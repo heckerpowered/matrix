@@ -1,0 +1,3 @@
+package heckerpowered.matrix.data
+
+class MatrixRecipeGenerator

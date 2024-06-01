@@ -1,0 +1,8 @@
+{
+  "effect.matrix.armor_penetration": "护甲穿透",
+  "effect.matrix.rapid_attack": "快速蓄力",
+  "entity.matrix.force_pearl": "力场珍珠",
+  "item.matrix.force_pearl": "力场珍珠",
+  "item.matrix.portable_tnt": "便携式TNT",
+  "itemGroup.matrix": "Matrix"
+}
