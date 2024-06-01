@@ -12,8 +12,8 @@ val archiveBaseName: String by project
 val fabricVersion: String by project
 
 plugins {
-    id("fabric-loom") version "1.5-SNAPSHOT"
-    kotlin("jvm") version "2.0.0-Beta4"
+    id("fabric-loom") version "1.6-SNAPSHOT"
+    kotlin("jvm") version "2.0.0"
 }
 
 version = modVersion
@@ -54,12 +54,12 @@ tasks.processResources {
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.release = 17
+    options.release = 21
 }
 
 tasks.withType<KotlinCompile>().all {
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 
