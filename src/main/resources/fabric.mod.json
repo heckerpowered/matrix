@@ -3,9 +3,9 @@
 	"id": "matrix",
 	"version": "${version}",
 	"name": "matrix",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "",
 	"authors": [
-		"Me!"
+		"heckerpowered"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
@@ -21,6 +21,12 @@
 				"adapter": "kotlin"
 			}
 		],
+		"client":[
+			{
+				"value": "heckerpowered.matrix.client.MatrixClient",
+				"adapter": "kotlin"
+			}
+		],
 		"fabric-datagen": [
 			{
 				"value": "heckerpowered.matrix.MatrixDataGenerator",
@@ -33,8 +39,8 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.15.7",
-		"minecraft": "~1.20.4",
-		"java": ">=17",
+		"minecraft": "~1.21",
+		"java": ">=21",
 		"fabric-api": "*",
 		"fabric-language-kotlin": ">=1.9.22"
 	},
