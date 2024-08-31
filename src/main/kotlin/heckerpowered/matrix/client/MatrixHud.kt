@@ -63,6 +63,7 @@ object MatrixHud {
         }
     }
 
+    @JvmStatic
     fun nextMagic() {
         ++selectedIndex
         if (selectedIndex >= MatrixClient.getPlayerMagics().size) {
@@ -70,6 +71,7 @@ object MatrixHud {
         }
     }
 
+    @JvmStatic
     fun previousMagic() {
         --selectedIndex
         if (selectedIndex < 1) {
@@ -99,6 +101,7 @@ object MatrixHud {
             for (magic in magicQueue) {
                 ClientPlayNetworking.send(UseMagicPayload(magic.first, magic.second))
             }
+            magicQueue.clear()
             return
         }
 
