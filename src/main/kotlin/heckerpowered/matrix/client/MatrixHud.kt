@@ -1,5 +1,10 @@
 package heckerpowered.matrix.client
 
+import heckerpowered.matrix.client.render.Color
+import heckerpowered.matrix.client.render.MatrixUIRenderer
+import heckerpowered.matrix.client.render.Point
+import heckerpowered.matrix.client.render.Rectangle
+import heckerpowered.matrix.client.ui.element.ManaBar
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.network.UseMagicPayload
@@ -12,15 +17,29 @@ import net.minecraft.client.render.RenderTickCounter
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.projectile.ProjectileUtil
+import net.minecraft.sound.SoundCategory
+import net.minecraft.sound.SoundEvents
 import net.minecraft.text.Text
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.MathHelper
 
-
 object MatrixHud {
-    var mana = 100
-    var maxMana = 100
+    var mana
+        get() = manaBar.currentMana
+        set(value) {
+            manaBar.currentMana = value
+        }
+    var maxMana
+        get() = manaBar.maxMana
+        set(value) {
+            manaBar.maxMana = value
+        }
+    private var manaUsage
+        get() = manaBar.manaUsage
+        set(value) {
+            manaBar.manaUsage = value
+        }
 
     private var targetedEntity: Entity? = null
 
@@ -33,6 +52,8 @@ object MatrixHud {
     private var usingMagicList = mutableMapOf<Int, Double>()
 
     private val magicQueue = mutableListOf<Pair<Int, Int>>()
+
+    private val manaBar = ManaBar()
 
     fun onInitialize() {
         HudRenderCallback.EVENT.register(this::onHudRender)
@@ -53,22 +74,15 @@ object MatrixHud {
                 previousMagic()
             }
         }
-
-        ClientTickEvents.START_CLIENT_TICK.register {
-            if ((ticks % 5L).toInt() == 0) {
-                ++mana
-                mana = mana.coerceAtMost(maxMana)
-            }
-            ++ticks
-        }
     }
 
     @JvmStatic
     fun nextMagic() {
         ++selectedIndex
-        if (selectedIndex >= MatrixClient.getPlayerMagics().size) {
+        if (selectedIndex > MatrixClient.getPlayerMagics().size) {
             selectedIndex = 1
         }
+        onSelectionChanged()
     }
 
     @JvmStatic
@@ -77,6 +91,11 @@ object MatrixHud {
         if (selectedIndex < 1) {
             selectedIndex = MatrixClient.getPlayerMagics().size
         }
+        onSelectionChanged()
+    }
+
+    private fun onSelectionChanged() {
+        manaBar.manaCost = MatrixClient.getPlayerMagics()[selectedIndex - 1].cost.toDouble()
     }
 
     private fun useCurrentMagic() {
@@ -87,21 +106,28 @@ object MatrixHud {
         val magic = MagicManager.getMagic(MinecraftClient.getInstance().player!!, selectedIndex) ?: return
         val targetedEntity = this.targetedEntity ?: return
 
-        if (mana < magic.cost) {
+        if (manaUsage + magic.cost > mana) {
             return
         }
-        mana -= magic.cost
+        manaUsage += magic.cost
 
         usingMagicList[selectedIndex] = 0.0
         magicQueue.add(Pair(selectedIndex, targetedEntity.id))
+
+        val minecraft = MinecraftClient.getInstance()
+        val player = minecraft.player!!
+        minecraft.world!!.playSound(
+            player,
+            player.x, player.y, player.z,
+            SoundEvents.ENTITY_ENDERMAN_TELEPORT,
+            SoundCategory.PLAYERS
+        )
     }
 
     private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
         if (!shouldRenderHud()) {
-            for (magic in magicQueue) {
-                ClientPlayNetworking.send(UseMagicPayload(magic.first, magic.second))
-            }
-            magicQueue.clear()
+            useMagics()
+            renderManaBarAutoHide(drawContext, tickCounter)
             return
         }
 
@@ -115,58 +141,41 @@ object MatrixHud {
         }
     }
 
+    private fun useMagics() {
+        if (manaBar.manaCost != .0) {
+            manaBar.manaCost = .0
+        }
+        if (magicQueue.isEmpty()) {
+            return
+        }
+
+        for (magic in magicQueue) {
+            ClientPlayNetworking.send(UseMagicPayload(magic.first, magic.second))
+        }
+        magicQueue.clear()
+        mana -= manaUsage
+        manaUsage = .0
+        ticks = 0
+    }
+
     private fun shouldRenderHud() = MinecraftClient.getInstance().options.playerListKey.isPressed
 
+    private fun renderManaBarAutoHide(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+        val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
+        manaBar.renderManaBarAutoHide(renderer)
+    }
+
     private fun renderManaBar(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val manaBarColor = ColorHelper.Argb.getArgb(128, 0, 128, 255)
+        val magicCost = MatrixClient.getPlayerMagics()[selectedIndex - 1].cost.toDouble()
+        if (manaBar.manaCost != magicCost) {
+            manaBar.manaCost = magicCost
+        }
 
-        drawContext.fill(
-            50,
-            10,
-            MathHelper.lerp(mana.toDouble() / maxMana.toDouble(), 50.0, drawContext.scaledWindowWidth - 50.0)
-                .toInt(),
-            25,
-            0,
-            manaBarColor
-        )
-
-        val textRenderer = MinecraftClient.getInstance().textRenderer
-        drawContext.drawText(
-            textRenderer,
-            Text.literal("法力值"),
-            55,
-            13,
-            foregroundColor,
-            true
-        )
-
-        // val cost = 10
-        // val maxMana = 100
-
-        val barWidth = drawContext.scaledWindowWidth - 100
-
-        // drawContext.fill(
-        //     drawContext.scaledWindowWidth - 50 - (barWidth.toDouble() * (cost.toDouble() / maxMana.toDouble())).toInt(),
-        //     10,
-        //     drawContext.scaledWindowWidth - 50,
-        //     25,
-        //     0,
-        //     ColorHelper.Argb.getArgb(255, 255, 0, 0)
-        // )
+        val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
+        manaBar.render(renderer)
     }
 
     private fun renderLeftPart(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        /**
-        drawContext.fill(
-        25,
-        drawContext.scaledWindowHeight - 25,
-        100,
-        25,
-        0,
-        backgroundColor
-        )
-         */
-
         val magics = MatrixClient.getPlayerMagics()
         val indentList = generateIndentList(magics.size)
         repeat(magics.size) {
@@ -181,6 +190,8 @@ object MatrixHud {
 
         val color = if (selectedIndex == index) {
             ColorHelper.Argb.getArgb(128, 0, 128, 0)
+        } else if (manaUsage + magic.cost > mana) {
+            ColorHelper.Argb.getArgb(128, 128, 0, 0)
         } else {
             backgroundColor
         }
@@ -221,21 +232,21 @@ object MatrixHud {
 
             val maxX = xIndent + 95
 
-            val startX = (xIndent + 30 + deltaTime * 5).toInt()
-            val endX = (startX + 10).coerceAtMost(maxX)
+            val startX = (xIndent + 30 + deltaTime * 5)
+            val endX = (startX + 10).coerceAtMost(maxX.toDouble())
 
             if (startX > maxX) {
                 usingMagicList.remove(index)
                 return
             }
 
-            drawContext.fill(
-                startX,
-                startY,
-                endX,
-                endY,
-                0,
-                ColorHelper.Argb.getArgb(128, 0, 0, 128)
+            val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
+            renderer.renderRectangle(
+                Rectangle(
+                    Point(startX, startY.toDouble()),
+                    Point(endX, endY.toDouble())
+                ),
+                Color(0, 0, 128, 128)
             )
         }
     }
@@ -283,6 +294,20 @@ object MatrixHud {
                 50,
                 lerpedColor
             )
+        }
+
+        var y = 55
+        val currentMagic = MatrixClient.getPlayerMagics()[selectedIndex - 1]
+        for (description in currentMagic.getDescription()) {
+            drawContext.drawText(
+                textRenderer,
+                description,
+                drawContext.scaledWindowWidth - 90,
+                y,
+                foregroundColor,
+                false
+            )
+            y += 10
         }
     }
 

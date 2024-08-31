@@ -1,5 +1,3 @@
 {
-  "entity.matrix.force_pearl": "Force Pearl",
-  "item.matrix.force_pearl": "Force Pearl",
-  "itemGroup.matrix": "Matrix"
+  "matrix.mana": "Mana"
 }

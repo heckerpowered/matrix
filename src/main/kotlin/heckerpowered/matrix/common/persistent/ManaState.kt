@@ -21,8 +21,8 @@ class ManaState : PersistentState() {
 
             val compound = nbt.getCompound("players")
             compound.keys.forEach {
-                val mana = compound.getCompound(it).getInt("Mana")
-                val maxMana = compound.getCompound(it).getInt("MaxMana")
+                val mana = compound.getCompound(it).getDouble("Mana")
+                val maxMana = compound.getCompound(it).getDouble("MaxMana")
                 val manaData = ManaData(mana, maxMana)
 
                 val uuid = UUID.fromString(it)
@@ -32,9 +32,10 @@ class ManaState : PersistentState() {
             return state
         }
 
+        @JvmStatic
         fun getPlayerState(player: LivingEntity): ManaData {
             val manaState = getServerState(player.world.server!!)
-            val manaData = manaState.manaData.computeIfAbsent(player.uuid) { ManaData(100, 100) }
+            val manaData = manaState.manaData.computeIfAbsent(player.uuid) { ManaData(1000.0, 1000.0) }
 
             return manaData
         }
@@ -55,8 +56,8 @@ class ManaState : PersistentState() {
         manaData.forEach { (uuid, manaData) ->
             val playerNbt = NbtCompound()
 
-            playerNbt.putInt("Mana", manaData.mana)
-            playerNbt.putInt("MaxMana", manaData.maxMana)
+            playerNbt.putDouble("Mana", manaData.mana)
+            playerNbt.putDouble("MaxMana", manaData.maxMana)
 
             playersNbt.put(uuid.toString(), playerNbt)
         }

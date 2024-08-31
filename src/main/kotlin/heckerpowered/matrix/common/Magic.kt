@@ -10,4 +10,8 @@ open class Magic(
 ) {
     open fun onUse(player: PlayerEntity, target: Entity) {
     }
+
+    open fun getDescription(): List<Text> {
+        return listOf()
+    }
 }

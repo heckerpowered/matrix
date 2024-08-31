@@ -1,3 +1,3 @@
 package heckerpowered.matrix.common.persistent
 
-data class ManaData(var mana: Int, var maxMana: Int)
+data class ManaData(var mana: Double, var maxMana: Double)

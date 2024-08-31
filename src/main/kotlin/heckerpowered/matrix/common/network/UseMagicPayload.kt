@@ -34,6 +34,7 @@ data class UseMagicPayload(
         val targetedEntity = context.player().world.getEntityById(entityId) ?: return
         if (manaState.mana >= magic.cost) {
             manaState.mana -= magic.cost
+            // ServerPlayNetworking.send(context.player(), SyncManaPayload(manaState.mana, manaState.maxMana))
         }
 
         magic.onUse(player, targetedEntity)
