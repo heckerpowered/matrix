@@ -1,10 +1,13 @@
 package heckerpowered.matrix.common.persistent
 
 import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.network.SyncManaPayload
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.LivingEntity
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.registry.RegistryWrapper
 import net.minecraft.server.MinecraftServer
+import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.PersistentState
 import net.minecraft.world.World
 import java.util.*
@@ -23,7 +26,8 @@ class ManaState : PersistentState() {
             compound.keys.forEach {
                 val mana = compound.getCompound(it).getDouble("Mana")
                 val maxMana = compound.getCompound(it).getDouble("MaxMana")
-                val manaData = ManaData(mana, maxMana)
+                val isInfinite = compound.getCompound(it).getBoolean("IsInfinite")
+                val manaData = ManaData(mana, maxMana, isInfinite)
 
                 val uuid = UUID.fromString(it)
                 state.manaData[uuid] = manaData
@@ -35,7 +39,7 @@ class ManaState : PersistentState() {
         @JvmStatic
         fun getPlayerState(player: LivingEntity): ManaData {
             val manaState = getServerState(player.world.server!!)
-            val manaData = manaState.manaData.computeIfAbsent(player.uuid) { ManaData(1000.0, 1000.0) }
+            val manaData = manaState.manaData.computeIfAbsent(player.uuid) { ManaData(100.0, 100.0) }
 
             return manaData
         }
@@ -43,7 +47,7 @@ class ManaState : PersistentState() {
         private fun getServerState(server: MinecraftServer): ManaState {
             val persistentStateManager = server.getWorld(World.OVERWORLD)!!.persistentStateManager
 
-            val state = persistentStateManager.getOrCreate(type, Matrix.MOD_ID)
+            val state = persistentStateManager.getOrCreate(type, Matrix.MOD_ID + "_mana_state")
 
             state.markDirty()
 
@@ -58,6 +62,7 @@ class ManaState : PersistentState() {
 
             playerNbt.putDouble("Mana", manaData.mana)
             playerNbt.putDouble("MaxMana", manaData.maxMana)
+            playerNbt.putBoolean("IsInfinite", manaData.isInfinite)
 
             playersNbt.put(uuid.toString(), playerNbt)
         }
@@ -66,3 +71,28 @@ class ManaState : PersistentState() {
         return nbt
     }
 }
+
+var ServerPlayerEntity.mana: Double
+    get() = ManaState.getPlayerState(this).mana
+    set(value) {
+        val manaData = ManaState.getPlayerState(this)
+        manaData.mana = value.coerceIn(.0, manaData.maxMana)
+
+        ServerPlayNetworking.send(this, SyncManaPayload(manaData.mana, manaData.maxMana))
+    }
+
+var ServerPlayerEntity.maxMana: Double
+    get() = ManaState.getPlayerState(this).maxMana
+    set(value) {
+        val manaData = ManaState.getPlayerState(this)
+        manaData.maxMana = value.coerceAtLeast(.0)
+
+        ServerPlayNetworking.send(this, SyncManaPayload(manaData.mana, manaData.maxMana))
+    }
+
+var ServerPlayerEntity.isInfiniteMana: Boolean
+    get() = ManaState.getPlayerState(this).isInfinite
+    set(value) {
+        val manaData = ManaState.getPlayerState(this)
+        manaData.isInfinite = value
+    }

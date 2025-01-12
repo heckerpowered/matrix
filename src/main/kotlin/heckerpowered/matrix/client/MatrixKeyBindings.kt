@@ -25,4 +25,18 @@ object MatrixKeyBindings {
         GLFW.GLFW_KEY_UP,
         "key.categories.matrix"
     )
+
+    val overclockMagic = KeyBinding(
+        "key.matrix.overclock_magic",
+        InputUtil.Type.KEYSYM,
+        GLFW.GLFW_KEY_N,
+        "key.categories.matrix"
+    )
+
+    val overclockMana = KeyBinding(
+        "key.matrix.overclock_mana",
+        InputUtil.Type.KEYSYM,
+        GLFW.GLFW_KEY_M,
+        "key.categories.matrix"
+    )
 }

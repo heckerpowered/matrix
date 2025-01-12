@@ -1,0 +1,32 @@
+{
+  "targets": [
+    "swap"
+  ],
+  "passes": [
+    {
+      "name": "color_filter",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        {
+          "name": "RedFilter",
+          "values": [
+            0.2
+          ]
+        },
+        {
+          "name": "GreenFilter",
+          "values": [
+            0.2
+          ]
+        },
+        {
+          "name": "BlueFilter",
+          "values": [
+            1.0
+          ]
+        }
+      ]
+    }
+  ]
+}

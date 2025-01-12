@@ -1,0 +1,43 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "one",
+    "dstrgb": "zero"
+  },
+  "vertex": "sobel",
+  "fragment": "color_filter",
+  "attributes": [
+    "Position"
+  ],
+  "samplers": [
+    {
+      "name": "DiffuseSampler"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "RedFilter",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.2
+      ]
+    },
+    {
+      "name": "GreenFilter",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.2
+      ]
+    },
+    {
+      "name": "BlueFilter",
+      "type": "float",
+      "count": 1,
+      "values": [
+        1.0
+      ]
+    }
+  ]
+}

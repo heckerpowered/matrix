@@ -29,7 +29,7 @@ class MatrixUIRenderer(private val vertexConsumers: VertexConsumerProvider.Immed
         val minX = min(rectangle.min.x, rectangle.max.x)
         val minY = min(rectangle.min.y, rectangle.max.y)
 
-        val vertexConsumer: VertexConsumer = vertexConsumers.getBuffer(layer)
+        val vertexConsumer = vertexConsumers.getBuffer(layer)
         val matrix = matrixStack.peek().positionMatrix
         vertexConsumer.vertex(matrix, maxX.toFloat(), maxY.toFloat(), 0f).color(color.toInt())
         vertexConsumer.vertex(matrix, maxX.toFloat(), minY.toFloat(), 0f).color(color.toInt())

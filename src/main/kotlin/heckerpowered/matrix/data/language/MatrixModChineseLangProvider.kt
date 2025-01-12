@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider
 import net.minecraft.registry.RegistryWrapper
 import java.util.concurrent.CompletableFuture
 
+
 class MatrixModChineseLangProvider(
     dataOutput: FabricDataOutput,
     registryLookup: CompletableFuture<RegistryWrapper.WrapperLookup>
@@ -13,28 +14,95 @@ class MatrixModChineseLangProvider(
         registryLookup: RegistryWrapper.WrapperLookup,
         translationBuilder: TranslationBuilder
     ) {
-        translationBuilder.add(MatrixLanguage.mana.string, "法力值")
+        translationBuilder.add(MatrixLanguage.mana.key, "法力值")
 
-        translationBuilder.add(MatrixLanguage.magicTargetPositioning.string, "目标定位")
-        translationBuilder.add(MatrixLanguage.magicTargetPositioningDescription1.string, "高亮目标及")
-        translationBuilder.add(MatrixLanguage.magicTargetPositioningDescription2.string, "其周围的生物。")
+        translationBuilder.add(MatrixLanguage.magicTargetPositioning.key, "目标定位")
+        translationBuilder.add(
+            MatrixLanguage.magicTargetPositioningDescription.key,
+            "高亮目标及其周围的生物。\n无法追踪。"
+        )
 
-        translationBuilder.add(MatrixLanguage.magicDecisiveStrike.string, "毁灭打击")
-        translationBuilder.add(MatrixLanguage.magicDecisiveStrikeDescription1.string, "对选定目标造")
-        translationBuilder.add(MatrixLanguage.magicDecisiveStrikeDescription2.string, "成10点伤害，")
-        translationBuilder.add(MatrixLanguage.magicDecisiveStrikeDescription3.string, "可叠加。")
+        translationBuilder.add(MatrixLanguage.magicDecisiveStrike.key, "毁灭打击")
+        translationBuilder.add(
+            MatrixLanguage.magicDecisiveStrikeDescription.key, "对目标造成6点伤害。\n移除目标的受击无敌时间。\n可被追踪。"
+        )
 
-        translationBuilder.add(MatrixLanguage.magicManaOverload.string, "法力过载")
-        translationBuilder.add(MatrixLanguage.magicManaOverloadDescription1.string, "标记一个目标，")
-        translationBuilder.add(MatrixLanguage.magicManaOverloadDescription2.string, "持续5秒。标")
-        translationBuilder.add(MatrixLanguage.magicManaOverloadDescription3.string, "记持续期间内")
-        translationBuilder.add(MatrixLanguage.magicManaOverloadDescription4.string, "击杀目标回复")
-        translationBuilder.add(MatrixLanguage.magicManaOverloadDescription5.string, "20点法力值。")
-        // 记持续期间内击杀目标回复20点法力值。
+        translationBuilder.add(MatrixLanguage.magicManaOverload.key, "法力过载")
+        translationBuilder.add(
+            MatrixLanguage.magicManaOverloadDescription.key,
+            "标记一个目标，持续5秒。标记持续期间内击杀目标回复20点法力值。\n无法追踪。"
+        )
 
-        translationBuilder.add(MatrixLanguage.magicHealthSteal.string, "生命偷取")
-        translationBuilder.add(MatrixLanguage.magicHealthStealDescription1.string, "将目标的生命")
-        translationBuilder.add(MatrixLanguage.magicHealthStealDescription2.string, "值转为自身的")
-        translationBuilder.add(MatrixLanguage.magicHealthStealDescription3.string, "额外生命值。")
+        translationBuilder.add(MatrixLanguage.magicHealthSteal.key, "生命偷取")
+        translationBuilder.add(
+            MatrixLanguage.magicHealthStealDescription.key,
+            "将目标的生命值转为自身的额外生命值。\n无法追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.magicExplosion.key, "原地爆炸")
+        translationBuilder.add(
+            MatrixLanguage.magicExplosionDescription.key,
+            "在选定目标的位置产生一次爆炸。\n可被追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.killMagic.key, "彻底抹除")
+        translationBuilder.add(
+            MatrixLanguage.killMagicDescription.key, "立即击杀目标。\n可被追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.sculkCatalystMagic.key, "幽匿催发")
+        translationBuilder.add(
+            MatrixLanguage.sculkCatalystMagicDescription.key,
+            "在短暂延迟后，对目标造成大量伤害，若目标死亡， 则将此魔法传染给20米内的下一个实体，自动消耗法力值。每次传染所需的时间越来越短，需要的法力值也越来越高，造成的伤害也越来越高。自动高亮传染目标。"
+        )
+
+        translationBuilder.add(MatrixLanguage.magicMemoryErase.key, "记忆擦除")
+        translationBuilder.add(
+            MatrixLanguage.magicMemoryEraseDescription.key,
+            "强迫目标解除正在锁定的目标。 \n无法追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.magicIgniteMagic.key, "点燃")
+        translationBuilder.add(
+            MatrixLanguage.magicIgniteMagicDescription.key,
+            "点燃目标5秒，造成持续伤害。\n如果目标处于中毒状态则引爆敌人。\n产生爆炸时可被追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.magicBreakingBad.key, "绝命毒师")
+        translationBuilder.add(
+            MatrixLanguage.magicBreakingBadDescription.key,
+            "使目标中毒5秒，造成持续伤害。\n如果敌人正在点燃，则会引爆敌人。\n产生爆炸时可被追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.magicSpread.key, "连带传染")
+        translationBuilder.add(
+            MatrixLanguage.magicSpreadDescription.key,
+            "排在此技能后的所有技能会传播给24米内的生物。\n无法传播。 \n无法追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.magicCrippleMovement.key, "阻碍移动")
+        translationBuilder.add(
+            MatrixLanguage.magicCrippleMovementDescription.key,
+            "减速目标5秒，使目标移动缓慢。\n无法追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.magicSystemCrash.key, "系统崩溃")
+        translationBuilder.add(
+            MatrixLanguage.magicSystemCrashDescription.key,
+            "仅对玩家有效，使目标玩家系统崩溃。\n无法追踪。"
+        )
+
+        translationBuilder.add(MatrixLanguage.overclockMagic.key, "超频或降频魔法")
+        translationBuilder.add(MatrixLanguage.overclockMana.key, "超频或降频法力")
+        translationBuilder.add(MatrixLanguage.switchClock.key, "切换超频或降频")
+        translationBuilder.add(MatrixLanguage.systemCrashing.key, "即将发生系统崩溃")
+
+        translationBuilder.add(MatrixLanguage.magicAvailable.key, "就绪")
+        translationBuilder.add(MatrixLanguage.magicAvailableManaNotEnough.key, "可用法力不足")
+        translationBuilder.add(MatrixLanguage.magicUnavailable.key, "无法引导法术")
+        translationBuilder.add(MatrixLanguage.magicChannelQueueFull.key, "队列已满")
+        translationBuilder.add(MatrixLanguage.magicChannelQueueLocked.key, "队列已锁定")
+        translationBuilder.add(MatrixLanguage.magicTargetMissing.key, "目标缺失")
+        translationBuilder.add(MatrixLanguage.magicTargetImmune.key, "目标免疫")
     }
 }

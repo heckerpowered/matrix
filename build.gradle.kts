@@ -12,8 +12,8 @@ val archiveBaseName: String by project
 val fabricVersion: String by project
 
 plugins {
-    id("fabric-loom") version "1.6-SNAPSHOT"
-    kotlin("jvm") version "2.0.0"
+    id("fabric-loom") version "1.9-SNAPSHOT"
+    kotlin("jvm") version "2.1.0"
 }
 
 version = modVersion
@@ -31,6 +31,10 @@ repositories {
     // for more information about repositories.
 }
 
+loom {
+    accessWidenerPath = file("src/main/resources/matrix.accesswidener")
+}
+
 fabricApi {
     configureDataGeneration()
 }
@@ -38,6 +42,7 @@ fabricApi {
 dependencies {
     minecraft("com.mojang:minecraft:${minecraftVersion}")
     mappings("net.fabricmc:yarn:${yarnMappings}:v2")
+
     modImplementation("net.fabricmc:fabric-loader:${loaderVersion}")
 
     // Fabric API

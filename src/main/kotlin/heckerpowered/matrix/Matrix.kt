@@ -2,7 +2,9 @@ package heckerpowered.matrix
 
 import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.MatrixServerPlayNetworking
+import heckerpowered.matrix.common.command.MatrixCommands
 import heckerpowered.matrix.common.effect.MatrixStatusEffects
+import heckerpowered.matrix.common.persistent.ChannelSequence
 import net.fabricmc.api.ModInitializer
 import net.minecraft.util.Identifier
 import org.slf4j.LoggerFactory
@@ -15,6 +17,8 @@ object Matrix : ModInitializer {
         MatrixServerPlayNetworking.onInitialize()
         MagicManager.onInitialize()
         MatrixStatusEffects.onInitialize()
+        MatrixCommands.onInitialize()
+        ChannelSequence.onInitialize()
     }
 
     fun identifier(path: String): Identifier {

@@ -1,13 +1,14 @@
 package heckerpowered.matrix.client.network
 
+import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.common.network.SyncManaPayload
+import heckerpowered.matrix.common.network.SystemCrashPayload
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 
 object MatrixClientPlayNetworking {
     fun onInitialize() {
-        PayloadTypeRegistry.playS2C().register(SyncManaPayload.id, SyncManaPayload.codec)
-
         ClientPlayNetworking.registerGlobalReceiver(SyncManaPayload.id, SyncManaPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(SystemCrashPayload.id, SystemCrashPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ChannelMagicPayload.id, ChannelMagicPayload::handle)
     }
 }

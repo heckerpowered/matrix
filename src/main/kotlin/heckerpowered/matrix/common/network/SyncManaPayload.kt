@@ -11,7 +11,7 @@ class SyncManaPayload(
     private val maxMana: Double
 ) : CustomPayload {
     companion object {
-        val id: CustomPayload.Id<SyncManaPayload> = CustomPayload.id("use_magic")
+        val id: CustomPayload.Id<SyncManaPayload> = CustomPayload.id("sync_mana")
         val codec: PacketCodec<PacketByteBuf, SyncManaPayload> =
             PacketCodec.of(SyncManaPayload::encode) { buffer ->
                 SyncManaPayload(
@@ -31,9 +31,21 @@ class SyncManaPayload(
     }
 
     fun handle(context: Context) {
+        if (mana.isNaN() || maxMana.isNaN()) {
+            return
+        }
         context.client().execute {
-            MatrixHud.mana = mana
             MatrixHud.maxMana = maxMana
+            if (mana.isInfinite()) {
+                MatrixHud.mana = mana
+                return@execute
+            }
+            if (MatrixHud.mana > mana) {
+                MatrixHud.manaUsage += MatrixHud.mana - mana
+            } else {
+                MatrixHud.manaUsage = .0
+                MatrixHud.mana += mana - MatrixHud.mana
+            }
         }
     }
 }

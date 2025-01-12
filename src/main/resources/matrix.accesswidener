@@ -1,0 +1,8 @@
+accessWidener v2 named
+accessible field net/minecraft/client/MinecraftClient renderTickCounter Lnet/minecraft/client/render/RenderTickCounter$Dynamic;
+accessible field net/minecraft/client/render/RenderTickCounter$Dynamic tickTime F
+accessible field net/minecraft/client/render/RenderTickCounter$Dynamic tickDelta F
+mutable field net/minecraft/client/render/RenderTickCounter$Dynamic tickTime F
+accessible field net/minecraft/world/tick/TickManager nanosPerTick J
+accessible field net/minecraft/server/MinecraftServer tickStartTimeNanos J
+accessible field net/minecraft/server/MinecraftServer tickEndTimeNanos J

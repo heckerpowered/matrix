@@ -1,28 +1,67 @@
 package heckerpowered.matrix.data.language
 
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
+import net.minecraft.text.TranslatableTextContent
+
+val MutableText.key: String
+    get() {
+        return (content as TranslatableTextContent).key
+    }
 
 object MatrixLanguage {
-    val mana = Text.translatable("matrix.mana")
+    val mana: MutableText = Text.translatable("matrix.mana")
 
-    val magicTargetPositioning = Text.translatable("matrix.target_positioning")
-    val magicTargetPositioningDescription1 = Text.translatable("matrix.target_positioning.description.1")
-    val magicTargetPositioningDescription2 = Text.translatable("matrix.target_positioning.description.2")
+    val magicTargetPositioning: MutableText = Text.translatable("matrix.target_positioning")
+    val magicTargetPositioningDescription: MutableText = Text.translatable("matrix.target_positioning.description")
 
-    val magicDecisiveStrike = Text.translatable("matrix.decisive_strike")
-    val magicDecisiveStrikeDescription1 = Text.translatable("matrix.decisive_strike.description.1")
-    val magicDecisiveStrikeDescription2 = Text.translatable("matrix.decisive_strike.description.2")
-    val magicDecisiveStrikeDescription3 = Text.translatable("matrix.decisive_strike.description.3")
+    val magicDecisiveStrike: MutableText = Text.translatable("matrix.decisive_strike")
+    val magicDecisiveStrikeDescription: MutableText = Text.translatable("matrix.decisive_strike.description")
 
-    val magicManaOverload = Text.translatable("matrix.mana_overload")
-    val magicManaOverloadDescription1 = Text.translatable("matrix.mana_overload.description.1")
-    val magicManaOverloadDescription2 = Text.translatable("matrix.mana_overload.description.2")
-    val magicManaOverloadDescription3 = Text.translatable("matrix.mana_overload.description.3")
-    val magicManaOverloadDescription4 = Text.translatable("matrix.mana_overload.description.4")
-    val magicManaOverloadDescription5 = Text.translatable("matrix.mana_overload.description.5")
+    val magicManaOverload: MutableText = Text.translatable("matrix.mana_overload")
+    val magicManaOverloadDescription: MutableText = Text.translatable("matrix.mana_overload.description")
 
-    val magicHealthSteal = Text.translatable("matrix.health_steal")
-    val magicHealthStealDescription1 = Text.translatable("matrix.health_steal.description.1")
-    val magicHealthStealDescription2 = Text.translatable("matrix.health_steal.description.2")
-    val magicHealthStealDescription3 = Text.translatable("matrix.health_steal.description.3")
+    val magicHealthSteal: MutableText = Text.translatable("matrix.health_steal")
+    val magicHealthStealDescription: MutableText = Text.translatable("matrix.health_steal.description")
+
+    val magicExplosion: MutableText = Text.translatable("matrix.explosion")
+    val magicExplosionDescription: MutableText = Text.translatable("matrix.explosion.description")
+
+    val killMagic: MutableText = Text.translatable("matrix.kill")
+    val killMagicDescription: MutableText = Text.translatable("matrix.kill.description")
+
+    val sculkCatalystMagic: MutableText = Text.translatable("matrix.sculk_catalyst")
+    val sculkCatalystMagicDescription: MutableText = Text.translatable("matrix.sculk_catalyst.description")
+
+    val magicMemoryErase: MutableText = Text.translatable("matrix.memory_erase")
+    val magicMemoryEraseDescription: MutableText = Text.translatable("matrix.memory_erase.description")
+
+    val magicIgniteMagic: MutableText = Text.translatable("matrix.ignite")
+    val magicIgniteMagicDescription: MutableText = Text.translatable("matrix.ignite.description")
+
+    val magicBreakingBad: MutableText = Text.translatable("matrix.breaking_bad")
+    val magicBreakingBadDescription: MutableText = Text.translatable("matrix.breaking_bad.description")
+
+    val magicSpread: MutableText = Text.translatable("matrix.spread")
+    val magicSpreadDescription: MutableText = Text.translatable("matrix.spread.description")
+
+    val magicCrippleMovement: MutableText = Text.translatable("matrix.cripple_movement")
+    val magicCrippleMovementDescription: MutableText = Text.translatable("matrix.cripple_movement.description")
+
+    val magicSystemCrash: MutableText = Text.translatable("matrix.system_crash")
+    val magicSystemCrashDescription: MutableText = Text.translatable("matrix.system_crash.description")
+
+    val overclockMagic: MutableText = Text.translatable("matrix.overclock.magic")
+    val overclockMana: MutableText = Text.translatable("matrix.overclock.mana")
+    val switchClock: MutableText = Text.translatable("matrix.overclock.switch")
+
+    val systemCrashing: MutableText = Text.translatable("matrix.system_is_crashing")
+
+    val magicAvailable: MutableText = Text.translatable("matrix.magic_available")
+    val magicAvailableManaNotEnough: MutableText = Text.translatable("matrix.magic_available.mana_not_enough")
+    val magicTargetImmune: MutableText = Text.translatable("matrix.magic_target_immune")
+    val magicUnavailable: MutableText = Text.translatable("matrix.magic_unavailable")
+    val magicChannelQueueFull: MutableText = Text.translatable("matrix.magic_channel_queue_full")
+    val magicChannelQueueLocked: MutableText = Text.translatable("matrix.magic_channel_queue_locked")
+    val magicTargetMissing: MutableText = Text.translatable("matrix.magic_target_missing")
 }
