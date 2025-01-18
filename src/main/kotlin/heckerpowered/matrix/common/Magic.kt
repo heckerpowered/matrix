@@ -48,7 +48,7 @@ abstract class Magic(
     /**
      * Called when the magic is casting.
      */
-    abstract fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence)
+    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {}
     open fun channel(player: ServerPlayerEntity, target: LivingEntity, sequence: ChannelSequence) {}
 
     open fun availableStatus(
@@ -95,7 +95,7 @@ abstract class Magic(
             return false
         }
 
-        if (sequence.channelingMagics() >= 4) {
+        if (sequence.channelingMagicCount() >= 4) {
             return true
         }
 
@@ -119,7 +119,7 @@ abstract class Magic(
             (player as ServerPlayerEntity).mana
         }
 
-        if (getCost() > mana) {
+        if (getCost(player, target, sequence) > mana) {
             return false
         }
 
@@ -137,7 +137,7 @@ abstract class Magic(
     /**
      * Gets the mana needed to channel this magic.
      */
-    open fun getCost(): Long {
+    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Long {
         return cost
     }
 
@@ -152,23 +152,22 @@ abstract class Magic(
     /**
      * Gets the time it takes for the magic to channel, in ticks.
      */
-    open fun getChannelTime(): Long {
+    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?): Long {
         return channelTime
     }
 
-    fun getId(): Int {
-        return name.hashCode()
-    }
+    val id: Int
+        get() = name.hashCode()
 }
 
-fun LivingEntity.isInvulnerableTo(effect: RegistryEntry<StatusEffect>): Boolean {
+fun LivingEntity.isInvulnerableToEffect(effect: RegistryEntry<StatusEffect>): Boolean {
     if (!canHaveStatusEffect(StatusEffectInstance(effect, 0, 0))) {
-        return false
+        return true
     }
 
     if (this is EnderDragonEntity || this is WitherEntity) {
-        return false
+        return true
     }
 
-    return true
+    return false
 }

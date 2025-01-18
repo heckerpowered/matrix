@@ -27,9 +27,9 @@ class ExplosionMagic : Magic(
 
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         val damageSource = if (sequence.sequencedAfter<MemoryEraseMagic>()) {
-            target.damageSources.magic()
+            target.damageSources.generic()
         } else {
-            player?.damageSources?.indirectMagic(player, null) ?: target.damageSources.magic()
+            player?.damageSources?.playerAttack(player) ?: target.damageSources.generic()
         }
 
         target.world.createExplosion(

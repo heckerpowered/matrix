@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
+import net.minecraft.server.dedicated.MinecraftDedicatedServer
 import net.minecraft.util.TimeHelper
 import net.minecraft.util.Util
 
@@ -30,6 +31,9 @@ data class WrapPayload(
 
     fun handle(context: Context) {
         val server = context.server()
+        if (server is MinecraftDedicatedServer) {
+            return
+        }
 
         val newTickTime = ((TimeHelper.SECOND_IN_NANOS / 20L) / timeScale).toLong()
         val previousTickTime = server.tickManager.nanosPerTick

@@ -2,7 +2,6 @@ package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.common.persistent.magicClock
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
@@ -17,7 +16,7 @@ class TargetPositioningMagic :
         2
     ) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
-        target.world.getOtherEntities(player, target.boundingBox.expand((player?.magicClock ?: 1.0) * 32.0)).forEach {
+        target.world.getOtherEntities(player, target.boundingBox.expand(24.0)).forEach {
             if (it is LivingEntity) {
                 it.addStatusEffect(StatusEffectInstance(StatusEffects.GLOWING, 200, 0, true, false))
             }

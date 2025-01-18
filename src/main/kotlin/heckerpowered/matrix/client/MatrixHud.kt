@@ -1,8 +1,9 @@
 package heckerpowered.matrix.client
 
-import heckerpowered.matrix.Matrix
+import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.core.AimAssist
 import heckerpowered.matrix.client.render.Color
-import heckerpowered.matrix.client.render.MatrixUIRenderer
+import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
 import heckerpowered.matrix.client.ui.element.AvailableStatusTooltip
@@ -16,12 +17,13 @@ import heckerpowered.matrix.common.magics.description
 import heckerpowered.matrix.common.network.OverclockPayload
 import heckerpowered.matrix.common.network.UseMagicPayload
 import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.persistent.getChannelSequence
+import heckerpowered.matrix.core.lerp
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gl.PostEffectProcessor
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.RenderTickCounter
+import net.minecraft.client.render.*
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.boss.dragon.EnderDragonPart
@@ -33,6 +35,7 @@ import net.minecraft.util.Util
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.MathHelper
+import net.minecraft.util.math.Vec3d
 import java.time.Duration
 
 object MatrixHud {
@@ -43,7 +46,7 @@ object MatrixHud {
         }
 
     var maxMana
-        get() = manaBar.maxMana.currentValue
+        get() = manaBar.maxMana.currentValue.coerceAtLeast(.0)
         set(value) {
             manaBar.maxMana.currentValue = value
         }
@@ -54,9 +57,8 @@ object MatrixHud {
             manaBar.manaUsage = value
         }
 
-    private var targetedEntity: Entity? = null
+    private var targetedEntity: LivingEntity? = null
 
-    private var ticks = 0L
     private var lastNanos = 0L
 
     private val backgroundColor = ColorHelper.Argb.getArgb(128, 0, 0, 0)
@@ -64,8 +66,6 @@ object MatrixHud {
 
     private var selectedIndex = 1
     private var usingMagicList = mutableMapOf<Int, Double>()
-
-    private val magicQueue = mutableMapOf<Int, MutableList<Int>>()
 
     private val manaBar = ManaBar()
 
@@ -81,12 +81,18 @@ object MatrixHud {
     private val timeSlowAnimationClock = AnimationClock(Duration.ofMillis(300), 1.0, 0.01)
     private val timeSlowAnimation = DoubleAnimation(timeSlowAnimationClock, easingFunction)
 
+    private val currentHealthAnimationClock = AnimationClock(Duration.ofMillis(300), 1.0, 1.0)
+    private val currentHealthAnimation = DoubleAnimation(currentHealthAnimationClock, easingFunction)
+    private val maxHealthAnimationClock = AnimationClock(Duration.ofMillis(300), 1.0, 1.0)
+    private val maxHealthAnimation = DoubleAnimation(maxHealthAnimationClock, easingFunction)
+
     private val manaOverclock = DoubleAnimation(manaOverclockAnimation, easingFunction)
     private val magicOverclock = DoubleAnimation(magicOverclockAnimation, easingFunction)
 
     private var previousVisibility = false
 
-    private var colorFilter: PostEffectProcessor? = null
+    private var aimEntity: Entity? = null
+    private var useAimAssist = false
 
     init {
         easingFunction.easingMode = EasingMode.OUT
@@ -130,6 +136,18 @@ object MatrixHud {
     private val magicColorAnimations = mutableListOf<ColorAnimation>()
     private val magicExtraWidthAnimations = mutableListOf<PackedAnimation>()
 
+    @JvmStatic
+    fun onDoAttack() {
+        if (!shouldRenderHud()) {
+            return
+        }
+
+        useAimAssist = !useAimAssist
+        if (!useAimAssist) {
+            aimEntity = null
+        }
+    }
+
     private fun processKeyInput() {
         if (MatrixKeyBindings.useMagic.wasPressed()) {
             useCurrentMagic()
@@ -147,16 +165,22 @@ object MatrixHud {
         }
 
         while (MatrixKeyBindings.overclockMagic.wasPressed()) {
-            val minecraftClient = MinecraftClient.getInstance()
-            val difference = if (minecraftClient.player!!.isSneaking) -0.5 else 0.5
+            val difference = if (player.isSneaking) {
+                -0.5
+            } else {
+                0.5
+            }
             val newOverclock = (magicOverclock.currentValue + difference).coerceIn(1.0..10.0)
             magicOverclock.currentValue = newOverclock
             ClientPlayNetworking.send(OverclockPayload(manaOverclock.currentValue, magicOverclock.currentValue))
         }
 
         while (MatrixKeyBindings.overclockMana.wasPressed()) {
-            val minecraftClient = MinecraftClient.getInstance()
-            val difference = if (minecraftClient.player!!.isSneaking) -0.5 else 0.5
+            val difference = if (player.isSneaking) {
+                -0.5
+            } else {
+                0.5
+            }
             val newOverclock = (manaOverclock.currentValue + difference).coerceIn(1.0..10.0)
             manaOverclock.currentValue = newOverclock
             ClientPlayNetworking.send(OverclockPayload(manaOverclock.currentValue, magicOverclock.currentValue))
@@ -215,34 +239,36 @@ object MatrixHud {
     }
 
     private fun onSelectionChanged() {
-        manaBar.manaCost = MatrixClient.getPlayerMagics()[selectedIndex - 1].getCost().toDouble()
+        val magic = selectedMagic
+        val target = this.targetedEntity
+        val channelSequence = player.getChannelSequence(target)
+        manaBar.manaCost = magic.getCost(player, target, channelSequence).toDouble()
     }
+
+    val selectedMagic: Magic
+        get() = MatrixClient.getPlayerMagics()[selectedIndex - 1]
 
     private fun useCurrentMagic() {
         if (!shouldRenderHud()) {
             return
         }
 
-        val magic = MatrixClient.getPlayerMagics()[selectedIndex - 1]
-        val targetedEntity = this.targetedEntity ?: return
-        if (targetedEntity !is LivingEntity) {
+        useMagicIndexed(selectedIndex - 1)
+    }
+
+    private fun useMagicIndexed(index: Int) {
+        val magic = MatrixClient.getPlayerMagics()[index]
+        val target = this.targetedEntity ?: return
+        if (magic.availableStatus(player, target, player.getChannelSequence(target)) != AVAILABLE) {
             return
         }
 
-        val minecraft = MinecraftClient.getInstance()
-        val player = MinecraftClient.getInstance().player!!
-        if (magic.availableStatus(
-                player,
-                targetedEntity as LivingEntity?,
-                ChannelSequence.getChannelSequence(player, targetedEntity as LivingEntity?)
-            ) != AVAILABLE
-        ) {
-            return
-        }
-        // manaUsage += magic.getCost()
+        magicColorAnimations[index].setColorWithoutAnimation(.0, 255.0, .0)
 
-        usingMagicList[selectedIndex] = 0.0
-        magicQueue.computeIfAbsent(targetedEntity.id) { mutableListOf() }.add(magic.name.hashCode())
+        // Reset use magic animation
+        usingMagicList[index + 1] = 0.0
+
+        channelMagic(magic, target)
 
         minecraft.world!!.playSound(
             player,
@@ -252,17 +278,12 @@ object MatrixHud {
             1.0f,
             1f
         )
+    }
 
-        magicQueue.forEach {
-            val entityId = it.key
-            val magics = it.value.toIntArray()
-            ClientPlayNetworking.send(UseMagicPayload(magics, entityId))
-        }
-
-        magicQueue.clear()
-        ChannelSequence.channelMagic(magic, player, targetedEntity)
-        ChannelSequence.channelMagicClient(magic, targetedEntity)
-        // useMagics()
+    private fun channelMagic(magic: Magic, target: LivingEntity) {
+        ClientPlayNetworking.send(UseMagicPayload(magic.id, target.id))
+        ChannelSequence.channelMagic(magic, player, target)
+        ChannelSequence.channelMagicClient(magic, target)
     }
 
     private fun checkVisibilityChanges() {
@@ -274,8 +295,7 @@ object MatrixHud {
     }
 
     private fun wrapDancer() {
-        val minecraft = MinecraftClient.getInstance()
-        if (minecraft.server != null && minecraft.server!!.currentPlayerCount > 1) {
+        if (!shouldSlowTime()) {
             return
         }
 
@@ -290,7 +310,15 @@ object MatrixHud {
 
         magics.forEachIndexed { index, magic ->
             if (index == selectedIndex - 1) {
-                magicColorAnimations[index].setColorWithoutAnimation(.0, 128.0, .0)
+                val color = magicColorAnimations[index]
+                // when green = 255, magic is used, perform animation
+                // when green = 128, animation is in progress
+                if (color.green.currentValue == 255.0 || color.green.currentValue == 128.0) {
+                    color.setColor(.0, 128.0, .0)
+                } else {
+                    color.setColorWithoutAnimation(.0, 128.0, .0)
+                }
+
                 return@forEachIndexed
             }
 
@@ -308,38 +336,34 @@ object MatrixHud {
     }
 
     private fun fillColorAnimationList(magics: List<Magic>) {
-        if (magicColorAnimations.size < magics.size) {
-            for (i in magicColorAnimations.size..magics.size) {
-                magicColorAnimations.add(ColorAnimation())
-            }
+        if (magicColorAnimations.size >= magics.size) {
+            return
+        }
+
+        for (i in magicColorAnimations.size..magics.size) {
+            magicColorAnimations.add(ColorAnimation())
         }
     }
 
     private fun fillExtraWidthAnimationList(magics: List<Magic>) {
-        if (magicExtraWidthAnimations.size < magics.size) {
-            for (i in magicExtraWidthAnimations.size..magics.size) {
-                val animationClock = AnimationClock(Duration.ofMillis(300), 0.0, 1.0)
-                val animation = DoubleAnimation(animationClock, easingFunction)
-                magicExtraWidthAnimations.add(
-                    PackedAnimation(
-                        animationClock,
-                        animation
-                    )
-                )
-            }
+        if (magicExtraWidthAnimations.size >= magics.size) {
+            return
+        }
+
+        for (i in magicExtraWidthAnimations.size..magics.size) {
+            val animationClock = AnimationClock(Duration.ofMillis(300), 0.0, 1.0)
+            val animation = DoubleAnimation(animationClock, easingFunction)
+            magicExtraWidthAnimations.add(PackedAnimation(animationClock, animation))
         }
     }
 
     private fun getMagicAvailableStatus(magic: Magic): MagicAvailableStatus {
-        val player = MinecraftClient.getInstance().player!!
-        val targetedEntity = this.targetedEntity as? LivingEntity?
-        val channelSequence = ChannelSequence.getChannelSequence(player, targetedEntity)
+        val channelSequence = player.getChannelSequence(targetedEntity)
         return magic.availableStatus(player, targetedEntity, channelSequence)
     }
 
-    private fun renderMagicAvailableStatus(renderer: MatrixUIRenderer) {
-        val magic = MatrixClient.getPlayerMagics()[selectedIndex - 1]
-        val status = getMagicAvailableStatus(magic)
+    private fun renderMagicAvailableStatus(renderer: LegacyMatrixUIRenderer) {
+        val status = getMagicAvailableStatus(selectedMagic)
         if (status == AVAILABLE || status == TARGET_MISSING || !shouldRenderHud()) {
             AvailableStatusTooltip.hide()
         } else {
@@ -349,8 +373,30 @@ object MatrixHud {
         AvailableStatusTooltip.render(renderer, status)
     }
 
+    private fun updateAimAssist(updateRotation: Boolean, tickCounter: RenderTickCounter) {
+        targetedEntity?.apply {
+            if (aimEntity == null) {
+                AimAssist.resetAnimation()
+                aimEntity = targetedEntity
+            }
+        }
+
+        if (!updateRotation) {
+            return
+        }
+
+        aimEntity?.apply {
+            val tickDelta = tickCounter.getTickDelta(true)
+            val x = lerp(tickDelta.toDouble(), prevX, x)
+            val y = lerp(tickDelta.toDouble(), prevY, y)
+            val z = lerp(tickDelta.toDouble(), prevZ, z)
+            AimAssist.lookAt(Vec3d(x, y - 0.5, z), tickDelta.toDouble())
+            AimAssist.applyRotation()
+        }
+    }
+
     private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
+        val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
         renderMagicAvailableStatus(renderer)
 
         processKeyInput()
@@ -358,108 +404,109 @@ object MatrixHud {
         wrapDancer()
         checkMagicAvailableStatus()
 
-        ticks++
-
         renderLeftPart(drawContext, tickCounter)
         renderRightPart(drawContext, tickCounter)
-
-        val delta = Util.getMeasuringTimeNano() - lastNanos
-        for (magic in usingMagicList) {
-            magic.setValue(magic.value + delta / 2000000)
-        }
-
-        if (!shouldRenderHud()) {
-            useMagics()
-            renderManaBarAutoHide(drawContext, tickCounter)
-            return
-        }
-
-        selectTargetEntity(tickCounter)
         renderManaBar(drawContext, tickCounter)
-        renderOverclock(drawContext, tickCounter)
+        performChannelMagicAnimation()
 
         lastNanos = Util.getMeasuringTimeNano()
-    }
-
-    private fun useMagics() {
-        if (magicQueue.isEmpty()) {
+        if (!shouldRenderHud()) {
             return
         }
+        selectTargetEntity(tickCounter)
+        renderOverclock(drawContext, tickCounter)
 
-        for (magic in magicQueue) {
-            val entityId = magic.key
-            val magics = magic.value.toIntArray()
-            ClientPlayNetworking.send(UseMagicPayload(magics, entityId))
-        }
-
-        magicQueue.clear()
-        mana -= manaUsage
-        manaUsage = .0
-        ticks = 0
+        updateAimAssist(false, tickCounter)
+        // BlurRenderer.renderBlur(drawContext, tickCounter)
     }
 
-    private fun shouldRenderHud() = MinecraftClient.getInstance().options.playerListKey.isPressed
+    private fun performChannelMagicAnimation() {
+        val delta = Util.getMeasuringTimeNano() - lastNanos
+        for (magic in usingMagicList) {
+            magic.setValue(magic.value + delta / 2000000) // 2000000
+        }
+    }
+
+    @JvmStatic
+    fun shouldRenderHud() = MinecraftClient.getInstance().options.playerListKey.isPressed
+
+    private fun shouldSlowTime(): Boolean {
+        val minecraft = MinecraftClient.getInstance()
+        val server = minecraft.server
+        return minecraft.isIntegratedServerRunning && (server != null && !server.isRemote)
+    }
 
     private fun onHudVisibilityChanged(visibility: Boolean) {
         manaBar.onHudVisibilityChanged(visibility)
         if (visibility) {
-            // showBlueFilter()
-            Wrap.setTimeScale(0.01)
-
-            magicShownAnimationClock.let {
-                it.from = magicShownAnimation.animatedValue
-                it.to = .0
-            }
-
-            magicShownOpacityAnimationClock.let {
-                it.from = magicShownOpacityAnimation.animatedValue
-                it.to = 128.0
-            }
-
-            timeSlowAnimationClock.let {
-                it.from = timeSlowAnimation.animatedValue
-                it.to = 0.01
-            }
-
-            magicShownAnimationClock.start()
-            magicShownOpacityAnimationClock.start()
-            timeSlowAnimationClock.start()
+            onHudShown()
         } else {
+            onHudHide()
+        }
+    }
+
+    private fun onHudHide() {
+        if (shouldSlowTime()) {
             Wrap.setTimeScale(1.0)
-
-            magicShownAnimationClock.let {
-                it.from = magicShownAnimation.animatedValue
-                it.to = -50.0
-            }
-
-            magicShownOpacityAnimationClock.let {
-                it.from = magicShownOpacityAnimation.animatedValue
-                it.to = .0
-            }
 
             timeSlowAnimationClock.let {
                 it.from = timeSlowAnimation.animatedValue
                 it.to = 1.0
             }
 
-            magicShownAnimationClock.start()
-            magicShownOpacityAnimationClock.start()
             timeSlowAnimationClock.start()
         }
+
+        magicShownAnimationClock.let {
+            it.from = magicShownAnimation.animatedValue
+            it.to = -50.0
+        }
+
+        magicShownOpacityAnimationClock.let {
+            it.from = magicShownOpacityAnimation.animatedValue
+            it.to = .0
+        }
+
+        magicShownAnimationClock.start()
+        magicShownOpacityAnimationClock.start()
     }
 
-    private fun renderManaBarAutoHide(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
-        manaBar.renderManaBarAutoHide(renderer)
+    private fun onHudShown() {
+        if (shouldSlowTime()) {
+            Wrap.setTimeScale(0.01)
+
+            timeSlowAnimationClock.let {
+                it.from = timeSlowAnimation.animatedValue
+                it.to = 0.01
+            }
+
+            timeSlowAnimationClock.start()
+        }
+
+        magicShownAnimationClock.let {
+            it.from = magicShownAnimation.animatedValue
+            it.to = .0
+        }
+
+        magicShownOpacityAnimationClock.let {
+            it.from = magicShownOpacityAnimation.animatedValue
+            it.to = 128.0
+        }
+
+        magicShownAnimationClock.start()
+        magicShownOpacityAnimationClock.start()
+
+        AimAssist.resetAnimation()
     }
 
     private fun renderManaBar(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val magicCost = MatrixClient.getPlayerMagics()[selectedIndex - 1].getCost().toDouble()
+        val channelSequence = player.getChannelSequence(targetedEntity)
+        val magicCost = selectedMagic.getCost(player, targetedEntity, channelSequence).toDouble()
         if (manaBar.manaCost != magicCost) {
             manaBar.manaCost = magicCost
         }
 
-        val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
+        val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
         manaBar.render(renderer)
     }
 
@@ -468,7 +515,7 @@ object MatrixHud {
         val indentList = generateIndentList(magics.size)
         fillExtraWidthAnimationList(magics)
         repeat(magics.size) {
-            renderMagic(drawContext, it + 1, magics[it], indentList)
+            renderMagic(drawContext, tickCounter, it + 1, magics[it], indentList)
         }
     }
 
@@ -488,9 +535,13 @@ object MatrixHud {
     }
 
 
-    private fun renderMagic(drawContext: DrawContext, index: Int, magic: Magic, indentList: List<Int>) {
-        // Render a widget start from y30, ends at y50
-
+    private fun renderMagic(
+        drawContext: DrawContext,
+        tickCounter: RenderTickCounter,
+        index: Int,
+        magic: Magic,
+        indentList: List<Int>
+    ) {
         val xIndent = indentList[index - 1]
 
         val animatedColor = magicColorAnimations.getOrNull(index - 1)
@@ -515,21 +566,23 @@ object MatrixHud {
                 it
             }
         }
-        val costString = magic.getCost().toString()
+
+        val channelSequence = player.getChannelSequence(targetedEntity)
+        val costString = magic.getCost(player, targetedEntity, channelSequence).toString()
         val statusString = status.description
 
         val textRenderer = MinecraftClient.getInstance().textRenderer
         val magicNameWidth = textRenderer.getWidth(magic.name)
         val costStringWidth = textRenderer.getWidth(costString)
         val statusStringWidth = textRenderer.getWidth(statusString)
-        val extraWidth = magicNameWidth + costStringWidth + statusStringWidth + 25 /* padding */
+        val extraWidth = magicNameWidth + costStringWidth + statusStringWidth + 30 /* padding */
         val extraWidthAnimation = magicExtraWidthAnimations[index - 1].animation
         extraWidthAnimation.currentValue = extraWidth.toDouble()
 
         drawContext.fill(
             xIndent + 50 + magicShownAnimation.animatedValue.toInt(),
             startY,
-            xIndent + 55 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(),
+            xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(),
             endY,
             0,
             color
@@ -557,10 +610,15 @@ object MatrixHud {
             )
 
             val statusStringMaxWidth = extraWidthAnimation.animatedValue - magicNameWidth - costStringWidth - 20
-            val restrictedStatusString = restrictedSizedString(statusString.string, statusStringMaxWidth)
+            val restrictedStatusString = if (extraWidthAnimation.animatedValue == extraWidth.toDouble()) {
+                statusString.string
+            } else {
+                restrictedSizedString(statusString.string, statusStringMaxWidth)
+            }
+
             drawContext.drawText(
                 textRenderer,
-                Text.of(restrictedStatusString),
+                Text.literal(restrictedStatusString),
                 xIndent + 75 + magicNameWidth + costStringWidth + magicShownAnimation.animatedValue.toInt(),
                 startY + 5,
                 foregroundColor,
@@ -571,29 +629,112 @@ object MatrixHud {
         if (usingMagicList.containsKey(index)) {
             val deltaTime = usingMagicList[index]!!
 
-            val maxX = xIndent + 150
+            val maxX =
+                xIndent + 55 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt()
 
-            val startX = (xIndent + 50 + deltaTime) + magicShownAnimation.animatedValue.toInt()
-            val endX = (startX + 10).coerceAtMost(maxX.toDouble()) + magicShownAnimation.animatedValue.toInt()
+            val startX = (xIndent + deltaTime) + magicShownAnimation.animatedValue.toInt()
+            val endX = startX + height
 
             if (startX > maxX) {
                 usingMagicList.remove(index)
                 return
             }
 
-            val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
-            renderer.renderRectangle(
-                Rectangle(
-                    Point(startX, startY.toDouble()),
-                    Point(endX, endY.toDouble())
-                ),
-                Color(0, 0, 128, magicShownOpacityAnimation.animatedValue.toInt())
+            val animationProgress = (startX - xIndent - 50) / extraWidth
+            val progressColor = Color(0, 192, 0, magicShownOpacityAnimation.animatedValue.toInt())
+            val brightProgressColor =
+                Color(0, 255, 0, (magicShownOpacityAnimation.animatedValue * 2).toInt().coerceAtMost(255))
+            val transparentColor = Color(0, 0, 0, 0)
+
+            val transformationMatrix = drawContext.matrices.peek().positionMatrix
+            val tessellator = Tessellator.getInstance()
+
+            RenderSystem.enableBlend()
+            RenderSystem.setShader(GameRenderer::getPositionColorProgram)
+
+            // We're drawing in triangle strip mode, the first 3 vertices form the first triangle.
+            // Each added vertex forms a new triangle with the first vertex and the last vertex.
+            //
+            // We need to draw a parallelogram, we split the parallelogram into two triangles to render
+            // in this mode, first we draw the left triangle by the following order:
+            // 1. lower left corner (startX, endY)
+            // 2. lower right corner (endX, endY)
+            // 3. upper right corner (endX, startY)
+            // Then we draw the right triangle, in this mode we only need to draw a new vertex that will
+            // form a new triangle with the first two vertices, so we only need to draw the upper right
+            // of the right triangle (endX + width, startY)
+            drawContext.enableScissor(
+                xIndent + 50 + magicShownAnimation.animatedValue.toInt(),
+                startY,
+                xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(),
+                endY
             )
+
+            val halfTransparentColor =
+                Color(
+                    0,
+                    255,
+                    0,
+                    ((magicShownOpacityAnimation.animatedValue * 2).coerceAtMost(255.0) * (1.0 - animationProgress)).toInt()
+                )
+            var buffer = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR)
+            buffer.vertex(transformationMatrix, startX.toFloat(), endY.toFloat(), 0f)
+                .color(transparentColor.toInt())
+            buffer.vertex(transformationMatrix, endX.toFloat(), endY.toFloat(), 0f)
+                .color(halfTransparentColor.toInt())
+            buffer.vertex(transformationMatrix, endX.toFloat(), startY.toFloat(), 0f)
+                .color(transparentColor.toInt())
+            buffer.vertex(transformationMatrix, (endX + height).toFloat(), startY.toFloat(), 0f)
+                .color(halfTransparentColor.toInt())
+            BufferRenderer.drawWithGlobalProgram(buffer.end())
+
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, (0.7F - animationProgress).toFloat())
+            buffer = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR)
+            buffer.vertex(transformationMatrix, startX.toFloat(), endY.toFloat(), 0f).color(progressColor.toInt())
+            buffer.vertex(transformationMatrix, endX.toFloat(), endY.toFloat(), 0f).color(progressColor.toInt())
+            buffer.vertex(transformationMatrix, endX.toFloat(), startY.toFloat(), 0f).color(progressColor.toInt())
+            buffer.vertex(transformationMatrix, (endX + height).toFloat(), startY.toFloat(), 0f)
+                .color(progressColor.toInt())
+            BufferRenderer.drawWithGlobalProgram(buffer.end())
+
+            buffer = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR)
+            buffer.vertex(transformationMatrix, (startX + 20).toFloat(), endY.toFloat(), 0f)
+                .color(progressColor.toInt())
+            buffer.vertex(transformationMatrix, (endX + 20).toFloat(), endY.toFloat(), 0f)
+                .color(progressColor.toInt())
+            buffer.vertex(transformationMatrix, (endX + 20).toFloat(), startY.toFloat(), 0f)
+                .color(progressColor.toInt())
+            buffer.vertex(transformationMatrix, (endX + 20 + height).toFloat(), startY.toFloat(), 0f)
+                .color(progressColor.toInt())
+            BufferRenderer.drawWithGlobalProgram(buffer.end())
+
+            buffer = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR)
+            buffer.vertex(transformationMatrix, (startX + 10).toFloat(), endY.toFloat(), 0f)
+                .color(brightProgressColor.toInt())
+            buffer.vertex(transformationMatrix, (endX + 10).toFloat(), endY.toFloat(), 0f)
+                .color(brightProgressColor.toInt())
+            buffer.vertex(transformationMatrix, (endX + 10).toFloat(), startY.toFloat(), 0f)
+                .color(brightProgressColor.toInt())
+            buffer.vertex(transformationMatrix, (endX + 10 + height).toFloat(), startY.toFloat(), 0f)
+                .color(brightProgressColor.toInt())
+            BufferRenderer.drawWithGlobalProgram(buffer.end())
+
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
+            drawContext.disableScissor()
+
+            // val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
+            // renderer.renderRectangle(
+            //     Rectangle(
+            //         Point(startX, startY.toDouble()),
+            //         Point(endX, endY.toDouble())
+            //     ),
+            //     Color(0, 0, 128, magicShownOpacityAnimation.animatedValue.toInt())
+            // )
         }
     }
 
     private fun renderOverclock(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
+        val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
         val manaOverclockMinPoint = Point(
             renderer.scaledWindowWidth - 5.0,
             renderer.scaledWindowHeight.toDouble() - 25.0
@@ -630,11 +771,20 @@ object MatrixHud {
     }
 
     private fun selectTargetEntity(tickCounter: RenderTickCounter) {
+        val aimEntity = this.aimEntity
+        if (aimEntity is LivingEntity) {
+            if (!aimEntity.isAlive) {
+                this.aimEntity = null
+            } else if (useAimAssist) {
+                targetedEntity = aimEntity
+                return
+            }
+        }
         var targetedEntity = getTargetedEntity(tickCounter.getTickDelta(true))
         if (targetedEntity is EnderDragonPart) {
             targetedEntity = targetedEntity.owner
         }
-        this.targetedEntity = targetedEntity
+        this.targetedEntity = targetedEntity as? LivingEntity
     }
 
     private fun renderRightPart(drawContext: DrawContext, tickCounter: RenderTickCounter) {
@@ -669,12 +819,15 @@ object MatrixHud {
             val red = ColorHelper.Argb.getArgb(alpha, 255, 0, 0)
             val green = ColorHelper.Argb.getArgb(alpha, 0, 255, 0)
 
+            currentHealthAnimation.currentValue = targetedEntity.health.toDouble()
+            maxHealthAnimation.currentValue = targetedEntity.maxHealth.toDouble()
+
             val health = targetedEntity.health
             val maxHealth = targetedEntity.maxHealth
-            val percentage = health / maxHealth
-            val lerpedColor = ColorHelper.Argb.lerp(percentage, red, green)
+            val percentage = currentHealthAnimation.animatedValue / maxHealthAnimation.animatedValue
+            val lerpedColor = ColorHelper.Argb.lerp(percentage.toFloat(), red, green)
 
-            val progressBarX = MathHelper.lerp(percentage, 190, 35)
+            val progressBarX = MathHelper.lerp(percentage.toFloat(), 190, 35)
             drawContext.fill(
                 drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(),
                 drawContext.scaledWindowHeight / 2 - 80,
@@ -708,64 +861,6 @@ object MatrixHud {
             drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(),
             y,
             150,
-            foregroundColor
-        )
-    }
-
-    @Deprecated("Legacy code, use renderRightPart instead")
-    private fun renderRightPartLegacy(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val targetedEntity = getTargetedEntity(tickCounter.getTickDelta(true))
-        this.targetedEntity = targetedEntity
-        if (targetedEntity == null) {
-            return
-        }
-
-        drawContext.fill(
-            drawContext.scaledWindowWidth - 25,
-            drawContext.scaledWindowHeight - 25,
-            drawContext.scaledWindowWidth - 100,
-            30,
-            0,
-            backgroundColor
-        )
-
-        val textRenderer = MinecraftClient.getInstance().textRenderer
-        drawContext.drawText(
-            textRenderer,
-            targetedEntity.name,
-            drawContext.scaledWindowWidth - 90,
-            35,
-            foregroundColor,
-            false
-        )
-
-        if (targetedEntity is LivingEntity) {
-            val red = ColorHelper.Argb.getArgb(255, 255, 0, 0)
-            val green = ColorHelper.Argb.getArgb(255, 0, 255, 0)
-
-            val health = targetedEntity.health
-            val maxHealth = targetedEntity.maxHealth
-            val percentage = health / maxHealth
-            val lerpedColor = ColorHelper.Argb.lerp(percentage, red, green)
-
-            val progressBarX = MathHelper.lerp(percentage, 90, 35)
-            drawContext.fill(
-                drawContext.scaledWindowWidth - 90,
-                45,
-                drawContext.scaledWindowWidth - progressBarX,
-                50,
-                lerpedColor
-            )
-        }
-
-        val currentMagic = MatrixClient.getPlayerMagics()[selectedIndex - 1]
-
-        drawContext.drawTextWrapped(
-            textRenderer,
-            currentMagic.description,
-            drawContext.scaledWindowWidth - 90,
-            55,
-            75,
             foregroundColor
         )
     }
@@ -815,27 +910,5 @@ object MatrixHud {
         }
 
         return result
-    }
-
-    private fun loadColorFilter() {
-        if (colorFilter != null) {
-            return
-        }
-        try {
-            val minecraftClient = MinecraftClient.getInstance()
-            colorFilter = PostEffectProcessor(
-                minecraftClient.textureManager,
-                minecraftClient.resourceManager,
-                minecraftClient.framebuffer,
-                Matrix.identifier("shaders/post/color_filter.json")
-            )
-        } catch (exception: Exception) {
-            exception.printStackTrace()
-        }
-    }
-
-    private fun showBlueFilter() {
-        loadColorFilter()
-
     }
 }

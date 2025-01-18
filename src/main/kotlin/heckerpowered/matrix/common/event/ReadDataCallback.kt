@@ -8,7 +8,7 @@ import net.minecraft.nbt.NbtCompound
 fun interface ReadDataCallback {
     companion object {
         @JvmField
-        val EVENT: Event<ReadDataCallback> = EventFactory.createArrayBacked(ReadDataCallback::class.java) { listeners ->
+        val event: Event<ReadDataCallback> = EventFactory.createArrayBacked(ReadDataCallback::class.java) { listeners ->
             ReadDataCallback { entity, nbt ->
                 for (listener in listeners) {
                     listener.readData(entity, nbt)
@@ -16,5 +16,6 @@ fun interface ReadDataCallback {
             }
         }
     }
+
     fun readData(entity: LivingEntity, nbt: NbtCompound)
 }

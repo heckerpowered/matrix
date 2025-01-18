@@ -1,7 +1,7 @@
 package heckerpowered.matrix.client.ui.element
 
 import heckerpowered.matrix.client.render.Color
-import heckerpowered.matrix.client.render.MatrixUIRenderer
+import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
@@ -32,7 +32,6 @@ class ManaBar {
     private var privateCurrentMana = 0.0
     private var privateManaUsage = 0.0
     private var privateManaCost = 0.0
-    private var autoHide = false
 
     private var visibility = false
 
@@ -79,14 +78,7 @@ class ManaBar {
         return mana.animatedValue / maxMana.animatedValue
     }
 
-    fun render(renderer: MatrixUIRenderer) {
-        autoHide = false
-        manaBarColor.alpha = 128
-        renderManaBar(renderer)
-        renderManaText(renderer)
-    }
-
-    private fun renderManaBar(renderer: MatrixUIRenderer) {
+    private fun renderManaBar(renderer: LegacyMatrixUIRenderer) {
         val manaUsage = manaUsageClock.transform(easingFunction)
         if (manaUsage != 0.0 && manaUsage == privateManaUsage) {
             mana.currentValue -= manaUsage
@@ -119,7 +111,7 @@ class ManaBar {
         renderer.renderRectangle(Rectangle(costMinPoint, Point(usageMinPoint.x, maxPoint.y + 3)), costManaColor)
     }
 
-    private fun renderManaText(renderer: MatrixUIRenderer) {
+    private fun renderManaText(renderer: LegacyMatrixUIRenderer) {
         renderer.render(
             MatrixLanguage.mana,
             Point(55.0, 12.5 + shownAnimation.animatedValue), Color(255, 255, 255, 255),
@@ -127,7 +119,7 @@ class ManaBar {
         )
     }
 
-    fun renderManaBarAutoHide(renderer: MatrixUIRenderer) {
+    fun render(renderer: LegacyMatrixUIRenderer) {
         if (!visibility && manaClock.getValue() >= 1.0) {
             opacityClock.let {
                 it.from = it.transform(easingFunction)
@@ -145,7 +137,7 @@ class ManaBar {
         manaBarColor.alpha = opacityClock.transform(easingFunction).toInt()
 
         renderManaBar(renderer)
-        // renderManaText(renderer)
+        renderManaText(renderer)
     }
 
     fun onHudVisibilityChanged(visibility: Boolean) {

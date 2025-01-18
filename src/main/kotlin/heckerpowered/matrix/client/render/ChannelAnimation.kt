@@ -23,7 +23,7 @@ class ChannelAnimation(
     var shownAnimation = DoubleAnimation(shownAnimationClock, easingFunction)
     var opacityAnimation = DoubleAnimation(opacityAnimationClock, easingFunction)
 
-    val channelTime = magic.getChannelTime()
+    var channelTime = 0L
     var currentChannelTime = 0L
 
     init {

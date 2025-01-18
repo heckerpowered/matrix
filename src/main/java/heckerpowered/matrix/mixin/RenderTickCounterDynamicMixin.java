@@ -14,7 +14,7 @@ class RenderTickCounterDynamicMixin {
 
     @Inject(method = "getTickDelta", at = @At("HEAD"), cancellable = true)
     public void getTickDelta(boolean bl, CallbackInfoReturnable<Float> cir) {
-        if(Wrap.getTimeScaled() && Wrap.getPlayerImmuneTimeScale()) {
+        if (Wrap.getTimeScaled() && Wrap.getPlayerImmuneTimeScale()) {
             cir.setReturnValue(Wrap.getRenderTickCounter().tickDelta);
         }
     }

@@ -6,3 +6,4 @@ mutable field net/minecraft/client/render/RenderTickCounter$Dynamic tickTime F
 accessible field net/minecraft/world/tick/TickManager nanosPerTick J
 accessible field net/minecraft/server/MinecraftServer tickStartTimeNanos J
 accessible field net/minecraft/server/MinecraftServer tickEndTimeNanos J
+accessible method net/minecraft/client/gl/Framebuffer drawInternal (IIZ)V

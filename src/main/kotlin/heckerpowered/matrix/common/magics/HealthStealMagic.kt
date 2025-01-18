@@ -2,14 +2,13 @@ package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.common.persistent.magicClock
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 class HealthStealMagic : Magic(
     MatrixLanguage.magicHealthSteal,
-    20,
+    8,
     MatrixLanguage.magicHealthStealDescription,
     20
 ) {
@@ -17,6 +16,10 @@ class HealthStealMagic : Magic(
         if (player == null) {
             return
         }
-        player.absorptionAmount += (target.health * (player.magicClock)).toFloat()
+
+        val amount = target.maxHealth * 0.5F
+        player.absorptionAmount += amount
+        player.heal(amount * 0.5f)
+        player.hungerManager.add((amount * 0.5).toInt(), amount * 0.5F)
     }
 }

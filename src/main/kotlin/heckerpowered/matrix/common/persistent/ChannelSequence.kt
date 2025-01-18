@@ -11,6 +11,7 @@ import heckerpowered.matrix.common.magics.ChannelingMagic
 import heckerpowered.matrix.core.MatrixLivingEntity
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.minecraft.client.MinecraftClient
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
@@ -61,11 +62,13 @@ class ChannelSequence(
             val sequences = target.getChannelSequence()
             val channelSequence =
                 sequences.computeIfAbsent(player.uuid) { ChannelSequence(player, player.uuid, target, mutableListOf()) }
-            channelSequence.magics.add(ChannelingMagic(magic, 0, magic.getChannelTime()))
+            val channelTime = magic.getChannelTime(player, target, channelSequence)
+            val cost = magic.getCost(player, target, channelSequence)
+            channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
             if (player is ServerPlayerEntity) {
                 magic.channel(player, target, channelSequence)
                 if (costMana) {
-                    player.mana -= magic.getCost()
+                    player.mana -= magic.getCost(player, target, channelSequence)
                 }
             }
         }
@@ -80,17 +83,22 @@ class ChannelSequence(
 
         @Environment(EnvType.CLIENT)
         fun channelMagicClient(magic: Magic, target: LivingEntity) {
-            ChannelSequenceRenderer.channelSequenceAnimationMap
+            val player = MinecraftClient.getInstance().player!!
+            ChannelSequenceRenderer
+                .channelSequenceAnimationMap
                 .computeIfAbsent(target) { mutableListOf() }
-                .add(ChannelAnimation(magic))
+                .add(ChannelAnimation(magic).also {
+                    val channelSequence = getChannelSequence(player, target)
+                    it.channelTime = magic.getChannelTime(player, target, channelSequence)
+                })
             ChannelSequenceRenderer.offsetAnimationMap
                 .computeIfAbsent(target) { ChannelSequenceRenderer.Companion.OffsetAnimation() }
         }
 
         fun onInitialize() {
-            EntityTickCallback.EVENT.register(::onEntityTick)
-            WriteDataCallback.EVENT.register(::onWriteData)
-            ReadDataCallback.EVENT.register(::onReadData)
+            EntityTickCallback.event.register(::onEntityTick)
+            WriteDataCallback.event.register(::onWriteData)
+            ReadDataCallback.event.register(::onReadData)
         }
 
         private fun onReadData(entity: Entity, nbt: NbtCompound) {
@@ -112,7 +120,8 @@ class ChannelSequence(
                         ChannelingMagic(
                             MagicManager.getMagicById(it.getInt("MagicId"))!!,
                             it.getLong("CurrentChannelTime"),
-                            it.getLong("ChannelTime")
+                            it.getLong("ChannelTime"),
+                            it.getLong("Cost")
                         )
                     }
                     .toMutableList()
@@ -166,7 +175,7 @@ class ChannelSequence(
     var index = 0
 
     val manaCost
-        get() = magics.sumOf { it.magic.getCost() }
+        get() = magics.sumOf { it.cost }
 
     constructor(player: ServerPlayerEntity, target: LivingEntity, magicIndices: IntArray) :
             this(
@@ -174,7 +183,14 @@ class ChannelSequence(
                 player.uuid,
                 target,
                 magicIndices.map { MagicManager.getMagic(player, it)!! }
-                    .map { ChannelingMagic(it, 0, it.getChannelTime()) }
+                    .map {
+                        val channelSequence = player.getChannelSequence(target)
+                        val channelTime = it.getChannelTime(player, target, channelSequence)
+                        val cost = it.getCost(player, target, channelSequence)
+                        ChannelingMagic(
+                            it, 0, channelTime, cost
+                        )
+                    }
                     .toMutableList()
             )
 
@@ -211,8 +227,16 @@ class ChannelSequence(
         return index > targetIndex
     }
 
-    fun channelingMagics(): Int {
+    fun channelingMagicCount(): Int {
         return magics.size - index
+    }
+
+    fun channelingMagics(): List<ChannelingMagic> {
+        return magics.filterIndexed { i, _ -> i > index }.toList()
+    }
+
+    fun castedMagics(): List<ChannelingMagic> {
+        return magics.filterIndexed { i, _ -> i <= index }.toList()
     }
 
     fun tick() {
@@ -225,7 +249,7 @@ class ChannelSequence(
         }
 
         val currentChanneling = magics[index]
-        if (currentChanneling.currentChannelTime++ >= currentChanneling.magic.getChannelTime()) {
+        if (currentChanneling.currentChannelTime++ >= currentChanneling.channelTime) {
             var player = this.player
             if (player == null) {
                 player = target.world.getPlayerByUuid(playerUUID)
@@ -236,4 +260,12 @@ class ChannelSequence(
             ++index
         }
     }
+}
+
+fun PlayerEntity.getChannelSequence(target: LivingEntity?): ChannelSequence? {
+    return ChannelSequence.getChannelSequence(this, target)
+}
+
+fun LivingEntity.getChannelSequence(player: PlayerEntity): ChannelSequence? {
+    return ChannelSequence.getChannelSequence(player, this)
 }

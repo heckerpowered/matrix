@@ -1,5 +1,6 @@
 package heckerpowered.matrix
 
+import heckerpowered.matrix.data.enchantment.EnchantmentGenerator
 import heckerpowered.matrix.data.language.MatrixModChineseLangProvider
 import heckerpowered.matrix.data.language.MatrixModEnglishLangProvider
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint
@@ -17,6 +18,9 @@ object MatrixDataGenerator : DataGeneratorEntrypoint {
         }
         pack.addProvider { output: FabricDataOutput, registriesFuture: CompletableFuture<RegistryWrapper.WrapperLookup> ->
             MatrixModEnglishLangProvider(output, registriesFuture)
+        }
+        pack.addProvider { output: FabricDataOutput, registriesFuture: CompletableFuture<RegistryWrapper.WrapperLookup> ->
+            EnchantmentGenerator(output, registriesFuture)
         }
     }
 }

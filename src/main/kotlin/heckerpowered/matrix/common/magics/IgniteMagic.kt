@@ -3,7 +3,6 @@ package heckerpowered.matrix.common.magics
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.magics.ExplosionMagic.Companion.explosionBehavior
 import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.common.persistent.magicClock
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffects
@@ -18,12 +17,12 @@ class IgniteMagic : Magic(
     9
 ) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
-        target.setOnFireFor((5 * (player?.magicClock ?: 1.0)).toFloat())
+        target.setOnFireFor(10F)
         if (target.hasStatusEffect(StatusEffects.POISON)) {
             val damageSource = if (sequence.sequencedAfter<MemoryEraseMagic>()) {
-                target.damageSources.magic()
+                target.damageSources.generic()
             } else {
-                player?.damageSources?.indirectMagic(player, null) ?: target.damageSources.magic()
+                player?.damageSources?.playerAttack(player) ?: target.damageSources.generic()
             }
 
             target.world.createExplosion(
@@ -33,7 +32,7 @@ class IgniteMagic : Magic(
                 target.x,
                 target.y,
                 target.z,
-                ((player?.magicClock ?: 1.0) * 4.0).toFloat(),
+                4.0F,
                 false,
                 World.ExplosionSourceType.MOB
             )
@@ -48,7 +47,7 @@ class IgniteMagic : Magic(
         if (target?.isFireImmune == true) {
             return MagicAvailableStatus.TARGET_IMMUNE
         }
-        
+
         return super.availableStatus(player, target, sequence)
     }
 }

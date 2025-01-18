@@ -1,10 +1,9 @@
 package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.isInvulnerableTo
+import heckerpowered.matrix.common.isInvulnerableToEffect
 import heckerpowered.matrix.common.magics.ExplosionMagic.Companion.explosionBehavior
 import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.common.persistent.magicClock
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
@@ -21,20 +20,27 @@ class BreakingBadMagic :
         10
     ) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
-        val magicClock = player?.magicClock ?: 1.0
         target.addStatusEffect(
             StatusEffectInstance(
                 StatusEffects.POISON,
-                (20 * 5 * magicClock).toInt(),
-                (magicClock - 1).toInt()
+                20 * 10,
+                4
+            )
+        )
+
+        target.addStatusEffect(
+            StatusEffectInstance(
+                StatusEffects.BLINDNESS,
+                20 * 10,
+                4
             )
         )
 
         if (target.isOnFire) {
             val damageSource = if (sequence.sequencedAfter<MemoryEraseMagic>()) {
-                target.damageSources.magic()
+                target.damageSources.generic()
             } else {
-                player?.damageSources?.indirectMagic(player, null) ?: target.damageSources.magic()
+                player?.damageSources?.playerAttack(player) ?: target.damageSources.generic()
             }
 
             target.world.createExplosion(
@@ -44,7 +50,7 @@ class BreakingBadMagic :
                 target.x,
                 target.y,
                 target.z,
-                ((player?.magicClock ?: 1.0) * 4.0).toFloat(),
+                4.0F,
                 false,
                 World.ExplosionSourceType.MOB
             )
@@ -56,7 +62,9 @@ class BreakingBadMagic :
         target: LivingEntity?,
         sequence: ChannelSequence?
     ): MagicAvailableStatus {
-        if (target?.isInvulnerableTo(StatusEffects.POISON) == false) {
+        if (target?.isInvulnerableToEffect(StatusEffects.POISON) == true ||
+            target?.isInvulnerableToEffect(StatusEffects.BLINDNESS) == true
+        ) {
             return MagicAvailableStatus.TARGET_IMMUNE
         }
 

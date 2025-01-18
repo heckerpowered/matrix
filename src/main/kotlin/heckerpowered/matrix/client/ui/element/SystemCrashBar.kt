@@ -2,7 +2,7 @@ package heckerpowered.matrix.client.ui.element
 
 import com.google.common.base.Stopwatch
 import heckerpowered.matrix.client.render.Color
-import heckerpowered.matrix.client.render.MatrixUIRenderer
+import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
@@ -39,7 +39,7 @@ object SystemCrashBar {
     }
 
     private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
+        val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
         render(renderer)
     }
 
@@ -73,7 +73,7 @@ object SystemCrashBar {
         }
     }
 
-    fun render(renderer: MatrixUIRenderer) {
+    fun render(renderer: LegacyMatrixUIRenderer) {
         if (stopWatch.elapsed(TimeUnit.NANOSECONDS).toDouble() >= CHANNEL_TIME.toNanos().toDouble() && !bsod) {
             bsod = true
             windowsBlueScreen()

@@ -9,8 +9,12 @@ interface MatrixMinecraftServer {
 
 var MinecraftServer.matrixTickStartTimeNanos: Long
     get() = (this as MatrixMinecraftServer).matrixTickStartTimeNanos
-    set(value) { (this as MatrixMinecraftServer).matrixTickStartTimeNanos = value }
+    set(value) {
+        (this as MatrixMinecraftServer).matrixTickStartTimeNanos = value
+    }
 
 var MinecraftServer.matrixTickEndTimeNanos: Long
     get() = (this as MatrixMinecraftServer).matrixTickEndTimeNanos
-    set(value) { (this as MatrixMinecraftServer).matrixTickEndTimeNanos = value }
+    set(value) {
+        (this as MatrixMinecraftServer).matrixTickEndTimeNanos = value
+    }

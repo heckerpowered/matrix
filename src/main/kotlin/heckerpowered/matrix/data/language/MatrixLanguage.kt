@@ -51,6 +51,15 @@ object MatrixLanguage {
     val magicSystemCrash: MutableText = Text.translatable("matrix.system_crash")
     val magicSystemCrashDescription: MutableText = Text.translatable("matrix.system_crash.description")
 
+    val magicLightningBoltMagic: MutableText = Text.translatable("matrix.lightning_bolt")
+    val magicLightningBoltMagicDescription: MutableText = Text.translatable("matrix.lightning_bolt.description")
+
+    val magicArmorPenetrationMagic: MutableText = Text.translatable("matrix.armor_penetration")
+    val magicArmorPenetrationMagicDescription: MutableText = Text.translatable("matrix.armor_penetration.description")
+
+    val magicTeleport: MutableText = Text.translatable("matrix.teleport")
+    val magicTeleportDescription: MutableText = Text.translatable("matrix.teleport.description")
+
     val overclockMagic: MutableText = Text.translatable("matrix.overclock.magic")
     val overclockMana: MutableText = Text.translatable("matrix.overclock.mana")
     val switchClock: MutableText = Text.translatable("matrix.overclock.switch")

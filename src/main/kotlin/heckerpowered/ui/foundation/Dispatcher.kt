@@ -2,7 +2,6 @@ package heckerpowered.ui.foundation
 
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
-import kotlin.collections.ArrayDeque
 
 class Dispatcher {
     private val taskQueue = ArrayDeque<Future<*>>()

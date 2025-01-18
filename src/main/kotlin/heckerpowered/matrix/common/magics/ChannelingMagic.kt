@@ -5,5 +5,6 @@ import heckerpowered.matrix.common.Magic
 data class ChannelingMagic(
     val magic: Magic,
     var currentChannelTime: Long,
-    val channelTime: Long
+    val channelTime: Long,
+    val cost: Long
 )

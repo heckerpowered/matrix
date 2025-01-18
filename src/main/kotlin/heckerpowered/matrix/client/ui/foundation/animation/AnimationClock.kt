@@ -1,5 +1,6 @@
 package heckerpowered.matrix.client.ui.foundation.animation
 
+import heckerpowered.matrix.core.lerp
 import net.minecraft.util.math.MathHelper
 import org.apache.commons.lang3.time.StopWatch
 import java.time.Duration
@@ -37,7 +38,7 @@ class AnimationClock(var duration: Duration, var from: Double, var to: Double) {
     }
 
     fun transform(easingFunction: EasingFunction): Double {
-        return MathHelper.lerp(easingFunction.transform(getValue()), from, to)
+        return lerp(easingFunction.transform(getValue()), from, to)
     }
 
     private fun getValueAt(timeNanos: Long): Double {

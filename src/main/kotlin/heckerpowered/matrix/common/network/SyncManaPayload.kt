@@ -40,11 +40,12 @@ class SyncManaPayload(
                 MatrixHud.mana = mana
                 return@execute
             }
-            if (MatrixHud.mana > mana) {
-                MatrixHud.manaUsage += MatrixHud.mana - mana
+
+            val currentMana = MatrixHud.mana - MatrixHud.manaUsage
+            if (currentMana > mana) {
+                MatrixHud.manaUsage += currentMana - mana
             } else {
-                MatrixHud.manaUsage = .0
-                MatrixHud.mana += mana - MatrixHud.mana
+                MatrixHud.mana += mana - currentMana
             }
         }
     }

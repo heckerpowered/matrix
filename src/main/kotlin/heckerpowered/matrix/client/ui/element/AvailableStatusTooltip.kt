@@ -1,23 +1,17 @@
 package heckerpowered.matrix.client.ui.element
 
+import heckerpowered.matrix.client.easingFunction
 import heckerpowered.matrix.client.render.Color
-import heckerpowered.matrix.client.render.MatrixUIRenderer
+import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
-import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
-import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
 import heckerpowered.matrix.common.magics.description
 import java.time.Duration
 
 object AvailableStatusTooltip {
-    private val easingFunction = ElasticEase().also {
-        it.oscillations = 0
-        it.easingMode = EasingMode.OUT
-    }
-
     private val opacityClock = AnimationClock(Duration.ofMillis(300), 128.0, 0.0)
     private val shownAnimationClock = AnimationClock(Duration.ofMillis(300), -50.0, .0)
     private val shownAnimation = DoubleAnimation(shownAnimationClock, easingFunction)
@@ -33,7 +27,7 @@ object AvailableStatusTooltip {
         shownAnimation.currentValue = -50.0
     }
 
-    fun render(renderer: MatrixUIRenderer, status: MagicAvailableStatus) {
+    fun render(renderer: LegacyMatrixUIRenderer, status: MagicAvailableStatus) {
         val minPoint = Point(
             renderer.scaledWindowWidth / 2 - 125.0,
             30.0 + shownAnimation.animatedValue

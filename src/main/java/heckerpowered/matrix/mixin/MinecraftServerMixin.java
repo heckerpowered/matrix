@@ -4,6 +4,7 @@ import heckerpowered.matrix.core.MatrixMinecraftServer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTickManager;
 import net.minecraft.util.Util;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -16,14 +17,14 @@ import java.util.function.BooleanSupplier;
 @Mixin(MinecraftServer.class)
 class MinecraftServerMixin implements MatrixMinecraftServer {
 
-    @Shadow
-    private ServerTickManager tickManager;
-
     @Unique
     long matrixTickStartTimeNanos;
-
     @Unique
     long matrixTickEndTimeNanos;
+    
+    @Final
+    @Shadow
+    private ServerTickManager tickManager;
 
     private MinecraftServerMixin() {
     }

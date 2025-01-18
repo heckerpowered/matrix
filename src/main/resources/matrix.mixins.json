@@ -6,9 +6,13 @@
     "EntityMixin",
     "LivingEntityMixin",
     "MinecraftServerMixin",
-    "MobEntityMixin"
+    "MobEntityMixin",
+    "ServerPlayerEntityMixin"
   ],
   "client": [
+    "MinecraftClientMixin",
+    "MixinGameRenderer",
+    "MixinInGameHud",
     "MouseMixin",
     "RenderTickCounterDynamicMixin"
   ],

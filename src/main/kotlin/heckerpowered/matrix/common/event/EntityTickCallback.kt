@@ -7,13 +7,15 @@ import net.minecraft.entity.LivingEntity
 fun interface EntityTickCallback {
     companion object {
         @JvmField
-        val EVENT: Event<EntityTickCallback> = EventFactory.createArrayBacked(EntityTickCallback::class.java) { listeners ->
-            EntityTickCallback { entity ->
-                for (listener in listeners) {
-                    listener.onEntityTick(entity)
+        val event: Event<EntityTickCallback> =
+            EventFactory.createArrayBacked(EntityTickCallback::class.java) { listeners ->
+                EntityTickCallback { entity ->
+                    for (listener in listeners) {
+                        listener.onEntityTick(entity)
+                    }
                 }
             }
-        }
     }
+
     fun onEntityTick(entity: LivingEntity)
 }

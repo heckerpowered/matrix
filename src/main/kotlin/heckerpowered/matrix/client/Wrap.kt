@@ -12,7 +12,8 @@ import net.minecraft.util.Util
  */
 object Wrap {
     @JvmStatic
-    var renderTickCounter: RenderTickCounter.Dynamic = RenderTickCounter.Dynamic(20.0f, 0L, FloatUnaryOperator.identity())
+    var renderTickCounter: RenderTickCounter.Dynamic =
+        RenderTickCounter.Dynamic(20.0f, 0L, FloatUnaryOperator.identity())
 
     val isTimeScaled: Boolean
         get() = MinecraftClient.getInstance().renderTickCounter.tickTime != 50.0f
@@ -38,7 +39,8 @@ object Wrap {
         val minecraftClient = MinecraftClient.getInstance()!!
         val player = minecraftClient.player!!
         val world = player.world!!
-        val tickCount = renderTickCounter.beginRenderTick(Util.getMeasuringTimeMs(), playerImmuneTimeScale && timeScaled)
+        val tickCount =
+            renderTickCounter.beginRenderTick(Util.getMeasuringTimeMs(), playerImmuneTimeScale && timeScaled)
         for (i in 0 until tickCount.coerceAtMost(10)) {
             player.tick()
         }

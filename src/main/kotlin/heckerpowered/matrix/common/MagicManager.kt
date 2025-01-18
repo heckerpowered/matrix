@@ -61,6 +61,9 @@ object MagicManager {
         registerMagic(MemoryEraseMagic())
         registerMagic(SpreadMagic())
         registerMagic(SystemCrashMagic())
+        registerMagic(LightningBoltMagic())
+        registerMagic(TeleportMagic())
+        registerMagic(ArmorPenetrationMagic())
     }
 
     fun onInitialize() {
@@ -81,6 +84,7 @@ object MagicManager {
                 if (manaState.mana > manaState.maxMana) {
                     manaState.mana = manaState.maxMana
                 }
+
                 ServerPlayNetworking.send(it, SyncManaPayload(manaState.mana, manaState.maxMana))
             }
         }

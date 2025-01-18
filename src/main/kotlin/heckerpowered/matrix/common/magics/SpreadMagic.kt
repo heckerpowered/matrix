@@ -29,7 +29,7 @@ class SpreadMagic : Magic(
             }
             for (magic in magics) {
                 ChannelSequence.channelMagic(magic, player, it, false)
-                ServerPlayNetworking.send(player, ChannelMagicPayload(magic.getId(), it.id))
+                ServerPlayNetworking.send(player, ChannelMagicPayload(magic.id, it.id))
             }
         }
     }
