@@ -131,6 +131,6 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(WitherArmorChargedEffect, "Wither Armor Charged")
         translationBuilder.add(WitherArmorEffect, "Wither Armor")
 
-        translationBuilder.add("enchantment." + witherArmorEnchantmentKey.value.toTranslationKey(), "Wither Armor")
+        translationBuilder.add(witherArmorEnchantmentKey, "Wither Armor")
     }
 }

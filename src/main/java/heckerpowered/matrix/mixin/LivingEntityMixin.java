@@ -125,6 +125,18 @@ class LivingEntityMixin implements MatrixLivingEntity {
         amountReference.set(livingHurtEvent.getAmount());
     }
 
+    @Inject(method = "applyDamage", at = @At("HEAD"), cancellable = true)
+    private void applyDamage(DamageSource source, float amount, CallbackInfo ci, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
+        final var livingDamageEvent = new LivingDamageEvent(self(), source, amount);
+        final var result = LivingDamageCallback.event.invoker().onHurt(livingDamageEvent);
+        if (result == ActionResult.FAIL) {
+            ci.cancel();
+        }
+
+        sourceReference.set(livingDamageEvent.getDamageSource());
+        amountReference.set(livingDamageEvent.getAmount());
+    }
+
     @Inject(method = "onStatusEffectRemoved", at = @At(value = "HEAD"), cancellable = true)
     private void onStatusEffectRemoved(StatusEffectInstance effect, CallbackInfo ci) {
         final var result = StatusEffectRemovedCallback.event.invoker().onStatusEffectRemoved(self(), effect);

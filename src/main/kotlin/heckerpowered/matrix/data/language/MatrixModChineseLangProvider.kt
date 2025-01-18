@@ -132,6 +132,6 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(WitherArmorChargedEffect, "凋灵护甲充能")
         translationBuilder.add(WitherArmorEffect, "凋灵护甲")
 
-        translationBuilder.add("enchantment." + witherArmorEnchantmentKey.value.toTranslationKey(), "凋灵护甲")
+        translationBuilder.add(witherArmorEnchantmentKey, "凋灵护甲")
     }
 }

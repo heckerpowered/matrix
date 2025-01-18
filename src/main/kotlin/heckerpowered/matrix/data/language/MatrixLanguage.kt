@@ -1,5 +1,8 @@
 package heckerpowered.matrix.data.language
 
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider.TranslationBuilder
+import net.minecraft.enchantment.Enchantment
+import net.minecraft.registry.RegistryKey
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.text.TranslatableTextContent
@@ -8,6 +11,10 @@ val MutableText.key: String
     get() {
         return (content as TranslatableTextContent).key
     }
+
+fun TranslationBuilder.add(enchantment: RegistryKey<Enchantment>, value: String) {
+    add("enchantment." + enchantment.value.toTranslationKey(), value)
+}
 
 object MatrixLanguage {
     val mana: MutableText = Text.translatable("matrix.mana")

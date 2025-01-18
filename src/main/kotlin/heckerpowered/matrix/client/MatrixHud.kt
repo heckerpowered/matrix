@@ -138,10 +138,6 @@ object MatrixHud {
 
     @JvmStatic
     fun onDoAttack() {
-        if (!shouldRenderHud()) {
-            return
-        }
-
         useAimAssist = !useAimAssist
         if (!useAimAssist) {
             aimEntity = null
