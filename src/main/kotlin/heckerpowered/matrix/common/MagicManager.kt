@@ -64,6 +64,7 @@ object MagicManager {
         registerMagic(LightningBoltMagic())
         registerMagic(TeleportMagic())
         registerMagic(ArmorPenetrationMagic())
+        registerMagic(SonicBoomMagic())
     }
 
     fun onInitialize() {

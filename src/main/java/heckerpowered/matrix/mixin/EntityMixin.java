@@ -1,10 +1,9 @@
 package heckerpowered.matrix.mixin;
 
-import heckerpowered.matrix.common.effect.CrippleMovementEffect;
+import heckerpowered.matrix.common.effect.MatrixStatusEffectsKt;
 import heckerpowered.matrix.common.event.EntityRemovedCallback;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.registry.Registries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,7 +29,7 @@ class EntityMixin {
         // This function may be called before the living entity's constructor is called,
         // exception will be thrown in that case.
         try {
-            final var crippleMovement = Registries.STATUS_EFFECT.getEntry(CrippleMovementEffect.INSTANCE);
+            final var crippleMovement = MatrixStatusEffectsKt.getCrippleMovementEffect();
             final var effect = self.getStatusEffect(crippleMovement);
             if (effect == null) {
                 return;

@@ -112,6 +112,12 @@ class MatrixModEnglishLangProvider(
             "Grants invisibility for 10 seconds and teleports to the target's location.\n\nCannot be tracked."
         )
 
+        translationBuilder.add(MatrixLanguage.magicSonicBoom.key, "Sonic Shriek")
+        translationBuilder.add(
+            MatrixLanguage.magicSonicBoomDescription.key,
+            "Channel a sonic boom, dealing 10 damage to the target.\n\nThe sonic boom ignores armor, any damage-reducing enchantments (e.g., Protection), and shield blocking. It does not trigger the Thorns enchantment, and its damage to witches is reduced by 85%.\n\nWither Armor can mitigate the damage caused by the sonic boom.\n\nTrackable."
+        )
+
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "Overclock or Underclock Magic")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "Overclock or Underclock Mana")
         translationBuilder.add(MatrixLanguage.switchClock.key, "Switch Overclock or Underclock")

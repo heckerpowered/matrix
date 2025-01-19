@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 val minecraftVersion: String by project
 val yarnMappings: String by project
 val loaderVersion: String by project
@@ -62,10 +60,8 @@ tasks.withType<JavaCompile>().configureEach {
     options.release = 21
 }
 
-tasks.withType<KotlinCompile>().all {
-    kotlinOptions {
-        jvmTarget = "21"
-    }
+kotlin {
+    jvmToolchain(21)
 }
 
 java {

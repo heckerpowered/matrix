@@ -1,6 +1,5 @@
 package heckerpowered.matrix.mixin;
 
-import heckerpowered.matrix.client.shader.UIBlurShader;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
@@ -16,6 +15,6 @@ class MixinInGameHud {
 
     @Inject(method = "renderMainHud", at = @At("HEAD"))
     private void renderMainHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
-        UIBlurShader.startUIOverlayDrawing(context, tickCounter.getTickDelta(false));
+        // UIBlurShader.startUIOverlayDrawing(context, tickCounter.getTickDelta(false));
     }
 }

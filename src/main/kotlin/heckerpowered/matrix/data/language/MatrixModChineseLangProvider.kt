@@ -113,6 +113,12 @@ class MatrixModChineseLangProvider(
             "隐身10秒并传送到目标位置。\n\n无法追踪。"
         )
 
+        translationBuilder.add(MatrixLanguage.magicSonicBoom.key, "音波尖啸")
+        translationBuilder.add(
+            MatrixLanguage.magicSonicBoomDescription.key,
+            "引导一次音波尖啸，对目标造成10点伤害。\n\n音波尖啸无视护甲值、任何可减伤的魔咒（如保护）和盾牌的阻挡，不能触发荆棘魔咒，且对女巫造成的伤害降低85%。\n\n凋零护甲可减免音波尖啸造成的伤害。\n\n可被追踪。"
+        )
+
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "超频或降频魔法")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "超频或降频法力")
         translationBuilder.add(MatrixLanguage.switchClock.key, "切换超频或降频")

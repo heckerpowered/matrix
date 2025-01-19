@@ -59,6 +59,7 @@ class MatrixClient : ClientModInitializer {
                 LightningBoltMagic(),
                 TeleportMagic(),
                 ArmorPenetrationMagic(),
+                SonicBoomMagic()
                 // SystemCrashMagic()
             )
         }
