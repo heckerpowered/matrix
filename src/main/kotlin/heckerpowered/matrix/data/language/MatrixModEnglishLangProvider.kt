@@ -2,6 +2,7 @@ package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
 import heckerpowered.matrix.common.enchantment.witherArmorEnchantmentKey
+import heckerpowered.matrix.common.item.WardenChestplateItem
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider
 import net.minecraft.registry.RegistryWrapper
@@ -136,7 +137,10 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(CrippleMovementEffect, "Cripple Movement")
         translationBuilder.add(WitherArmorChargedEffect, "Wither Armor Charged")
         translationBuilder.add(WitherArmorEffect, "Wither Armor")
+        translationBuilder.add(AngeredEffect, "Angered")
 
         translationBuilder.add(witherArmorEnchantmentKey, "Wither Armor")
+
+        translationBuilder.add(WardenChestplateItem, "Sculk 'Warden' Chestplate")
     }
 }

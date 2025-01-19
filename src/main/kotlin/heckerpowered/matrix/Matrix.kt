@@ -5,6 +5,7 @@ import heckerpowered.matrix.common.MatrixServerPlayNetworking
 import heckerpowered.matrix.common.command.MatrixCommands
 import heckerpowered.matrix.common.effect.MatrixStatusEffects
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments
+import heckerpowered.matrix.common.item.MatrixItems
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import net.fabricmc.api.ModInitializer
 import net.minecraft.util.Identifier
@@ -20,6 +21,7 @@ object Matrix : ModInitializer {
         MatrixStatusEffects.onInitialize()
         MatrixEnchantments.onInitialize()
         MatrixCommands.onInitialize()
+        MatrixItems.onInitialize()
         ChannelSequence.onInitialize()
     }
 

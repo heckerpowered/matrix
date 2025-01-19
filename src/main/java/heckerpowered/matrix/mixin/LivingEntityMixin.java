@@ -1,10 +1,12 @@
 package heckerpowered.matrix.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalDoubleRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import heckerpowered.matrix.common.effect.MatrixStatusEffectsKt;
 import heckerpowered.matrix.common.event.*;
+import heckerpowered.matrix.common.item.WardenChestplateItem;
 import heckerpowered.matrix.common.network.SyncManaPayload;
 import heckerpowered.matrix.common.persistent.ChannelSequence;
 import heckerpowered.matrix.common.persistent.ManaState;
@@ -148,6 +150,32 @@ class LivingEntityMixin implements MatrixLivingEntity {
     @Inject(method = "onEquipStack", at = @At("HEAD"))
     private void onEquipStack(EquipmentSlot slot, ItemStack oldStack, ItemStack newStack, CallbackInfo ci) {
         ItemStackEquippedCallback.event.invoker().onItemStackEquipped(self(), slot, oldStack, newStack);
+    }
+
+    @Inject(method = "takeKnockback", at = @At("HEAD"), cancellable = true)
+    private void takeKnockback(double strength, double x, double z, CallbackInfo ci, @Local(argsOnly = true, ordinal = 0) LocalDoubleRef strengthReference, @Local(argsOnly = true, ordinal = 1) LocalDoubleRef xReference, @Local(argsOnly = true, ordinal = 2) LocalDoubleRef zReference) {
+        final var event = new LivingKnockbackEvent(self(), strength, x, z);
+        final var result = LivingKnockbackCallback.event.invoker().onKnockback(event);
+        strengthReference.set(event.getStrength());
+        xReference.set(event.getX());
+        zReference.set(event.getZ());
+        if (result == ActionResult.FAIL) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "canWalkOnFluid", at = @At("HEAD"), cancellable = true)
+    private void canWalkOnFluid(CallbackInfoReturnable<Boolean> cir) {
+        if (WardenChestplateItem.isAngered(self())) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    @Inject(method = "canHaveStatusEffect", at = @At("HEAD"), cancellable = true)
+    private void canHaveStatusEffect(StatusEffectInstance effect, CallbackInfoReturnable<Boolean> cir) {
+        if (WardenChestplateItem.isAngered(self()) && !effect.getEffectType().value().isBeneficial()) {
+            cir.setReturnValue(false);
+        }
     }
 
     @SuppressWarnings("all")

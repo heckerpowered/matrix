@@ -2,12 +2,16 @@ package heckerpowered.matrix.mixin;
 
 import heckerpowered.matrix.common.effect.MatrixStatusEffectsKt;
 import heckerpowered.matrix.common.event.EntityRemovedCallback;
+import heckerpowered.matrix.common.item.WardenChestplateItem;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Entity.class)
 class EntityMixin {
@@ -37,6 +41,30 @@ class EntityMixin {
 
             ci.cancel();
         } catch (Exception e) {
+        }
+    }
+
+    @SuppressWarnings("all")
+    @Inject(method = "isFireImmune", at = @At("HEAD"), cancellable = true)
+    private void isFireImmune(CallbackInfoReturnable<Boolean> cir) {
+        if (!(((Object) this) instanceof final LivingEntity self)) {
+            return;
+        }
+
+        if (WardenChestplateItem.isAngered(self)) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    @SuppressWarnings("all")
+    @Inject(method = "slowMovement", at = @At("HEAD"), cancellable = true)
+    private void slowMovement(BlockState state, Vec3d multiplier, CallbackInfo ci) {
+        if (!(((Object) this) instanceof final LivingEntity self)) {
+            return;
+        }
+
+        if (WardenChestplateItem.isAngered(self)) {
+            ci.cancel();
         }
     }
 }

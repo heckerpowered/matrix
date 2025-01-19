@@ -9,6 +9,7 @@ val armorPenetrationEffect by lazy { Registries.STATUS_EFFECT.getEntry(ArmorPene
 val crippleMovementEffect by lazy { Registries.STATUS_EFFECT.getEntry(CrippleMovementEffect) }
 val witherArmorChargedEffect by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorChargedEffect) }
 val witherArmorEffect by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorEffect) }
+val angeredEffect by lazy { Registries.STATUS_EFFECT.getEntry(AngeredEffect) }
 
 object MatrixStatusEffects {
     fun onInitialize() {
@@ -17,5 +18,6 @@ object MatrixStatusEffects {
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("cripple_movement"), CrippleMovementEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("wither_armor_charged"), WitherArmorChargedEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("wither_armor"), WitherArmorEffect)
+        Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("angered"), AngeredEffect)
     }
 }

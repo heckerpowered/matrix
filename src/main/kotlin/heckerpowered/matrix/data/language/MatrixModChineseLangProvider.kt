@@ -2,6 +2,7 @@ package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
 import heckerpowered.matrix.common.enchantment.witherArmorEnchantmentKey
+import heckerpowered.matrix.common.item.WardenChestplateItem
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider
 import net.minecraft.registry.RegistryWrapper
@@ -137,7 +138,10 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(CrippleMovementEffect, "阻碍移动")
         translationBuilder.add(WitherArmorChargedEffect, "凋灵护甲充能")
         translationBuilder.add(WitherArmorEffect, "凋灵护甲")
+        translationBuilder.add(AngeredEffect, "狂暴")
 
         translationBuilder.add(witherArmorEnchantmentKey, "凋灵护甲")
+
+        translationBuilder.add(WardenChestplateItem, "幽匿“坚守”胸甲")
     }
 }
