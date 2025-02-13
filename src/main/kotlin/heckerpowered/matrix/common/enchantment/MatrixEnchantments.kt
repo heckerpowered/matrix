@@ -4,7 +4,6 @@ import heckerpowered.matrix.Matrix
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.item.ItemStack
-import net.minecraft.registry.Registries
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 
@@ -18,8 +17,6 @@ internal fun of(name: String): RegistryKey<Enchantment> {
 object MatrixEnchantments {
     fun onInitialize() {
         WitherArmorEnchantment.onInitialize()
-
-        Registries.ENCHANTMENT_ENTITY_EFFECT_TYPE
     }
 }
 

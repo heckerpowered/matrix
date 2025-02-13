@@ -2,7 +2,7 @@ package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
 import heckerpowered.matrix.common.enchantment.witherArmorEnchantmentKey
-import heckerpowered.matrix.common.item.WardenChestplateItem
+import heckerpowered.matrix.common.item.*
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider
 import net.minecraft.registry.RegistryWrapper
@@ -10,11 +10,11 @@ import java.util.concurrent.CompletableFuture
 
 class MatrixModEnglishLangProvider(
     dataOutput: FabricDataOutput,
-    registryLookup: CompletableFuture<RegistryWrapper.WrapperLookup>
+    registryLookup: CompletableFuture<RegistryWrapper.WrapperLookup>,
 ) : FabricLanguageProvider(dataOutput, "en_us", registryLookup) {
     override fun generateTranslations(
         registryLookup: RegistryWrapper.WrapperLookup,
-        translationBuilder: TranslationBuilder
+        translationBuilder: TranslationBuilder,
     ) {
         translationBuilder.add(MatrixLanguage.mana.key, "Mana")
 
@@ -142,5 +142,96 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(witherArmorEnchantmentKey, "Wither Armor")
 
         translationBuilder.add(WardenChestplateItem, "Sculk 'Warden' Chestplate")
+        translationBuilder.add(
+            MatrixLanguage.wardenChestplateDescription.key,
+            """
+                §7When Angered:§r
+                Immune to §9damage§r, §9knockback§r, §9fire§r, and §9movement penalties§r.
+                Clears and blocks all negative effects.
+                Damage is increased by §9100%§r.
+                -§9100%§r melee weapon charge time.
+                Movement speed is increased.
+            """.trimIndent()
+        )
+
+        translationBuilder.add(itemGroupKey, "Matrix")
+
+        translationBuilder.add(MatrixLanguage.redstoneSuitPower.key, "Power: ")
+
+        translationBuilder.add(RedstoneHelmetItem, "Redstone Helmet")
+        translationBuilder.add(
+            MatrixLanguage.redstoneHelmetDescription.key,
+            "Electrolytic Breathing: Enables underwater breathing, using §91§r power every §95§r seconds."
+        )
+
+        translationBuilder.add(RedstoneChestplateItem, "Redstone Chestplate")
+        translationBuilder.add(
+            MatrixLanguage.redstoneChestplateDescription.key,
+            "Consumes power to reduce damage taken: 1 power reduces 4 damage, up to 40% per hit."
+        )
+        translationBuilder.add(RedstoneLeggingsItem, "Redstone Leggings")
+        translationBuilder.add(
+            MatrixLanguage.redstoneLeggingsDescription.key,
+            "Chance to damage nearby entities when hit."
+        )
+        translationBuilder.add(RedstoneBootsItem, "Redstone Boots")
+        translationBuilder.add(RedstoneSwordItem, "Redstone Sword")
+        translationBuilder.add(RedstonePickaxeItem, "Redstone Pickaxe")
+        translationBuilder.add(RedstoneAxeItem, "Redstone Axe")
+        translationBuilder.add(RedstoneShovelItem, "Redstone Shovel")
+        translationBuilder.add(RedstoneHoeItem, "Redstone Hoe")
+        translationBuilder.add(
+            MatrixLanguage.redstoneMiningToolDescription.key,
+            "Increases mining speed by 40%. Breaking blocks consumes 1 power."
+        )
+        translationBuilder.add(
+            MatrixLanguage.redstoneSwordDescription.key,
+            "Consumes 1 MEU power on attack to deal an additional 2 damage."
+        )
+
+        translationBuilder.add(LapisLazuliHelmetItem, "Lapis Lazuli Helmet")
+        translationBuilder.add(LapisLazuliChestplateItem, "Lapis Lazuli Chestplate")
+        translationBuilder.add(LapisLazuliLeggingsItem, "Lapis Lazuli Leggings")
+        translationBuilder.add(LapisLazuliBootsItem, "Lapis Lazuli Boots")
+        translationBuilder.add(LapisLazuliSwordItem, "Lapis Lazuli Sword")
+        translationBuilder.add(LapisLazuliPickaxeItem, "Lapis Lazuli Pickaxe")
+        translationBuilder.add(LapisLazuliAxeItem, "Lapis Lazuli Axe")
+        translationBuilder.add(LapisLazuliShovelItem, "Lapis Lazuli Shovel")
+        translationBuilder.add(LapisLazuliHoeItem, "Lapis Lazuli Hoe")
+
+        translationBuilder.add(EmeraldHelmetItem, "Emerald Helmet")
+        translationBuilder.add(EmeraldChestplateItem, "Emerald Chestplate")
+        translationBuilder.add(EmeraldLeggingsItem, "Emerald Leggings")
+        translationBuilder.add(EmeraldBootsItem, "Emerald Boots")
+        translationBuilder.add(EmeraldSwordItem, "Emerald Sword")
+        translationBuilder.add(EmeraldPickaxeItem, "Emerald Pickaxe")
+        translationBuilder.add(EmeraldAxeItem, "Emerald Axe")
+        translationBuilder.add(EmeraldShovelItem, "Emerald Shovel")
+        translationBuilder.add(EmeraldHoeItem, "Emerald Hoe")
+
+        translationBuilder.add(CoalHelmetItem, "Coal Helmet")
+        translationBuilder.add(CoalChestplateItem, "Coal Chestplate")
+        translationBuilder.add(CoalLeggingsItem, "Coal Leggings")
+        translationBuilder.add(CoalBootsItem, "Coal Boots")
+        translationBuilder.add(CoalSwordItem, "Coal Sword")
+        translationBuilder.add(CoalPickaxeItem, "Coal Pickaxe")
+        translationBuilder.add(CoalAxeItem, "Coal Axe")
+        translationBuilder.add(CoalShovelItem, "Coal Shovel")
+        translationBuilder.add(CoalHoeItem, "Coal Hoe")
+
+        translationBuilder.add(StoneHelmetItem, "Stone Helmet")
+        translationBuilder.add(StoneChestplateItem, "Stone Chestplate")
+        translationBuilder.add(StoneLeggingsItem, "Stone Leggings")
+        translationBuilder.add(StoneBootsItem, "Stone Boots")
+
+        translationBuilder.add(WoodenHelmetItem, "Wooden Helmet")
+        translationBuilder.add(WoodenChestplateItem, "Wooden Chestplate")
+        translationBuilder.add(WoodenLeggingsItem, "Wooden Leggings")
+        translationBuilder.add(WoodenBootsItem, "Wooden Boots")
+
+        // Potions
+        translationBuilder.add("item.minecraft.potion.effect.angered", "Potion of Angered")
+        translationBuilder.add("item.minecraft.slash_potion.effect.angered", "Slash Potion of Angered")
+        translationBuilder.add("item.minecraft.lingering_potion.effect.angered", "Lingering Potion of Angered")
     }
 }

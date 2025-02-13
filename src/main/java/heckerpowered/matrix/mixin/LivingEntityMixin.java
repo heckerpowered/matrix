@@ -6,7 +6,9 @@ import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import heckerpowered.matrix.common.effect.MatrixStatusEffectsKt;
 import heckerpowered.matrix.common.event.*;
+import heckerpowered.matrix.common.item.RedstoneSuitKt;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
+import heckerpowered.matrix.common.item.WardenSuitKt;
 import heckerpowered.matrix.common.network.SyncManaPayload;
 import heckerpowered.matrix.common.persistent.ChannelSequence;
 import heckerpowered.matrix.common.persistent.ManaState;
@@ -17,14 +19,19 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,10 +43,21 @@ import java.util.Map;
 import java.util.UUID;
 
 @Mixin(LivingEntity.class)
+abstract
 class LivingEntityMixin implements MatrixLivingEntity {
 
     @Unique
     private final Map<UUID, ChannelSequence> channelingSequences = new HashMap<>();
+
+    @Shadow
+    @Final
+    private Map<RegistryEntry<StatusEffect>, StatusEffectInstance> activeStatusEffects;
+
+    @Shadow
+    public abstract @Nullable StatusEffectInstance getStatusEffect(RegistryEntry<StatusEffect> effect);
+
+    @Shadow
+    public abstract ItemStack getEquippedStack(EquipmentSlot slot);
 
     @Unique
     private LivingEntity self() {
@@ -117,7 +135,18 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
     private void damage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
-        final var livingHurtEvent = new LivingHurtEvent(self(), source, amount);
+        if (source.getAttacker() instanceof final LivingEntity attacker) {
+            final var damageAccumulator = new DamageAccumulator(attacker, self(), source, amount, .0, 1.0);
+            final var result = LivingAttackCallback.event.invoker().onAttack(damageAccumulator);
+            if (result == ActionResult.FAIL) {
+                cir.setReturnValue(false);
+                return;
+            }
+
+            sourceReference.set(damageAccumulator.getDamageSource());
+            amountReference.set((float) damageAccumulator.accumulateDamage());
+        }
+        final var livingHurtEvent = new LivingHurtEvent(self(), sourceReference.get(), amountReference.get());
         final var result = LivingHurtCallback.event.invoker().onHurt(livingHurtEvent);
         if (result == ActionResult.FAIL) {
             cir.setReturnValue(false);
@@ -166,15 +195,39 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "canWalkOnFluid", at = @At("HEAD"), cancellable = true)
     private void canWalkOnFluid(CallbackInfoReturnable<Boolean> cir) {
-        if (WardenChestplateItem.isAngered(self())) {
+        if (WardenSuitKt.isWardenArmorAngered(self())) {
             cir.setReturnValue(true);
         }
     }
 
     @Inject(method = "canHaveStatusEffect", at = @At("HEAD"), cancellable = true)
     private void canHaveStatusEffect(StatusEffectInstance effect, CallbackInfoReturnable<Boolean> cir) {
-        if (WardenChestplateItem.isAngered(self()) && !effect.getEffectType().value().isBeneficial()) {
+        if (!WardenChestplateItem.isAngered(self())) {
+            return;
+        }
+
+        final var angeredEffectInstance = getStatusEffect(MatrixStatusEffectsKt.getAngeredEffect());
+        if (angeredEffectInstance == null) {
+            return;
+        }
+        if (effect.getEffectType() == StatusEffects.DARKNESS && angeredEffectInstance.getDuration() >= effect.getDuration()) {
+            cir.setReturnValue(true);
+            return;
+        }
+
+        if (!effect.getEffectType().value().isBeneficial()) {
             cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(method = "canBreatheInWater", at = @At("HEAD"), cancellable = true)
+    private void canBreatheInWater(CallbackInfoReturnable<Boolean> cir) {
+        final var helmet = getEquippedStack(EquipmentSlot.HEAD);
+        if (!RedstoneSuitKt.isRedstoneSuit(helmet)) {
+            return;
+        }
+        if (RedstoneSuitKt.getRedstoneSuitPower(helmet) > 0) {
+            cir.setReturnValue(true);
         }
     }
 

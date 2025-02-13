@@ -2,12 +2,13 @@ package heckerpowered.matrix.client.shader
 
 import com.mojang.blaze3d.platform.GlConst
 import com.mojang.blaze3d.platform.GlStateManager
+import net.minecraft.client.gl.GlProgramManager
 import java.io.Closeable
 
 open class Shader(
     vertexProgramPath: String,
     fragmentProgramPath: String,
-    private val uniforms: Array<UniformProvider> = emptyArray()
+    private val uniforms: Array<UniformProvider> = emptyArray(),
 ) : Closeable {
     var program = 0
 
@@ -52,13 +53,13 @@ open class Shader(
     }
 
     fun enableShader() {
-        GlStateManager._glUseProgram(program)
+        GlProgramManager.useProgram(program)
         uniforms.forEach { uniform ->
-            uniform.init(program)
+            uniform.set(uniform.pointer)
         }
     }
 
     fun disableShader() {
-        GlStateManager._glUseProgram(0)
+        GlProgramManager.useProgram(0)
     }
 }

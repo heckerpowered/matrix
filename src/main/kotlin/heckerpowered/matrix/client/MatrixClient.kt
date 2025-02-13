@@ -45,7 +45,7 @@ class MatrixClient : ClientModInitializer {
         fun getPlayerMagics(): List<Magic> {
             return listOf(
                 TargetPositioningMagic(),
-                DecisiveStrikeMagic(),
+                DecisiveStrikeMagic,
                 HealthStealMagic(),
                 ManaOverloadMagic(),
                 ExplosionMagic(),

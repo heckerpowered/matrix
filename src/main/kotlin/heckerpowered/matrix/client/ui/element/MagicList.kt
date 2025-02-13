@@ -1,20 +1,29 @@
 package heckerpowered.matrix.client.ui.element
 
+import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.MatrixHud.targetedEntity
+import heckerpowered.matrix.client.minecraft
+import heckerpowered.matrix.client.player
+import heckerpowered.matrix.client.shader.UIBlurShader
+import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.Magic
+import heckerpowered.matrix.common.magics.MagicAvailableStatus
+import heckerpowered.matrix.common.magics.description
+import heckerpowered.matrix.common.persistent.getChannelSequence
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.RenderTickCounter
-import net.minecraft.client.render.Tessellator
-import net.minecraft.client.render.VertexFormat
-import net.minecraft.client.render.VertexFormats
+import net.minecraft.client.render.*
+import net.minecraft.text.Text
+import net.minecraft.util.math.ColorHelper
 
 /**
  * Renderer of the magic list in the HUD.
  */
 object MagicList {
 
-    const val MAGIC_ELEMENT_HEIGHT = 100.0
-    const val MAGIC_ELEMENT_SPAN = 5.0
+    private const val MAGIC_ELEMENT_HEIGHT = 100.0
+    private const val MAGIC_ELEMENT_MARGIN = 50.0
+    private const val MAGIC_ELEMENT_SPAN = 10.0
 
     /**
      * The list of magics to be displayed in the HUD.
@@ -60,6 +69,41 @@ object MagicList {
         }
 
     /**
+     * Extra width animation list for the magics, regenerates when the size of the list changes.
+     */
+    private var cachedWidthAnimationList: MutableList<SimpleDoubleAnimation>? = null
+
+    /**
+     * Width animation list for the magics.
+     */
+    private val widthAnimationList: MutableList<SimpleDoubleAnimation>
+        get() {
+            if (cachedWidthAnimationList?.size != magics.size) {
+                cachedWidthAnimationList = mutableListOf<SimpleDoubleAnimation>().apply {
+                    repeat(magics.size) {
+                        add(SimpleDoubleAnimation())
+                    }
+                }
+            }
+
+            return cachedWidthAnimationList!!
+        }
+
+    private var cachedBackgroundColorAnimationList: MutableList<ColorAnimation>? = null
+    private val backgroundColorAnimationList: MutableList<ColorAnimation>
+        get() {
+            if (cachedBackgroundColorAnimationList?.size != magics.size) {
+                cachedBackgroundColorAnimationList = mutableListOf<ColorAnimation>().apply {
+                    repeat(magics.size) {
+                        add(ColorAnimation())
+                    }
+                }
+            }
+
+            return cachedBackgroundColorAnimationList!!
+        }
+
+    /**
      * Whether the HUD is visible or not.
      */
     private var visibility: Boolean = false
@@ -98,15 +142,88 @@ object MagicList {
         updateUseAnimationList(tickCounter)
     }
 
+    private fun getMagicAvailableStatus(magic: Magic): MagicAvailableStatus {
+        val channelSequence = player.getChannelSequence(targetedEntity)
+        return magic.availableStatus(player, targetedEntity, channelSequence)
+    }
+
+    private fun calculateMagicWidth(magic: Magic): Double {
+        val textRenderer = minecraft.textRenderer
+
+        val channelSequence = player.getChannelSequence(targetedEntity)
+        val costString = magic.getCost(player, targetedEntity, channelSequence).toString()
+        val statusString = magic.availableStatus(player, targetedEntity, channelSequence).description.toString()
+
+        val magicNameWidth = textRenderer.getWidth(magic.name)
+        val costWidth = textRenderer.getWidth(costString)
+        val statusWidth = textRenderer.getWidth(statusString)
+
+        return magicNameWidth + costWidth + statusWidth + MAGIC_ELEMENT_SPAN * 3 // 3 spans for the name, cost, and status
+    }
+
     private fun renderMagic(index: Int, drawContext: DrawContext, tickCounter: RenderTickCounter) {
+        if (opacity.animatedValue == .0) {
+            return
+        }
+
         val magic = magics[index]
         val indent = indentList[index]
 
+        val channelSequence = player.getChannelSequence(targetedEntity)
+        val costString = magic.getCost(player, targetedEntity, channelSequence).toString()
+        val statusString = magic.availableStatus(player, targetedEntity, channelSequence).description.toString()
+
+        val textRenderer = minecraft.textRenderer
+        val magicNameWidth = textRenderer.getWidth(magic.name)
+        val costWidth = textRenderer.getWidth(costString)
+        val statusWidth = textRenderer.getWidth(statusString)
+
+        val magicWidth = magicNameWidth + costWidth + statusWidth + MAGIC_ELEMENT_SPAN * 3 // 3 spans for the name, cost, and status
+
+        val widthAnimation = widthAnimationList[index]
+        widthAnimation.value = magicWidth
+
+        val startX = (MAGIC_ELEMENT_MARGIN + indent + xOffset.animatedValue).toFloat()
+        val endX = (startX + widthAnimation.animatedValue).toFloat()
+        val startY = (index * (MAGIC_ELEMENT_HEIGHT + MAGIC_ELEMENT_MARGIN) + drawContext.scaledWindowHeight / 2 - (indentList.size + 1) * (MAGIC_ELEMENT_HEIGHT + MAGIC_ELEMENT_MARGIN) / 2).toFloat()
+        val endY = startY + MAGIC_ELEMENT_HEIGHT.toFloat()
+
+        drawContext.enableScissor(startX.toInt(), startY.toInt(), endX.toInt(), endY.toInt())
+
+        UIBlurShader.blurTextureRenderShader.enableShader()
+        UIBlurShader.renderQuad()
+        UIBlurShader.blurTextureRenderShader.disableShader()
+
         val transformationMatrix = drawContext.matrices.peek().positionMatrix
-        val tessellator = Tessellator.getInstance()
+        val builder = Tessellator.getInstance()
+        val buffer = builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR)
 
-        val buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR)
+        val backgroundColorAnimation = backgroundColorAnimationList[index]
+        val backgroundColor = ColorHelper.Argb.getArgb(
+            (opacity.animatedValue * 127.5).toInt(),
+            backgroundColorAnimation.red.animatedValue.toInt(),
+            backgroundColorAnimation.green.animatedValue.toInt(),
+            backgroundColorAnimation.blue.animatedValue.toInt()
+        )
 
+        buffer.vertex(transformationMatrix, startX, startY, 0F).color(backgroundColor)
+        buffer.vertex(transformationMatrix, endX, startY, 0F).color(backgroundColor)
+        buffer.vertex(transformationMatrix, endX, endY, 0F).color(backgroundColor)
+        buffer.vertex(transformationMatrix, startX, endY, 0F).color(backgroundColor)
+
+        RenderSystem.enableBlend()
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram)
+        BufferRenderer.drawWithGlobalProgram(buffer.end())
+        RenderSystem.disableBlend()
+
+        val foregroundColor = ColorHelper.Argb.getArgb((opacity.animatedValue * 255).toInt(), 255, 255, 255)
+        drawContext.drawText(textRenderer, magic.name, startX.toInt() + 5, startY.toInt() + 5, foregroundColor, false)
+        drawContext.drawText(textRenderer, Text.literal(costString), startX.toInt() + magicNameWidth + 15, startY.toInt() + 5, foregroundColor, false)
+        drawContext.drawText(textRenderer, statusString, startX.toInt() + magicNameWidth + costWidth + 25, startY.toInt() + 5, foregroundColor, false)
+
+        val usingAnimation = animationList[index]
+
+        drawContext.disableScissor()
     }
 
     fun onHudVisibilityChanged(visibility: Boolean) {

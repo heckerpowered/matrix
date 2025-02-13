@@ -5,10 +5,12 @@ import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
+import heckerpowered.matrix.client.shader.UIBlurShader
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
 import heckerpowered.matrix.common.magics.description
+import net.minecraft.client.gui.DrawContext
 import java.time.Duration
 
 object AvailableStatusTooltip {
@@ -27,7 +29,7 @@ object AvailableStatusTooltip {
         shownAnimation.currentValue = -50.0
     }
 
-    fun render(renderer: LegacyMatrixUIRenderer, status: MagicAvailableStatus) {
+    fun render(drawContext: DrawContext, renderer: LegacyMatrixUIRenderer, status: MagicAvailableStatus) {
         val minPoint = Point(
             renderer.scaledWindowWidth / 2 - 125.0,
             30.0 + shownAnimation.animatedValue
@@ -36,6 +38,18 @@ object AvailableStatusTooltip {
             renderer.scaledWindowWidth / 2 + 125.0,
             45.0 + shownAnimation.animatedValue
         )
+
+        drawContext.enableScissor(
+            minPoint.x.toInt(),
+            minPoint.y.toInt(),
+            maxPoint.x.toInt(),
+            maxPoint.y.toInt()
+        )
+        UIBlurShader.blurTextureRenderShader.enableShader()
+        UIBlurShader.renderQuad()
+        UIBlurShader.blurTextureRenderShader.disableShader()
+        drawContext.disableScissor()
+
         val backgroundColor = Color(128, 0, 0, (128 * opacityAnimation.animatedValue).toInt())
         renderer.renderRectangle(Rectangle(minPoint, maxPoint), backgroundColor)
 

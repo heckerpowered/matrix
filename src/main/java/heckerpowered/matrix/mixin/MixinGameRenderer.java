@@ -1,5 +1,6 @@
 package heckerpowered.matrix.mixin;
 
+import heckerpowered.matrix.client.shader.UIBlurShader;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,6 +16,7 @@ class MixinGameRenderer {
     @Inject(method = "onResized", at = @At("HEAD"))
     private void onResized(int width, int height, CallbackInfo ci) {
         //UIBlurShader.setupDimensions(width, height);
+        UIBlurShader.onResize(width, height);
     }
 
     @Inject(method = "render", at = @At(value = "RETURN"))

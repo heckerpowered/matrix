@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -43,5 +44,22 @@ class PlayerEntityMixin {
         if (WardenChestplateItem.isAngered(self())) {
             cir.setReturnValue(1.0F);
         }
+    }
+
+
+    @ModifyVariable(method = "attack", at = @At(value = "LOAD"), ordinal = 2)
+    private boolean modifyAttackCritical(boolean isCritical) {
+        if (WardenChestplateItem.isAngered(self())) {
+            return true;
+        }
+        return isCritical;
+    }
+
+    @ModifyVariable(method = "attack", at = @At(value = "LOAD"), ordinal = 3)
+    private boolean modifyAttackSweep(boolean canSweep) {
+        if (WardenChestplateItem.isAngered(self())) {
+            return true;
+        }
+        return canSweep;
     }
 }

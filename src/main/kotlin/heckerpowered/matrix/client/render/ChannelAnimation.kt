@@ -9,7 +9,7 @@ import net.minecraft.entity.LivingEntity
 import java.time.Duration
 
 class ChannelAnimation(
-    val magic: Magic
+    val magic: Magic,
 ) {
     companion object {
         private val easingFunction = ElasticEase().also {

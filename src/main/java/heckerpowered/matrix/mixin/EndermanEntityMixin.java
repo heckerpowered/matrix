@@ -18,6 +18,7 @@ abstract class EndermanEntityMixin extends LivingEntity {
         super(entityType, world);
     }
 
+    @SuppressWarnings("all")
     @Unique
     private EndermanEntity self() {
         return (EndermanEntity) (Object) this;

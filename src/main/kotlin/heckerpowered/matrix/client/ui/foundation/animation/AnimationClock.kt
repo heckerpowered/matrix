@@ -4,8 +4,10 @@ import heckerpowered.matrix.core.lerp
 import net.minecraft.util.math.MathHelper
 import org.apache.commons.lang3.time.StopWatch
 import java.time.Duration
+import kotlin.math.max
+import kotlin.math.min
 
-class AnimationClock(var duration: Duration, var from: Double, var to: Double) {
+class AnimationClock(var duration: Duration, var from: Double, var to: Double, var startTime: Duration = Duration.ZERO) {
     private val stopwatch = StopWatch.create()
 
     fun start() {
@@ -34,7 +36,7 @@ class AnimationClock(var duration: Duration, var from: Double, var to: Double) {
     }
 
     fun getValue(): Double {
-        return getValueAt(stopwatch.nanoTime)
+        return getValueAt(max(stopwatch.nanoTime - startTime.toNanos(), 0))
     }
 
     fun transform(easingFunction: EasingFunction): Double {
@@ -45,4 +47,7 @@ class AnimationClock(var duration: Duration, var from: Double, var to: Double) {
         val progress = (timeNanos.toDouble() / duration.toNanos().toDouble()).coerceIn(.0..1.0)
         return MathHelper.lerp(progress, 0.0, 1.0)
     }
+
+    val progress: Double
+        get() = min(max(stopwatch.nanoTime - startTime.toNanos(), 0), duration.toNanos()) / duration.toNanos().toDouble()
 }

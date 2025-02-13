@@ -2,96 +2,128 @@ package heckerpowered.matrix.client.shader
 
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
-import heckerpowered.matrix.client.core.FramebufferSpoof
+import heckerpowered.matrix.client.MatrixHud
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.core.resourceToString
+import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.gl.SimpleFramebuffer
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.RenderPhase
+import net.minecraft.client.render.BufferRenderer
+import net.minecraft.client.render.Tessellator
+import net.minecraft.client.render.VertexFormat
+import net.minecraft.client.render.VertexFormats
+import net.minecraft.client.texture.NativeImage
 import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL20
+import java.io.File
 
-object UIBlurShader : BlitShader(
-    resourceToString("/assets/matrix/shaders/sobel.vert"),
-    resourceToString("/assets/matrix/shaders/blur/ui_blur.frag"),
-    arrayOf(
-        UniformProvider("texture0") { pointer ->
-            GlStateManager._activeTexture(GL13.GL_TEXTURE0)
-            GlStateManager._bindTexture(minecraft.framebuffer.colorAttachment)
-            GL20.glUniform1i(pointer, 0)
-        },
-        UniformProvider("overlay") { pointer ->
-            val active = GlStateManager._getActiveTexture()
-            GlStateManager._activeTexture(GL13.GL_TEXTURE9)
-            GlStateManager._bindTexture(UIBlurShader.overlayFramebuffer.colorAttachment)
-            GL20.glUniform1i(pointer, 9)
-            GlStateManager._activeTexture(active)
-        },
-        UniformProvider("radius") { pointer -> GL20.glUniform1f(pointer, UIBlurShader.getBlurRadius()) }
-    )) {
-    private val overlayFramebuffer by lazy {
+
+object UIBlurShader {
+    private var currentFramebuffer = minecraft.framebuffer
+
+    var radius = 5.0F
+
+    private val imageProvider = UniformProvider("image") { pointer ->
+        GlStateManager._activeTexture(GL13.GL_TEXTURE0)
+        GlStateManager._bindTexture(currentFramebuffer.colorAttachment)
+        GL20.glUniform1i(pointer, 0)
+    }
+
+    private val radiusProvider = UniformProvider("radius") { pointer ->
+        GL20.glUniform1f(pointer, radius)
+    }
+
+    private val blurFramebuffer by lazy {
         val framebuffer = SimpleFramebuffer(
             minecraft.window.framebufferWidth,
             minecraft.window.framebufferHeight,
             true,
-            true
+            MinecraftClient.IS_SYSTEM_MAC
         )
-
-        framebuffer.setClearColor(0.0f, 0.0f, 0.0f, 0.0f)
+        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
         framebuffer
     }
 
-    private fun getBlurRadius(): Float {
-        return 20.0F
-    }
+    private val horizontalBlurShader = BlitShader(
+        resourceToString("/assets/matrix/shaders/sobel.vert"),
+        resourceToString("/assets/matrix/shaders/gaussian_blur_horizontal.fsh"),
+        arrayOf(imageProvider, radiusProvider)
+    )
 
-    private var isDrawingHudFramebuffer = false
+    private val verticalBlurShader = BlitShader(
+        resourceToString("/assets/matrix/shaders/sobel.vert"),
+        resourceToString("/assets/matrix/shaders/gaussian_blur_vertical.fsh"),
+        arrayOf(imageProvider, radiusProvider)
+    )
 
-    val OUTLINE_TARGET = RenderPhase.Target("overlay_target", {
-        if (isDrawingHudFramebuffer) {
-            overlayFramebuffer.beginWrite(true)
+    val blurTextureRenderShader = Shader(
+        resourceToString("/assets/matrix/shaders/sobel.vert"),
+        resourceToString("/assets/matrix/shaders/blur_mask.fsh"),
+        arrayOf(UniformProvider("image") { pointer ->
+            GlStateManager._activeTexture(GL13.GL_TEXTURE0)
+            GlStateManager._bindTexture(blurFramebuffer.colorAttachment)
+            GL20.glUniform1i(pointer, 0)
+        }, UniformProvider("opacity") { pointer ->
+            GL20.glUniform1f(pointer, MatrixHud.magicShownOpacityAnimation.animatedValue.toFloat())
+        })
+    )
+
+    val debugShader = Shader(
+        resourceToString("/assets/matrix/shaders/sobel.vert"),
+        resourceToString("/assets/matrix/shaders/debug.fsh"),
+        arrayOf()
+    )
+
+    fun dumpFrameBuffer(framebuffer: Framebuffer) {
+        val framebufferWidth = framebuffer.textureWidth
+        val framebufferHeight = framebuffer.textureHeight
+
+        NativeImage(framebufferWidth, framebufferHeight, false).use { nativeImage ->
+            RenderSystem.bindTexture(framebuffer.colorAttachment)
+            nativeImage.loadFromTextureImage(0, false)
+            nativeImage.mirrorVertically()
+
+            val file = File("screenshots")
+            file.mkdir()
+
+            val filename = "framebuffer_dump_${framebuffer.hashCode()}.png"
+            nativeImage.writeTo(File(file, filename))
         }
-    }, {})
-
-    @JvmStatic
-    fun startUIOverlayDrawing(context: DrawContext, tickDelta: Float) {
-        isDrawingHudFramebuffer = true
-
-        overlayFramebuffer.clear(true)
-        overlayFramebuffer.beginWrite(true)
-        FramebufferSpoof.push(overlayFramebuffer)
     }
 
-    @JvmStatic
-    fun endUIOverlayDrawing() {
-        if (!isDrawingHudFramebuffer) {
-            return
+    fun renderQuad() {
+        val builder = Tessellator.getInstance()
+        val buffer = builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE)
+        buffer.vertex(-1F, -1F, 0F).texture(0F, 0F)
+        buffer.vertex(1F, -1F, 0F).texture(1F, 0F)
+        buffer.vertex(1F, 1F, 0F).texture(1F, 1F)
+        buffer.vertex(-1F, 1F, 0F).texture(0F, 1F)
+        BufferRenderer.draw(buffer.end())
+    }
+
+    fun renderBlur() {
+        blurFramebuffer.beginWrite(false)
+
+        // Init blur framebuffer
+        currentFramebuffer = minecraft.framebuffer
+        horizontalBlurShader.blit()
+
+        currentFramebuffer = blurFramebuffer
+        verticalBlurShader.blit()
+
+        for (i in 0..9) {
+            horizontalBlurShader.blit()
+            verticalBlurShader.blit()
         }
 
-        isDrawingHudFramebuffer = false
-
-        FramebufferSpoof.pop()
-        overlayFramebuffer.endWrite()
-
-        val projectionMatrix = RenderSystem.getProjectionMatrix()
-        val vertexSorting = RenderSystem.getVertexSorting()
-
-        RenderSystem.disableBlend()
-
-        minecraft.framebuffer.beginWrite(true)
-
-        // RenderSystem.setShaderColor(0F, 0F, 0F, 0F)
-        RenderSystem.enableBlend()
-        RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
-
-        overlayFramebuffer.drawInternal(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-
-        RenderSystem.setProjectionMatrix(projectionMatrix, vertexSorting)
-        RenderSystem.defaultBlendFunc()
+        blurFramebuffer.endWrite()
+        minecraft.framebuffer.beginWrite(false)
+        // dumpFrameBuffer(blurFramebuffer)
     }
 
     @JvmStatic
-    fun setupDimensions(width: Int, height: Int) {
-        this.overlayFramebuffer.resize(width, height, true)
+    fun onResize(width: Int, height: Int) {
+        blurFramebuffer.resize(width, height, MinecraftClient.IS_SYSTEM_MAC)
+        // GL30.glViewport(0, 0, width, height)
     }
 }

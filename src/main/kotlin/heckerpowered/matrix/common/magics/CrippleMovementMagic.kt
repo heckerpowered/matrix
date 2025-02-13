@@ -8,7 +8,9 @@ import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.network.packet.s2c.play.EntityStatusEffectS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 
 class CrippleMovementMagic :
     Magic(
@@ -23,6 +25,20 @@ class CrippleMovementMagic :
             return
         }
         target.addStatusEffect(StatusEffectInstance(crippleMovementEffect, 20 * 10, 0))
+        if (target.world !is ServerWorld) {
+            return
+        }
+
+        val server = target.world.server ?: return
+        for (serverPlayer in server.playerManager.playerList) {
+            serverPlayer.networkHandler.sendPacket(
+                EntityStatusEffectS2CPacket(
+                    target.id,
+                    target.getStatusEffect(crippleMovementEffect),
+                    false
+                )
+            )
+        }
     }
 
     override fun availableStatus(

@@ -18,6 +18,7 @@ object WitherArmorChargedEffect : StatusEffect(
     0x32C8A8
 ) {
     init {
+        fadeTicks(0)
         StatusEffectRemovedCallback.event.register(::onStatusEffectRemoved)
         LivingDamageCallback.event.register(::onLivingDamage)
     }
@@ -88,6 +89,6 @@ object WitherArmorChargedEffect : StatusEffect(
             StatusEffectInstance(witherArmorChargedEffect, 200, amplifier - useAmount - 1, false, true),
             entity
         )
-        return ActionResult.PASS
+        return ActionResult.SUCCESS
     }
 }

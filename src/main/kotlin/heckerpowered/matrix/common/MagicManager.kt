@@ -16,7 +16,7 @@ object MagicManager {
     fun getMagic(player: PlayerEntity, index: Int): Magic? {
         return when (index) {
             1 -> TargetPositioningMagic()
-            2 -> DecisiveStrikeMagic()
+            2 -> DecisiveStrikeMagic
             3 -> HealthStealMagic()
             4 -> ManaOverloadMagic()
             5 -> ExplosionMagic()
@@ -49,7 +49,7 @@ object MagicManager {
 
     private fun registerMagics() {
         registerMagic(TargetPositioningMagic())
-        registerMagic(DecisiveStrikeMagic())
+        registerMagic(DecisiveStrikeMagic)
         registerMagic(HealthStealMagic())
         registerMagic(ManaOverloadMagic())
         registerMagic(ExplosionMagic())

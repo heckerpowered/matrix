@@ -13,7 +13,7 @@ val MutableText.key: String
     }
 
 fun TranslationBuilder.add(enchantment: RegistryKey<Enchantment>, value: String) {
-    add("enchantment." + enchantment.value.toTranslationKey(), value)
+    addEnchantment(enchantment, value)
 }
 
 object MatrixLanguage {
@@ -83,4 +83,15 @@ object MatrixLanguage {
     val magicChannelQueueFull: MutableText = Text.translatable("matrix.magic_channel_queue_full")
     val magicChannelQueueLocked: MutableText = Text.translatable("matrix.magic_channel_queue_locked")
     val magicTargetMissing: MutableText = Text.translatable("matrix.magic_target_missing")
+
+    val wardenChestplateDescription: MutableText = Text.translatable("matrix.warden_chestplate.description")
+
+    val redstoneSuitPower: MutableText = Text.translatable("matrix.redstone_suit.power")
+
+    val redstoneHelmetDescription: MutableText = Text.translatable("matrix.redstone_helmet.power")
+    val redstoneChestplateDescription: MutableText = Text.translatable("matrix.redstone_chestplate.description")
+    val redstoneLeggingsDescription: MutableText = Text.translatable("matrix.redstone_leggings.description")
+    val redstoneBootsDescription: MutableText = Text.translatable("matrix.redstone_boots.description")
+    val redstoneSwordDescription: MutableText = Text.translatable("matrix.redstone_sword.description")
+    val redstoneMiningToolDescription: MutableText = Text.translatable("matrix.redstone_mining_tool.description")
 }

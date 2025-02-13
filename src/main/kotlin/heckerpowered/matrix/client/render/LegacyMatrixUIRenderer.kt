@@ -59,7 +59,7 @@ class LegacyMatrixUIRenderer(private val vertexConsumers: VertexConsumerProvider
 
         render()
     }
-
+    
     private fun render() {
         RenderSystem.disableDepthTest()
         vertexConsumers.draw()

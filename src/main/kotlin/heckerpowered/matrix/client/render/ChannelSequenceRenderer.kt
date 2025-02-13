@@ -8,7 +8,7 @@ import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.core.MatrixLivingEntity
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.render.OutlineVertexConsumerProvider
+import net.minecraft.client.render.GameRenderer
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.VertexConsumer
 import net.minecraft.client.render.VertexConsumerProvider
@@ -24,7 +24,7 @@ import java.time.Duration
 import java.util.*
 
 class ChannelSequenceRenderer(
-    context: FeatureRendererContext<LivingEntity, EntityModel<LivingEntity>>
+    context: FeatureRendererContext<LivingEntity, EntityModel<LivingEntity>>,
 ) : FeatureRenderer<LivingEntity, EntityModel<LivingEntity>>(context) {
 
     companion object {
@@ -64,7 +64,7 @@ class ChannelSequenceRenderer(
                     val iterator = list.iterator()
                     while (iterator.hasNext()) {
                         val channelAnimation = iterator.next()
-                        if (channelAnimation.currentChannelTime >= channelAnimation.channelTime && channelAnimation.opacityAnimation.animatedValue == 0.0) {
+                        if (channelAnimation.currentChannelTime > channelAnimation.channelTime && channelAnimation.opacityAnimation.animatedValue == 0.0) {
                             offsetAnimationMap[entity]?.let {
                                 it.xOffsetAnimationClock.from = .0
                                 it.xOffsetAnimationClock.to = .0
@@ -87,7 +87,7 @@ class ChannelSequenceRenderer(
         tickDelta: Float,
         animationProgress: Float,
         headYaw: Float,
-        headPitch: Float
+        headPitch: Float,
     ) {
         if (entity !is MatrixLivingEntity) {
             return
@@ -125,18 +125,19 @@ class ChannelSequenceRenderer(
 
         val positionMatrix = matrixStack.peek().positionMatrix
 
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram)
+        RenderSystem.enableBlend()
         val layer = RenderLayer.getGui()
         val buffer = vertexConsumers.getBuffer(layer)
 
         channelAnimations.forEachIndexed { index, channelAnimation ->
             val color = Color(128, 0, 0, (128 * channelAnimation.opacityAnimation.animatedValue).toInt())
             val progressColor = Color(255, 0, 0, (255 * channelAnimation.opacityAnimation.animatedValue).toInt())
-            val animatedX =
-                if (channelAnimation.opacityAnimation.animatedValue != 1.0 && channelAnimation.opacityAnimationClock.to == 0.0) {
-                    offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
-                } else {
-                    offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
-                }
+            val animatedX = if (channelAnimation.opacityAnimation.animatedValue != 1.0 && channelAnimation.opacityAnimationClock.to == 0.0) {
+                offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
+            } else {
+                offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
+            }
 
 
             val isChanneling = if (index == 0) {
@@ -149,28 +150,19 @@ class ChannelSequenceRenderer(
             } else {
                 .0f
             }
-            val channelProgress =
-                ((channelAnimation.currentChannelTime + partialProgress) / channelAnimation.channelTime.toDouble()).coerceAtMost(
-                    1.0
-                )
+            val channelProgress = ((channelAnimation.currentChannelTime + partialProgress) / channelAnimation.channelTime.toDouble()).coerceAtMost(1.0)
             val progressRectangle = Rectangle(
                 Point(
-                    -8.0 + index * 24 + animatedX,
-                    16.0 + channelAnimation.shownAnimation.animatedValue
-                ),
-                Point(
-                    8.0 + index * 24 + animatedX,
-                    (1 - channelProgress) * 16.0 + channelAnimation.shownAnimation.animatedValue
+                    -8.0 + index * 24 + animatedX, 16.0 + channelAnimation.shownAnimation.animatedValue
+                ), Point(
+                    8.0 + index * 24 + animatedX, (1 - channelProgress) * 16.0 + channelAnimation.shownAnimation.animatedValue
                 )
             )
             val rectangle = Rectangle(
                 Point(
-                    -8.0 + index * 24 + animatedX,
-                    (1 - channelProgress + 0.1).coerceIn(.0..1.0) * 16.0 + channelAnimation.shownAnimation.animatedValue
-                ),
-                Point(
-                    8.0 + index * 24 + animatedX,
-                    .0 + channelAnimation.shownAnimation.animatedValue
+                    -8.0 + index * 24 + animatedX, (1 - channelProgress).coerceIn(.0..1.0) * 16.0 + channelAnimation.shownAnimation.animatedValue
+                ), Point(
+                    8.0 + index * 24 + animatedX, .0 + channelAnimation.shownAnimation.animatedValue
                 )
             )
             renderRectangle(
@@ -189,13 +181,7 @@ class ChannelSequenceRenderer(
             )
         }
 
-        RenderSystem.disableDepthTest()
-        if (vertexConsumers is VertexConsumerProvider.Immediate) {
-            vertexConsumers.draw()
-        } else if (vertexConsumers is OutlineVertexConsumerProvider) {
-            vertexConsumers.draw()
-        }
-        RenderSystem.enableDepthTest()
+        RenderSystem.disableBlend()
         matrixStack.pop()
         matrixStack.pop()
     }
@@ -206,27 +192,11 @@ class ChannelSequenceRenderer(
         rectangle: Rectangle,
         color: Color,
         light: Int,
-        z: Float = 0.01f
+        z: Float = 0.01f,
     ) {
-        buffer
-            .vertex(positionMatrix, rectangle.min.x.toFloat(), rectangle.min.y.toFloat(), z)
-            .color(color.toInt())
-            .texture(0f, 0f)
-            .light(light)
-        buffer
-            .vertex(positionMatrix, rectangle.max.x.toFloat(), rectangle.min.y.toFloat(), z)
-            .color(color.toInt())
-            .texture(0f, 0f)
-            .light(light)
-        buffer
-            .vertex(positionMatrix, rectangle.max.x.toFloat(), rectangle.max.y.toFloat(), z)
-            .color(color.toInt())
-            .texture(0f, 0f)
-            .light(light)
-        buffer
-            .vertex(positionMatrix, rectangle.min.x.toFloat(), rectangle.max.y.toFloat(), z)
-            .color(color.toInt())
-            .texture(0f, 0f)
-            .light(light)
+        buffer.vertex(positionMatrix, rectangle.min.x.toFloat(), rectangle.min.y.toFloat(), z).color(color.toInt())
+        buffer.vertex(positionMatrix, rectangle.max.x.toFloat(), rectangle.min.y.toFloat(), z).color(color.toInt())
+        buffer.vertex(positionMatrix, rectangle.max.x.toFloat(), rectangle.max.y.toFloat(), z).color(color.toInt())
+        buffer.vertex(positionMatrix, rectangle.min.x.toFloat(), rectangle.max.y.toFloat(), z).color(color.toInt())
     }
 }

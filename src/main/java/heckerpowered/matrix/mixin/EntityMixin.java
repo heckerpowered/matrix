@@ -8,6 +8,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -18,15 +19,19 @@ class EntityMixin {
     private EntityMixin() {
     }
 
+    @Unique
+    private Entity self() {
+        return (Entity) (Object) this;
+    }
+
     @Inject(method = "remove", at = @At("HEAD"))
     private void onRemove(Entity.RemovalReason reason, CallbackInfo ci) {
         EntityRemovedCallback.event.invoker().onEntityRemoved((Entity) (Object) this, reason);
     }
 
-    @SuppressWarnings("all")
     @Inject(method = "setPos", at = @At("HEAD"), cancellable = true)
     private void setPos(double x, double y, double z, CallbackInfo ci) {
-        if (!(((Object) this) instanceof final LivingEntity self)) {
+        if (!(self() instanceof final LivingEntity self)) {
             return;
         }
 
@@ -35,19 +40,18 @@ class EntityMixin {
         try {
             final var crippleMovement = MatrixStatusEffectsKt.getCrippleMovementEffect();
             final var effect = self.getStatusEffect(crippleMovement);
-            if (effect == null) {
+            if (effect == null || effect.getDuration() <= 0) {
                 return;
             }
 
             ci.cancel();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
     }
 
-    @SuppressWarnings("all")
     @Inject(method = "isFireImmune", at = @At("HEAD"), cancellable = true)
     private void isFireImmune(CallbackInfoReturnable<Boolean> cir) {
-        if (!(((Object) this) instanceof final LivingEntity self)) {
+        if (!(self() instanceof final LivingEntity self)) {
             return;
         }
 
@@ -56,10 +60,20 @@ class EntityMixin {
         }
     }
 
-    @SuppressWarnings("all")
     @Inject(method = "slowMovement", at = @At("HEAD"), cancellable = true)
     private void slowMovement(BlockState state, Vec3d multiplier, CallbackInfo ci) {
-        if (!(((Object) this) instanceof final LivingEntity self)) {
+        if (!(self() instanceof final LivingEntity self)) {
+            return;
+        }
+
+        if (WardenChestplateItem.isAngered(self)) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "addVelocity(DDD)V", at = @At("HEAD"), cancellable = true)
+    private void addVelocity(double deltaX, double deltaY, double deltaZ, CallbackInfo ci) {
+        if (!(self() instanceof final LivingEntity self)) {
             return;
         }
 

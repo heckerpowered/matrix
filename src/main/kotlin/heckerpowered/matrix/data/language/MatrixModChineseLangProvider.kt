@@ -2,7 +2,7 @@ package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
 import heckerpowered.matrix.common.enchantment.witherArmorEnchantmentKey
-import heckerpowered.matrix.common.item.WardenChestplateItem
+import heckerpowered.matrix.common.item.*
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider
 import net.minecraft.registry.RegistryWrapper
@@ -11,11 +11,11 @@ import java.util.concurrent.CompletableFuture
 
 class MatrixModChineseLangProvider(
     dataOutput: FabricDataOutput,
-    registryLookup: CompletableFuture<RegistryWrapper.WrapperLookup>
+    registryLookup: CompletableFuture<RegistryWrapper.WrapperLookup>,
 ) : FabricLanguageProvider(dataOutput, "zh_cn", registryLookup) {
     override fun generateTranslations(
         registryLookup: RegistryWrapper.WrapperLookup,
-        translationBuilder: TranslationBuilder
+        translationBuilder: TranslationBuilder,
     ) {
         translationBuilder.add(MatrixLanguage.mana.key, "法力值")
 
@@ -143,5 +143,93 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(witherArmorEnchantmentKey, "凋灵护甲")
 
         translationBuilder.add(WardenChestplateItem, "幽匿“坚守”胸甲")
+        translationBuilder.add(
+            MatrixLanguage.wardenChestplateDescription.key,
+            """
+                §7狂暴时：§r
+                对§9伤害§r、§9击退§r、§9火焰§r、§9移速惩罚§r免疫。
+                立即清除负面效果并在持续时间内免疫任何负面效果。
+                造成的伤害提升§9100%§r。
+                -§9100%§r近战武器攻击蓄力时间。
+                移动速度获得提升。
+            """.trimIndent()
+        )
+
+        translationBuilder.add(itemGroupKey, "Matrix")
+
+        translationBuilder.add(MatrixLanguage.redstoneSuitPower.key, "电力: ")
+
+        translationBuilder.add(RedstoneHelmetItem, "红石头盔")
+        translationBuilder.add(
+            MatrixLanguage.redstoneHelmetDescription.key,
+            "电解呼吸: 在水下时消耗电量来呼吸，每§95§r秒消耗§91§r单位电力。"
+        )
+
+        translationBuilder.add(RedstoneChestplateItem, "红石胸甲")
+        translationBuilder.add(
+            MatrixLanguage.redstoneChestplateDescription.key,
+            "消耗电量减少受到的伤害，每1单位电力可减少4点伤害，每次至多减免40%。"
+        )
+        translationBuilder.add(RedstoneLeggingsItem, "红石护腿")
+        translationBuilder.add(
+            MatrixLanguage.redstoneLeggingsDescription.key,
+            "受到伤害时有概率对附近的生物造成伤害。"
+        )
+        translationBuilder.add(RedstoneBootsItem, "红石靴子")
+        translationBuilder.add(RedstoneSwordItem, "红石剑")
+        translationBuilder.add(RedstonePickaxeItem, "红石镐")
+        translationBuilder.add(RedstoneAxeItem, "红石斧")
+        translationBuilder.add(RedstoneShovelItem, "红石铲")
+        translationBuilder.add(RedstoneHoeItem, "红石锄")
+        translationBuilder.add(MatrixLanguage.redstoneSwordDescription.key, "攻击时消耗1电力造成额外2点伤害。")
+        translationBuilder.add(
+            MatrixLanguage.redstoneMiningToolDescription.key,
+            "挖掘速度提升40%，破坏方块消耗1EMU电力。"
+        )
+
+        translationBuilder.add(LapisLazuliHelmetItem, "青金石头盔")
+        translationBuilder.add(LapisLazuliChestplateItem, "青金石头盔")
+        translationBuilder.add(LapisLazuliLeggingsItem, "青金石护腿")
+        translationBuilder.add(LapisLazuliBootsItem, "青金石靴子")
+        translationBuilder.add(LapisLazuliSwordItem, "青金石剑")
+        translationBuilder.add(LapisLazuliPickaxeItem, "青金石镐")
+        translationBuilder.add(LapisLazuliAxeItem, "青金石斧")
+        translationBuilder.add(LapisLazuliShovelItem, "青金石铲")
+        translationBuilder.add(LapisLazuliHoeItem, "青金石锄")
+
+        translationBuilder.add(EmeraldHelmetItem, "绿宝石头盔")
+        translationBuilder.add(EmeraldChestplateItem, "绿宝石胸甲")
+        translationBuilder.add(EmeraldLeggingsItem, "绿宝石护腿")
+        translationBuilder.add(EmeraldBootsItem, "绿宝石靴子")
+        translationBuilder.add(EmeraldSwordItem, "绿宝石剑")
+        translationBuilder.add(EmeraldPickaxeItem, "绿宝石镐")
+        translationBuilder.add(EmeraldAxeItem, "绿宝石斧")
+        translationBuilder.add(EmeraldShovelItem, "绿宝石铲")
+        translationBuilder.add(EmeraldHoeItem, "绿宝石锄")
+
+        translationBuilder.add(CoalHelmetItem, "煤炭头盔")
+        translationBuilder.add(CoalChestplateItem, "煤炭胸甲")
+        translationBuilder.add(CoalLeggingsItem, "煤炭护腿")
+        translationBuilder.add(CoalBootsItem, "煤炭靴子")
+        translationBuilder.add(CoalSwordItem, "煤炭剑")
+        translationBuilder.add(CoalPickaxeItem, "煤炭镐")
+        translationBuilder.add(CoalAxeItem, "煤炭斧")
+        translationBuilder.add(CoalShovelItem, "煤炭铲")
+        translationBuilder.add(CoalHoeItem, "煤炭锄")
+
+        translationBuilder.add(StoneHelmetItem, "石头盔")
+        translationBuilder.add(StoneChestplateItem, "石胸甲")
+        translationBuilder.add(StoneLeggingsItem, "石护腿")
+        translationBuilder.add(StoneBootsItem, "石靴子")
+
+        translationBuilder.add(WoodenHelmetItem, "木头盔")
+        translationBuilder.add(WoodenChestplateItem, "木胸甲")
+        translationBuilder.add(WoodenLeggingsItem, "木护腿")
+        translationBuilder.add(WoodenBootsItem, "木靴子")
+
+        // Potions
+        translationBuilder.add("item.minecraft.potion.effect.angered", "狂暴药水")
+        translationBuilder.add("item.minecraft.slash_potion.effect.angered", "喷溅型狂暴药水")
+        translationBuilder.add("item.minecraft.lingering_potion.effect.angered", "滞留型狂暴药水")
     }
 }

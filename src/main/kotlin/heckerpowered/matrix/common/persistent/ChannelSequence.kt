@@ -60,8 +60,10 @@ class ChannelSequence(
             }
 
             val sequences = target.getChannelSequence()
-            val channelSequence =
-                sequences.computeIfAbsent(player.uuid) { ChannelSequence(player, player.uuid, target, mutableListOf()) }
+            val channelSequence = sequences.computeIfAbsent(player.uuid) { ChannelSequence(player, player.uuid, target, mutableListOf()) }
+            channelSequence.player = player
+            channelSequence.playerUUID = player.uuid
+
             val channelTime = magic.getChannelTime(player, target, channelSequence)
             val cost = magic.getCost(player, target, channelSequence)
             channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
@@ -193,6 +195,8 @@ class ChannelSequence(
                     }
                     .toMutableList()
             )
+
+    constructor(target: LivingEntity) : this(null, UUID(0L, 0L), target, mutableListOf())
 
     fun sequencedBefore(magic: Magic): Boolean {
         val targetIndex = magics.indexOfFirst { it.magic == magic }

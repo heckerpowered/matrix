@@ -9,3 +9,4 @@ accessible field net/minecraft/server/MinecraftServer tickEndTimeNanos J
 accessible method net/minecraft/client/gl/Framebuffer drawInternal (IIZ)V
 accessible field net/minecraft/entity/mob/MobEntity targetSelector Lnet/minecraft/entity/ai/goal/GoalSelector;
 accessible field net/minecraft/entity/passive/VillagerEntity gossip Lnet/minecraft/village/VillagerGossips;
+accessible field net/minecraft/entity/LivingEntity itemUseTimeLeft I

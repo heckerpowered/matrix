@@ -3,6 +3,8 @@ package heckerpowered.matrix
 import heckerpowered.matrix.data.enchantment.EnchantmentGenerator
 import heckerpowered.matrix.data.language.MatrixModChineseLangProvider
 import heckerpowered.matrix.data.language.MatrixModEnglishLangProvider
+import heckerpowered.matrix.data.recipe.MatrixRecipeProvider
+import heckerpowered.matrix.data.tag.MatrixItemTagProvider
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
@@ -21,6 +23,12 @@ object MatrixDataGenerator : DataGeneratorEntrypoint {
         }
         pack.addProvider { output: FabricDataOutput, registriesFuture: CompletableFuture<RegistryWrapper.WrapperLookup> ->
             EnchantmentGenerator(output, registriesFuture)
+        }
+        pack.addProvider { output: FabricDataOutput, registriesFuture: CompletableFuture<RegistryWrapper.WrapperLookup> ->
+            MatrixRecipeProvider(output, registriesFuture)
+        }
+        pack.addProvider { output: FabricDataOutput, registriesFuture: CompletableFuture<RegistryWrapper.WrapperLookup> ->
+            MatrixItemTagProvider(output, registriesFuture)
         }
     }
 }

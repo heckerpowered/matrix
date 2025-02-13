@@ -9,7 +9,8 @@
     "MinecraftServerMixin",
     "MobEntityMixin",
     "PlayerEntityMixin",
-    "ServerPlayerEntityMixin"
+    "ServerPlayerEntityMixin",
+    "ServerPlayNetworkHandlerMixin"
   ],
   "client": [
     "MinecraftClientMixin",
