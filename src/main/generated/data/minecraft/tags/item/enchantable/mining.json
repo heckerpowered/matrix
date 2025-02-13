@@ -1,0 +1,20 @@
+{
+  "values": [
+    "matrix:redstone_pickaxe",
+    "matrix:redstone_axe",
+    "matrix:redstone_shovel",
+    "matrix:redstone_hoe",
+    "matrix:lapis_lazuli_pickaxe",
+    "matrix:lapis_lazuli_axe",
+    "matrix:lapis_lazuli_shovel",
+    "matrix:lapis_lazuli_hoe",
+    "matrix:emerald_pickaxe",
+    "matrix:emerald_axe",
+    "matrix:emerald_shovel",
+    "matrix:emerald_hoe",
+    "matrix:coal_pickaxe",
+    "matrix:coal_axe",
+    "matrix:coal_shovel",
+    "matrix:coal_hoe"
+  ]
+}

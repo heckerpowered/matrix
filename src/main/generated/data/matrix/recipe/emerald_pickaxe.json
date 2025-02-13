@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "matrix_emerald_suit",
+  "key": {
+    "#": {
+      "item": "minecraft:emerald"
+    },
+    "|": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "###",
+    " | ",
+    " | "
+  ],
+  "result": {
+    "count": 1,
+    "id": "matrix:emerald_pickaxe"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "values": [
+    "matrix:warden_chestplate",
+    "matrix:redstone_chestplate",
+    "matrix:lapis_lazuli_chestplate",
+    "matrix:emerald_chestplate",
+    "matrix:coal_chestplate",
+    "matrix:stone_chestplate",
+    "matrix:wooden_chestplate"
+  ]
+}

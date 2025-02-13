@@ -1,0 +1,27 @@
+// 1.21	2025-01-23T17:30:43.173773	matrix/Tags for minecraft:item
+601216415c5932fef46338f674668335de84a695 data/minecraft/tags/item/axes.json
+4d2a91a43addc79539b93bc838f7b1a5ca648b65 data/minecraft/tags/item/swords.json
+3710937a7995e1f6b895c946326f84fe10512445 data/minecraft/tags/item/enchantable/mining.json
+0169d736b8233a57edd73d2159daca3c5ce54114 data/minecraft/tags/item/enchantable/durability.json
+23f37552fbd6f24eb1f06dc21cb8272e140814d9 data/minecraft/tags/item/leg_armor.json
+23f37552fbd6f24eb1f06dc21cb8272e140814d9 data/minecraft/tags/item/enchantable/leg_armor.json
+4d2a91a43addc79539b93bc838f7b1a5ca648b65 data/minecraft/tags/item/enchantable/sharp_weapon.json
+e91c97fd560037a265b842b9f754a82c11f23759 data/minecraft/tags/item/shovels.json
+9bd10420dd015b35b7c4bf3bca9b948e22f9c522 data/minecraft/tags/item/pickaxes.json
+dbf14a80fcc8b28ec446f1db8fcad85cc2991ea6 data/minecraft/tags/item/chest_armor.json
+4d2a91a43addc79539b93bc838f7b1a5ca648b65 data/minecraft/tags/item/enchantable/sword.json
+dbf14a80fcc8b28ec446f1db8fcad85cc2991ea6 data/minecraft/tags/item/enchantable/chest_armor.json
+3710937a7995e1f6b895c946326f84fe10512445 data/minecraft/tags/item/enchantable/mining_loot.json
+4d2a91a43addc79539b93bc838f7b1a5ca648b65 data/minecraft/tags/item/enchantable/weapon.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/minecraft/tags/item/enchantable/crossbow.json
+87a9052cb8326380df28a0073e814abfb7ba18e0 data/minecraft/tags/item/foot_armor.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/minecraft/tags/item/enchantable/fishing.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/minecraft/tags/item/enchantable/bow.json
+0169d736b8233a57edd73d2159daca3c5ce54114 data/minecraft/tags/item/enchantable/vanishing.json
+87a9052cb8326380df28a0073e814abfb7ba18e0 data/minecraft/tags/item/enchantable/foot_armor.json
+4d2a91a43addc79539b93bc838f7b1a5ca648b65 data/minecraft/tags/item/enchantable/fire_aspect.json
+8933989c006eddb8f5d5fe1a46974fe4871fea49 data/minecraft/tags/item/enchantable/head_armor.json
+061dfafd9dfac7731cafd48583503edb33bb68ef data/minecraft/tags/item/enchantable/armor.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/minecraft/tags/item/enchantable/trident.json
+530a4d8c965d4cac95556b7d18a1f241fda78360 data/minecraft/tags/item/hoes.json
+8933989c006eddb8f5d5fe1a46974fe4871fea49 data/minecraft/tags/item/head_armor.json

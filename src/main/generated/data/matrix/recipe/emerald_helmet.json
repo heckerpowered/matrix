@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "matrix_emerald_suit",
+  "key": {
+    "#": {
+      "item": "minecraft:emerald"
+    }
+  },
+  "pattern": [
+    "###",
+    "# #"
+  ],
+  "result": {
+    "count": 1,
+    "id": "matrix:emerald_helmet"
+  }
+}

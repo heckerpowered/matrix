@@ -1,0 +1,29 @@
+{
+  "values": [
+    "matrix:warden_chestplate",
+    "matrix:redstone_helmet",
+    "matrix:redstone_chestplate",
+    "matrix:redstone_leggings",
+    "matrix:redstone_boots",
+    "matrix:lapis_lazuli_helmet",
+    "matrix:lapis_lazuli_chestplate",
+    "matrix:lapis_lazuli_leggings",
+    "matrix:lapis_lazuli_boots",
+    "matrix:emerald_helmet",
+    "matrix:emerald_chestplate",
+    "matrix:emerald_leggings",
+    "matrix:emerald_boots",
+    "matrix:coal_helmet",
+    "matrix:coal_chestplate",
+    "matrix:coal_leggings",
+    "matrix:coal_boots",
+    "matrix:stone_helmet",
+    "matrix:stone_chestplate",
+    "matrix:stone_leggings",
+    "matrix:stone_boots",
+    "matrix:wooden_helmet",
+    "matrix:wooden_chestplate",
+    "matrix:wooden_leggings",
+    "matrix:wooden_boots"
+  ]
+}

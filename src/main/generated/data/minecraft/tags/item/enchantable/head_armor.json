@@ -1,0 +1,10 @@
+{
+  "values": [
+    "matrix:redstone_helmet",
+    "matrix:lapis_lazuli_helmet",
+    "matrix:emerald_helmet",
+    "matrix:coal_helmet",
+    "matrix:stone_helmet",
+    "matrix:wooden_helmet"
+  ]
+}
