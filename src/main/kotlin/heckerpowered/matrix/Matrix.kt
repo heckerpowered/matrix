@@ -14,6 +14,7 @@ import heckerpowered.matrix.common.recipe.MatrixRecipeSerializer
 import net.fabricmc.api.ModInitializer
 import net.minecraft.util.Identifier
 import org.slf4j.LoggerFactory
+import kotlin.math.exp
 
 object Matrix : ModInitializer {
     const val MOD_ID = "matrix"
@@ -35,5 +36,23 @@ object Matrix : ModInitializer {
 
     fun identifier(path: String): Identifier {
         return Identifier.of("matrix", path)
+    }
+
+    private fun generateGaussianKernel(kernelSize: Int, sigma: Float): List<Float> {
+        val kernel = mutableListOf<Float>()
+        var sum = 0F
+
+        for (i in 0..<kernelSize) {
+            val x = i - kernelSize / 2
+            val result = exp(-0.5F * (x * x) / (sigma * sigma))
+            kernel.add(result)
+            sum += result
+        }
+
+        for (i in 0..<kernelSize) {
+            kernel[i] /= sum
+        }
+
+        return kernel
     }
 }

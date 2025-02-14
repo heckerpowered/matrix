@@ -120,6 +120,12 @@ class MatrixModChineseLangProvider(
             "引导一次音波尖啸，对目标造成10点伤害。\n\n音波尖啸无视护甲值、任何可减伤的魔咒（如保护）和盾牌的阻挡，不能触发荆棘魔咒，且对女巫造成的伤害降低85%。\n\n凋零护甲可减免音波尖啸造成的伤害。\n\n可被追踪。"
         )
 
+        translationBuilder.add(MatrixLanguage.magicBruteForce.key, "大力出奇迹")
+        translationBuilder.add(MatrixLanguage.magicBruteForceDescription.key, "使目标进入危险状态，持续10秒。\n\n危险状态将使目标受到的伤害增加100%，每一效果等级进一步增加100%\n\n无法追踪。")
+
+        translationBuilder.add(MatrixLanguage.magicBloodPact.key, "血之契约")
+        translationBuilder.add(MatrixLanguage.magicBloodPactDescription.key, "诅咒目标，使你所受到的50%伤害转移到目标身上，转移的伤害没有上限。\n\n若目标无法承受转移的伤害，则转移的数额会降低。\n\n若有多个目标被诅咒，则所有目标共同承受转移的伤害。\n\n只要诅咒存在，效果就会持续。\n\n")
+
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "超频或降频魔法")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "超频或降频法力")
         translationBuilder.add(MatrixLanguage.switchClock.key, "切换超频或降频")

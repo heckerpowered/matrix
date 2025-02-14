@@ -8,12 +8,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-class SystemCrashMagic : Magic(
-    MatrixLanguage.magicSystemCrash,
-    100,
-    MatrixLanguage.magicSystemCrashDescription,
-    200
-) {
+object SystemCrashMagic : Magic(MatrixLanguage.magicSystemCrash, 100, MatrixLanguage.magicSystemCrashDescription, 200) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
     }
 

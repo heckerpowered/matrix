@@ -21,7 +21,7 @@ val minecraft
 val player
     get() = MinecraftClient.getInstance().player!!
 
-val animationDuration = Duration.ofMillis(200)
+val animationDuration: Duration = Duration.ofMillis(200)
 
 val easingFunction = ElasticEase().also {
     it.oscillations = 0
@@ -44,22 +44,23 @@ class MatrixClient : ClientModInitializer {
     companion object {
         fun getPlayerMagics(): List<Magic> {
             return listOf(
-                TargetPositioningMagic(),
+                TargetPositioningMagic,
                 DecisiveStrikeMagic,
-                HealthStealMagic(),
-                ManaOverloadMagic(),
-                ExplosionMagic(),
+                HealthStealMagic,
+                ManaOverloadMagic,
+                ExplosionMagic,
                 // KillMagic(),
                 // SculkCatalystMagic(),
-                IgniteMagic(),
-                BreakingBadMagic(),
-                CrippleMovementMagic(),
-                MemoryEraseMagic(),
-                SpreadMagic(),
-                LightningBoltMagic(),
-                TeleportMagic(),
-                ArmorPenetrationMagic(),
-                SonicBoomMagic()
+                IgniteMagic,
+                BreakingBadMagic,
+                CrippleMovementMagic,
+                MemoryEraseMagic,
+                SpreadMagic,
+                LightningBoltMagic,
+                TeleportMagic,
+                ArmorPenetrationMagic,
+                SonicBoomMagic,
+                BruteForceMagic
                 // SystemCrashMagic()
             )
         }

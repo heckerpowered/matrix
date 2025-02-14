@@ -30,7 +30,7 @@ object UIBlurShader {
     }
 
     private val radiusProvider = UniformProvider("radius") { pointer ->
-        GL20.glUniform1f(pointer, radius)
+        GL20.glUniform1f(pointer, radius * MatrixHud.magicShownOpacityAnimation.animatedValue.toFloat())
     }
 
     private val blurFramebuffer by lazy {
@@ -63,15 +63,7 @@ object UIBlurShader {
             GlStateManager._activeTexture(GL13.GL_TEXTURE0)
             GlStateManager._bindTexture(blurFramebuffer.colorAttachment)
             GL20.glUniform1i(pointer, 0)
-        }, UniformProvider("opacity") { pointer ->
-            GL20.glUniform1f(pointer, MatrixHud.magicShownOpacityAnimation.animatedValue.toFloat())
         })
-    )
-
-    val debugShader = Shader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/debug.fsh"),
-        arrayOf()
     )
 
     fun dumpFrameBuffer(framebuffer: Framebuffer) {
@@ -107,7 +99,6 @@ object UIBlurShader {
         // Init blur framebuffer
         currentFramebuffer = minecraft.framebuffer
         horizontalBlurShader.blit()
-
         currentFramebuffer = blurFramebuffer
         verticalBlurShader.blit()
 

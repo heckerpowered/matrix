@@ -4,18 +4,17 @@ import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.mob.Angerable
 import net.minecraft.entity.mob.MobEntity
 import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.village.VillageGossipType
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
-class MemoryEraseMagic : Magic(
-    MatrixLanguage.magicMemoryErase,
-    10,
-    MatrixLanguage.magicMemoryEraseDescription,
-    10
-) {
+object MemoryEraseMagic : Magic(MatrixLanguage.magicMemoryErase, 10, MatrixLanguage.magicMemoryEraseDescription, 10) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         target.brain.clear()
         if (target is MobEntity) {
@@ -40,5 +39,20 @@ class MemoryEraseMagic : Magic(
                 gossips?.set(VillageGossipType.MINOR_NEGATIVE, 0)
             }
         }
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    fun getDamageSource(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, supplier: () -> DamageSource?): DamageSource {
+        contract {
+            callsInPlace(supplier, InvocationKind.AT_MOST_ONCE)
+        }
+
+        val erasedSource = target.damageSources.generic()
+        if (player == null || sequence.sequencedAfter<MemoryEraseMagic>()) {
+            return erasedSource
+        }
+
+        val result = supplier() ?: return erasedSource
+        return result
     }
 }

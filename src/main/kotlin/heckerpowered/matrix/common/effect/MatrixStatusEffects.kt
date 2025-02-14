@@ -1,15 +1,18 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.Matrix
+import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
+import net.minecraft.registry.entry.RegistryEntry
 
-val manaOverloadEffect by lazy { Registries.STATUS_EFFECT.getEntry(ManaOverloadEffect) }
-val armorPenetrationEffect by lazy { Registries.STATUS_EFFECT.getEntry(ArmorPenetrationEffect) }
-val crippleMovementEffect by lazy { Registries.STATUS_EFFECT.getEntry(CrippleMovementEffect) }
-val witherArmorChargedEffect by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorChargedEffect) }
-val witherArmorEffect by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorEffect) }
-val angeredEffect by lazy { Registries.STATUS_EFFECT.getEntry(AngeredEffect) }
+val manaOverloadEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ManaOverloadEffect) }
+val armorPenetrationEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ArmorPenetrationEffect) }
+val crippleMovementEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(CrippleMovementEffect) }
+val witherArmorChargedEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorChargedEffect) }
+val witherArmorEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorEffect) }
+val angeredEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(AngeredEffect) }
+val exposedEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ExposedEffect) }
 
 object MatrixStatusEffects {
     fun onInitialize() {
@@ -19,5 +22,6 @@ object MatrixStatusEffects {
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("wither_armor_charged"), WitherArmorChargedEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("wither_armor"), WitherArmorEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("angered"), AngeredEffect)
+        Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("exposed"), ExposedEffect)
     }
 }

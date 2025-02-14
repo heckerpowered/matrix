@@ -7,8 +7,8 @@ layout (location = 2) in vec4 Color;
 uniform mat4 modelViewMatrix = mat4(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 uniform mat4 projectionMatrix = mat4(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
-layout (location = 3) out vec2 fragTexCoord;
-layout (location = 4) out vec4 vertexColor;
+layout (location = 0) out vec2 fragTexCoord;
+layout (location = 1) out vec4 vertexColor;
 
 void main() {
     gl_Position = projectionMatrix * modelViewMatrix * vec4(Position, 1.0);

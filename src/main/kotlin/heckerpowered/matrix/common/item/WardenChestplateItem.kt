@@ -25,15 +25,15 @@ object WardenChestplateItem : ArmorItem(
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {
-        if (isAngered(event.attacker)) {
+        if (isAngered(event.attacker!!)) {
             event.damageMultiplier += 1
         }
         return ActionResult.PASS
     }
 
-    private fun onLivingHurt(event: LivingHurtEvent): ActionResult {
-        if (isAngered(event.entity)) {
-            event.amount = .0F
+    private fun onLivingHurt(event: DamageAccumulator): ActionResult {
+        if (isAngered(event.target)) {
+            event.immune = true
         }
         return ActionResult.PASS
     }
@@ -45,12 +45,7 @@ object WardenChestplateItem : ArmorItem(
         return ActionResult.PASS
     }
 
-    override fun appendTooltip(
-        stack: ItemStack,
-        context: TooltipContext,
-        tooltip: MutableList<Text>,
-        type: TooltipType
-    ) {
+    override fun appendTooltip(stack: ItemStack, context: TooltipContext, tooltip: MutableList<Text>, type: TooltipType) {
         super.appendTooltip(stack, context, tooltip, type)
         val lines = MatrixLanguage.wardenChestplateDescription.string.split('\n').map {
             Text.literal(it).formatted(Formatting.GRAY, Formatting.ITALIC)

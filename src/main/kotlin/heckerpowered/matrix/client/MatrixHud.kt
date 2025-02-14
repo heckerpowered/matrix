@@ -38,6 +38,7 @@ import net.minecraft.util.math.Box
 import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
+import net.minecraft.world.RaycastContext
 import java.time.Duration
 import kotlin.math.min
 
@@ -63,6 +64,7 @@ object MatrixHud {
         }
 
     var targetedEntity: LivingEntity? = null
+    private var cachedTargetedEntity: LivingEntity? = null
 
     private var lastNanos = 0L
 
@@ -76,11 +78,7 @@ object MatrixHud {
     private val easingFunction = ElasticEase()
 
     private val manaOverclockAnimation = AnimationClock(Duration.ofMillis(300), 1.0, 1.0)
-    private val magicOverclockAnimation = AnimationClock(
-        Duration.ofMillis(
-            300
-        ), 1.0, 1.0
-    )
+    private val magicOverclockAnimation = AnimationClock(Duration.ofMillis(300), 1.0, 1.0)
 
     private val magicShownAnimationClock = AnimationClock(
         Duration.ofMillis(
@@ -138,11 +136,14 @@ object MatrixHud {
     private val dissolveAnimation = SimpleDoubleAnimation(from = 1.0)
     private val magicDescriptionPrimaryOpacityAnimation = SimpleDoubleAnimation(from = 1.0, to = 1.0, duration = Duration.ofMillis(150))
     private val magicDescriptionSecondaryOpacityAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150))
+    private val descriptionYOffsetAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(300))
 
+    private val entityDescriptionOpacityAnimation = SimpleDoubleAnimation()
     private var previousVisibility = false
 
     private var aimEntity: Entity? = null
     private var useAimAssist = false
+    private var firstShow = true
 
     init {
         easingFunction.easingMode = EasingMode.OUT
@@ -150,6 +151,9 @@ object MatrixHud {
 
         magicOverclock.currentValue = 1.0
         manaOverclock.currentValue = 1.0
+
+        entityDescriptionOpacityAnimation.start()
+        descriptionYOffsetAnimation.start()
     }
 
     private class ColorAnimation {
@@ -435,9 +439,7 @@ object MatrixHud {
     private fun checkVisibilityChanges() {
         val shouldRenderHud = shouldRenderHud()
         if (shouldRenderHud != previousVisibility) {
-            onHudVisibilityChanged(
-                shouldRenderHud
-            )
+            onHudVisibilityChanged(shouldRenderHud)
         }
         previousVisibility = shouldRenderHud
     }
@@ -640,32 +642,18 @@ object MatrixHud {
             return
         }
         UIBlurShader.renderBlur()
-        renderLeftPart(
-            drawContext, tickCounter
-        )
-        renderRightPart(
-            drawContext, tickCounter
-        )
-        renderManaBar(
-            drawContext, tickCounter
-        )
-        renderMagicAvailableStatus(
-            drawContext, renderer
-        )
+        renderLeftPart(drawContext, tickCounter)
+        renderRightPart(drawContext, tickCounter)
+        renderManaBar(drawContext, tickCounter)
+        renderMagicAvailableStatus(drawContext, renderer)
 
         if (!shouldRenderHud()) {
             return
         }
-        selectTargetEntity(
-            tickCounter
-        )
-        renderOverclock(
-            drawContext, tickCounter
-        )
+        selectTargetEntity(tickCounter)
+        renderOverclock(drawContext, tickCounter)
 
-        updateAimAssist(
-            false, tickCounter
-        )
+        updateAimAssist(false, tickCounter)
         // BlurRenderer.renderBlur(drawContext, tickCounter)
     }
 
@@ -764,7 +752,13 @@ object MatrixHud {
         magicShownOpacityAnimationClock.start()
 
         AimAssist.resetAnimation()
-        // BlurRenderer.test()
+        if (firstShow) {
+            firstShow = false
+            selectTargetEntity(RenderTickCounter.ZERO)
+            if (targetedEntity == null) {
+                descriptionYOffsetAnimation.animatedValue = -35.0
+            }
+        }
     }
 
     private fun renderManaBar(
@@ -1240,9 +1234,7 @@ object MatrixHud {
         )
     }
 
-    private fun selectTargetEntity(
-        tickCounter: RenderTickCounter,
-    ) {
+    private fun selectTargetEntity(tickCounter: RenderTickCounter) {
         val aimEntity = this.aimEntity
         if (aimEntity is LivingEntity) {
             if (!aimEntity.isAlive) {
@@ -1252,15 +1244,23 @@ object MatrixHud {
                 return
             }
         }
-        var targetedEntity = getTargetedEntity(
-            tickCounter.getTickDelta(
-                true
-            )
-        )
+        var targetedEntity = getTargetedEntity(tickCounter.getTickDelta(true))
         if (targetedEntity is EnderDragonPart) {
             targetedEntity = targetedEntity.owner
         }
-        this.targetedEntity = targetedEntity as? LivingEntity
+        if (targetedEntity != this.targetedEntity) {
+            if (targetedEntity == null) {
+                entityDescriptionOpacityAnimation.value = .0
+                descriptionYOffsetAnimation.value = -35.0
+            } else {
+                entityDescriptionOpacityAnimation.value = 1.0
+                descriptionYOffsetAnimation.value = .0
+            }
+        }
+        if (targetedEntity is LivingEntity) {
+            cachedTargetedEntity = targetedEntity
+        }
+        this.targetedEntity = targetedEntity as? LivingEntity?
     }
 
     private fun renderRightPart(
@@ -1273,9 +1273,7 @@ object MatrixHud {
         val alpha = (magicShownOpacityAnimation.animatedValue * 255).coerceIn(
             .0..255.0
         ).toInt()
-        val foregroundColor = ColorHelper.Argb.getArgb(
-            alpha, 255, 255, 255
-        )
+        val foregroundColor = ColorHelper.Argb.getArgb(alpha, 255, 255, 255)
 
         drawContext.enableScissor(
             drawContext.scaledWindowWidth - 200 - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 100, drawContext.scaledWindowWidth - 25 - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 + 100
@@ -1299,50 +1297,31 @@ object MatrixHud {
         dissolveShader.disableShader()
         RenderSystem.disableBlend()
 
-        val targetedEntity = this.targetedEntity
-        if (targetedEntity != null && alpha > 5) {
-            val textRenderer = MinecraftClient.getInstance().textRenderer
-            drawContext.drawText(
-                textRenderer, targetedEntity.name, drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 90, foregroundColor, false
-            )
-        }
+        val descriptionAlpha = min(magicShownOpacityAnimation.animatedValue * 255, entityDescriptionOpacityAnimation.animatedValue * 255).toInt()
+        val cachedTargetedEntity = this.cachedTargetedEntity
 
         val textRenderer = MinecraftClient.getInstance().textRenderer
-        if (targetedEntity is LivingEntity) {
-            val red = ColorHelper.Argb.getArgb(
-                alpha, 255, 0, 0
-            )
-            val green = ColorHelper.Argb.getArgb(
-                alpha, 0, 255, 0
-            )
+        if (cachedTargetedEntity != null) {
+            val red = ColorHelper.Argb.getArgb(descriptionAlpha, 255, 0, 0)
+            val green = ColorHelper.Argb.getArgb(descriptionAlpha, 0, 255, 0)
 
-            currentHealthAnimation.currentValue = targetedEntity.health.toDouble()
-            maxHealthAnimation.currentValue = targetedEntity.maxHealth.toDouble()
+            currentHealthAnimation.currentValue = cachedTargetedEntity.health.toDouble()
+            maxHealthAnimation.currentValue = cachedTargetedEntity.maxHealth.toDouble()
 
-            val health = targetedEntity.health
-            val maxHealth = targetedEntity.maxHealth
+            val health = cachedTargetedEntity.health
+            val maxHealth = cachedTargetedEntity.maxHealth
             val percentage = currentHealthAnimation.animatedValue / maxHealthAnimation.animatedValue
-            val lerpedColor = ColorHelper.Argb.lerp(
-                percentage.toFloat(), red, green
-            )
+            val lerpedColor = ColorHelper.Argb.lerp(percentage.toFloat(), red, green)
 
-            val progressBarX = MathHelper.lerp(
-                percentage.toFloat(), 190, 35
-            )
-            drawContext.fill(
-                drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 80, drawContext.scaledWindowWidth - progressBarX - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 75, lerpedColor
-            )
+            val progressBarX = MathHelper.lerp(percentage.toFloat(), 190, 35)
+            drawContext.fill(drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 80, drawContext.scaledWindowWidth - progressBarX - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 75, lerpedColor)
 
-            if (alpha > 3) {
-                drawContext.drawText(
-                    textRenderer, StringBuilder().append(
-                        (health * 100).toLong().toDouble() / 100
-                    ).append(
-                        "/"
-                    ).append(
-                        (maxHealth * 100).toLong().toDouble() / 100
-                    ).toString(), drawContext.scaledWindowWidth - 150 - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 90, foregroundColor, false
-                )
+            val descriptionForegroundColor = ColorHelper.Argb.getArgb(descriptionAlpha, 255, 255, 255)
+            if (descriptionAlpha > 3) {
+                drawContext.drawText(textRenderer, StringBuilder().append((health * 100).toLong().toDouble() / 100).append("/").append((maxHealth * 100).toLong().toDouble() / 100).toString(), drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 70, descriptionForegroundColor, false)
+            }
+            if (descriptionAlpha > 3) {
+                drawContext.drawText(textRenderer, cachedTargetedEntity.name, drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), drawContext.scaledWindowHeight / 2 - 90, descriptionForegroundColor, false)
             }
         }
 
@@ -1360,49 +1339,38 @@ object MatrixHud {
         val currentMagic = MatrixClient.getPlayerMagics()[selectedIndex - 1]
         val previousMagic = MatrixClient.getPlayerMagics()[previousIndex - 1]
 
-        val primaryY = drawContext.scaledWindowHeight / 2 - 65 // + magicSwitchAnimation.animatedValue
-        val secondaryY = drawContext.scaledWindowHeight / 2 - 65 // + magicSwitchAnimation.animatedValue
+        val primaryY = drawContext.scaledWindowHeight / 2 - 55 + descriptionYOffsetAnimation.animatedValue.toInt() // + magicSwitchAnimation.animatedValue
 
         if (primaryAlpha > 3) {
-            drawContext.drawTextWrapped(textRenderer, currentMagic.description, drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), primaryY.toInt(), 150, primaryForegroundColor)
+            drawContext.drawTextWrapped(textRenderer, currentMagic.description, drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), primaryY, 150, primaryForegroundColor)
         }
         if (secondaryAlpha > 3) {
-            drawContext.drawTextWrapped(textRenderer, previousMagic.description, drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), secondaryY.toInt(), 150, secondaryForegroundColor)
+            drawContext.drawTextWrapped(textRenderer, previousMagic.description, drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), primaryY, 150, secondaryForegroundColor)
         }
         drawContext.disableScissor()
     }
 
-    private fun getTargetedEntity(
-        tickDelta: Float,
-    ): Entity? {
-        val range = 10240.0
+    private fun getTargetedEntity(tickDelta: Float): Entity? {
+        val range = 10000.0
 
         val minecraftClient = MinecraftClient.getInstance()!!
         val camera = minecraftClient.cameraEntity!!
 
-        val location = camera.getCameraPosVec(
-            tickDelta
-        )
-        val rotation = camera.getRotationVec(
-            tickDelta
-        )
-        val min = location.add(
-            rotation
-        )
-        val max = location.add(
-            rotation.multiply(
-                range
-            )
-        )
-        val box = Box(
-            min, max
-        )
+        val location = camera.getCameraPosVec(tickDelta)
+        val rotation = camera.getRotationVec(tickDelta)
+        val min = location.add(rotation)
+        val max = location.add(rotation.multiply(range))
+        val box = Box(min, max)
 
-        val result = ProjectileUtil.raycast(
-            camera, min, max, box, { entity ->
-                !entity.isSpectator && entity.canHit()
-            }, range
-        )
+        val blockHit = player.world.raycast(RaycastContext(min, max, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.ANY, player))
+        val blockHitDistance = player.squaredDistanceTo(blockHit.pos)
+        val result = ProjectileUtil.raycast(camera, min, max, box, { entity ->
+            if (entity.isSpectator) {
+                return@raycast false
+            }
+
+            blockHitDistance > entity.squaredDistanceTo(player)
+        }, range)
 
         return result?.entity
     }

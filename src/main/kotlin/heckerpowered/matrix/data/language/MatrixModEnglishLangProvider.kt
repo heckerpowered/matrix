@@ -119,6 +119,12 @@ class MatrixModEnglishLangProvider(
             "Channel a sonic boom, dealing 10 damage to the target.\n\nThe sonic boom ignores armor, any damage-reducing enchantments (e.g., Protection), and shield blocking. It does not trigger the Thorns enchantment, and its damage to witches is reduced by 85%.\n\nWither Armor can mitigate the damage caused by the sonic boom.\n\nTrackable."
         )
 
+        translationBuilder.add(MatrixLanguage.magicBruteForce.key, "Brute Force")
+        translationBuilder.add(MatrixLanguage.magicBruteForceDescription.key, "Expose the target for 10 seconds.\n\nEntities affected by the exposed effect take 100% additional damage, with each level further increasing the damage by 100%.\n\nCannot be tracked.")
+
+        translationBuilder.add(MatrixLanguage.magicBloodPact.key, "Blood Pact")
+        translationBuilder.add(MatrixLanguage.magicBloodPactDescription.key, "Curse the target, transferring 50% of the damage you take to the target, with no limit on the amount transferred.\n\nIf the target cannot withstand the transferred damage, the amount transferred will be reduced.\n\nIf multiple targets are cursed, they will all share the transferred damage.\n\nThe effect lasts as long as the curse remains.")
+
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "Overclock or Underclock Magic")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "Overclock or Underclock Mana")
         translationBuilder.add(MatrixLanguage.switchClock.key, "Switch Overclock or Underclock")

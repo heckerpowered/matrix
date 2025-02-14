@@ -9,12 +9,7 @@ import net.minecraft.entity.effect.StatusEffects
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
 
-class TeleportMagic : Magic(
-    MatrixLanguage.magicTeleport,
-    15,
-    MatrixLanguage.magicTeleportDescription,
-    5
-) {
+object TeleportMagic : Magic(MatrixLanguage.magicTeleport, 15, MatrixLanguage.magicTeleportDescription, 5) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         if (player == null) {
             return

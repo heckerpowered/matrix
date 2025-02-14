@@ -70,6 +70,12 @@ object MatrixLanguage {
     val magicSonicBoom: MutableText = Text.translatable("matrix.sonic_boom")
     val magicSonicBoomDescription: MutableText = Text.translatable("matrix.sonic_boom.description")
 
+    val magicBruteForce: MutableText = Text.translatable("matrix.brute_force")
+    val magicBruteForceDescription: MutableText = Text.translatable("matrix.brute_force.description")
+
+    val magicBloodPact: MutableText = Text.translatable("matrix.blood_pact")
+    val magicBloodPactDescription: MutableText = Text.translatable("matrix.blood_pact.description")
+
     val overclockMagic: MutableText = Text.translatable("matrix.overclock.magic")
     val overclockMana: MutableText = Text.translatable("matrix.overclock.mana")
     val switchClock: MutableText = Text.translatable("matrix.overclock.switch")

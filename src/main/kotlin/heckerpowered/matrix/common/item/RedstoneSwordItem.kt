@@ -23,7 +23,7 @@ object RedstoneSwordItem : SwordItem(
 
     private fun onLivingAttack(damageAccumulator: DamageAccumulator): ActionResult {
         val redstoneSword =
-            damageAccumulator.attacker.handItems.find { it.item is RedstoneSwordItem } ?: return ActionResult.PASS
+            damageAccumulator.attacker!!.handItems.find { it.item is RedstoneSwordItem } ?: return ActionResult.PASS
         if (redstoneSword.redstoneSuitPower <= 0) {
             return ActionResult.PASS
         }
@@ -38,7 +38,7 @@ object RedstoneSwordItem : SwordItem(
         stack: ItemStack,
         context: TooltipContext,
         tooltip: MutableList<Text>,
-        type: TooltipType
+        type: TooltipType,
     ) {
         super.appendTooltip(stack, context, tooltip, type)
         RedstoneSuit.appendTooltip(stack, context, tooltip, type)

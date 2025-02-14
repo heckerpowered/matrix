@@ -26,5 +26,5 @@ fun interface LivingHurtCallback {
             }
     }
 
-    fun onHurt(event: LivingHurtEvent): ActionResult
+    fun onHurt(event: DamageAccumulator): ActionResult
 }

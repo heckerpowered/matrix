@@ -12,13 +12,7 @@ import net.minecraft.network.packet.s2c.play.EntityStatusEffectS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 
-class CrippleMovementMagic :
-    Magic(
-        MatrixLanguage.magicCrippleMovement,
-        6,
-        MatrixLanguage.magicCrippleMovementDescription,
-        2
-    ) {
+object CrippleMovementMagic : Magic(MatrixLanguage.magicCrippleMovement, 6, MatrixLanguage.magicCrippleMovementDescription, 2) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         if (target is PlayerEntity) {
             target.addStatusEffect(StatusEffectInstance(crippleMovementEffect, 20 * 3, 0))
@@ -31,20 +25,14 @@ class CrippleMovementMagic :
 
         val server = target.world.server ?: return
         for (serverPlayer in server.playerManager.playerList) {
-            serverPlayer.networkHandler.sendPacket(
-                EntityStatusEffectS2CPacket(
-                    target.id,
-                    target.getStatusEffect(crippleMovementEffect),
-                    false
-                )
-            )
+            serverPlayer.networkHandler.sendPacket(EntityStatusEffectS2CPacket(target.id, target.getStatusEffect(crippleMovementEffect), false))
         }
     }
 
     override fun availableStatus(
         player: PlayerEntity,
         target: LivingEntity?,
-        sequence: ChannelSequence?
+        sequence: ChannelSequence?,
     ): MagicAvailableStatus {
         if (target?.isInvulnerableToEffect(crippleMovementEffect) == true) {
             return MagicAvailableStatus.TARGET_IMMUNE

@@ -6,12 +6,7 @@ import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-class HealthStealMagic : Magic(
-    MatrixLanguage.magicHealthSteal,
-    8,
-    MatrixLanguage.magicHealthStealDescription,
-    20
-) {
+object HealthStealMagic : Magic(MatrixLanguage.magicHealthSteal, 8, MatrixLanguage.magicHealthStealDescription, 20) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         if (player == null) {
             return

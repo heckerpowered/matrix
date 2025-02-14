@@ -179,23 +179,6 @@ class ChannelSequence(
     val manaCost
         get() = magics.sumOf { it.cost }
 
-    constructor(player: ServerPlayerEntity, target: LivingEntity, magicIndices: IntArray) :
-            this(
-                player,
-                player.uuid,
-                target,
-                magicIndices.map { MagicManager.getMagic(player, it)!! }
-                    .map {
-                        val channelSequence = player.getChannelSequence(target)
-                        val channelTime = it.getChannelTime(player, target, channelSequence)
-                        val cost = it.getCost(player, target, channelSequence)
-                        ChannelingMagic(
-                            it, 0, channelTime, cost
-                        )
-                    }
-                    .toMutableList()
-            )
-
     constructor(target: LivingEntity) : this(null, UUID(0L, 0L), target, mutableListOf())
 
     fun sequencedBefore(magic: Magic): Boolean {

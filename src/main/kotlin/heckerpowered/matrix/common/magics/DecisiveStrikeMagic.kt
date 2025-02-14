@@ -8,12 +8,7 @@ import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-object DecisiveStrikeMagic : Magic(
-    MatrixLanguage.magicDecisiveStrike,
-    15,
-    MatrixLanguage.magicDecisiveStrikeDescription,
-    20
-) {
+object DecisiveStrikeMagic : Magic(MatrixLanguage.magicDecisiveStrike, 15, MatrixLanguage.magicDecisiveStrikeDescription, 20) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         val damageSource = if (sequence.sequencedAfter<MemoryEraseMagic>()) {
             target.damageSources.generic()
@@ -39,11 +34,7 @@ object DecisiveStrikeMagic : Magic(
         player?.addEnchantedHitParticles(target)
     }
 
-    override fun availableStatus(
-        player: PlayerEntity,
-        target: LivingEntity?,
-        sequence: ChannelSequence?,
-    ): MagicAvailableStatus {
+    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
         val damageSource = if (sequence?.sequencedAfter<MemoryEraseMagic>() == true) {
             player.damageSources.magic()
         } else {

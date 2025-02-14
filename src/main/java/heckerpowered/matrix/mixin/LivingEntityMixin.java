@@ -135,25 +135,22 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
     private void damage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
-        if (source.getAttacker() instanceof final LivingEntity attacker) {
-            final var damageAccumulator = new DamageAccumulator(attacker, self(), source, amount, .0, 1.0);
+        final var attacker = source.getAttacker() instanceof LivingEntity ? (LivingEntity) source.getAttacker() : null;
+        final var damageAccumulator = new DamageAccumulator(attacker, self(), source, amount, .0, 1.0, false);
+        if (attacker != null) {
             final var result = LivingAttackCallback.event.invoker().onAttack(damageAccumulator);
             if (result == ActionResult.FAIL) {
                 cir.setReturnValue(false);
                 return;
             }
-
-            sourceReference.set(damageAccumulator.getDamageSource());
-            amountReference.set((float) damageAccumulator.accumulateDamage());
         }
-        final var livingHurtEvent = new LivingHurtEvent(self(), sourceReference.get(), amountReference.get());
-        final var result = LivingHurtCallback.event.invoker().onHurt(livingHurtEvent);
+        final var result = LivingHurtCallback.event.invoker().onHurt(damageAccumulator);
         if (result == ActionResult.FAIL) {
             cir.setReturnValue(false);
         }
 
-        sourceReference.set(livingHurtEvent.getDamageSource());
-        amountReference.set(livingHurtEvent.getAmount());
+        sourceReference.set(damageAccumulator.getDamageSource());
+        amountReference.set((float) damageAccumulator.accumulateDamage());
     }
 
     @Inject(method = "applyDamage", at = @At("HEAD"), cancellable = true)

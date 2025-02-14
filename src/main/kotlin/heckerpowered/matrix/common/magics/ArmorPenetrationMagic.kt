@@ -10,25 +10,12 @@ import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-class ArmorPenetrationMagic :
-    Magic(MatrixLanguage.magicArmorPenetrationMagic, 8, MatrixLanguage.magicArmorPenetrationMagicDescription, 8) {
+object ArmorPenetrationMagic : Magic(MatrixLanguage.magicArmorPenetrationMagic, 8, MatrixLanguage.magicArmorPenetrationMagicDescription, 8) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
-        target.addStatusEffect(
-            StatusEffectInstance(
-                armorPenetrationEffect,
-                200,
-                1,
-                false,
-                false
-            )
-        )
+        target.addStatusEffect(StatusEffectInstance(armorPenetrationEffect, 200, 1, false, false))
     }
 
-    override fun availableStatus(
-        player: PlayerEntity,
-        target: LivingEntity?,
-        sequence: ChannelSequence?
-    ): MagicAvailableStatus {
+    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
         if (target?.isInvulnerableToEffect(armorPenetrationEffect) == true) {
             return MagicAvailableStatus.TARGET_IMMUNE
         }

@@ -8,28 +8,9 @@ import heckerpowered.matrix.common.persistent.mana
 import heckerpowered.matrix.common.persistent.maxMana
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.entity.player.PlayerEntity
 
 object MagicManager {
     private val magics = mutableMapOf<Int, Magic>()
-
-    fun getMagic(player: PlayerEntity, index: Int): Magic? {
-        return when (index) {
-            1 -> TargetPositioningMagic()
-            2 -> DecisiveStrikeMagic
-            3 -> HealthStealMagic()
-            4 -> ManaOverloadMagic()
-            5 -> ExplosionMagic()
-            6 -> KillMagic()
-            7 -> SculkCatalystMagic()
-            8 -> IgniteMagic()
-            9 -> BreakingBadMagic()
-            10 -> CrippleMovementMagic()
-            11 -> MemoryEraseMagic()
-            12 -> SpreadMagic()
-            else -> null
-        }
-    }
 
     fun getRegisteredMagics(): List<Magic> {
         return magics.values.toList()
@@ -48,23 +29,24 @@ object MagicManager {
     }
 
     private fun registerMagics() {
-        registerMagic(TargetPositioningMagic())
+        registerMagic(TargetPositioningMagic)
         registerMagic(DecisiveStrikeMagic)
-        registerMagic(HealthStealMagic())
-        registerMagic(ManaOverloadMagic())
-        registerMagic(ExplosionMagic())
-        registerMagic(KillMagic())
-        registerMagic(SculkCatalystMagic())
-        registerMagic(IgniteMagic())
-        registerMagic(BreakingBadMagic())
-        registerMagic(CrippleMovementMagic())
-        registerMagic(MemoryEraseMagic())
-        registerMagic(SpreadMagic())
-        registerMagic(SystemCrashMagic())
-        registerMagic(LightningBoltMagic())
-        registerMagic(TeleportMagic())
-        registerMagic(ArmorPenetrationMagic())
-        registerMagic(SonicBoomMagic())
+        registerMagic(HealthStealMagic)
+        registerMagic(ManaOverloadMagic)
+        registerMagic(ExplosionMagic)
+        registerMagic(KillMagic)
+        registerMagic(SculkCatalystMagic)
+        registerMagic(IgniteMagic)
+        registerMagic(BreakingBadMagic)
+        registerMagic(CrippleMovementMagic)
+        registerMagic(MemoryEraseMagic)
+        registerMagic(SpreadMagic)
+        registerMagic(SystemCrashMagic)
+        registerMagic(LightningBoltMagic)
+        registerMagic(TeleportMagic)
+        registerMagic(ArmorPenetrationMagic)
+        registerMagic(SonicBoomMagic)
+        registerMagic(BruteForceMagic)
     }
 
     fun onInitialize() {

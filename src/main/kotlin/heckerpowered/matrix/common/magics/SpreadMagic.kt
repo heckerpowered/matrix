@@ -8,12 +8,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-class SpreadMagic : Magic(
-    MatrixLanguage.magicSpread,
-    9,
-    MatrixLanguage.magicSpreadDescription,
-    9
-) {
+object SpreadMagic : Magic(MatrixLanguage.magicSpread, 9, MatrixLanguage.magicSpreadDescription, 9) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         if (player == null) {
             return

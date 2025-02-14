@@ -46,12 +46,16 @@ class SimpleDoubleAnimation(
     var animatedValue: Double
         get() = doubleAnimation.animatedValue
         set(value) {
+            doubleAnimation.currentValue = value
             from = value
             to = value
         }
 
     val progress: Double
         get() = doubleAnimation.progress
+
+    val isAnimating: Boolean
+        get() = doubleAnimation.isAnimating
 
     fun start() {
         animationClock.start()
