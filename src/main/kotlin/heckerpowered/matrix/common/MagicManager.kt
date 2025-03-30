@@ -1,16 +1,25 @@
 package heckerpowered.matrix.common
 
+import heckerpowered.matrix.common.enchantment.getEnchantmentLevel
+import heckerpowered.matrix.common.enchantment.manaOverflow
+import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.magics.*
 import heckerpowered.matrix.common.network.SyncManaPayload
-import heckerpowered.matrix.common.persistent.ManaState
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.mana
 import heckerpowered.matrix.common.persistent.maxMana
+import heckerpowered.matrix.common.persistent.wizardHelmet
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.minecraft.entity.EquipmentSlot
+import net.minecraft.entity.player.PlayerEntity
 
 object MagicManager {
     private val magics = mutableMapOf<Int, Magic>()
+
+    init {
+        registerMagics()
+    }
 
     fun getRegisteredMagics(): List<Magic> {
         return magics.values.toList()
@@ -47,10 +56,21 @@ object MagicManager {
         registerMagic(ArmorPenetrationMagic)
         registerMagic(SonicBoomMagic)
         registerMagic(BruteForceMagic)
+        registerMagic(PullMagic)
+        registerMagic(LevitationMagic)
+    }
+
+    fun getMagics(player: PlayerEntity): List<Magic> {
+        val itemStack = player.getEquippedStack(EquipmentSlot.HEAD)
+        val item = itemStack.item
+        if (item !is WizardHelmet) {
+            return listOf()
+        }
+
+        return item.getMagics(player, itemStack)
     }
 
     fun onInitialize() {
-        registerMagics()
         ServerTickEvents.END_SERVER_TICK.register { it ->
             it.playerManager.playerList.forEach {
                 if (it.isInfiniteMana) {
@@ -62,13 +82,21 @@ object MagicManager {
             }
 
             it.playerManager.playerList.forEach {
-                val manaState = ManaState.getPlayerState(it)
-                manaState.mana += 5
-                if (manaState.mana > manaState.maxMana) {
-                    manaState.mana = manaState.maxMana
+                val wizardHelmet = it.wizardHelmet
+                val item = wizardHelmet.item
+                if (item is WizardHelmet) {
+                    it.maxMana = item.getMaxMana(it, wizardHelmet)
+                } else {
+                    it.maxMana = .0
                 }
 
-                ServerPlayNetworking.send(it, SyncManaPayload(manaState.mana, manaState.maxMana))
+                var manaRegen = 1.0
+                val manaOverflowLevel = wizardHelmet.getEnchantmentLevel(manaOverflow)
+                if (manaOverflowLevel > 0) {
+                    manaRegen += manaRegen * (manaOverflowLevel * 0.3)
+                }
+                it.mana += manaRegen
+                ServerPlayNetworking.send(it, SyncManaPayload(it.mana, it.maxMana))
             }
         }
     }

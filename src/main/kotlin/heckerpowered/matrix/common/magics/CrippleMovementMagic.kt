@@ -24,8 +24,9 @@ object CrippleMovementMagic : Magic(MatrixLanguage.magicCrippleMovement, 6, Matr
         }
 
         val server = target.world.server ?: return
+        val statusEffectInstance = target.getStatusEffect(crippleMovementEffect) ?: return
         for (serverPlayer in server.playerManager.playerList) {
-            serverPlayer.networkHandler.sendPacket(EntityStatusEffectS2CPacket(target.id, target.getStatusEffect(crippleMovementEffect), false))
+            serverPlayer.networkHandler.sendPacket(EntityStatusEffectS2CPacket(target.id, statusEffectInstance, false))
         }
     }
 

@@ -1,11 +1,12 @@
 package heckerpowered.matrix.common.effect
 
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.event.EntityTickCallback
 import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.attribute.EntityAttributeModifier
+import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectCategory
-import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.entity.effect.StatusEffects
 import net.minecraft.sound.SoundEvents
 
 object AngeredEffect : StatusEffect(
@@ -14,6 +15,10 @@ object AngeredEffect : StatusEffect(
 ) {
     init {
         EntityTickCallback.event.register(::onEntityTick)
+
+        addAttributeModifier(
+            EntityAttributes.GENERIC_MOVEMENT_SPEED, Matrix.identifier("angered"), 0.2, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
+        )
     }
 
     private fun onEntityTick(entity: LivingEntity) {
@@ -34,7 +39,5 @@ object AngeredEffect : StatusEffect(
             .filter { !it.value.effectType.value().isBeneficial }
             .map { it.key }
             .forEach { entity.removeStatusEffect(it) }
-        val angeredEffectInstance = entity.getStatusEffect(angeredEffect) ?: return
-        entity.addStatusEffect(StatusEffectInstance(StatusEffects.DARKNESS, angeredEffectInstance.duration, 0))
     }
 }

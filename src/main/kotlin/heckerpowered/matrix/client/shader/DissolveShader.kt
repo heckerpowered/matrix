@@ -1,12 +1,12 @@
 package heckerpowered.matrix.client.shader
 
 import com.mojang.blaze3d.platform.GlConst
-import com.mojang.blaze3d.platform.GlStateManager
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.texture.ResourceTexture
 import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL31
 
 class DissolveShader : AutoCloseable {
     private val shader = Shader(
@@ -16,8 +16,8 @@ class DissolveShader : AutoCloseable {
             modelViewMatrixProvider,
             projectionMatrixProvider,
             UniformProvider("noiseTexture") { pointer ->
-                GlStateManager._activeTexture(GlConst.GL_TEXTURE0)
-                GlStateManager._bindTexture(noiseTexture)
+                GL31.glActiveTexture(GlConst.GL_TEXTURE0)
+                GL31.glBindTexture(GL31.GL_TEXTURE_2D, noiseTexture)
                 GL20.glUniform1i(pointer, 0)
             },
             UniformProvider("dissolveFactor") { pointer ->
@@ -28,7 +28,7 @@ class DissolveShader : AutoCloseable {
 
     companion object {
         private val perlinNoiseTexture = ResourceTexture(Matrix.identifier("textures/perlin_noise.png"))
-        private var perlinNoiseTextureId: Int = 0
+        var perlinNoiseTextureId: Int = 0
         private fun loadPerlinNoiseTexture() {
             perlinNoiseTexture.load(minecraft.resourceManager)
             perlinNoiseTextureId = perlinNoiseTexture.glId
@@ -41,6 +41,7 @@ class DissolveShader : AutoCloseable {
 
     var noiseTexture: Int = perlinNoiseTextureId
     var dissolveFactor: Float = 1.0f
+    val normalTexture: Int = 0
 
     fun enableShader() {
         shader.enableShader()

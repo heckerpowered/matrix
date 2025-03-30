@@ -31,7 +31,7 @@ object RedstoneSwordItem : SwordItem(
         damageAccumulator.baseDamageBonus += 2
         --redstoneSword.redstoneSuitPower
 
-        return ActionResult.SUCCESS
+        return ActionResult.PASS
     }
 
     override fun appendTooltip(

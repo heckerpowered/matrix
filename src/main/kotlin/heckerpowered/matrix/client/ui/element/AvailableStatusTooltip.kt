@@ -5,7 +5,7 @@ import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
-import heckerpowered.matrix.client.shader.UIBlurShader
+import heckerpowered.matrix.client.shader.BlurRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
@@ -45,9 +45,9 @@ object AvailableStatusTooltip {
             maxPoint.x.toInt(),
             maxPoint.y.toInt()
         )
-        UIBlurShader.blurTextureRenderShader.enableShader()
-        UIBlurShader.renderQuad()
-        UIBlurShader.blurTextureRenderShader.disableShader()
+        BlurRenderer.blurTextureRenderShader.enableShader()
+        BlurRenderer.renderQuad()
+        BlurRenderer.blurTextureRenderShader.disableShader()
         drawContext.disableScissor()
 
         val backgroundColor = Color(128, 0, 0, (128 * opacityAnimation.animatedValue).toInt())

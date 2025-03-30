@@ -37,7 +37,7 @@ object RedstoneLeggingsItem : ArmorItem(
             powerLeakage(entity)
         }
 
-        return ActionResult.SUCCESS
+        return ActionResult.PASS
     }
 
     private fun powerLeakage(entity: LivingEntity) {

@@ -1,12 +1,18 @@
 package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
-import heckerpowered.matrix.common.enchantment.witherArmorEnchantmentKey
+import heckerpowered.matrix.common.enchantment.*
 import heckerpowered.matrix.common.item.*
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider.TranslationBuilder
 import net.minecraft.registry.RegistryWrapper
 import java.util.concurrent.CompletableFuture
+
+fun TranslationBuilder.addMagic(key: String, name: String) {
+    add(key, name)
+    add("enchantment.$key", name)
+}
 
 class MatrixModEnglishLangProvider(
     dataOutput: FabricDataOutput,
@@ -18,112 +24,148 @@ class MatrixModEnglishLangProvider(
     ) {
         translationBuilder.add(MatrixLanguage.mana.key, "Mana")
 
-        translationBuilder.add(MatrixLanguage.magicTargetPositioning.key, "Target Positioning")
+        translationBuilder.addMagic(MatrixLanguage.magicTargetPositioning.key, "Target Positioning")
         translationBuilder.add(
             MatrixLanguage.magicTargetPositioningDescription.key,
-            "Highlights the target and all entities within a 24-meter radius for 10 seconds.\n\nCannot be tracked."
+            "Highlights the target and all entities within a §a24§r-meter radius for §a10§r seconds.\n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicDecisiveStrike.key, "Decisive Strike")
+        translationBuilder.addMagic(MatrixLanguage.magicDecisiveStrike.key, "Decisive Strike")
         translationBuilder.add(
             MatrixLanguage.magicDecisiveStrikeDescription.key,
-            "Deals 6 damage to the target, adds extra damage based on the player's base attack damage, and inflicts additional damage equal to 14% of the target's maximum health.\n\nIncreases damage by 1% per magics' cost in the channel queue, up to 400%.\n\nRemoves the target's invincibility frames upon being hit.\n\nTrackable."
+            "Deals §a6§r damage to the target, adds extra damage based on the player's base attack damage, and inflicts additional damage equal to §a14§r% of the target's maximum health.\n\nIncreases damage by §a1§r% per magics' cost in the channel queue, up to §a400§r%.\n\nRemoves the target's invincibility frames upon being hit.\n\nTrackable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicManaOverload.key, "Mana Overload")
+        translationBuilder.addMagic(MatrixLanguage.magicManaOverload.key, "Mana Overload")
         translationBuilder.add(
             MatrixLanguage.magicManaOverloadDescription.key,
-            "Marks a target for 10 seconds. Killing the target during the mark duration restores 20 mana points.\n\nCannot be tracked."
+            "Marks a target for §a10§r seconds. Killing the target during the mark duration restores §a20§r mana.\n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicHealthSteal.key, "Life Steal")
+        translationBuilder.addMagic(MatrixLanguage.magicHealthSteal.key, "Life Steal")
         translationBuilder.add(
             MatrixLanguage.magicHealthStealDescription.key,
-            "Converts 50% of the target's maximum health into additional health for the player.\n\n50% of the converted value is used to restore health, hunger, and saturation.\n\nCannot be tracked."
+            "Converts §a50§r% of the target's maximum health into additional health for the player.\n\n§a50§r% of the converted value is used to restore health, hunger, and saturation.\n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicExplosion.key, "Explosion")
+        translationBuilder.addMagic(MatrixLanguage.magicExplosion.key, "Explosion")
         translationBuilder.add(
             MatrixLanguage.magicExplosionDescription.key,
-            "Create an explosion at the selected target's location.\n\nTrackable."
+            "Create an§c explosion§r at the selected target's location.\n\nTrackable."
         )
 
-        translationBuilder.add(MatrixLanguage.killMagic.key, "Complete Erasure")
+        translationBuilder.addMagic(MatrixLanguage.killMagic.key, "Complete Erasure")
         translationBuilder.add(
             MatrixLanguage.killMagicDescription.key, "Instantly kill the target.\n\nTrackable."
         )
 
-        translationBuilder.add(MatrixLanguage.sculkCatalystMagic.key, "Sculk Catalyst")
+        translationBuilder.addMagic(MatrixLanguage.sculkCatalystMagic.key, "Sculk Catalyst")
         translationBuilder.add(
             MatrixLanguage.sculkCatalystMagicDescription.key,
             "After a brief delay, deals massive damage to the target. If the target dies, the magic spreads to the next entity within 20 meters, consuming mana automatically. Each spread reduces the required time, increases the mana cost, and deals more damage. Automatically highlights the spread target."
         )
 
-        translationBuilder.add(MatrixLanguage.magicMemoryErase.key, "Memory Erasure")
+        translationBuilder.addMagic(MatrixLanguage.magicMemoryErase.key, "Memory Erasure")
         translationBuilder.add(
             MatrixLanguage.magicMemoryEraseDescription.key,
-            "Forces the target to forget the currently locked target.\n\nCannot be tracked."
+            "Forces the target to forget the currently locked target.\n\nMagics queued after this magic Untraceable. \n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicIgniteMagic.key, "Ignite")
+        translationBuilder.addMagic(MatrixLanguage.magicIgniteMagic.key, "Ignite")
         translationBuilder.add(
             MatrixLanguage.magicIgniteMagicDescription.key,
-            "Ignites the target for 10 seconds, dealing continuous damage.\n\nIf the target is poisoned, it will explode.\n\nTrackable when causing an explosion."
+            "§cIgnites§r the target for §a10§r seconds, dealing continuous damage.\n\nIf the target is §2poisoned§r, it will§c explode§r.\n\nTrackable when causing an§c explosion§r."
         )
 
-        translationBuilder.add(MatrixLanguage.magicBreakingBad.key, "Breaking Bad")
+        translationBuilder.addMagic(MatrixLanguage.magicBreakingBad.key, "Breaking Bad")
         translationBuilder.add(
             MatrixLanguage.magicBreakingBadDescription.key,
             "Poisons and blinds the target for 10 seconds, dealing continuous damage.\n\nIf the target is ignited, it will explode.\n\nTrackable when causing an explosion."
         )
 
-        translationBuilder.add(MatrixLanguage.magicSpread.key, "Contagion")
+        translationBuilder.addMagic(MatrixLanguage.magicSpread.key, "Contagion")
         translationBuilder.add(
             MatrixLanguage.magicSpreadDescription.key,
-            "All magics queued after this one will spread to creatures within 24 meters.\n\nCannot spread.\n\nCannot be tracked."
+            "All magics queued after this one will spread to creatures within §a24§r meters.\n\nCannot spread.\n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicCrippleMovement.key, "Cripple Movement")
+        translationBuilder.addMagic(MatrixLanguage.magicCrippleMovement.key, "Cripple Movement")
         translationBuilder.add(
             MatrixLanguage.magicCrippleMovementDescription.key,
-            "Disables the target's teleportation ability and hinders their movement for 10 seconds.\n\nCannot be tracked."
+            "Disables the target's teleportation ability and hinders their movement for §a10§r seconds.\n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicSystemCrash.key, "System Crash")
+        translationBuilder.addMagic(MatrixLanguage.magicSystemCrash.key, "System Crash")
         translationBuilder.add(
             MatrixLanguage.magicSystemCrashDescription.key,
-            "Effective only on players, crashes the target player's system.\n\nCannot be tracked."
+            "Effective only on players, crashes the target player's system.\n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicLightningBoltMagic.key, "Lightning Whirlstrike")
+        translationBuilder.addMagic(MatrixLanguage.magicLightningBoltMagic.key, "Lightning Whirlstrike")
         translationBuilder.add(
             MatrixLanguage.magicLightningBoltMagicDescription.key,
-            "Summons lightning at the target's location.\n\nCannot be tracked."
+            """
+    Summons lightning at the target's location, with different colors having different effects.
+    
+    §4Red§r lightning deals §a400§r% damage to hit entities.
+    
+    §cOrange§r lightning removes all armor from hit entities for §a10§r seconds.
+    
+    §eYellow§r lightning highlights the hit entity. Regardless of the distance, immediately charges the held item and attacks the target once.
+    
+    §aGreen§r lightning heals you for 1 heart upon hitting and poisons the target for §a10§r seconds.
+    
+    §9Cyan§r lightning automatically channels "Cripple Movement" on the hit target without extra mana cost. For targets already affected, it also applies the §cExposed§r state for §a10§r seconds.
+    
+    §1Blue§r lightning channels this magic on the hit target.
+    
+    §dPurple§r lightning increases the area of effect by §a100§r%, causes small explosions on each hit, and applies the "Lightning Strike" status to the target for §a180§r seconds.
+    
+    White lightning has no special effect.
+    
+    Clear lightning instantly kills all hit entities.
+    
+    The extraction probability for clear lightning is §a0.6§r%, and the probabilities for all other colors are equally distributed.
+    Lightning summoned by the player behaves differently from natural lightning, such as not charging Creepers, damage not scaling with difficulty, and not triggering achievements.
+    When cast after "Memory Erasure," this magic will render any effects related to you invalid, such as preventing healing.
+    Continuous mana usage reduces mana consumption by §a20§r%, stackable up to §a80§r%.
+    
+    Untraceable.
+    """.trimIndent()
         )
 
-        translationBuilder.add(MatrixLanguage.magicArmorPenetrationMagic.key, "Armor Penetration")
+        translationBuilder.addMagic(MatrixLanguage.magicArmorPenetrationMagic.key, "Armor Penetration")
         translationBuilder.add(
             MatrixLanguage.magicArmorPenetrationMagicDescription.key,
-            "Reduces the target's armor and thoughness by 40% for 10 seconds.\n\nCannot be tracked."
+            "Reduces the target's §9armor§r and §9thoughness§r by §a40§r% for §a10§r seconds.\n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicTeleport.key, "Teleport")
+        translationBuilder.addMagic(MatrixLanguage.magicTeleport.key, "Teleport")
         translationBuilder.add(
             MatrixLanguage.magicTeleportDescription.key,
-            "Grants invisibility for 10 seconds and teleports to the target's location.\n\nCannot be tracked."
+            "Grants §9invisibility§r for §a10§r seconds and teleports to the target's location.\n\nUntraceable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicSonicBoom.key, "Sonic Shriek")
+        translationBuilder.addMagic(MatrixLanguage.magicSonicBoom.key, "Sonic Shriek")
         translationBuilder.add(
             MatrixLanguage.magicSonicBoomDescription.key,
-            "Channel a sonic boom, dealing 10 damage to the target.\n\nThe sonic boom ignores armor, any damage-reducing enchantments (e.g., Protection), and shield blocking. It does not trigger the Thorns enchantment, and its damage to witches is reduced by 85%.\n\nWither Armor can mitigate the damage caused by the sonic boom.\n\nTrackable."
+            "Channel a §9sonic boom§r, dealing §a10§r damage to the target.\n\nThe §9sonic boom§r ignores armor, any damage-reducing enchantments (e.g., Protection), and shield blocking. It does not trigger the Thorns enchantment, and its damage to §9witches§r is reduced by §a85§r%.\n\n§9Wither Armor§r can mitigate the damage caused by the §9sonic boom§r.\n\nTrackable."
         )
 
-        translationBuilder.add(MatrixLanguage.magicBruteForce.key, "Brute Force")
-        translationBuilder.add(MatrixLanguage.magicBruteForceDescription.key, "Expose the target for 10 seconds.\n\nEntities affected by the exposed effect take 100% additional damage, with each level further increasing the damage by 100%.\n\nCannot be tracked.")
+        translationBuilder.addMagic(MatrixLanguage.magicBruteForce.key, "Brute Force")
+        translationBuilder.add(MatrixLanguage.magicBruteForceDescription.key, "§cExpose§r the target for §a10§r seconds.\n\nEntities affected by the §cExposed§r effect take §a100§r% additional damage, with each level further increasing the damage by §a100§r%.\n\nUntraceable.")
 
-        translationBuilder.add(MatrixLanguage.magicBloodPact.key, "Blood Pact")
-        translationBuilder.add(MatrixLanguage.magicBloodPactDescription.key, "Curse the target, transferring 50% of the damage you take to the target, with no limit on the amount transferred.\n\nIf the target cannot withstand the transferred damage, the amount transferred will be reduced.\n\nIf multiple targets are cursed, they will all share the transferred damage.\n\nThe effect lasts as long as the curse remains.")
+        // translationBuilder.addMagic(MatrixLanguage.magicBloodPact.key, "Blood Pact")
+        // translationBuilder.add(MatrixLanguage.magicBloodPactDescription.key, "Curse the target, transferring §a50§r% of the damage you take to the target, with no limit on the amount transferred.\n\nIf the target cannot withstand the transferred damage, the amount transferred will be reduced.\n\nIf multiple targets are cursed, they will all share the transferred damage.\n\nThe effect lasts as long as the curse remains.")
+
+        translationBuilder.addMagic(MatrixLanguage.magicPull.key, "Invisible Hand")
+        translationBuilder.add(
+            MatrixLanguage.magicPullDescription.key,
+            "§cThe invisible hand exerts its force§r, pulling entities within §a6§r meters of the target to the target's location. §r\n\nUntraceable."
+        )
+
+        translationBuilder.addMagic(MatrixLanguage.magicLevitation.key, "Levitation")
+        translationBuilder.add(MatrixLanguage.magicLevitationDescription.key, "Levitate the target for 10 seconds.\n\nCan be stacked, with stacking increasing the effect level and resetting the duration, with no limit.\n\nUntraceable. ")
 
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "Overclock or Underclock Magic")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "Overclock or Underclock Mana")
@@ -144,8 +186,22 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(WitherArmorChargedEffect, "Wither Armor Charged")
         translationBuilder.add(WitherArmorEffect, "Wither Armor")
         translationBuilder.add(AngeredEffect, "Angered")
+        translationBuilder.add(BloodPactEffect, "Blood Pact")
+        translationBuilder.add(BorrowedTimeEffect, "Borrowed Time")
 
         translationBuilder.add(witherArmorEnchantmentKey, "Wither Armor")
+        translationBuilder.add(guaranteedEnchantmentKey, "Guaranteed")
+        translationBuilder.add(lastStandEnchantmentKey, "Last Stand")
+        translationBuilder.add(revivalEnchantmentKey, "Revival")
+        translationBuilder.add(secondWindEnchantmentKey, "Second Wind")
+        translationBuilder.add(proximatePropagationEnchantmentKey, "Proximate Propagation")
+        translationBuilder.add(manaOverflow, "Mana Overflow")
+        translationBuilder.add(manaRegeneration, "Mana Regeneration")
+        translationBuilder.add(wizardForce, "Wizard Force")
+        translationBuilder.add(bloodPact, "Blood Pact")
+        translationBuilder.add(magicShield, "Magic Shield")
+        translationBuilder.add(brutalStrength, "Brutal Strength")
+        translationBuilder.add(peakOverdrive, "Peak Overdrive")
 
         translationBuilder.add(WardenChestplateItem, "Sculk 'Warden' Chestplate")
         translationBuilder.add(
@@ -235,9 +291,29 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(WoodenLeggingsItem, "Wooden Leggings")
         translationBuilder.add(WoodenBootsItem, "Wooden Boots")
 
+        translationBuilder.add(WizardHelmetHacker, "Wizard 9000 'Hacker'")
+        translationBuilder.add(WizardHelmetBasic, "Wizard 1 'Basic Wizard Helmet'")
+        translationBuilder.add(WizardHelmetDoom, "Wizard 2 'Doom'")
+        translationBuilder.add(WizardHelmetRuin, "Wizard 3 'Ruin'")
+        translationBuilder.add(WizardHelmetApogee, "Wizard 4 'Apogee'")
+        translationBuilder.add(WizardHelmetWarpDancer, "Wizard 5 'Warp Dancer'")
+
+        translationBuilder.add(LightningChestplateBorrowedTime, "Lightning 1 'Borrowed Time'")
+
         // Potions
         translationBuilder.add("item.minecraft.potion.effect.angered", "Potion of Angered")
-        translationBuilder.add("item.minecraft.slash_potion.effect.angered", "Slash Potion of Angered")
+        translationBuilder.add("item.minecraft.splash_potion.effect.angered", "Slash Potion of Angered")
         translationBuilder.add("item.minecraft.lingering_potion.effect.angered", "Lingering Potion of Angered")
+
+        translationBuilder.add("key.categories.matrix", "Matrix")
+        translationBuilder.add("key.matrix.use_magic", "Channel magic")
+        translationBuilder.add("key.matrix.next_magic", "Next magic")
+        translationBuilder.add("key.matrix.previous_magic", "Previous magic")
+
+        translationBuilder.add(MatrixLanguage.manaCostReduced.key, "Mana cost reduced by")
+        translationBuilder.add(MatrixLanguage.manaCostIncreased.key, "Mana cost increased by")
+
+        translationBuilder.add(MatrixLanguage.borrowedTimeChargeDescription.key, "Borrowed Time Charge: ")
+        translationBuilder.add(MatrixLanguage.wizardHelmetLoadDescription.key, "Current load: ")
     }
 }

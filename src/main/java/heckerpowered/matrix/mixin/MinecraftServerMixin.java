@@ -21,7 +21,7 @@ class MinecraftServerMixin implements MatrixMinecraftServer {
     long matrixTickStartTimeNanos;
     @Unique
     long matrixTickEndTimeNanos;
-    
+
     @Final
     @Shadow
     private ServerTickManager tickManager;

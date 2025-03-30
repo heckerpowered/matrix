@@ -1,0 +1,40 @@
+package heckerpowered.matrix.common.enchantment
+
+import heckerpowered.matrix.common.effect.bloodPactActive
+import heckerpowered.matrix.common.event.DamageAccumulator
+import heckerpowered.matrix.common.event.LivingAttackCallback
+import heckerpowered.matrix.common.persistent.wizardHelmet
+import net.minecraft.enchantment.EnchantmentHelper
+import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.registry.RegistryKeys
+import net.minecraft.util.ActionResult
+
+object PeakOverdriveEnchantment {
+    fun onInitialize() {
+        LivingAttackCallback.event.register(::onLivingAttack)
+    }
+
+    private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
+        val attacker = accumulator.attacker!!
+        val target = accumulator.target
+        if (attacker !is PlayerEntity || !attacker.bloodPactActive) {
+            return ActionResult.PASS
+        }
+
+        val equippedHelmet = attacker.wizardHelmet
+        if (equippedHelmet.isEmpty) {
+            return ActionResult.PASS
+        }
+
+        val registryManager = attacker.world.registryManager
+        val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
+        val enchantmentEntry = registryWrapper.getOrThrow(peakOverdrive)
+        val enchantmentLevel = EnchantmentHelper.getLevel(enchantmentEntry, equippedHelmet)
+        if (enchantmentLevel <= 0) {
+            return ActionResult.PASS
+        }
+
+        accumulator.damageMultiplier += 1.5
+        return ActionResult.PASS
+    }
+}

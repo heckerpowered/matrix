@@ -23,8 +23,9 @@ object SpreadMagic : Magic(MatrixLanguage.magicSpread, 9, MatrixLanguage.magicSp
                 return@forEach
             }
             for (magic in magics) {
-                ChannelSequence.channelMagic(magic, player, it, false)
-                ServerPlayNetworking.send(player, ChannelMagicPayload(magic.id, it.id))
+                if (ChannelSequence.channelMagic(magic, player, it)) {
+                    ServerPlayNetworking.send(player, ChannelMagicPayload(magic.id, it.id))
+                }
             }
         }
     }

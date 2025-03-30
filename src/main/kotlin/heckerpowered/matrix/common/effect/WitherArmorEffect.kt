@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.effect
 
+import heckerpowered.matrix.client.player
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectCategory
@@ -10,16 +11,18 @@ object WitherArmorEffect : StatusEffect(
 ) {
     override fun onApplied(entity: LivingEntity, amplifier: Int) {
         super.onApplied(entity, amplifier)
-        val newAbsorptionAmount = entity.maxHealth * (0.05F + (amplifier + 1) * 0.05F)
-        val maxAbsorptionAmount = entity.maxHealth * 0.5F
-        if (entity.absorptionAmount >= maxAbsorptionAmount) {
-            return
-        }
-        if (entity.absorptionAmount + newAbsorptionAmount >= maxAbsorptionAmount) {
-            entity.absorptionAmount = maxAbsorptionAmount
+        if (entity.world.isClient) {
             return
         }
 
-        entity.absorptionAmount += newAbsorptionAmount
+        // Ensure the new absorption amount will not exceed the maximum health of the entity
+        // and not less than the current absorption amount. Do not use .coerceIn(), the size
+        // relationship between the two values is unknown.
+        val maxAbsorptionAmount = entity.maxHealth
+        val newAbsorptionAmount = (entity.absorptionAmount + entity.maxHealth * (0.05F + (amplifier + 1) * 0.05F))
+            .coerceAtMost(maxAbsorptionAmount)
+            .coerceAtLeast(player.absorptionAmount)
+
+        entity.setAbsorptionAmountUnclamped(newAbsorptionAmount)
     }
 }

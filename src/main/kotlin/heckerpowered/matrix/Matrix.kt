@@ -1,10 +1,12 @@
 package heckerpowered.matrix
 
 import heckerpowered.matrix.common.MagicManager
+import heckerpowered.matrix.common.MatrixCommonProxy
 import heckerpowered.matrix.common.MatrixServerPlayNetworking
 import heckerpowered.matrix.common.command.MatrixCommands
 import heckerpowered.matrix.common.effect.MatrixStatusEffects
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments
+import heckerpowered.matrix.common.entity.MatrixEntityType
 import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.MatrixItemGroups
 import heckerpowered.matrix.common.item.MatrixItems
@@ -20,6 +22,8 @@ object Matrix : ModInitializer {
     const val MOD_ID = "matrix"
     private val logger = LoggerFactory.getLogger("matrix")
 
+    var proxy = MatrixCommonProxy()
+
     override fun onInitialize() {
         MatrixServerPlayNetworking.onInitialize()
         MagicManager.onInitialize()
@@ -31,6 +35,7 @@ object Matrix : ModInitializer {
         MatrixItemGroups.onInitialize()
         MatrixRecipeSerializer.onInitialize()
         MatrixPotions.onInitialize()
+        MatrixEntityType.onInitialize()
         ChannelSequence.onInitialize()
     }
 

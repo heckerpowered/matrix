@@ -10,6 +10,7 @@ import net.minecraft.item.tooltip.TooltipType
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
+import net.minecraft.util.Rarity
 
 object WardenChestplateItem : ArmorItem(
     wardenArmorMaterial,
@@ -17,6 +18,7 @@ object WardenChestplateItem : ArmorItem(
     Settings()
         .fireproof()
         .maxDamage(Type.CHESTPLATE.getMaxDamage(37))
+        .rarity(Rarity.EPIC)
 ) {
     init {
         LivingAttackCallback.event.register(::onLivingAttack)

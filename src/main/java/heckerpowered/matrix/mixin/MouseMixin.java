@@ -18,30 +18,18 @@ class MouseMixin {
         }
         final var minecraft = MinecraftClient.getInstance();
         if (vertical < 0) {
-            var overclocking = false;
-            if (minecraft.mouse.wasLeftButtonClicked()) {
-                MatrixHud.underclockMagic();
-                overclocking = true;
-            }
-            if (minecraft.mouse.wasRightButtonClicked()) {
-                MatrixHud.underclockMana();
-                overclocking = true;
-            }
-            if (!overclocking) {
+            if (MatrixHud.isPressingRightMouseButton) {
+                MatrixHud.previousZoomLevel();
+                ci.cancel();
+            } else {
                 MatrixHud.nextMagic();
                 ci.cancel();
             }
         } else if (vertical > 0) {
-            var underclocking = false;
-            if (minecraft.mouse.wasLeftButtonClicked()) {
-                MatrixHud.overclockMagic();
-                underclocking = true;
-            }
-            if (minecraft.mouse.wasRightButtonClicked()) {
-                MatrixHud.overclockMana();
-                underclocking = true;
-            }
-            if (!underclocking) {
+            if (MatrixHud.isPressingRightMouseButton) {
+                MatrixHud.nextZoomLevel();
+                ci.cancel();
+            } else {
                 MatrixHud.previousMagic();
                 ci.cancel();
             }
@@ -51,5 +39,12 @@ class MouseMixin {
     @Inject(method = "updateMouse", at = @At("TAIL"))
     private void updateMouse(double timeDelta, CallbackInfo ci) {
         AimAssist.onMouseUpdate(timeDelta);
+    }
+
+    @Inject(method = "onMouseButton", at = @At("HEAD"), cancellable = true)
+    private void onMouseButton(long window, int button, int action, int mods, CallbackInfo ci) {
+        if (MatrixHud.onMouseButton(window, button, action, mods)) {
+            ci.cancel();
+        }
     }
 }

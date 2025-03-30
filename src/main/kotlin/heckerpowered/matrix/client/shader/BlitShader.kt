@@ -22,6 +22,12 @@ open class BlitShader(vertex: String, fragment: String, uniform: Array<UniformPr
             this.buffer.upload(buffer.end())
             VertexBuffer.unbind()
         }
+
+        fun blit() {
+            buffer.bind()
+            buffer.draw()
+            VertexBuffer.unbind()
+        }
     }
 
     fun blit() {

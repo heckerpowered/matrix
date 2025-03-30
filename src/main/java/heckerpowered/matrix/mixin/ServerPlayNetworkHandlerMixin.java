@@ -1,5 +1,6 @@
 package heckerpowered.matrix.mixin;
 
+import heckerpowered.matrix.common.item.LightningChestplateBorrowedTimeKt;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
 import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -20,7 +21,9 @@ class ServerPlayNetworkHandlerMixin {
 
     @Inject(method = "onPlayerInteractItem", at = @At("TAIL"))
     private void onPlayerInteractItem(PlayerInteractItemC2SPacket packet, CallbackInfo ci) {
-        if (WardenChestplateItem.isAngered(player) && player.isUsingItem()) {
+        final var instantUse = WardenChestplateItem.isAngered(player) ||
+                LightningChestplateBorrowedTimeKt.getBorrowedTimeActive(player);
+        if (instantUse && player.isUsingItem()) {
             final var activeItem = player.getActiveItem();
             player.itemUseTimeLeft = 0;
             player.stopUsingItem();

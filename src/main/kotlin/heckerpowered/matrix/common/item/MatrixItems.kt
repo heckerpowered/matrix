@@ -59,6 +59,15 @@ object MatrixItems {
         WoodenChestplateItem,
         WoodenLeggingsItem,
         WoodenBootsItem,
+
+        WizardHelmetHacker,
+        WizardHelmetBasic,
+        WizardHelmetDoom,
+        WizardHelmetRuin,
+        WizardHelmetApogee,
+        WizardHelmetWarpDancer,
+
+        LightningChestplateBorrowedTime
     )
 
     private fun register(item: Item, name: String): Item {
@@ -119,5 +128,14 @@ object MatrixItems {
         register(WoodenChestplateItem, "wooden_chestplate")
         register(WoodenLeggingsItem, "wooden_leggings")
         register(WoodenBootsItem, "wooden_boots")
+
+        register(WizardHelmetBasic, "wizard_helmet_basic")
+        register(WizardHelmetHacker, "wizard_helmet_hacker")
+        register(WizardHelmetDoom, "wizard_helmet_doom")
+        register(WizardHelmetRuin, "wizard_helmet_ruin")
+        register(WizardHelmetApogee, "wizard_helmet_apogee")
+        register(WizardHelmetWarpDancer, "wizard_helmet_warp_dancer")
+
+        register(LightningChestplateBorrowedTime, "lightning_chestplate_borrowed_time")
     }
 }

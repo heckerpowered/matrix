@@ -12,16 +12,17 @@ import heckerpowered.matrix.common.item.WardenSuitKt;
 import heckerpowered.matrix.common.network.SyncManaPayload;
 import heckerpowered.matrix.common.persistent.ChannelSequence;
 import heckerpowered.matrix.common.persistent.ManaState;
+import heckerpowered.matrix.core.Accumulator;
 import heckerpowered.matrix.core.MatrixLivingEntity;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
-import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -64,13 +65,16 @@ class LivingEntityMixin implements MatrixLivingEntity {
         return (LivingEntity) (Object) this;
     }
 
-    @Inject(method = "onDeath", at = @At("HEAD"))
+    @Inject(method = "onDeath", at = @At("HEAD"), cancellable = true)
     private void onDeath(DamageSource damageSource, CallbackInfo info) {
+        if (LivingDeathCallback.event.invoker().onDeath(self(), damageSource) == ActionResult.FAIL) {
+            info.cancel();
+        }
         if (!(damageSource.getAttacker() instanceof final ServerPlayerEntity serverPlayer)) {
             return;
         }
 
-        var restoreAmount = 40;
+        var restoreAmount = 0;
         final var self = self();
         final var manaOverload = MatrixStatusEffectsKt.getManaOverloadEffect();
         final var effect = self.getStatusEffect(manaOverload);
@@ -81,11 +85,6 @@ class LivingEntityMixin implements MatrixLivingEntity {
         final var manaState = ManaState.getPlayerState(serverPlayer);
         manaState.setMana(manaState.getMana() + restoreAmount);
         ServerPlayNetworking.send(serverPlayer, new SyncManaPayload(manaState.getMana(), manaState.getMaxMana()));
-    }
-
-    @Inject(method = "getMaxAbsorption", at = @At("HEAD"), cancellable = true)
-    private void getMaxAbsorption(CallbackInfoReturnable<Float> info) {
-        info.setReturnValue(Float.POSITIVE_INFINITY);
     }
 
     @Inject(method = "writeCustomDataToNbt", at = @At("HEAD"))
@@ -105,32 +104,22 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "getArmor", at = @At("TAIL"), cancellable = true)
     private void getArmor(CallbackInfoReturnable<Integer> cir) {
-        final var self = self();
-        final var armorPenetration = MatrixStatusEffectsKt.getArmorPenetrationEffect();
-        final var effect = self.getStatusEffect(armorPenetration);
-        if (effect == null) {
-            return;
-        }
+        final var thoughness = cir.getReturnValueI();
+        final var accumulator = new Accumulator(thoughness);
+        GetArmorCallback.event.invoker().getArmor(self(), accumulator);
 
-        final var armor = cir.getReturnValue();
-        final var percentage = 1 - (effect.getAmplifier() + 1) * 0.2;
-        cir.setReturnValue((int) (armor * percentage));
+        final var result = accumulator.accumulate();
+        cir.setReturnValue((int) Math.floor(result));
     }
 
     @Inject(method = "getAttributeValue", at = @At("TAIL"), cancellable = true)
     public void getAttributeValue(RegistryEntry<EntityAttribute> attribute, CallbackInfoReturnable<Double> cir) {
-        if (attribute == EntityAttributes.GENERIC_ARMOR_TOUGHNESS) {
-            final var self = self();
-            final var armorPenetration = MatrixStatusEffectsKt.getArmorPenetrationEffect();
-            final var effect = self.getStatusEffect(armorPenetration);
-            if (effect == null) {
-                return;
-            }
+        final var thoughness = cir.getReturnValueD();
+        final var accumulator = new Accumulator(thoughness);
+        GetAttributeValueCallback.event.invoker().getAttributeValue(self(), attribute, accumulator);
 
-            final var thoughness = cir.getReturnValue();
-            final var percentage = 1 - (effect.getAmplifier() + 1) * 0.2;
-            cir.setReturnValue(thoughness * percentage);
-        }
+        final var result = accumulator.accumulate();
+        cir.setReturnValue(result);
     }
 
     @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
@@ -191,8 +180,11 @@ class LivingEntityMixin implements MatrixLivingEntity {
     }
 
     @Inject(method = "canWalkOnFluid", at = @At("HEAD"), cancellable = true)
-    private void canWalkOnFluid(CallbackInfoReturnable<Boolean> cir) {
-        if (WardenSuitKt.isWardenArmorAngered(self())) {
+    private void canWalkOnFluid(FluidState fluidState, CallbackInfoReturnable<Boolean> cir) {
+        // Remove condition "fluidState != Fluids.EMPTY.getDefaultState()"
+        // may cause AI pathfinding infinite loop.
+        // (LandPathNodeMaker#getStart) -> while (this.entity.canWalkOnFluid(blockState.getFluidState())) ...
+        if (WardenSuitKt.isWardenArmorAngered(self()) && fluidState != Fluids.EMPTY.getDefaultState()) {
             cir.setReturnValue(true);
         }
     }
@@ -200,15 +192,6 @@ class LivingEntityMixin implements MatrixLivingEntity {
     @Inject(method = "canHaveStatusEffect", at = @At("HEAD"), cancellable = true)
     private void canHaveStatusEffect(StatusEffectInstance effect, CallbackInfoReturnable<Boolean> cir) {
         if (!WardenChestplateItem.isAngered(self())) {
-            return;
-        }
-
-        final var angeredEffectInstance = getStatusEffect(MatrixStatusEffectsKt.getAngeredEffect());
-        if (angeredEffectInstance == null) {
-            return;
-        }
-        if (effect.getEffectType() == StatusEffects.DARKNESS && angeredEffectInstance.getDuration() >= effect.getDuration()) {
-            cir.setReturnValue(true);
             return;
         }
 
@@ -233,5 +216,16 @@ class LivingEntityMixin implements MatrixLivingEntity {
     @Override
     public Map<UUID, ChannelSequence> getChannelSequence() {
         return channelingSequences;
+    }
+
+    @Inject(method = "heal", at = @At("HEAD"), cancellable = true)
+    private void heal(float amount, CallbackInfo ci, @Local(argsOnly = true) LocalFloatRef amountReference) {
+        final var livingHealEvent = new LivingHealEvent(self(), amount);
+        final var result = LivingHealCallback.event.invoker().onHeal(livingHealEvent);
+        if (result == ActionResult.FAIL) {
+            ci.cancel();
+        }
+
+        amountReference.set(livingHealEvent.getAmount());
     }
 }

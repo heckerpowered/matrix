@@ -4,6 +4,8 @@ import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.MatrixHud
 import heckerpowered.matrix.client.minecraft
+import heckerpowered.matrix.client.render.PostProcessRenderer
+import heckerpowered.matrix.client.render.post.ScaleSampling
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gl.Framebuffer
@@ -18,10 +20,12 @@ import org.lwjgl.opengl.GL20
 import java.io.File
 
 
-object UIBlurShader {
-    private var currentFramebuffer = minecraft.framebuffer
+object BlurRenderer {
+    var initialFramebuffer = minecraft.framebuffer
+    var currentFramebuffer = minecraft.framebuffer
 
     var radius = 5.0F
+    var kawaseOffset = 1.0F
 
     private val imageProvider = UniformProvider("image") { pointer ->
         GlStateManager._activeTexture(GL13.GL_TEXTURE0)
@@ -33,7 +37,13 @@ object UIBlurShader {
         GL20.glUniform1f(pointer, radius * MatrixHud.magicShownOpacityAnimation.animatedValue.toFloat())
     }
 
-    private val blurFramebuffer by lazy {
+    private val kawaseOffsetProvider = UniformProvider("offset") { pointer ->
+        kawaseOffset += 3F
+        val progress = MatrixHud.magicShownOpacityAnimation.animatedValue.toFloat()
+        GL20.glUniform2f(pointer, progress * kawaseOffset, progress * kawaseOffset)
+    }
+
+    val blurFramebuffer by lazy {
         val framebuffer = SimpleFramebuffer(
             minecraft.window.framebufferWidth,
             minecraft.window.framebufferHeight,
@@ -44,16 +54,37 @@ object UIBlurShader {
         framebuffer
     }
 
-    private val horizontalBlurShader = BlitShader(
+    val horizontalBlurShader = BlitShader(
         resourceToString("/assets/matrix/shaders/sobel.vert"),
         resourceToString("/assets/matrix/shaders/gaussian_blur_horizontal.fsh"),
-        arrayOf(imageProvider, radiusProvider)
+        arrayOf(PostProcessRenderer.framebufferProvider, radiusProvider)
     )
 
-    private val verticalBlurShader = BlitShader(
+    val verticalBlurShader = BlitShader(
         resourceToString("/assets/matrix/shaders/sobel.vert"),
         resourceToString("/assets/matrix/shaders/gaussian_blur_vertical.fsh"),
-        arrayOf(imageProvider, radiusProvider)
+        arrayOf(PostProcessRenderer.framebufferProvider, radiusProvider)
+    )
+
+    val kawaseBlurShader = BlitShader(
+        resourceToString("/assets/matrix/shaders/sobel.vert"),
+        resourceToString("/assets/matrix/shaders/post/blur/kawase_blur.fsh"),
+        arrayOf(PostProcessRenderer.framebufferProvider, kawaseOffsetProvider)
+    )
+
+    private val colorfulShader = BlitShader(
+        resourceToString("/assets/matrix/shaders/sobel.vert"),
+        resourceToString("/assets/matrix/shaders/post/color/colorful.fsh"),
+        arrayOf(PostProcessRenderer.framebufferProvider,
+            UniformProvider("brightness") { pointer ->
+                GL20.glUniform1f(pointer, 1.1F)
+            },
+            UniformProvider("saturation") { pointer ->
+                GL20.glUniform1f(pointer, 2.0F)
+            },
+            UniformProvider("contrast") { pointer ->
+                GL20.glUniform1f(pointer, 1.0F)
+            })
     )
 
     val blurTextureRenderShader = Shader(
@@ -94,22 +125,20 @@ object UIBlurShader {
     }
 
     fun renderBlur() {
-        blurFramebuffer.beginWrite(false)
+        ScaleSampling.sample(PostProcessRenderer.sourceFramebuffer, ScaleSampling.oneHalfFramebuffer, ScaleSampling.bilinearSample)
+        ScaleSampling.sample(ScaleSampling.oneHalfFramebuffer, ScaleSampling.oneQuarterFramebuffer, ScaleSampling.bilinearSample)
 
-        // Init blur framebuffer
-        currentFramebuffer = minecraft.framebuffer
-        horizontalBlurShader.blit()
-        currentFramebuffer = blurFramebuffer
-        verticalBlurShader.blit()
-
-        for (i in 0..9) {
-            horizontalBlurShader.blit()
-            verticalBlurShader.blit()
+        blurFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
+        minecraft.framebuffer.beginWrite(false)
+        kawaseOffset = 0F
+        val shaders = mutableListOf<BlitShader>()
+        for (i in 0..4) {
+            shaders.add(kawaseBlurShader)
         }
 
-        blurFramebuffer.endWrite()
-        minecraft.framebuffer.beginWrite(false)
-        // dumpFrameBuffer(blurFramebuffer)
+        PostProcessRenderer.useFramebuffer(ScaleSampling.oneQuarterFramebuffer) {
+            PostProcessRenderer.renderShadersToFramebuffer(shaders, blurFramebuffer)
+        }
     }
 
     @JvmStatic

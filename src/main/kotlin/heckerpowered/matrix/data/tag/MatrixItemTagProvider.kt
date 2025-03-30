@@ -1,5 +1,7 @@
 package heckerpowered.matrix.data.tag
 
+import heckerpowered.matrix.common.item.MatrixItemTags
+import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.item.allMatrixItems
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider
@@ -205,6 +207,13 @@ class MatrixItemTagProvider(
             .forEach { tagBuilder.add(it) }
     }
 
+    private fun addWitchHelmets() {
+        val tagBuilder = getOrCreateTagBuilder(MatrixItemTags.wizardHelmetTag)
+        allMatrixItems
+            .filterIsInstance<WizardHelmet>()
+            .forEach { tagBuilder.add(it) }
+    }
+
     override fun configure(registries: RegistryWrapper.WrapperLookup) {
         addArmorEnchantable()
         addHeadArmorEnchantable()
@@ -232,5 +241,6 @@ class MatrixItemTagProvider(
         addAxes()
         addShovels()
         addHoes()
+        addWitchHelmets()
     }
 }

@@ -32,6 +32,12 @@ val stoneArmorMaterial
 val woodenArmorMaterial
     get() = MatrixArmorMaterials.woodenMaterial
 
+val wizardArmorMaterial
+    get() = MatrixArmorMaterials.wizardMaterial
+
+val lightningArmorMaterial
+    get() = MatrixArmorMaterials.lightningMaterial
+
 object MatrixArmorMaterials {
     private fun registerMaterial(
         identifier: String,
@@ -170,6 +176,34 @@ object MatrixArmorMaterials {
             Items.SPRUCE_PLANKS,
             Items.WARPED_PLANKS
         )
+    }
+
+    val wizardMaterial = registerMaterial(
+        "wizard",
+        mapOf(
+            ArmorItem.Type.HELMET to 0,
+            ArmorItem.Type.CHESTPLATE to 0,
+            ArmorItem.Type.LEGGINGS to 0,
+            ArmorItem.Type.BOOTS to 0,
+            ArmorItem.Type.BODY to 0
+        ),
+        100, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0F, 0F, false
+    ) {
+        Ingredient.EMPTY
+    }
+
+    val lightningMaterial = registerMaterial(
+        "lightning",
+        mapOf(
+            ArmorItem.Type.HELMET to 0,
+            ArmorItem.Type.CHESTPLATE to 0,
+            ArmorItem.Type.LEGGINGS to 0,
+            ArmorItem.Type.BOOTS to 0,
+            ArmorItem.Type.BODY to 0
+        ),
+        10, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0F, 0F, false
+    ) {
+        Ingredient.EMPTY
     }
 
     fun onInitialize() {

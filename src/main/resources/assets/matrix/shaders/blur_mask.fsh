@@ -7,4 +7,7 @@ uniform sampler2D image;
 
 void main() {
     fragColor = texture(image, fragTexCoord);
+    if (fragColor.a < 0.1) {
+        discard;
+    }
 }

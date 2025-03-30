@@ -4,13 +4,14 @@ import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
-import heckerpowered.matrix.client.shader.UIBlurShader
+import heckerpowered.matrix.client.shader.BlurRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.text.Text
 import net.minecraft.util.math.MathHelper
 import java.time.Duration
 
@@ -101,9 +102,9 @@ class ManaBar {
             maxPoint.x.toInt(),
             maxPoint.y.toInt()
         )
-        UIBlurShader.blurTextureRenderShader.enableShader()
-        UIBlurShader.renderQuad()
-        UIBlurShader.blurTextureRenderShader.disableShader()
+        BlurRenderer.blurTextureRenderShader.enableShader()
+        BlurRenderer.renderQuad()
+        BlurRenderer.blurTextureRenderShader.disableShader()
 
         drawContext.disableScissor()
 
@@ -126,8 +127,11 @@ class ManaBar {
     }
 
     private fun renderManaText(renderer: LegacyMatrixUIRenderer) {
+        // val manaUsage = manaUsageClock.transform(easingFunction)
+        val mana = (mana.animatedValue * 10).toInt() / 10.0
+        val maxMana = (maxMana.animatedValue * 10).toInt() / 10.0
         renderer.render(
-            MatrixLanguage.mana,
+            Text.literal("${MatrixLanguage.mana.string} - ${mana}/${maxMana}"),
             Point(55.0, 12.5 + shownAnimation.animatedValue), Color(255, 255, 255, 255),
             true
         )
@@ -168,5 +172,8 @@ class ManaBar {
                 it.start()
             }
         }
+    }
+
+    fun onRemoteManaUpdate() {
     }
 }

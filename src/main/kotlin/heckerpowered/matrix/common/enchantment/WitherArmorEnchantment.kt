@@ -20,10 +20,7 @@ object WitherArmorEnchantment {
         }
 
         val itemStack = entity.getEquippedStack(EquipmentSlot.CHEST)
-        val witherArmorEnchantment =
-            entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(
-                witherArmorEnchantmentKey
-            )
+        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(witherArmorEnchantmentKey)
         val level = EnchantmentHelper.getLevel(witherArmorEnchantment, itemStack)
         if (level <= 0) {
             return

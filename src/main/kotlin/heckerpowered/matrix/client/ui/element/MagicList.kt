@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.MatrixHud.targetedEntity
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
-import heckerpowered.matrix.client.shader.UIBlurShader
+import heckerpowered.matrix.client.shader.BlurRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.Magic
@@ -190,9 +190,9 @@ object MagicList {
 
         drawContext.enableScissor(startX.toInt(), startY.toInt(), endX.toInt(), endY.toInt())
 
-        UIBlurShader.blurTextureRenderShader.enableShader()
-        UIBlurShader.renderQuad()
-        UIBlurShader.blurTextureRenderShader.disableShader()
+        BlurRenderer.blurTextureRenderShader.enableShader()
+        BlurRenderer.renderQuad()
+        BlurRenderer.blurTextureRenderShader.disableShader()
 
         val transformationMatrix = drawContext.matrices.peek().positionMatrix
         val builder = Tessellator.getInstance()

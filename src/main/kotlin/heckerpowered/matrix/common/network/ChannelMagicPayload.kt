@@ -2,6 +2,7 @@ package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.persistent.getChannelSequence
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.entity.LivingEntity
 import net.minecraft.network.PacketByteBuf
@@ -10,7 +11,7 @@ import net.minecraft.network.packet.CustomPayload
 
 class ChannelMagicPayload(
     private val magicId: Int,
-    private val entityId: Int
+    private val entityId: Int,
 ) : CustomPayload {
     companion object {
         val id: CustomPayload.Id<ChannelMagicPayload> = CustomPayload.id("channel_magic")
@@ -39,8 +40,11 @@ class ChannelMagicPayload(
             if (entity !is LivingEntity) {
                 return@execute
             }
-            ChannelSequence.channelMagic(magic, context.player(), entity, false)
-            ChannelSequence.channelMagicClient(magic, entity)
+            if (ChannelSequence.channelMagic(magic, context.player(), entity, false)) {
+                val channelSequence = entity.getChannelSequence(context.player())
+                val channelingMagic = channelSequence?.magics?.last() ?: return@execute
+                ChannelSequence.channelMagicClient(channelingMagic, entity)
+            }
         }
     }
 }

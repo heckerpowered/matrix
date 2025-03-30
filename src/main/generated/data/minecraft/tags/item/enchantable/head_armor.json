@@ -5,6 +5,12 @@
     "matrix:emerald_helmet",
     "matrix:coal_helmet",
     "matrix:stone_helmet",
-    "matrix:wooden_helmet"
+    "matrix:wooden_helmet",
+    "matrix:wizard_helmet_hacker",
+    "matrix:wizard_helmet_basic",
+    "matrix:wizard_helmet_doom",
+    "matrix:wizard_helmet_ruin",
+    "matrix:wizard_helmet_apogee",
+    "matrix:wizard_helmet_warp_dancer"
   ]
 }

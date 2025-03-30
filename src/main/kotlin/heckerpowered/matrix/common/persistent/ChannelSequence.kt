@@ -4,14 +4,16 @@ import heckerpowered.matrix.client.render.ChannelAnimation
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.MagicManager
+import heckerpowered.matrix.common.effect.bloodPactActive
 import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
 import heckerpowered.matrix.common.magics.ChannelingMagic
+import heckerpowered.matrix.common.network.SyncHealthPayload
 import heckerpowered.matrix.core.MatrixLivingEntity
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.minecraft.client.MinecraftClient
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
@@ -54,9 +56,9 @@ class ChannelSequence(
     var locked = false
 
     companion object {
-        fun channelMagic(magic: Magic, player: PlayerEntity, target: LivingEntity, costMana: Boolean = true) {
+        fun channelMagic(magic: Magic, player: PlayerEntity, target: LivingEntity, costMana: Boolean = true, bypassLock: Boolean = false): Boolean {
             if (target !is MatrixLivingEntity) {
-                return
+                return false
             }
 
             val sequences = target.getChannelSequence()
@@ -64,15 +66,39 @@ class ChannelSequence(
             channelSequence.player = player
             channelSequence.playerUUID = player.uuid
 
+            if (channelSequence.locked && !bypassLock) {
+                return false
+            }
+
             val channelTime = magic.getChannelTime(player, target, channelSequence)
             val cost = magic.getCost(player, target, channelSequence)
-            channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
+            val convertRatio = magic.getBloodPactConvertRatio(player, target, channelSequence)
             if (player is ServerPlayerEntity) {
-                magic.channel(player, target, channelSequence)
-                if (costMana) {
-                    player.mana -= magic.getCost(player, target, channelSequence)
+                if (player.isInfiniteMana || !costMana) {
+                    channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
+                    magic.channel(player, target, channelSequence)
+                } else if (player.mana >= cost) {
+                    channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
+                    magic.channel(player, target, channelSequence)
+                    player.mana -= cost
+                } else if (player.bloodPactActive && player.mana + player.health * convertRatio >= cost) {
+                    val usedHealth = (cost - player.mana) / convertRatio
+                    player.health -= usedHealth.toFloat()
+                    player.health = player.health.coerceAtLeast(1F)
+                    ServerPlayNetworking.send(player, SyncHealthPayload(player))
+                    
+                    player.mana = .0
+                    channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
+                    magic.channel(player, target, channelSequence)
+                } else {
+                    return false
                 }
+            } else {
+                channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
+                magic.channel(player, target, channelSequence)
             }
+
+            return true
         }
 
         fun getChannelSequence(player: PlayerEntity, target: LivingEntity?): ChannelSequence? {
@@ -84,14 +110,12 @@ class ChannelSequence(
         }
 
         @Environment(EnvType.CLIENT)
-        fun channelMagicClient(magic: Magic, target: LivingEntity) {
-            val player = MinecraftClient.getInstance().player!!
+        fun channelMagicClient(magic: ChannelingMagic, target: LivingEntity) {
             ChannelSequenceRenderer
                 .channelSequenceAnimationMap
                 .computeIfAbsent(target) { mutableListOf() }
-                .add(ChannelAnimation(magic).also {
-                    val channelSequence = getChannelSequence(player, target)
-                    it.channelTime = magic.getChannelTime(player, target, channelSequence)
+                .add(ChannelAnimation(magic.magic).also {
+                    it.channelTime = magic.channelTime
                 })
             ChannelSequenceRenderer.offsetAnimationMap
                 .computeIfAbsent(target) { ChannelSequenceRenderer.Companion.OffsetAnimation() }
@@ -219,11 +243,11 @@ class ChannelSequence(
     }
 
     fun channelingMagics(): List<ChannelingMagic> {
-        return magics.filterIndexed { i, _ -> i > index }.toList()
+        return magics.filterIndexed { i, _ -> i >= index }.toList()
     }
 
     fun castedMagics(): List<ChannelingMagic> {
-        return magics.filterIndexed { i, _ -> i <= index }.toList()
+        return magics.filterIndexed { i, _ -> i < index }.toList()
     }
 
     fun tick() {
@@ -231,6 +255,7 @@ class ChannelSequence(
             // The index is increased after the magic is casted, when we reach there
             // all the magics in the sequence are casted, or there's no more magics left.
             magics.clear()
+            locked = false
             index = 0
             return
         }
@@ -256,3 +281,11 @@ fun PlayerEntity.getChannelSequence(target: LivingEntity?): ChannelSequence? {
 fun LivingEntity.getChannelSequence(player: PlayerEntity): ChannelSequence? {
     return ChannelSequence.getChannelSequence(player, this)
 }
+
+fun LivingEntity.getOrCreateChannelSequence(player: PlayerEntity): ChannelSequence {
+    val channelSequence = (this as MatrixLivingEntity).getChannelSequence()
+    return channelSequence.computeIfAbsent(player.uuid) { ChannelSequence(player, player.uuid, this, mutableListOf()) }
+}
+
+val LivingEntity.allChannelSequences
+    get() = (this as MatrixLivingEntity).getChannelSequence()

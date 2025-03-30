@@ -8,7 +8,7 @@ import net.minecraft.network.packet.CustomPayload
 
 class SyncManaPayload(
     private val mana: Double,
-    private val maxMana: Double
+    private val maxMana: Double,
 ) : CustomPayload {
     companion object {
         val id: CustomPayload.Id<SyncManaPayload> = CustomPayload.id("sync_mana")
@@ -47,6 +47,7 @@ class SyncManaPayload(
             } else {
                 MatrixHud.mana += mana - currentMana
             }
+            MatrixHud.onRemoteManaUpdate()
         }
     }
 }

@@ -1,9 +1,13 @@
 package heckerpowered.matrix.common.persistent
 
 import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.network.SyncManaPayload
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.registry.RegistryWrapper
 import net.minecraft.server.MinecraftServer
@@ -95,4 +99,20 @@ var ServerPlayerEntity.isInfiniteMana: Boolean
     set(value) {
         val manaData = ManaState.getPlayerState(this)
         manaData.isInfinite = value
+    }
+
+val PlayerEntity.isWizard: Boolean
+    get() = getEquippedStack(EquipmentSlot.HEAD).item is WizardHelmet
+
+val PlayerEntity.wizardHelmet: ItemStack
+    get() = getEquippedStack(EquipmentSlot.HEAD)
+
+val PlayerEntity.queueSize: Long
+    get() {
+        val wizardHelmet = this.wizardHelmet
+        val item = wizardHelmet.item
+        if (item !is WizardHelmet) {
+            return 1
+        }
+        return item.getQueueSize(this, wizardHelmet)
     }

@@ -10,14 +10,21 @@
     "MobEntityMixin",
     "PlayerEntityMixin",
     "ServerPlayerEntityMixin",
-    "ServerPlayNetworkHandlerMixin"
+    "ServerPlayNetworkHandlerMixin",
+    "TridentEntityMixin",
+    "TridentItemMixin",
+    "WorldMixin"
   ],
   "client": [
+    "EntityRenderDispatcherMixin",
+    "GameRendererMixin",
+    "KeyboardMixin",
     "MinecraftClientMixin",
-    "MixinGameRenderer",
     "MixinInGameHud",
     "MouseMixin",
-    "RenderTickCounterDynamicMixin"
+    "PlayerEntityRendererMixin",
+    "RenderTickCounterDynamicMixin",
+    "WorldRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

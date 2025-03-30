@@ -24,6 +24,13 @@
     "matrix:wooden_helmet",
     "matrix:wooden_chestplate",
     "matrix:wooden_leggings",
-    "matrix:wooden_boots"
+    "matrix:wooden_boots",
+    "matrix:wizard_helmet_hacker",
+    "matrix:wizard_helmet_basic",
+    "matrix:wizard_helmet_doom",
+    "matrix:wizard_helmet_ruin",
+    "matrix:wizard_helmet_apogee",
+    "matrix:wizard_helmet_warp_dancer",
+    "matrix:lightning_chestplate_borrowed_time"
   ]
 }

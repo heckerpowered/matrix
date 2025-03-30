@@ -21,8 +21,9 @@ object LapisLazuliSwordItem : SwordItem(
         }
 
         if (attacker is ServerPlayerEntity) {
-            ChannelSequence.channelMagic(DecisiveStrikeMagic, attacker, target, false)
-            ServerPlayNetworking.send(attacker, ChannelMagicPayload(DecisiveStrikeMagic.id, target.id))
+            if (ChannelSequence.channelMagic(DecisiveStrikeMagic, attacker, target, false)) {
+                ServerPlayNetworking.send(attacker, ChannelMagicPayload(DecisiveStrikeMagic.id, target.id))
+            }
         } else {
             DecisiveStrikeMagic.cast(null, target, ChannelSequence(target))
         }

@@ -16,7 +16,7 @@ object ExposedEffect : StatusEffect(
 
     private fun onLivingHurt(event: DamageAccumulator): ActionResult {
         val statusEffect = event.target.getStatusEffect(exposedEffect) ?: return ActionResult.PASS
-        event.damageMultiplier += (statusEffect.amplifier + 1)
-        return ActionResult.SUCCESS
+        event.damageMultiplier += (statusEffect.amplifier + 1) * 0.4
+        return ActionResult.PASS
     }
 }

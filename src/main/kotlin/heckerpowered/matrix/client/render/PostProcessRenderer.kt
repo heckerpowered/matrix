@@ -1,0 +1,188 @@
+package heckerpowered.matrix.client.render
+
+import com.mojang.blaze3d.platform.GlConst
+import com.mojang.blaze3d.platform.GlStateManager
+import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.minecraft
+import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.UniformProvider
+import heckerpowered.matrix.core.resourceToString
+import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gl.Framebuffer
+import net.minecraft.client.gl.SimpleFramebuffer
+import org.lwjgl.opengl.GL31
+
+val framebufferProvider: UniformProvider
+    get() = PostProcessRenderer.framebufferProvider
+
+object PostProcessRenderer {
+    val postProcessShaders = mutableSetOf<BlitShader>()
+
+    /**
+     * The source framebuffer to render the post process effects from.
+     */
+    var sourceFramebuffer = minecraft.framebuffer
+    private var boundFramebuffer = minecraft.framebuffer
+    val framebufferProvider = UniformProvider("framebuffer") { pointer ->
+        GL31.glActiveTexture(GlConst.GL_TEXTURE0)
+        GL31.glBindTexture(GlConst.GL_TEXTURE_2D, boundFramebuffer.colorAttachment)
+        RenderSystem.glUniform1i(pointer, 0)
+    }
+
+    private val blitShader by lazy {
+        BlitShader(
+            resourceToString("/assets/matrix/shaders/sobel.vert"),
+            resourceToString("/assets/matrix/shaders/blit.fsh"),
+            arrayOf(framebufferProvider)
+        )
+    }
+
+    private val managedFramebuffers = mutableListOf<Framebuffer>()
+    private val framebuffers = mutableListOf(createFramebuffer(), createFramebuffer())
+    private var currentFramebufferIndex = 0
+
+    private fun currentFramebuffer(): Framebuffer {
+        return framebuffers[currentFramebufferIndex]
+    }
+
+    private fun nextFramebuffer() {
+        currentFramebufferIndex++
+        if (currentFramebufferIndex >= framebuffers.size) {
+            currentFramebufferIndex = 0
+        }
+    }
+
+    private fun createFramebuffer(): Framebuffer {
+        val framebuffer = SimpleFramebuffer(
+            minecraft.window.framebufferWidth,
+            minecraft.window.framebufferHeight,
+            true,
+            MinecraftClient.IS_SYSTEM_MAC
+        )
+        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
+        return framebuffer
+    }
+
+    fun createManagedFramebuffer(): Framebuffer {
+        val framebuffer = SimpleFramebuffer(
+            minecraft.window.framebufferWidth,
+            minecraft.window.framebufferHeight,
+            true,
+            MinecraftClient.IS_SYSTEM_MAC
+        )
+        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
+        managedFramebuffers.add(framebuffer)
+        return framebuffer
+    }
+
+    fun manageFramebuffer(framebuffer: Framebuffer) {
+        managedFramebuffers.add(framebuffer)
+    }
+
+    @JvmStatic
+    fun onResize(width: Int, height: Int) {
+        for (framebuffer in framebuffers) {
+            framebuffer.resize(width, height, MinecraftClient.IS_SYSTEM_MAC)
+        }
+        for (framebuffer in managedFramebuffers) {
+            framebuffer.resize(width, height, MinecraftClient.IS_SYSTEM_MAC)
+        }
+    }
+
+    @JvmStatic
+    fun renderToScreen() {
+        if (postProcessShaders.isEmpty()) {
+            return
+        }
+
+        val renderedFramebuffer = renderPostProcessEffects()
+        renderFramebufferToScreen(renderedFramebuffer)
+    }
+
+    private fun resetFramebuffers() {
+        currentFramebufferIndex = 0
+        framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
+    }
+
+    @JvmStatic
+    fun renderToFramebuffer(framebuffer: Framebuffer) {
+        if (postProcessShaders.isEmpty()) {
+            return
+        }
+
+        val renderedFramebuffer = renderPostProcessEffects()
+        copyFramebuffer(renderedFramebuffer, framebuffer)
+    }
+
+    @JvmStatic
+    fun renderPostProcessEffects(): Framebuffer {
+        return renderShaders(postProcessShaders)
+    }
+
+    @JvmStatic
+    fun renderToMinecraftFramebuffer() {
+        renderToFramebuffer(minecraft.framebuffer)
+    }
+
+    @JvmStatic
+    fun renderFramebufferToScreen(framebuffer: Framebuffer, disableBlend: Boolean = false) {
+        val previousFramebuffer = GlStateManager.getBoundFramebuffer()
+
+        framebuffer.endWrite()
+        framebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, disableBlend)
+
+        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+    }
+
+    @JvmStatic
+    fun renderShaderToFramebuffer(shader: BlitShader, framebuffer: Framebuffer) {
+        val previousFramebuffer = GlStateManager.getBoundFramebuffer()
+
+        framebuffer.beginWrite(true)
+        shader.blit()
+
+        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+    }
+
+    @JvmStatic
+    fun renderShaders(shaders: Collection<BlitShader>): Framebuffer {
+        val previousFramebuffer = GlStateManager.getBoundFramebuffer()
+
+        resetFramebuffers()
+        copyFramebuffer(sourceFramebuffer, currentFramebuffer())
+        boundFramebuffer = currentFramebuffer()
+
+        // Render post process effects
+        for (shader in shaders) {
+            // Render shader to next framebuffer
+            nextFramebuffer()
+            currentFramebuffer().beginWrite(false)
+            shader.blit()
+
+            // Bind the rendered framebuffer
+            boundFramebuffer = currentFramebuffer()
+        }
+
+        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+        return boundFramebuffer
+    }
+
+    @JvmStatic
+    fun renderShadersToFramebuffer(shaders: Collection<BlitShader>, framebuffer: Framebuffer) {
+        val renderedFramebuffer = renderShaders(shaders)
+        copyFramebuffer(renderedFramebuffer, framebuffer)
+    }
+
+    @JvmStatic
+    fun copyFramebuffer(from: Framebuffer, to: Framebuffer) {
+        boundFramebuffer = from
+        renderShaderToFramebuffer(blitShader, to)
+    }
+
+    fun useFramebuffer(framebuffer: Framebuffer, action: () -> Unit) {
+        val previousFramebuffer = sourceFramebuffer
+        sourceFramebuffer = framebuffer
+        action()
+        sourceFramebuffer = previousFramebuffer
+    }
+}

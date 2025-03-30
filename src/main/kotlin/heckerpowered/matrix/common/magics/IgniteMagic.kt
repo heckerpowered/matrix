@@ -10,7 +10,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.World
 
-object IgniteMagic : Magic(MatrixLanguage.magicIgniteMagic, 9, MatrixLanguage.magicIgniteMagicDescription, 9) {
+object IgniteMagic : Magic(MatrixLanguage.magicIgniteMagic, 3, MatrixLanguage.magicIgniteMagicDescription, 9) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         target.setOnFireFor(10F)
         if (target.hasStatusEffect(StatusEffects.POISON)) {

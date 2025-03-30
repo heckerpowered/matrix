@@ -18,6 +18,7 @@ object FramebufferSpoof {
         }
 
         FramebufferSpoof.spoofedFramebuffer = spoofedFramebuffer
+        spoofedFramebuffer.beginWrite(false)
     }
 
     fun pop() {

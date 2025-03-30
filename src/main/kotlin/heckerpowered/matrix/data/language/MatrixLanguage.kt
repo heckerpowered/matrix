@@ -6,6 +6,7 @@ import net.minecraft.registry.RegistryKey
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.text.TranslatableTextContent
+import net.minecraft.util.Util
 
 val MutableText.key: String
     get() {
@@ -14,6 +15,10 @@ val MutableText.key: String
 
 fun TranslationBuilder.add(enchantment: RegistryKey<Enchantment>, value: String) {
     addEnchantment(enchantment, value)
+}
+
+fun TranslationBuilder.addEnchantmentDescription(enchantment: RegistryKey<Enchantment>, value: String) {
+    add("${Util.createTranslationKey("enchantment", enchantment.value)}.desc", value)
 }
 
 object MatrixLanguage {
@@ -76,6 +81,12 @@ object MatrixLanguage {
     val magicBloodPact: MutableText = Text.translatable("matrix.blood_pact")
     val magicBloodPactDescription: MutableText = Text.translatable("matrix.blood_pact.description")
 
+    val magicPull: MutableText = Text.translatable("matrix.pull")
+    val magicPullDescription: MutableText = Text.translatable("matrix.pull.description")
+
+    val magicLevitation: MutableText = Text.translatable("matrix.levitation")
+    val magicLevitationDescription: MutableText = Text.translatable("matrix.levitation.description")
+
     val overclockMagic: MutableText = Text.translatable("matrix.overclock.magic")
     val overclockMana: MutableText = Text.translatable("matrix.overclock.mana")
     val switchClock: MutableText = Text.translatable("matrix.overclock.switch")
@@ -100,4 +111,10 @@ object MatrixLanguage {
     val redstoneBootsDescription: MutableText = Text.translatable("matrix.redstone_boots.description")
     val redstoneSwordDescription: MutableText = Text.translatable("matrix.redstone_sword.description")
     val redstoneMiningToolDescription: MutableText = Text.translatable("matrix.redstone_mining_tool.description")
+
+    val manaCostReduced: MutableText = Text.translatable("matrix.mana_cost_reduced")
+    val manaCostIncreased: MutableText = Text.translatable("matrix.mana_cost_increased")
+
+    val borrowedTimeChargeDescription: MutableText = Text.translatable("matrix.borrowed_time_charge.description")
+    val wizardHelmetLoadDescription: MutableText = Text.translatable("matrix.wizard_helmet.load.description")
 }
