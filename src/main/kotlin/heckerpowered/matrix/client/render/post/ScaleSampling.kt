@@ -14,60 +14,25 @@ import net.minecraft.client.gl.Framebuffer
 import org.lwjgl.opengl.GL31
 
 object ScaleSampling {
-    val oneQuarterFramebuffer by lazy {
-        val framebuffer = ScalingFramebuffer(
-            minecraft.window.framebufferWidth,
-            minecraft.window.framebufferHeight,
-            true,
-            MinecraftClient.IS_SYSTEM_MAC,
-            0.25
-        )
-        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
-        PostProcessRenderer.manageFramebuffer(framebuffer)
-        framebuffer
-    }
-
-    val oneQuarterFramebuffer2 by lazy {
-        val framebuffer = ScalingFramebuffer(
-            minecraft.window.framebufferWidth,
-            minecraft.window.framebufferHeight,
-            true,
-            MinecraftClient.IS_SYSTEM_MAC,
-            0.25
-        )
-        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
-        PostProcessRenderer.manageFramebuffer(framebuffer)
-        framebuffer
-    }
-
-    val oneHalfFramebuffer by lazy {
-        val framebuffer = ScalingFramebuffer(
-            minecraft.window.framebufferWidth,
-            minecraft.window.framebufferHeight,
-            true,
-            MinecraftClient.IS_SYSTEM_MAC,
-            0.5
-        )
-        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
-        PostProcessRenderer.manageFramebuffer(framebuffer)
-        framebuffer
-    }
-
-    val oneHalfFramebuffer2 by lazy {
-        val framebuffer = ScalingFramebuffer(
-            minecraft.window.framebufferWidth,
-            minecraft.window.framebufferHeight,
-            true,
-            MinecraftClient.IS_SYSTEM_MAC,
-            0.5
-        )
-        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
-        PostProcessRenderer.manageFramebuffer(framebuffer)
-        framebuffer
+    private val scaledFramebuffers = mutableMapOf<Double, ScalingFramebuffer>()
+    fun getScaledFramebuffer(scaling: Double): ScalingFramebuffer {
+        return scaledFramebuffers.computeIfAbsent(scaling) {
+            val framebuffer = ScalingFramebuffer(
+                minecraft.window.framebufferWidth,
+                minecraft.window.framebufferHeight,
+                true,
+                MinecraftClient.IS_SYSTEM_MAC,
+                scaling
+            )
+            framebuffer.setClearColor(.0F, .0F, .0F, .0F)
+            PostProcessRenderer.manageFramebuffer(framebuffer)
+            framebuffer
+        }
     }
 
     val framebuffer = PostProcessRenderer.createManagedFramebuffer()
-    val framebuffer2 = PostProcessRenderer.createManagedFramebuffer()
+
+    var levelOfDetail = 0F
 
     private var sourceFramebuffer: Framebuffer? = null
     private var targetFramebuffer: Framebuffer? = null
@@ -77,6 +42,11 @@ object ScaleSampling {
 
         GL31.glActiveTexture(GlConst.GL_TEXTURE0)
         GL31.glBindTexture(GlConst.GL_TEXTURE_2D, sourceFramebuffer.colorAttachment)
+
+        GL31.glGenerateMipmap(GL31.GL_TEXTURE_2D)
+        GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MIN_FILTER, GL31.GL_LINEAR_MIPMAP_LINEAR)
+        GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MAG_FILTER, GL31.GL_LINEAR)
+
         RenderSystem.glUniform1i(pointer, 0)
     }
 
@@ -98,6 +68,19 @@ object ScaleSampling {
             resourceToString("/assets/matrix/shaders/sobel.vert"),
             resourceToString("/assets/matrix/shaders/post/sampling/bilinear.fsh"),
             arrayOf(sourceFramebufferProvider, sourceResolutionProvider, targetResolutionProvider)
+        )
+    }
+
+    val textureLod by lazy {
+        BlitShader(
+            resourceToString("/assets/matrix/shaders/sobel.vert"),
+            resourceToString("/assets/matrix/shaders/post/lower_sampling/lod.fsh"),
+            arrayOf(
+                sourceFramebufferProvider,
+                UniformProvider("levelOfDetail") { pointer ->
+                    GL31.glUniform1f(pointer, levelOfDetail)
+                }
+            )
         )
     }
 

@@ -182,6 +182,14 @@ object PostProcessRenderer {
     fun useFramebuffer(framebuffer: Framebuffer, action: () -> Unit) {
         val previousFramebuffer = sourceFramebuffer
         sourceFramebuffer = framebuffer
+
+        val previousBoundFramebuffer = GlStateManager.getBoundFramebuffer()
+        currentFramebuffer().clear(false)
+        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousBoundFramebuffer)
+        
+        copyFramebuffer(sourceFramebuffer, currentFramebuffer())
+        boundFramebuffer = currentFramebuffer()
+
         action()
         sourceFramebuffer = previousFramebuffer
     }

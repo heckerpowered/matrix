@@ -72,6 +72,12 @@ object BlurRenderer {
         arrayOf(PostProcessRenderer.framebufferProvider, kawaseOffsetProvider)
     )
 
+    val tentBlurShader = BlitShader(
+        resourceToString("/assets/matrix/shaders/sobel.vert"),
+        resourceToString("/assets/matrix/shaders/post/blur/tent.fsh"),
+        arrayOf(PostProcessRenderer.framebufferProvider)
+    )
+
     private val colorfulShader = BlitShader(
         resourceToString("/assets/matrix/shaders/sobel.vert"),
         resourceToString("/assets/matrix/shaders/post/color/colorful.fsh"),
@@ -125,8 +131,8 @@ object BlurRenderer {
     }
 
     fun renderBlur() {
-        ScaleSampling.sample(PostProcessRenderer.sourceFramebuffer, ScaleSampling.oneHalfFramebuffer, ScaleSampling.bilinearSample)
-        ScaleSampling.sample(ScaleSampling.oneHalfFramebuffer, ScaleSampling.oneQuarterFramebuffer, ScaleSampling.bilinearSample)
+        val lowersamplingFramebuffer = ScaleSampling.getScaledFramebuffer(1.0 / 4)
+        ScaleSampling.sample(PostProcessRenderer.sourceFramebuffer, lowersamplingFramebuffer, ScaleSampling.bilinearSample)
 
         blurFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
         minecraft.framebuffer.beginWrite(false)
@@ -136,7 +142,7 @@ object BlurRenderer {
             shaders.add(kawaseBlurShader)
         }
 
-        PostProcessRenderer.useFramebuffer(ScaleSampling.oneQuarterFramebuffer) {
+        PostProcessRenderer.useFramebuffer(lowersamplingFramebuffer) {
             PostProcessRenderer.renderShadersToFramebuffer(shaders, blurFramebuffer)
         }
     }

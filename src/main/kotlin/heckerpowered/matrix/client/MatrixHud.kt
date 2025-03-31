@@ -821,8 +821,6 @@ object MatrixHud {
                 descriptionYOffsetAnimation.animatedValue = -35.0
             }
         }
-
-        BloomEffect.renderBloom()
     }
 
     private fun renderManaBar(
@@ -1525,6 +1523,10 @@ object MatrixHud {
     fun onKey(window: Long, key: Int, scancode: Int, action: Int, mods: Int): Boolean {
         if (window != minecraft.window.handle) {
             return false
+        }
+
+        if (InputUtil.isKeyPressed(minecraft.window.handle, GLFW.GLFW_KEY_TAB)) {
+            BloomEffect.renderBloom()
         }
 
         if (isPressingTab && InputUtil.isKeyPressed(minecraft.window.handle, GLFW.GLFW_KEY_E) &&

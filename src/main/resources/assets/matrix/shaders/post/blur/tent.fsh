@@ -1,0 +1,35 @@
+#version 330 core
+
+in vec2 fragTexCoord;
+
+uniform sampler2D framebuffer;
+
+out vec4 fragColor;
+
+const vec3 tentKernel[9] = vec3[9](
+vec3(-1, 1, 1), vec3(0, 1, 2), vec3(1, 1, 1),
+vec3(-1, 0, 2), vec3(0, 0, 4), vec3(1, 0, 2),
+vec3(-1, -1, 1), vec3(0, -1, 2), vec3(1, -1, 1)
+);
+
+// Function to calculate perceived brightness (luminance)
+float luminance(vec3 color) {
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+void main() {
+    vec4 color = texture(framebuffer, fragTexCoord);
+    vec2 texelSize = 1.0 / textureSize(framebuffer, 0);
+    float weight = 0;
+
+    for (int i = 0;i < 9; ++i) {
+        vec3 kernel = tentKernel[i];
+        vec4 sampledColor = texture(framebuffer, fragTexCoord + kernel.xy * texelSize);
+        float l = kernel.z / (1 + luminance(sampledColor.rgb));
+        color += sampledColor * l;
+        weight += l;
+    }
+
+    color /= weight;
+    fragColor = color;
+}
