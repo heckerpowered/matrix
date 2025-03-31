@@ -1,6 +1,7 @@
 package heckerpowered.matrix.client.render.post
 
 import com.mojang.blaze3d.platform.GlConst
+import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.shader.BlitShader
@@ -40,27 +41,36 @@ object BloomEffect {
         minecraft.framebuffer.beginWrite(false)
         PostProcessRenderer.renderShaderToFramebuffer(brightnessShader, brightFramebuffer)
         PostProcessRenderer.copyFramebuffer(brightFramebuffer, ScaleSampling.getScaledFramebuffer(1.0))
-        for (i in 2..5) {
+        for (i in 2..10) {
             val previousScale = 1.0 / (i - 1.0)
             val currentScale = 1.0 / i
 
             val previousScalingFramebuffer = ScaleSampling.getScaledFramebuffer(previousScale)
             val currentScalingFramebuffer = ScaleSampling.getScaledFramebuffer(currentScale)
 
-            ScaleSampling.levelOfDetail = i.toFloat()
+            ScaleSampling.levelOfDetail = i.toFloat() / 5F
             ScaleSampling.sample(previousScalingFramebuffer, currentScalingFramebuffer, ScaleSampling.textureLod)
+            PostProcessRenderer.useFramebuffer(currentScalingFramebuffer) {
+                PostProcessRenderer.renderShaderToFramebuffer(BlurRenderer.tentBlurShader, currentScalingFramebuffer)
+            }
         }
 
-        for (i in (2..5).reversed()) {
+        for (i in (2..10).reversed()) {
             val previousScale = 1.0 / i
             val currentScale = 1.0 / (i - 1.0)
 
             val previousScalingFramebuffer = ScaleSampling.getScaledFramebuffer(previousScale)
             val currentScalingFramebuffer = ScaleSampling.getScaledFramebuffer(currentScale)
 
-            ScaleSampling.levelOfDetail = i.toFloat()
+            ScaleSampling.levelOfDetail = i.toFloat() / 5F
             ScaleSampling.sample(previousScalingFramebuffer, currentScalingFramebuffer, ScaleSampling.textureLod)
+            PostProcessRenderer.useFramebuffer(currentScalingFramebuffer) {
+                PostProcessRenderer.renderShaderToFramebuffer(BlurRenderer.tentBlurShader, currentScalingFramebuffer)
+            }
         }
-        BlurRenderer.dumpFrameBuffer(ScaleSampling.getScaledFramebuffer(1.0))
+
+        RenderSystem.enableBlend()
+        PostProcessRenderer.copyFramebuffer(ScaleSampling.getScaledFramebuffer(1.0), minecraft.framebuffer, false)
+        // BlurRenderer.dumpFrameBuffer(ScaleSampling.getScaledFramebuffer(1.0))
     }
 }

@@ -678,6 +678,7 @@ object MatrixHud {
     }
 
     private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+        BloomEffect.renderBloom()
         if (selectedIndex - 1 !in MatrixClient.getPlayerMagics().indices ||
             previousIndex - 1 !in MatrixClient.getPlayerMagics().indices
         ) {

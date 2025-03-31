@@ -135,11 +135,17 @@ object PostProcessRenderer {
     }
 
     @JvmStatic
-    fun renderShaderToFramebuffer(shader: BlitShader, framebuffer: Framebuffer) {
+    fun renderShaderToFramebuffer(shader: BlitShader, framebuffer: Framebuffer, disableBlend: Boolean = true) {
         val previousFramebuffer = GlStateManager.getBoundFramebuffer()
 
         framebuffer.beginWrite(true)
-        shader.blit()
+        if (disableBlend) {
+            shader.blit()
+        } else {
+            shader.enableShader()
+            BlitShader.blit()
+            shader.disableShader()
+        }
 
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
     }
@@ -174,9 +180,9 @@ object PostProcessRenderer {
     }
 
     @JvmStatic
-    fun copyFramebuffer(from: Framebuffer, to: Framebuffer) {
+    fun copyFramebuffer(from: Framebuffer, to: Framebuffer, disableBlend: Boolean = true) {
         boundFramebuffer = from
-        renderShaderToFramebuffer(blitShader, to)
+        renderShaderToFramebuffer(blitShader, to, disableBlend)
     }
 
     fun useFramebuffer(framebuffer: Framebuffer, action: () -> Unit) {
@@ -186,7 +192,7 @@ object PostProcessRenderer {
         val previousBoundFramebuffer = GlStateManager.getBoundFramebuffer()
         currentFramebuffer().clear(false)
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousBoundFramebuffer)
-        
+
         copyFramebuffer(sourceFramebuffer, currentFramebuffer())
         boundFramebuffer = currentFramebuffer()
 
