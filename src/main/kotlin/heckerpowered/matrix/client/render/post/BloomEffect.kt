@@ -26,7 +26,7 @@ object BloomEffect {
                     GL31.glUniform1i(pointer, 0)
                 },
                 UniformProvider("threshold") { pointer ->
-                    GL31.glUniform1f(pointer, 0.6F)
+                    GL31.glUniform1f(pointer, 0.55F)
                 }
             )
         )
@@ -41,28 +41,28 @@ object BloomEffect {
         minecraft.framebuffer.beginWrite(false)
         PostProcessRenderer.renderShaderToFramebuffer(brightnessShader, brightFramebuffer)
         PostProcessRenderer.copyFramebuffer(brightFramebuffer, ScaleSampling.getScaledFramebuffer(1.0))
-        for (i in 2..10) {
+        for (i in 2..5) {
             val previousScale = 1.0 / (i - 1.0)
             val currentScale = 1.0 / i
 
             val previousScalingFramebuffer = ScaleSampling.getScaledFramebuffer(previousScale)
             val currentScalingFramebuffer = ScaleSampling.getScaledFramebuffer(currentScale)
 
-            ScaleSampling.levelOfDetail = i.toFloat() / 5F
+            ScaleSampling.levelOfDetail = i.toFloat() / 2.5F
             ScaleSampling.sample(previousScalingFramebuffer, currentScalingFramebuffer, ScaleSampling.textureLod)
             PostProcessRenderer.useFramebuffer(currentScalingFramebuffer) {
                 PostProcessRenderer.renderShaderToFramebuffer(BlurRenderer.tentBlurShader, currentScalingFramebuffer)
             }
         }
 
-        for (i in (2..10).reversed()) {
+        for (i in (2..5).reversed()) {
             val previousScale = 1.0 / i
             val currentScale = 1.0 / (i - 1.0)
 
             val previousScalingFramebuffer = ScaleSampling.getScaledFramebuffer(previousScale)
             val currentScalingFramebuffer = ScaleSampling.getScaledFramebuffer(currentScale)
 
-            ScaleSampling.levelOfDetail = i.toFloat() / 5F
+            ScaleSampling.levelOfDetail = i.toFloat() / 2.5F
             ScaleSampling.sample(previousScalingFramebuffer, currentScalingFramebuffer, ScaleSampling.textureLod)
             PostProcessRenderer.useFramebuffer(currentScalingFramebuffer) {
                 PostProcessRenderer.renderShaderToFramebuffer(BlurRenderer.tentBlurShader, currentScalingFramebuffer)
