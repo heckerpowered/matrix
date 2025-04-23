@@ -1,6 +1,7 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
 import heckerpowered.matrix.common.event.EntityTickCallback
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttributeModifier
@@ -22,7 +23,7 @@ object AngeredEffect : StatusEffect(
     }
 
     private fun onEntityTick(entity: LivingEntity) {
-        if (entity.hasStatusEffect(angeredEffect) && entity.age % 10 == 0) {
+        if (entity.hasStatusEffect(ANGERED_EFFECT) && entity.age % 10 == 0) {
             entity.apply {
                 world.playSound(x, y, z, SoundEvents.ENTITY_WARDEN_HEARTBEAT, soundCategory, 5.0F, soundPitch, false)
             }

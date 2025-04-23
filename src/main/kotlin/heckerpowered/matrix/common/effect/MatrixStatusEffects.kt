@@ -6,18 +6,19 @@ import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.registry.entry.RegistryEntry
 
-val manaOverloadEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ManaOverloadEffect) }
-val armorPenetrationEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ArmorPenetrationEffect) }
-val crippleMovementEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(CrippleMovementEffect) }
-val witherArmorChargedEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorChargedEffect) }
-val witherArmorEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorEffect) }
-val angeredEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(AngeredEffect) }
-val exposedEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ExposedEffect) }
-val sculkCatalystEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(SculkCatalystEffect) }
-val bloodPactEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(BloodPactEffect) }
-val borrowedTimeEffect: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(BorrowedTimeEffect) }
-
 object MatrixStatusEffects {
+    val MANA_OVERLOAD_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ManaOverloadEffect) }
+    val ARMOR_PENETRATION_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ArmorPenetrationEffect) }
+    val CRIPPLE_MOVEMENT_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(CrippleMovementEffect) }
+    val WITHER_ARMOR_CHARGED_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorChargedEffect) }
+    val WITHER_ARMOR_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorEffect) }
+    val ANGERED_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(AngeredEffect) }
+    val EXPOSED_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ExposedEffect) }
+    val SCULK_CATALYST_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(SculkCatalystEffect) }
+    val BLOOD_PACT_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(BloodPactEffect) }
+    val BORROWED_TIME_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(BorrowedTimeEffect) }
+    val IGNITE_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(IgniteEffect) }
+
     fun onInitialize() {
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("mana_overload"), ManaOverloadEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("armor_penetration"), ArmorPenetrationEffect)
@@ -28,6 +29,7 @@ object MatrixStatusEffects {
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("exposed"), ExposedEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("sculk_catalyst"), SculkCatalystEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("blood_pact"), BloodPactEffect)
-        Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("lightning"), BorrowedTimeEffect)
+        Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("borrowed_time"), BorrowedTimeEffect)
+        Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("ignite"), IgniteEffect)
     }
 }

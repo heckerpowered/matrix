@@ -1,7 +1,7 @@
 package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.effect.manaOverloadEffect
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
 import heckerpowered.matrix.common.isInvulnerableToEffect
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
@@ -14,12 +14,12 @@ import net.minecraft.server.network.ServerPlayerEntity
 
 object ManaOverloadMagic : Magic(MatrixLanguage.magicManaOverload, 10, MatrixLanguage.magicManaOverloadDescription, 10) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
-        val manaOverloadInstance = target.getStatusEffect(manaOverloadEffect)
+        val manaOverloadInstance = target.getStatusEffect(MANA_OVERLOAD_EFFECT)
 
         val nextAmplifier = (manaOverloadInstance?.amplifier ?: -1) + 1
         target.addStatusEffect(
             StatusEffectInstance(
-                manaOverloadEffect,
+                MANA_OVERLOAD_EFFECT,
                 20 * 10,
                 nextAmplifier.coerceAtMost(7),
                 true, false
@@ -38,15 +38,15 @@ object ManaOverloadMagic : Magic(MatrixLanguage.magicManaOverload, 10, MatrixLan
             }
         }
         val server = target.world.server ?: return
-        val statusEffectInstance = target.getStatusEffect(manaOverloadEffect) ?: return
+        val statusEffectInstance = target.getStatusEffect(MANA_OVERLOAD_EFFECT) ?: return
         for (serverPlayer in server.playerManager.playerList) {
             serverPlayer.networkHandler.sendPacket(EntityStatusEffectS2CPacket(target.id, statusEffectInstance, false))
         }
     }
 
     override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
-        val effect = target?.getStatusEffect(manaOverloadEffect)
-        if (target?.isInvulnerableToEffect(manaOverloadEffect) == true ||
+        val effect = target?.getStatusEffect(MANA_OVERLOAD_EFFECT)
+        if (target?.isInvulnerableToEffect(MANA_OVERLOAD_EFFECT) == true ||
             (effect?.amplifier ?: 0) >= 7 && (effect?.duration != 0)
         ) {
             return MagicAvailableStatus.TARGET_IMMUNE

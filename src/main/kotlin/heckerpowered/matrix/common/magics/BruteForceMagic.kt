@@ -1,7 +1,7 @@
 package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.effect.exposedEffect
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.isInvulnerableToEffect
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.data.language.MatrixLanguage
@@ -13,11 +13,11 @@ import net.minecraft.server.network.ServerPlayerEntity
 object BruteForceMagic : Magic(MatrixLanguage.magicBruteForce, 45, MatrixLanguage.magicBruteForceDescription, 40) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         super.cast(player, target, sequence)
-        target.addStatusEffect(StatusEffectInstance(exposedEffect, 200, 0, false, true))
+        target.addStatusEffect(StatusEffectInstance(EXPOSED_EFFECT, 200, 0, false, true))
     }
 
     override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
-        if (target?.isInvulnerableToEffect(exposedEffect) == true) {
+        if (target?.isInvulnerableToEffect(EXPOSED_EFFECT) == true) {
             return MagicAvailableStatus.TARGET_IMMUNE
         }
         return super.availableStatus(player, target, sequence)

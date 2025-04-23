@@ -1,9 +1,9 @@
 package heckerpowered.matrix.common.entity
 
 import heckerpowered.matrix.client.render.Color
-import heckerpowered.matrix.common.effect.armorPenetrationEffect
-import heckerpowered.matrix.common.effect.crippleMovementEffect
-import heckerpowered.matrix.common.effect.exposedEffect
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_EFFECT
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.entity.MagicLightningEntity.LightningType.*
 import heckerpowered.matrix.common.magics.CrippleMovementMagic
 import heckerpowered.matrix.common.magics.ExplosionMagic.explosionBehavior
@@ -104,7 +104,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
         }
 
         placeFireAt(blockPos)
-        for (i in 0 until spreadAttempts) {
+        repeat(spreadAttempts) {
             val spreadBlockPos = blockPos.add(random.nextInt(3) - 1, random.nextInt(3) - 1, random.nextInt(3) - 1)
             placeFireAt(spreadBlockPos)
         }
@@ -123,7 +123,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
 
             val mutableBlockPos = blockPos.mutableCopy()
             val cleanCount = world.random.nextInt(3) + 3
-            for (i in 0 until cleanCount) {
+            repeat(cleanCount) {
                 val subCleanCount = world.random.nextInt(8) + 1
                 cleanOxidationAround(blockPos, mutableBlockPos, subCleanCount)
             }
@@ -133,10 +133,10 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
     private fun cleanOxidationAround(pos: BlockPos, mutablePos: BlockPos.Mutable, count: Int) {
         mutablePos.set(pos)
 
-        for (i in 0 until count) {
+        repeat(count) {
             val optional = cleanOxidationAround(mutablePos)
             if (optional.isEmpty) {
-                break
+                return@repeat
             }
 
             mutablePos.set(optional.get())
@@ -219,7 +219,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
             RED -> entity.damage(damageSource, 20.0F)
             ORANGE -> {
                 if (entity is LivingEntity) {
-                    entity.addStatusEffect(StatusEffectInstance(armorPenetrationEffect, 20 * 10, 4))
+                    entity.addStatusEffect(StatusEffectInstance(ARMOR_PENETRATION_EFFECT, 20 * 10, 4))
                 }
                 entity.damage(damageSource, 5.0F)
             }
@@ -248,12 +248,12 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
 
             CYAN -> {
                 if (entity is LivingEntity) {
-                    if (entity.hasStatusEffect(crippleMovementEffect)) {
-                        entity.addStatusEffect(StatusEffectInstance(exposedEffect, 20 * 10, 0))
+                    if (entity.hasStatusEffect(CRIPPLE_MOVEMENT_EFFECT)) {
+                        entity.addStatusEffect(StatusEffectInstance(EXPOSED_EFFECT, 20 * 10, 0))
                     }
                     val channeler = channeler
                     if (channeler == null) {
-                        entity.addStatusEffect(StatusEffectInstance(crippleMovementEffect, 20 * 10, 4))
+                        entity.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 4))
                     } else {
                         if (ChannelSequence.channelMagic(CrippleMovementMagic, channeler, entity, false)) {
                             ServerPlayNetworking.send(channeler, ChannelMagicPayload(CrippleMovementMagic.id, entity.id))

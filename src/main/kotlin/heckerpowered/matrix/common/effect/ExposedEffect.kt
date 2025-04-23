@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.effect
 
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
 import net.minecraft.entity.effect.StatusEffect
@@ -15,7 +16,7 @@ object ExposedEffect : StatusEffect(
     }
 
     private fun onLivingHurt(event: DamageAccumulator): ActionResult {
-        val statusEffect = event.target.getStatusEffect(exposedEffect) ?: return ActionResult.PASS
+        val statusEffect = event.target.getStatusEffect(EXPOSED_EFFECT) ?: return ActionResult.PASS
         event.damageMultiplier += (statusEffect.amplifier + 1) * 0.4
         return ActionResult.PASS
     }

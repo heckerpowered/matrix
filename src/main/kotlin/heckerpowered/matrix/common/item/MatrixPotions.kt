@@ -1,7 +1,7 @@
 package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.angeredEffect
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
 import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.item.Items
@@ -17,7 +17,7 @@ val angeredPotionEntry: RegistryEntry<Potion> by lazy { Registries.POTION.getEnt
 
 object MatrixPotions {
 
-    val angeredPotion = register("angered", Potion(StatusEffectInstance(angeredEffect, 20 * 30)))
+    val angeredPotion = register("angered", Potion(StatusEffectInstance(ANGERED_EFFECT, 20 * 30)))
 
     private fun register(name: String, potion: Potion): Potion {
         val identifier = Matrix.identifier(name)

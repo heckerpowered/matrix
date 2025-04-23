@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.effect
 
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_EFFECT
 import heckerpowered.matrix.common.event.GetArmorCallback
 import heckerpowered.matrix.common.event.GetAttributeValueCallback
 import heckerpowered.matrix.core.Accumulator
@@ -24,13 +25,13 @@ object ArmorPenetrationEffect : StatusEffect(
             return
         }
 
-        val armorPenetrationInstance = entity.getStatusEffect(armorPenetrationEffect) ?: return
+        val armorPenetrationInstance = entity.getStatusEffect(ARMOR_PENETRATION_EFFECT) ?: return
         val amplifier = armorPenetrationInstance.amplifier + 1
         accumulator.multiplier -= amplifier * 0.4
     }
 
     private fun getArmor(entity: LivingEntity, accumulator: Accumulator) {
-        val armorPenetrationInstance = entity.getStatusEffect(armorPenetrationEffect) ?: return
+        val armorPenetrationInstance = entity.getStatusEffect(ARMOR_PENETRATION_EFFECT) ?: return
         val amplifier = armorPenetrationInstance.amplifier + 1
         accumulator.multiplier -= amplifier * 0.4
     }

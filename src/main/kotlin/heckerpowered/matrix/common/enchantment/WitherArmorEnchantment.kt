@@ -1,6 +1,6 @@
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.effect.witherArmorChargedEffect
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
 import heckerpowered.matrix.common.event.EntityTickCallback
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.EquipmentSlot
@@ -26,12 +26,12 @@ object WitherArmorEnchantment {
             return
         }
 
-        val witherArmorChargedStatusEffectInstance = entity.getStatusEffect(witherArmorChargedEffect)
+        val witherArmorChargedStatusEffectInstance = entity.getStatusEffect(WITHER_ARMOR_CHARGED_EFFECT)
         if (witherArmorChargedStatusEffectInstance != null) {
             return
         }
 
-        entity.addStatusEffect(StatusEffectInstance(witherArmorChargedEffect, 20 * 10, 0, true, true))
+        entity.addStatusEffect(StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 20 * 10, 0, true, true))
         if (entity is ServerPlayerEntity) {
             entity.server.playerManager.sendStatusEffects(entity)
         }

@@ -1,7 +1,7 @@
 package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.effect.crippleMovementEffect
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
 import heckerpowered.matrix.common.isInvulnerableToEffect
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.data.language.MatrixLanguage
@@ -15,16 +15,16 @@ import net.minecraft.server.world.ServerWorld
 object CrippleMovementMagic : Magic(MatrixLanguage.magicCrippleMovement, 6, MatrixLanguage.magicCrippleMovementDescription, 2) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
         if (target is PlayerEntity) {
-            target.addStatusEffect(StatusEffectInstance(crippleMovementEffect, 20 * 3, 0))
+            target.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 3, 0))
             return
         }
-        target.addStatusEffect(StatusEffectInstance(crippleMovementEffect, 20 * 10, 0))
+        target.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 0))
         if (target.world !is ServerWorld) {
             return
         }
 
         val server = target.world.server ?: return
-        val statusEffectInstance = target.getStatusEffect(crippleMovementEffect) ?: return
+        val statusEffectInstance = target.getStatusEffect(CRIPPLE_MOVEMENT_EFFECT) ?: return
         for (serverPlayer in server.playerManager.playerList) {
             serverPlayer.networkHandler.sendPacket(EntityStatusEffectS2CPacket(target.id, statusEffectInstance, false))
         }
@@ -35,7 +35,7 @@ object CrippleMovementMagic : Magic(MatrixLanguage.magicCrippleMovement, 6, Matr
         target: LivingEntity?,
         sequence: ChannelSequence?,
     ): MagicAvailableStatus {
-        if (target?.isInvulnerableToEffect(crippleMovementEffect) == true) {
+        if (target?.isInvulnerableToEffect(CRIPPLE_MOVEMENT_EFFECT) == true) {
             return MagicAvailableStatus.TARGET_IMMUNE
         }
 

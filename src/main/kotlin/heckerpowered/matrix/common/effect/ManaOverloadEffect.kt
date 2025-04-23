@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.effect
 
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
 import heckerpowered.matrix.common.event.*
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.entity.LivingEntity
@@ -21,7 +22,7 @@ object ManaOverloadEffect : StatusEffect(
     }
 
     private fun onEntityTick(entity: LivingEntity) {
-        val effect = entity.getStatusEffect(manaOverloadEffect) ?: return
+        val effect = entity.getStatusEffect(MANA_OVERLOAD_EFFECT) ?: return
         if (effect.amplifier >= 2 && entity.age % 20 == 0) {
             entity.damage(entity.damageSources.create(MatrixDamageTypes.magic), entity.health * 0.08F)
         }
@@ -38,11 +39,11 @@ object ManaOverloadEffect : StatusEffect(
     }
 
     fun isMagicAbilityDisabled(entity: LivingEntity): Boolean {
-        return entity.hasStatusEffect(manaOverloadEffect)
+        return entity.hasStatusEffect(MANA_OVERLOAD_EFFECT)
     }
 
     private fun canHaveStatusEffect(entity: LivingEntity, effect: StatusEffectInstance): ActionResult {
-        val effectAmplifier = entity.getStatusEffect(manaOverloadEffect)?.amplifier ?: 0
+        val effectAmplifier = entity.getStatusEffect(MANA_OVERLOAD_EFFECT)?.amplifier ?: 0
         if (effectAmplifier >= 1 && effect.effectType.value().isBeneficial) {
             return ActionResult.FAIL
         }
@@ -52,7 +53,7 @@ object ManaOverloadEffect : StatusEffect(
 
     private fun onLivingHurt(accumulator: DamageAccumulator): ActionResult {
         val target = accumulator.target
-        if (target.hasStatusEffect(manaOverloadEffect)) {
+        if (target.hasStatusEffect(MANA_OVERLOAD_EFFECT)) {
             accumulator.damageMultiplier += 0.15
         }
 

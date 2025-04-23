@@ -1,6 +1,8 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
 import heckerpowered.matrix.common.enchantment.witherArmorEnchantmentKey
 import heckerpowered.matrix.common.event.*
 import heckerpowered.matrix.common.network.SyncHealthPayload
@@ -41,10 +43,10 @@ object WitherArmorChargedEffect : StatusEffect(
             return ActionResult.PASS
         }
 
-        val statusEffect = attacker.getStatusEffect(witherArmorChargedEffect)
+        val statusEffect = attacker.getStatusEffect(WITHER_ARMOR_CHARGED_EFFECT)
         val amplifier = statusEffect?.amplifier ?: 0
         val duration = statusEffect?.duration ?: 200
-        attacker.setStatusEffect(StatusEffectInstance(witherArmorChargedEffect, duration, amplifier + 1, false, true), entity)
+        attacker.setStatusEffect(StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, duration, amplifier + 1, false, true), entity)
 
         return ActionResult.PASS
     }
@@ -56,7 +58,7 @@ object WitherArmorChargedEffect : StatusEffect(
             return
         }
 
-        val witherArmorChargedStatusEffectInstance = entity.getStatusEffect(witherArmorChargedEffect) ?: return
+        val witherArmorChargedStatusEffectInstance = entity.getStatusEffect(WITHER_ARMOR_CHARGED_EFFECT) ?: return
         val amplifier = witherArmorChargedStatusEffectInstance.amplifier
         if (amplifier <= 0) {
             return
@@ -80,7 +82,7 @@ object WitherArmorChargedEffect : StatusEffect(
             entity.setAbsorptionAmountUnclamped(newAbsorptionAmount)
         }
         entity.heal(healAmount)
-        entity.setStatusEffect(StatusEffectInstance(witherArmorEffect, 200, level - 1, false, true).also {
+        entity.setStatusEffect(StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, level - 1, false, true).also {
             // Cannot add a weaker status effect to an entity, when we set the status effect directly,
             // it is not considered as a new status effect, call onApplied() manually.
             it.onApplied(entity)
@@ -88,7 +90,7 @@ object WitherArmorChargedEffect : StatusEffect(
 
         // Wither armor charges has no special effect when it is applied. Call onApplied() is not necessary.
         entity.setStatusEffect(
-            StatusEffectInstance(witherArmorChargedEffect, 200, amplifier - 1, false, true),
+            StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, amplifier - 1, false, true),
             entity
         )
         if (entity is ServerPlayerEntity) {
@@ -105,7 +107,7 @@ object WitherArmorChargedEffect : StatusEffect(
     private fun onStatusEffectRemoved(entity: LivingEntity, statusEffectInstance: StatusEffectInstance): ActionResult {
         // Status removed callback may be called in client, remember to check if the entity is client-side.
         if (entity.world.isClient ||
-            statusEffectInstance.effectType != witherArmorChargedEffect ||
+            statusEffectInstance.effectType != WITHER_ARMOR_CHARGED_EFFECT ||
             statusEffectInstance.duration > 0
         ) {
             return ActionResult.PASS
@@ -124,7 +126,7 @@ object WitherArmorChargedEffect : StatusEffect(
         val nextAmplifier = (currentAmplifier + 1)
             .coerceAtMost(3)
             .coerceAtLeast(currentAmplifier)
-        entity.addStatusEffect(StatusEffectInstance(witherArmorChargedEffect, 200, nextAmplifier, false, true))
+        entity.addStatusEffect(StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, nextAmplifier, false, true))
         return ActionResult.FAIL
     }
 
@@ -144,7 +146,7 @@ object WitherArmorChargedEffect : StatusEffect(
             return ActionResult.PASS
         }
 
-        val witherArmorChargedStatusEffectInstance = entity.getStatusEffect(witherArmorChargedEffect) ?: return ActionResult.PASS
+        val witherArmorChargedStatusEffectInstance = entity.getStatusEffect(WITHER_ARMOR_CHARGED_EFFECT) ?: return ActionResult.PASS
         val amplifier = witherArmorChargedStatusEffectInstance.amplifier
         if (amplifier <= 0) {
             return ActionResult.PASS
@@ -177,7 +179,7 @@ object WitherArmorChargedEffect : StatusEffect(
             entity.setAbsorptionAmountUnclamped(newAbsorptionAmount)
         }
         entity.heal(healAmount)
-        entity.setStatusEffect(StatusEffectInstance(witherArmorEffect, 200, level - 1, false, true).also {
+        entity.setStatusEffect(StatusEffectInstance(WITHER_ARMOR_EFFECT, 200, level - 1, false, true).also {
             // Cannot add a weaker status effect to an entity, when we set the status effect directly,
             // it is not considered as a new status effect, call onApplied() manually.
             it.onApplied(entity)
@@ -185,7 +187,7 @@ object WitherArmorChargedEffect : StatusEffect(
 
         // Wither armor charges has no special effect when it is applied. Call onApplied() is not necessary.
         entity.setStatusEffect(
-            StatusEffectInstance(witherArmorChargedEffect, 200, amplifier - useAmount - 1, false, true),
+            StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, amplifier - useAmount - 1, false, true),
             entity
         )
         if (entity is ServerPlayerEntity) {

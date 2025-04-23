@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.effect
 
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
@@ -9,7 +10,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.util.ActionResult
 
 val PlayerEntity.bloodPactActive: Boolean
-    get() = hasStatusEffect(bloodPactEffect)
+    get() = hasStatusEffect(BLOOD_PACT_EFFECT)
 
 object BloodPactEffect : StatusEffect(
     StatusEffectCategory.BENEFICIAL,
@@ -21,7 +22,7 @@ object BloodPactEffect : StatusEffect(
 
     private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
         val attacker = accumulator.attacker!!
-        if (attacker.hasStatusEffect(bloodPactEffect) &&
+        if (attacker.hasStatusEffect(BLOOD_PACT_EFFECT) &&
             accumulator.damageSource.isOf(MatrixDamageTypes.magic)
         ) {
             accumulator.damageMultiplier += 0.1

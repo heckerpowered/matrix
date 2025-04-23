@@ -1,6 +1,6 @@
 package heckerpowered.matrix.common.network
 
-import heckerpowered.matrix.common.effect.bloodPactEffect
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
 import heckerpowered.matrix.common.enchantment.bloodPact
 import heckerpowered.matrix.common.enchantment.getEnchantmentLevel
 import heckerpowered.matrix.common.persistent.wizardHelmet
@@ -21,6 +21,7 @@ class ActiveBloodPactPayload : CustomPayload {
             }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun encode(buffer: PacketByteBuf) {
     }
 
@@ -34,12 +35,12 @@ class ActiveBloodPactPayload : CustomPayload {
             return
         }
 
-        if (player.hasStatusEffect(bloodPactEffect) || player.itemCooldownManager.isCoolingDown(player.wizardHelmet.item)) {
+        if (player.hasStatusEffect(BLOOD_PACT_EFFECT) || player.itemCooldownManager.isCoolingDown(player.wizardHelmet.item)) {
             player.serverWorld.playSound(null, player.x, player.y, player.z, SoundEvents.ENTITY_BLAZE_HURT, SoundCategory.PLAYERS, 3.0F, 1.0F)
             return
         }
 
-        player.addStatusEffect(StatusEffectInstance(bloodPactEffect, 20 * 30, 0, false, true))
+        player.addStatusEffect(StatusEffectInstance(BLOOD_PACT_EFFECT, 20 * 30, 0, false, true))
         player.serverWorld.playSound(null, player.x, player.y, player.z, SoundEvents.ENTITY_WITHER_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.0F)
         player.itemCooldownManager.set(player.wizardHelmet.item, 20 * (30 + 14)) // 30 = duration, 14 = cooldown
     }

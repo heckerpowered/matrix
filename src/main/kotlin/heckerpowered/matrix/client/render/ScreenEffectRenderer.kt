@@ -13,9 +13,9 @@ import heckerpowered.matrix.client.shader.DissolveShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.effect.angeredEffect
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
+import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
 import heckerpowered.matrix.common.effect.bloodPactActive
-import heckerpowered.matrix.common.effect.witherArmorEffect
 import heckerpowered.matrix.core.approximatelyEqual
 import heckerpowered.matrix.core.resourceToString
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
@@ -118,22 +118,6 @@ object ScreenEffectRenderer {
         )
     }
 
-    private val ghostShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/ghost.fsh"),
-            arrayOf(
-                PostProcessRenderer.framebufferProvider,
-                UniformProvider("strength") { pointer ->
-                    glUniform1f(
-                        pointer,
-                        ghostStrengthAnimation.animatedValue.toFloat()
-                    )
-                }
-            )
-        )
-    }
-
     private val edgeHighlightShader by lazy {
         BlitShader(
             resourceToString("/assets/matrix/shaders/sobel.vert"),
@@ -200,15 +184,15 @@ object ScreenEffectRenderer {
         if (minecraftClient.player == null) {
             return
         }
-        if (player.getStatusEffect(angeredEffect) == null && previousAngryState) {
+        if (player.getStatusEffect(ANGERED_EFFECT) == null && previousAngryState) {
             onAngeredEffectRemoved()
             previousAngryState = false
-        } else if (player.getStatusEffect(angeredEffect) != null && !previousAngryState) {
+        } else if (player.getStatusEffect(ANGERED_EFFECT) != null && !previousAngryState) {
             onAngeredEffectApplied()
             previousAngryState = true
         }
 
-        val witherArmorStatusEffect = player.getStatusEffect(witherArmorEffect)
+        val witherArmorStatusEffect = player.getStatusEffect(WITHER_ARMOR_EFFECT)
         if (witherArmorStatusEffect == null && previousWitherArmorState) {
             previousWitherArmorState = false
         } else if (witherArmorStatusEffect != null && !previousWitherArmorState ||
@@ -226,7 +210,7 @@ object ScreenEffectRenderer {
 
     fun onWitherArmorEffectApplied() {
         previousWitherArmorState = true
-        val witherArmorStatusEffect = player.getStatusEffect(witherArmorEffect)
+        val witherArmorStatusEffect = player.getStatusEffect(WITHER_ARMOR_EFFECT)
         previousWitherArmorDuration = witherArmorStatusEffect?.duration?.toLong() ?: 0L
 
         PostProcessRenderer.postProcessShaders.add(colorFilterShader)
