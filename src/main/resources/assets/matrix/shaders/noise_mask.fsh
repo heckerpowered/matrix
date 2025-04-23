@@ -6,6 +6,7 @@ uniform float emissiveRange = 0.05;
 uniform vec4 emissiveColor = vec4(0, 0.5, 1.0, 1.0);
 uniform float pixelStrength = 16.0;
 uniform float detialStrength = 1;
+uniform vec2 resolution = vec2(1.0, 1.0);
 
 layout (location = 0) out vec4 fragColor;
 

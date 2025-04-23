@@ -11,12 +11,11 @@ import net.minecraft.util.ActionResult
 
 object PeakOverdriveEnchantment {
     fun onInitialize() {
-        LivingAttackCallback.event.register(::onLivingAttack)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
     }
 
     private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
         val attacker = accumulator.attacker!!
-        val target = accumulator.target
         if (attacker !is PlayerEntity || !attacker.bloodPactActive) {
             return ActionResult.PASS
         }
@@ -34,7 +33,7 @@ object PeakOverdriveEnchantment {
             return ActionResult.PASS
         }
 
-        accumulator.damageMultiplier += 1.5
+        accumulator.damageMultiplier += 0.5
         return ActionResult.PASS
     }
 }

@@ -4,7 +4,6 @@ import heckerpowered.matrix.client.player
 import heckerpowered.matrix.common.enchantment.witherArmorEnchantmentKey
 import heckerpowered.matrix.common.event.*
 import heckerpowered.matrix.common.network.SyncHealthPayload
-import heckerpowered.matrix.common.network.WitherArmorTriggerPayload
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.EquipmentSlot
@@ -25,10 +24,10 @@ object WitherArmorChargedEffect : StatusEffect(
 ) {
     init {
         fadeTicks(0)
-        StatusEffectRemovedCallback.event.register(::onStatusEffectRemoved)
-        LivingDamageCallback.event.register(::onLivingDamage)
-        EntityTickCallback.event.register(::onEntityTick)
-        LivingDeathCallback.event.register(::onLivingDeath)
+        StatusEffectRemovedCallback.EVENT.register(::onStatusEffectRemoved)
+        LivingDamageCallback.EVENT.register(::onLivingDamage)
+        EntityTickCallback.EVENT.register(::onEntityTick)
+        LivingDeathCallback.EVENT.register(::onLivingDeath)
     }
 
     private fun onLivingDeath(entity: LivingEntity, damageSource: DamageSource): ActionResult {
@@ -99,7 +98,7 @@ object WitherArmorChargedEffect : StatusEffect(
             // may not be synchronized to the client just in time. Send a packet to synchronize the health and
             // absorption amount to the client.
             ServerPlayNetworking.send(entity, SyncHealthPayload(entity))
-            ServerPlayNetworking.send(entity, WitherArmorTriggerPayload())
+            // ServerPlayNetworking.send(entity, WitherArmorTriggerPayload())
         }
     }
 
@@ -196,7 +195,7 @@ object WitherArmorChargedEffect : StatusEffect(
             // may not be synchronized to the client just in time. Send a packet to synchronize the health and
             // absorption amount to the client.
             ServerPlayNetworking.send(entity, SyncHealthPayload(entity))
-            ServerPlayNetworking.send(entity, WitherArmorTriggerPayload())
+            // ServerPlayNetworking.send(entity, WitherArmorTriggerPayload())
         }
         return ActionResult.PASS
     }

@@ -14,9 +14,11 @@ import net.minecraft.client.gl.Framebuffer
 import org.lwjgl.opengl.GL31
 
 object ScaleSampling {
-    private val scaledFramebuffers = mutableMapOf<Double, ScalingFramebuffer>()
-    fun getScaledFramebuffer(scaling: Double): ScalingFramebuffer {
-        return scaledFramebuffers.computeIfAbsent(scaling) {
+    private val downScalingFramebuffers = mutableMapOf<Double, ScalingFramebuffer>()
+    private val upScalingFramebuffers = mutableMapOf<Double, ScalingFramebuffer>()
+
+    fun getDownScalingFramebuffer(scaling: Double): ScalingFramebuffer {
+        return downScalingFramebuffers.computeIfAbsent(scaling) {
             val framebuffer = ScalingFramebuffer(
                 minecraft.window.framebufferWidth,
                 minecraft.window.framebufferHeight,
@@ -28,6 +30,39 @@ object ScaleSampling {
             PostProcessRenderer.manageFramebuffer(framebuffer)
             framebuffer
         }
+    }
+
+    fun getUpScalingFramebuffer(scaling: Double): ScalingFramebuffer {
+        return upScalingFramebuffers.computeIfAbsent(scaling) {
+            val framebuffer = ScalingFramebuffer(
+                minecraft.window.framebufferWidth,
+                minecraft.window.framebufferHeight,
+                true,
+                MinecraftClient.IS_SYSTEM_MAC,
+                scaling
+            )
+            framebuffer.setClearColor(.0F, .0F, .0F, .0F)
+            PostProcessRenderer.manageFramebuffer(framebuffer)
+            framebuffer
+        }
+    }
+
+    fun createManagedScalingFramebuffer(scaling: Double): ScalingFramebuffer {
+        val framebuffer = ScalingFramebuffer(
+            minecraft.window.framebufferWidth,
+            minecraft.window.framebufferHeight,
+            true,
+            MinecraftClient.IS_SYSTEM_MAC,
+            scaling
+        )
+        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
+        PostProcessRenderer.manageFramebuffer(framebuffer)
+        return framebuffer
+    }
+
+    fun clearAll() {
+        downScalingFramebuffers.values.forEach { it.clear(false) }
+        upScalingFramebuffers.values.forEach { it.clear(false) }
     }
 
     val framebuffer = PostProcessRenderer.createManagedFramebuffer()
@@ -42,10 +77,6 @@ object ScaleSampling {
 
         GL31.glActiveTexture(GlConst.GL_TEXTURE0)
         GL31.glBindTexture(GlConst.GL_TEXTURE_2D, sourceFramebuffer.colorAttachment)
-
-        GL31.glGenerateMipmap(GL31.GL_TEXTURE_2D)
-        GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MIN_FILTER, GL31.GL_LINEAR_MIPMAP_LINEAR)
-        GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MAG_FILTER, GL31.GL_LINEAR)
 
         RenderSystem.glUniform1i(pointer, 0)
     }
@@ -96,6 +127,7 @@ object ScaleSampling {
 
         targetFramebuffer.beginWrite(true)
         sampler.blit()
+        targetFramebuffer.endWrite()
 
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
         GlStateManager._viewport(previousViewportX, previousViewportY, previousViewportWidth, previousViewportHeight)

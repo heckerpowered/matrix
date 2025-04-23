@@ -39,7 +39,7 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
         }
 
         init {
-            ItemStackEquippedCallback.event.register(::onItemStackEquipped)
+            ItemStackEquippedCallback.EVENT.register(::onItemStackEquipped)
         }
 
         private fun onItemStackEquipped(entity: LivingEntity, equipmentSlot: EquipmentSlot, previousItemStack: ItemStack, currentItemStack: ItemStack) {

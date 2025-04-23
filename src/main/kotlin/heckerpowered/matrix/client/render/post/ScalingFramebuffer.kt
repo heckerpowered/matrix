@@ -22,8 +22,8 @@ class ScalingFramebuffer(width: Int, height: Int, useDepth: Boolean, getError: B
             return
         }
 
-        val scaledWidth = floor(width * resolutionScaling).toInt()
-        val scaledHeight = floor(height * resolutionScaling).toInt()
+        val scaledWidth = floor(width * resolutionScaling).toInt().coerceAtLeast(1)
+        val scaledHeight = floor(height * resolutionScaling).toInt().coerceAtLeast(1)
         super.resize(scaledWidth, scaledHeight, getError)
     }
 }

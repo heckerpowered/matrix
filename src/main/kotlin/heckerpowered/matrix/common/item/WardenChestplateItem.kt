@@ -21,9 +21,9 @@ object WardenChestplateItem : ArmorItem(
         .rarity(Rarity.EPIC)
 ) {
     init {
-        LivingAttackCallback.event.register(::onLivingAttack)
-        LivingHurtCallback.event.register(::onLivingHurt)
-        LivingKnockbackCallback.event.register(::onLivingKnockback)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
+        LivingHurtCallback.EVENT.register(::onLivingHurt)
+        LivingKnockbackCallback.EVENT.register(::onLivingKnockback)
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {

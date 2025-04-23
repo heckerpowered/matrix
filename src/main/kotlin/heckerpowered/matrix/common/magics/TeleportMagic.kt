@@ -2,10 +2,11 @@ package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.core.attack
+import heckerpowered.matrix.core.squaredDistanceTo
+import heckerpowered.matrix.core.toBox
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.entity.effect.StatusEffects
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
 
@@ -15,13 +16,22 @@ object TeleportMagic : Magic(MatrixLanguage.magicTeleport, 15, MatrixLanguage.ma
             return
         }
 
-        player.addStatusEffect(StatusEffectInstance(StatusEffects.INVISIBILITY, 200, 0, false, false))
-        player.addStatusEffect(StatusEffectInstance(StatusEffects.SPEED, 200, 4, false, false))
         val velocity = player.velocity
         player.teleport(target.x, target.y, target.z, true)
         player.networkHandler.sendPacket(EntityVelocityUpdateS2CPacket(player))
         player.velocity = velocity
         player.velocityDirty = true
         player.velocityModified = true
+
+        target.world.getOtherEntities(player, target.pos.toBox().expand(3.0))
+            .filter { it squaredDistanceTo player <= 6 * 6 }
+            .forEach {
+                it.timeUntilRegen = 0
+                player.lastAttackedTicks = Int.MAX_VALUE
+                player attack it
+                player.addCritParticles(it)
+                player.addEnchantedHitParticles(it)
+                player.swingHand(player.activeHand, true)
+            }
     }
 }

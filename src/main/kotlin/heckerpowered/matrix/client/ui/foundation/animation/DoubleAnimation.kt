@@ -25,7 +25,7 @@ class DoubleAnimation(
         get() = animationClock.transform(easingFunction)
 
     val isAnimating: Boolean
-        get() = abs(animatedValue - currentValue) < 0.001
+        get() = abs(animatedValue - currentValue) > 0.001
 
     val progress: Double
         get() = animationClock.progress

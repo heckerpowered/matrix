@@ -1,20 +1,29 @@
 package heckerpowered.matrix.client.render
 
 import com.mojang.blaze3d.platform.GlConst
+import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.event.PostProcessCallback
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
+import heckerpowered.matrix.client.render.post.BloomEffect
+import heckerpowered.matrix.client.render.shader.RadialBlurRenderer.samples
 import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.DissolveShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.effect.angeredEffect
+import heckerpowered.matrix.common.effect.bloodPactActive
 import heckerpowered.matrix.common.effect.witherArmorEffect
+import heckerpowered.matrix.core.approximatelyEqual
 import heckerpowered.matrix.core.resourceToString
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.MinecraftClient
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL31
+import org.lwjgl.opengl.GL46.glUniform1f
+import org.lwjgl.opengl.GL46.glUniform1i
 import java.time.Duration
 
 object ScreenEffectRenderer {
@@ -24,32 +33,52 @@ object ScreenEffectRenderer {
     private var previousWitherArmorState = false
     private var previousWitherArmorDuration = 0L
 
-    val colorAnimation = ColorAnimation(
-        red = SimpleDoubleAnimation(from = 1.0, to = 1.0, duration = Duration.ofMillis(1000)),
-        green = SimpleDoubleAnimation(from = 1.0, to = 1.0, duration = Duration.ofMillis(1000)),
-        blue = SimpleDoubleAnimation(from = 1.0, to = 1.0, duration = Duration.ofMillis(1000))
+    private val colorAnimation = ColorAnimation(
+        red = SimpleDoubleAnimation(from = 1.0, to = 1.0, initValue = 1.0, duration = Duration.ofMillis(1000)),
+        green = SimpleDoubleAnimation(from = 1.0, to = 1.0, initValue = 1.0, duration = Duration.ofMillis(1000)),
+        blue = SimpleDoubleAnimation(from = 1.0, to = 1.0, initValue = 1.0, duration = Duration.ofMillis(1000))
     )
     private val ghostStrengthAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
+    private val auraAlphaAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
 
     private val auraShader by lazy {
         BlitShader(
             resourceToString("/assets/matrix/shaders/sobel.vert"),
             resourceToString("/assets/matrix/shaders/post/aura.fsh"),
             arrayOf(
-                UniformProvider("depthTexture") { pointer ->
+                UniformProvider("entityDepthAttachment") { pointer ->
                     GL31.glActiveTexture(GlConst.GL_TEXTURE0)
                     GL31.glBindTexture(GlConst.GL_TEXTURE_2D, sceneFramebuffer.depthAttachment)
                     RenderSystem.glUniform1i(pointer, 0)
                 },
-                UniformProvider("objectDepthTexture") { pointer ->
-                    GL31.glActiveTexture(GlConst.GL_TEXTURE1)
-                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, minecraft.framebuffer.depthAttachment)
+                UniformProvider("entityColorAttachment") { pointer ->
+                    GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 1)
+                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, sceneFramebuffer.colorAttachment)
                     RenderSystem.glUniform1i(pointer, 1)
                 },
-                UniformProvider("objectTexture") { pointer ->
-                    GL31.glActiveTexture(GlConst.GL_TEXTURE2)
-                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, minecraft.framebuffer.colorAttachment)
+                UniformProvider("sceneDepthAttachment") { pointer ->
+                    GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 2)
+                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, minecraft.framebuffer.depthAttachment)
                     RenderSystem.glUniform1i(pointer, 2)
+                },
+                UniformProvider("sceneColorAttachment") { pointer ->
+                    GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 3)
+                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, minecraft.framebuffer.colorAttachment)
+                    RenderSystem.glUniform1i(pointer, 3)
+                },
+                UniformProvider("noiseColorAttachment") { pointer ->
+                    GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 4)
+                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, DissolveShader.perlinNoiseTextureId)
+                    RenderSystem.glUniform1i(pointer, 4)
+                },
+                UniformProvider("time") { pointer ->
+                    val age = minecraft.player?.age?.toFloat() ?: 0F
+                    val deltaTime = minecraft.renderTickCounter.tickDelta
+                    val time = age + deltaTime
+                    glUniform1f(pointer, time / 1000.0F)
+                },
+                UniformProvider("alpha") { pointer ->
+                    glUniform1f(pointer, auraAlphaAnimation.animatedValue.toFloat())
                 },
                 UniformProvider("auraColor") { pointer ->
                     val color = colorAnimation
@@ -68,6 +97,7 @@ object ScreenEffectRenderer {
     private val blurRadiusAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
 
     private val edgeThresholdAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
+    private val bloomThresholdAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
 
     private val colorFilterShader by lazy {
         BlitShader(
@@ -95,7 +125,7 @@ object ScreenEffectRenderer {
             arrayOf(
                 PostProcessRenderer.framebufferProvider,
                 UniformProvider("strength") { pointer ->
-                    GL20.glUniform1f(
+                    glUniform1f(
                         pointer,
                         ghostStrengthAnimation.animatedValue.toFloat()
                     )
@@ -111,7 +141,7 @@ object ScreenEffectRenderer {
             arrayOf(
                 PostProcessRenderer.framebufferProvider,
                 UniformProvider("edgeThreshold") { pointer ->
-                    GL20.glUniform1f(pointer, edgeThresholdAnimation.animatedValue.toFloat())
+                    glUniform1f(pointer, edgeThresholdAnimation.animatedValue.toFloat())
                 },
                 UniformProvider("edgeColor") { pointer ->
                     GL20.glUniform4f(pointer, 0.7F, 0.1F, 0.1F, 1.0F)
@@ -120,8 +150,25 @@ object ScreenEffectRenderer {
         )
     }
 
+    private val radialBlurShader by lazy {
+        BlitShader(
+            resourceToString("/assets/matrix/shaders/sobel.vert"),
+            resourceToString("/assets/matrix/shaders/post/blur/radial_blur.fsh"),
+            arrayOf(
+                PostProcessRenderer.framebufferProvider,
+                UniformProvider("strength") { pointer ->
+                    glUniform1f(pointer, ghostStrengthAnimation.animatedValue.toFloat())
+                },
+                UniformProvider("samples") { pointer ->
+                    glUniform1i(pointer, samples)
+                }
+            )
+        )
+    }
+
     fun onInitialize() {
         ClientTickEvents.START_CLIENT_TICK.register(::onTick)
+        PostProcessCallback.event.register(::onPostProcess)
 
         colorAnimation.red.start()
         colorAnimation.green.start()
@@ -129,6 +176,24 @@ object ScreenEffectRenderer {
 
         edgeThresholdAnimation.start()
         edgeThresholdAnimation.animatedValue = 1.0
+        bloomThresholdAnimation.animatedValue = 1.0
+    }
+
+    private fun onPostProcess() {
+        if (bloomThresholdAnimation.animatedValue.approximatelyEqual(1.0)) {
+            return
+        }
+
+        spoofFramebuffer {
+            BloomEffect.brightnessThreshold = bloomThresholdAnimation.animatedValue.toFloat()
+            BloomEffect.brightnessPassFramebuffer = minecraft.framebuffer
+            BloomEffect.renderBloom()
+
+            RenderSystem.enableBlend()
+            RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
+            PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
+            RenderSystem.defaultBlendFunc()
+        }
     }
 
     fun onTick(minecraftClient: MinecraftClient) {
@@ -163,14 +228,14 @@ object ScreenEffectRenderer {
         previousWitherArmorState = true
         val witherArmorStatusEffect = player.getStatusEffect(witherArmorEffect)
         previousWitherArmorDuration = witherArmorStatusEffect?.duration?.toLong() ?: 0L
-        
+
         PostProcessRenderer.postProcessShaders.add(colorFilterShader)
         PostProcessRenderer.postProcessShaders.add(edgeHighlightShader)
-        PostProcessRenderer.postProcessShaders.add(ghostShader)
+        PostProcessRenderer.postProcessShaders.add(radialBlurShader)
 
-        ghostStrengthAnimation.from = 1.0
+        ghostStrengthAnimation.from = 5.0
         ghostStrengthAnimation.to = ghostStrengthAnimation.value
-        ghostStrengthAnimation.duration = Duration.ofMillis(10000)
+        ghostStrengthAnimation.duration = Duration.ofMillis(1000)
         ghostStrengthAnimation.start()
 
         colorAnimation.red.from = 2.0
@@ -183,15 +248,22 @@ object ScreenEffectRenderer {
         colorAnimation.red.start()
 
         edgeThresholdAnimation.from = 0.0
+
         edgeThresholdAnimation.to = edgeThresholdAnimation.value
         edgeThresholdAnimation.duration = Duration.ofMillis(10000)
         edgeThresholdAnimation.start()
+
+        bloomThresholdAnimation.from = .0
+        bloomThresholdAnimation.to = 1.0
+        bloomThresholdAnimation.duration = Duration.ofSeconds(3)
+        bloomThresholdAnimation.start()
     }
 
     private fun onAngeredEffectApplied() {
         PostProcessRenderer.postProcessShaders.add(colorFilterShader)
         PostProcessRenderer.postProcessShaders.add(edgeHighlightShader)
-        PostProcessRenderer.postProcessShaders.add(ghostShader)
+        PostProcessRenderer.postProcessShaders.add(radialBlurShader)
+        // PostProcessRenderer.postProcessShaders.add(ghostShader)
 
         colorAnimation.red.value = 2.0
         colorAnimation.red.duration = Duration.ofMillis(1000)
@@ -201,12 +273,14 @@ object ScreenEffectRenderer {
 
         colorAnimation.blue.value = 1.0
 
-        edgeThresholdAnimation.value = 0.1
+        edgeThresholdAnimation.value = 0.3
         edgeThresholdAnimation.duration = Duration.ofMillis(1000)
         blurRadiusAnimation.value = 5.0
 
         ghostStrengthAnimation.duration = Duration.ofMillis(1000)
         ghostStrengthAnimation.value = 1.0
+
+        auraAlphaAnimation.value = 1.0
     }
 
     private fun onAngeredEffectRemoved() {
@@ -215,20 +289,72 @@ object ScreenEffectRenderer {
         colorAnimation.blue.value = 1.0
         edgeThresholdAnimation.value = 1.0
         ghostStrengthAnimation.value = 0.0
+        auraAlphaAnimation.value = .0
     }
 
     private val sceneFramebuffer by lazy { PostProcessRenderer.createManagedFramebuffer() }
+    private var previousFramebuffer = -1
+    private var useAuraShader = false
+    private var useBloom = false
 
     @JvmStatic
     fun beginRenderEntity() {
-        // val previousFramebuffer = GlStateManager.getBoundFramebuffer()
-        // sceneFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
-        // PostProcessRenderer.copyFramebuffer(minecraft.framebuffer, sceneFramebuffer)
-        // GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+        if (player.bloodPactActive) {
+            useBloom = true
+        } else if (previousAngryState || auraAlphaAnimation.animatedValue != .0) {
+            useAuraShader = true
+        }
+
+        if (!useBloom && !useAuraShader) {
+            return
+        }
+
+        previousFramebuffer = GlStateManager.getBoundFramebuffer()
+        sceneFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
+        sceneFramebuffer.beginWrite(false)
     }
 
     @JvmStatic
     fun endRenderEntity() {
-        // auraShader.blit()
+        if (!useAuraShader && !useBloom) {
+            return
+        }
+        // RenderSystem.enableBlend()
+        // PostProcessRenderer.copyFramebuffer(sceneFramebuffer, sceneFramebuffer)
+
+        // BloomEffect.brightnessThreshold = 0F
+        // BloomEffect.brightnessPassFramebuffer = sceneFramebuffer
+        // BloomEffect.renderBloom()
+//
+        // RenderSystem.enableBlend()
+        // PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
+
+        // copyFramebuffer() will discard all full black pixels.
+        spoofFramebuffer {
+            if (useBloom) {
+                BloomEffect.brightnessThreshold = .0F
+                BloomEffect.brightnessPassFramebuffer = sceneFramebuffer
+                BloomEffect.renderBloom()
+                minecraft.framebuffer.beginWrite(true)
+                BloomEffect.bloomFramebuffer.apply {
+                    RenderSystem.enableDepthTest()
+                    RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
+                    draw(viewportWidth, viewportHeight, false)
+                    RenderSystem.defaultBlendFunc()
+                    sceneFramebuffer.draw(viewportWidth, viewportHeight, false)
+                }
+            }
+            if (useAuraShader) {
+                PostProcessRenderer.useDepthAttachment = true
+                minecraft.framebuffer.beginWrite(true)
+                RenderSystem.enableBlend()
+                RenderSystem.enableDepthTest()
+                auraShader.blit()
+            }
+            PostProcessRenderer.useDepthAttachment = false
+        }
+        useAuraShader = false
+        useBloom = false
+        minecraft.framebuffer.beginWrite(true)
     }
 }

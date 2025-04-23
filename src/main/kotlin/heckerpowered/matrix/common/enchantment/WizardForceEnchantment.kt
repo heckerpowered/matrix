@@ -9,7 +9,7 @@ import net.minecraft.util.ActionResult
 
 object WizardForceEnchantment {
     fun onInitialize() {
-        LivingAttackCallback.event.register(::onLivingAttack)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {
@@ -22,7 +22,7 @@ object WizardForceEnchantment {
         }
 
         val level = attacker.wizardHelmet.getEnchantmentLevel(wizardForce)
-        event.damageMultiplier += level * 0.2
+        event.damageMultiplier += level * 0.05
         return ActionResult.PASS
     }
 }

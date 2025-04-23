@@ -10,7 +10,7 @@ data class LivingHealEvent(val entity: LivingEntity, var amount: Float)
 fun interface LivingHealCallback {
     companion object {
         @JvmField
-        val event: Event<LivingHealCallback> =
+        val EVENT: Event<LivingHealCallback> =
             EventFactory.createArrayBacked(LivingHealCallback::class.java) { listeners ->
                 LivingHealCallback { event ->
                     for (listener in listeners) {

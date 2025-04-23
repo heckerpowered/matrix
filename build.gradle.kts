@@ -10,8 +10,8 @@ val archiveBaseName: String by project
 val fabricVersion: String by project
 
 plugins {
-    id("fabric-loom") version "1.9-SNAPSHOT"
-    kotlin("jvm") version "2.1.0"
+    id("fabric-loom") version "1.9.2"
+    kotlin("jvm") version "2.1.20"
 }
 
 version = modVersion

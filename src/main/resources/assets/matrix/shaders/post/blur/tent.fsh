@@ -18,14 +18,14 @@ float luminance(vec3 color) {
 }
 
 void main() {
-    vec4 color = texture(framebuffer, fragTexCoord);
-    vec2 texelSize = 10 / textureSize(framebuffer, 0);
+    vec4 color = vec4(0);
+    vec2 texelSize = 1.0 / textureSize(framebuffer, 0);
     float weight = 0;
 
     for (int i = 0;i < 9; ++i) {
         vec3 kernel = tentKernel[i];
         vec4 sampledColor = texture(framebuffer, fragTexCoord + kernel.xy * texelSize);
-        float l = kernel.z;// kernel.z / (1 + luminance(sampledColor.rgb));
+        float l = kernel.z / (1 + luminance(sampledColor.rgb));
         color += sampledColor * l;
         weight += l;
     }

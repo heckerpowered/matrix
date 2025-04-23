@@ -8,7 +8,7 @@ import net.minecraft.entity.LivingEntity
 fun interface GetArmorCallback {
     companion object {
         @JvmField
-        val event: Event<GetArmorCallback> =
+        val EVENT: Event<GetArmorCallback> =
             EventFactory.createArrayBacked(GetArmorCallback::class.java) { listeners ->
                 GetArmorCallback { entity, accumulator ->
                     for (listener in listeners) {

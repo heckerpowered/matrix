@@ -43,7 +43,7 @@ object SystemCrashBar {
         render(renderer)
     }
 
-    fun systemCrach() {
+    fun systemCrash() {
         isCrashing = true
         if (stopWatch.isRunning) {
             stopWatch.reset()

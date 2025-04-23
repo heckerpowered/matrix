@@ -1,6 +1,7 @@
 package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.common.event.DamageAccumulator
+import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.server.network.ServerPlayerEntity
@@ -14,6 +15,10 @@ object WizardHelmetWarpDancer : WizardHelmet(
         .rarity(Rarity.EPIC)
         .component(MatrixComponents.maxLoad, 20.0)
 ) {
+    init {
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
+    }
+
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {
         val attacker = event.attacker!!
         if (attacker !is ServerPlayerEntity) {

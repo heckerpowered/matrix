@@ -3,6 +3,7 @@ package heckerpowered.matrix.common.magics
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.persistent.magicClock
+import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
@@ -19,7 +20,7 @@ object ExplosionMagic : Magic(MatrixLanguage.magicExplosion, 30, MatrixLanguage.
     )
 
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
-        val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { player?.damageSources?.explosion(target, player) }
+        val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
 
         target.world.createExplosion(player, damageSource, explosionBehavior, target.x, target.y, target.z, ((player?.magicClock ?: 1.0) * 4.0).toFloat(), false, World.ExplosionSourceType.MOB)
     }

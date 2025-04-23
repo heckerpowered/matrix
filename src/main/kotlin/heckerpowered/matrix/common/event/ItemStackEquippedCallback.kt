@@ -9,7 +9,7 @@ import net.minecraft.item.ItemStack
 fun interface ItemStackEquippedCallback {
     companion object {
         @JvmField
-        val event: Event<ItemStackEquippedCallback> =
+        val EVENT: Event<ItemStackEquippedCallback> =
             EventFactory.createArrayBacked(ItemStackEquippedCallback::class.java) { listeners ->
                 ItemStackEquippedCallback { entity, equipmentSlot, previousItemStack, currentItemStack ->
                     for (listener in listeners) {
@@ -23,6 +23,6 @@ fun interface ItemStackEquippedCallback {
         entity: LivingEntity,
         equipmentSlot: EquipmentSlot,
         previousItemStack: ItemStack,
-        currentItemStack: ItemStack
+        currentItemStack: ItemStack,
     )
 }

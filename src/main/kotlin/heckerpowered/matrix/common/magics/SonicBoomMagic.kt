@@ -2,6 +2,7 @@ package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttributes
@@ -29,7 +30,7 @@ object SonicBoomMagic : Magic(MatrixLanguage.magicSonicBoom, 40, MatrixLanguage.
 
             val boundingBox = Box(currentPosition, currentPosition).expand(3.0)
             for (entity in player.serverWorld.getOtherEntities(player, boundingBox)) {
-                if (entity.damage(player.serverWorld.damageSources.sonicBoom(player), 10.0f)) {
+                if (entity.damage(player.serverWorld.damageSources.create(MatrixDamageTypes.magic, player), 10.0f)) {
                     val horizontalKnockback = 0.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
                     val verticalKnockback = 2.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
                     entity.addVelocity(normalizedDirection.x * verticalKnockback, normalizedDirection.y * horizontalKnockback, normalizedDirection.z * verticalKnockback)

@@ -1,5 +1,7 @@
 package heckerpowered.matrix.core
 
+import net.minecraft.entity.Entity
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.Vec3d
 
@@ -37,4 +39,32 @@ operator fun Vec3d.times(value: Double): Vec3d {
 
 operator fun Vec3d.div(value: Double): Vec3d {
     return Vec3d(x / value, y / value, z / value)
+}
+
+infix fun PlayerEntity.attack(target: Entity) {
+    attack(target)
+}
+
+infix fun Vec3d.distanceTo(other: Vec3d): Double {
+    return distanceTo(other)
+}
+
+infix fun Vec3d.squaredDistanceTo(other: Vec3d): Double {
+    return squaredDistanceTo(other)
+}
+
+infix fun Entity.distanceTo(other: Entity): Double {
+    return pos.distanceTo(other.pos)
+}
+
+infix fun Entity.squaredDistanceTo(other: Entity): Double {
+    return pos.distanceTo(other.pos)
+}
+
+infix fun Entity.distanceTo(other: Vec3d): Double {
+    return pos.distanceTo(pos)
+}
+
+infix fun Entity.squaredDistanceTo(other: Vec3d): Double {
+    return pos.distanceTo(pos)
 }

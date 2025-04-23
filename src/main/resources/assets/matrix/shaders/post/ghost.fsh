@@ -15,7 +15,7 @@ void main() {
     vec2 offset = directionToEdge * edgeFactor * strength * 0.05;
 
     float blurRadius = strength * length(centeredTexCoord) * 0.25;
-    int samples = 9;
+    int samples = 10;
 
     vec4 blurColor = vec4(0.0);
     for (int i = -samples; i <= samples; i++) {

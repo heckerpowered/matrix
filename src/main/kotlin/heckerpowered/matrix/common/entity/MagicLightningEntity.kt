@@ -10,6 +10,7 @@ import heckerpowered.matrix.common.magics.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.magics.LightningBoltMagic
 import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.AbstractFireBlock
 import net.minecraft.block.Blocks
@@ -206,8 +207,9 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
             entity.setOnFireFor(8.0f)
         }
 
+        val channeler = this.channeler
         val damageSource = if (channeler != null) {
-            damageSources.playerAttack(channeler)
+            channeler.world.damageSources.create(MatrixDamageTypes.magic, channeler)
         } else {
             damageSources.generic()
         }
@@ -261,7 +263,6 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
             }
 
             BLUE -> {
-                val channeler = channeler
                 if (channeler == null) {
                     entity.damage(damageSource, 5.0F)
                     return

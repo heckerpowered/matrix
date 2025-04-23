@@ -81,8 +81,8 @@ object MatrixLanguage {
     val magicBloodPact: MutableText = Text.translatable("matrix.blood_pact")
     val magicBloodPactDescription: MutableText = Text.translatable("matrix.blood_pact.description")
 
-    val magicPull: MutableText = Text.translatable("matrix.pull")
-    val magicPullDescription: MutableText = Text.translatable("matrix.pull.description")
+    val magicAttract: MutableText = Text.translatable("matrix.attract")
+    val magicAttractDescription: MutableText = Text.translatable("matrix.attract.description")
 
     val magicLevitation: MutableText = Text.translatable("matrix.levitation")
     val magicLevitationDescription: MutableText = Text.translatable("matrix.levitation.description")

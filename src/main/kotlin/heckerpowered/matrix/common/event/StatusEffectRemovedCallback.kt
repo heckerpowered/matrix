@@ -9,7 +9,7 @@ import net.minecraft.util.ActionResult
 fun interface StatusEffectRemovedCallback {
     companion object {
         @JvmField
-        val event: Event<StatusEffectRemovedCallback> =
+        val EVENT: Event<StatusEffectRemovedCallback> =
             EventFactory.createArrayBacked(StatusEffectRemovedCallback::class.java) { listeners ->
                 StatusEffectRemovedCallback { entity, statusEffectInstance ->
                     for (listener in listeners) {

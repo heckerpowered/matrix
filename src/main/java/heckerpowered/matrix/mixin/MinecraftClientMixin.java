@@ -15,8 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MinecraftClient.class)
-abstract
-class MinecraftClientMixin {
+abstract class MinecraftClientMixin {
     private MinecraftClientMixin() {
     }
 

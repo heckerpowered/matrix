@@ -2,6 +2,7 @@ package heckerpowered.matrix.common.magics
 
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.damage.DamageSource
@@ -47,7 +48,7 @@ object MemoryEraseMagic : Magic(MatrixLanguage.magicMemoryErase, 10, MatrixLangu
             callsInPlace(supplier, InvocationKind.AT_MOST_ONCE)
         }
 
-        val erasedSource = target.damageSources.generic()
+        val erasedSource = target.world.damageSources.create(MatrixDamageTypes.magic, player)
         if (player == null || sequence.sequencedAfter<MemoryEraseMagic>()) {
             return erasedSource
         }

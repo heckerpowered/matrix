@@ -11,7 +11,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 
 object WitherArmorEnchantment {
     fun onInitialize() {
-        EntityTickCallback.event.register(::onEntityTick)
+        EntityTickCallback.EVENT.register(::onEntityTick)
     }
 
     private fun onEntityTick(entity: LivingEntity) {

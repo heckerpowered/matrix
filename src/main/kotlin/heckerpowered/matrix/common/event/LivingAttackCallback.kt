@@ -7,7 +7,7 @@ import net.minecraft.util.ActionResult
 fun interface LivingAttackCallback {
     companion object {
         @JvmField
-        val event: Event<LivingAttackCallback> =
+        val EVENT: Event<LivingAttackCallback> =
             EventFactory.createArrayBacked(LivingAttackCallback::class.java) { listeners ->
                 LivingAttackCallback { event ->
                     for (listener in listeners) {

@@ -6,8 +6,6 @@ import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.Point
-import heckerpowered.matrix.client.shader.BlitShader
-import heckerpowered.matrix.client.shader.BlurRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.persistent.getChannelSequence
@@ -26,6 +24,10 @@ object ManaCostTooltip {
     private var visibility = false
 
     private var differenceChangedAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150))
+    private var stateChangedAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150))
+    private var lastState = false
+    private var displayState = false
+
     private var lastDifference = 0L
     private var displayedDifference = 0L
 
@@ -62,33 +64,20 @@ object ManaCostTooltip {
         }
 
         if (cost > normalCost) {
-            backgroundColorAnimation.red.value = 127.0
+            backgroundColorAnimation.red.value = 0.5
             backgroundColorAnimation.green.value = .0
             backgroundColorAnimation.blue.value = .0
         } else if (cost < normalCost) {
             backgroundColorAnimation.red.value = .0
-            backgroundColorAnimation.green.value = 127.0
+            backgroundColorAnimation.green.value = 0.5
             backgroundColorAnimation.blue.value = .0
         }
-
         if (opacityAnimation.animatedValue == .0) {
             return
         }
 
         val minPoint = Point(drawContext.scaledWindowWidth / 2 - 125.0, drawContext.scaledWindowHeight - shownAnimation.animatedValue)
         val maxPoint = Point(drawContext.scaledWindowWidth / 2 + 125.0, minPoint.y + 15)
-
-        drawContext.enableScissor(
-            minPoint.x.toInt(),
-            minPoint.y.toInt(),
-            maxPoint.x.toInt(),
-            maxPoint.y.toInt()
-        )
-        BlurRenderer.blurTextureRenderShader.enableShader()
-        BlitShader.blit()
-        //BlurRenderer.renderQuad()
-        BlurRenderer.blurTextureRenderShader.disableShader()
-        drawContext.disableScissor()
 
         val color = backgroundColorAnimation
         val red = color.red.animatedValue.toFloat()
@@ -121,8 +110,21 @@ object ManaCostTooltip {
             displayedDifference = difference
         }
 
+        if (cost != normalCost) {
+            val state = cost > normalCost
+            if (state != lastState) {
+                lastState = state
+                stateChangedAnimation.value = .0
+            }
+        }
+        if (stateChangedAnimation.animatedValue == .0) {
+            stateChangedAnimation.value = 1.0
+            displayState = lastState
+        }
+
         val foregroundOpacity = min(differenceChangedAnimation.animatedValue, opacityAnimation.animatedValue)
-        val foregroundColor = Color(255, 255, 255, (opacityAnimation.animatedValue * 255).toInt())
+        val stateForegroundOpacity = (min(stateChangedAnimation.animatedValue, opacityAnimation.animatedValue) * 255).toInt()
+        val foregroundColor = Color(255, 255, 255, stateForegroundOpacity)
         val differenceForegroundColor = Color(255, 255, 255, (foregroundOpacity * 255).toInt())
         if ((opacityAnimation.animatedValue * 255).toInt() <= 3) {
             return
@@ -130,10 +132,13 @@ object ManaCostTooltip {
 
         val vertexConsumerProvider = drawContext.vertexConsumers
         val yOffset = 2.5F
-        if (cost > normalCost) {
-            textRenderer.draw(MatrixLanguage.manaCostIncreased, minPoint.x.toFloat() + 5F, minPoint.y.toFloat() + yOffset, foregroundColor.toInt(), false, transformationMatrix, vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880)
-        } else if (cost < normalCost) {
-            textRenderer.draw(MatrixLanguage.manaCostReduced, minPoint.x.toFloat() + 5F, minPoint.y.toFloat() + yOffset, foregroundColor.toInt(), false, transformationMatrix, vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880)
+
+        if (stateForegroundOpacity > 3) {
+            if (displayState) {
+                textRenderer.draw(MatrixLanguage.manaCostIncreased, minPoint.x.toFloat() + 5F, minPoint.y.toFloat() + yOffset, foregroundColor.toInt(), false, transformationMatrix, vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880)
+            } else {
+                textRenderer.draw(MatrixLanguage.manaCostReduced, minPoint.x.toFloat() + 5F, minPoint.y.toFloat() + yOffset, foregroundColor.toInt(), false, transformationMatrix, vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880)
+            }
         }
 
         if ((foregroundOpacity * 255).toInt() > 3 && cost != normalCost) {

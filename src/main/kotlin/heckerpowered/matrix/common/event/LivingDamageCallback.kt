@@ -11,7 +11,7 @@ data class LivingDamageEvent(val entity: LivingEntity, var damageSource: DamageS
 fun interface LivingDamageCallback {
     companion object {
         @JvmField
-        val event: Event<LivingDamageCallback> =
+        val EVENT: Event<LivingDamageCallback> =
             EventFactory.createArrayBacked(LivingDamageCallback::class.java) { listeners ->
                 LivingDamageCallback { event ->
                     for (listener in listeners) {

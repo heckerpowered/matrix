@@ -4,16 +4,13 @@ import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
-import heckerpowered.matrix.client.shader.BlurRenderer
-import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
-import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
+import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Text
 import net.minecraft.util.math.MathHelper
-import java.time.Duration
 
 class ManaBar {
     companion object {
@@ -23,69 +20,32 @@ class ManaBar {
     }
 
     private val easingFunction = ElasticEase()
-
-    private val maxManaClock = AnimationClock(Duration.ofMillis(300), 100.0, 100.0)
-    private val manaClock = AnimationClock(Duration.ofMillis(300), 0.0, 1.0)
-    private val manaUsageClock = AnimationClock(Duration.ofMillis(300), 0.0, 1.0)
-    private val manaCostClock = AnimationClock(Duration.ofMillis(300), 0.0, 1.0)
-    private val opacityClock = AnimationClock(Duration.ofMillis(300), 128.0, 0.0)
-    private val shownAnimationClock = AnimationClock(Duration.ofMillis(300), -50.0, .0)
-    private val shownAnimation = DoubleAnimation(shownAnimationClock, easingFunction)
-
-    private var privateCurrentMana = 0.0
-    private var privateManaUsage = 0.0
-    private var privateManaCost = 0.0
-
     private var visibility = false
 
-    val maxMana = DoubleAnimation(maxManaClock, easingFunction)
-    val mana = DoubleAnimation(manaClock, easingFunction)
+    private val shownAnimation = SimpleDoubleAnimation()
+    private val opacityAnimation = SimpleDoubleAnimation()
 
-    var manaUsage
-        get() = privateManaUsage
-        set(value) {
-            val newValue = value.coerceIn(0.0..mana.currentValue)
-            if (newValue == privateManaUsage) {
-                return
-            }
-            val lastManaUsage = privateManaUsage
-            privateManaUsage = newValue
-
-            manaUsageClock.from = lastManaUsage
-            manaUsageClock.to = privateManaUsage
-            manaUsageClock.start()
-        }
-
-    var manaCost
-        get() = privateManaCost
-        set(value) {
-            val lastManaCost = privateManaCost
-            privateManaCost = value
-
-            manaCostClock.from = lastManaCost
-            manaCostClock.to = privateManaCost
-            manaCostClock.start()
-        }
+    val maxMana = SimpleDoubleAnimation()
+    val mana = SimpleDoubleAnimation()
+    var manaUsage = SimpleDoubleAnimation()
+    val manaCost = SimpleDoubleAnimation()
 
     init {
         easingFunction.easingMode = EasingMode.OUT
         easingFunction.oscillations = 0
-
-        maxMana.currentValue = 100.0
     }
 
     private fun manaPercentage(): Double {
-        if (mana.currentValue.isInfinite()) {
+        if (mana.value.isInfinite()) {
             return 1.0
         }
         return mana.animatedValue / maxMana.animatedValue
     }
 
     private fun renderManaBar(drawContext: DrawContext, renderer: LegacyMatrixUIRenderer) {
-        val manaUsage = manaUsageClock.transform(easingFunction)
-        if (manaUsage != 0.0 && manaUsage == privateManaUsage) {
-            mana.currentValue -= manaUsage
-            this.manaUsage = 0.0
+        if (!manaUsage.isAnimating) {
+            mana.value -= manaUsage.value
+            manaUsage.value = .0
         }
         val minPoint = Point(
             50.0,
@@ -96,29 +56,16 @@ class ManaBar {
             25.0 + shownAnimation.animatedValue
         )
 
-        drawContext.enableScissor(
-            minPoint.x.toInt(),
-            minPoint.y.toInt(),
-            maxPoint.x.toInt(),
-            maxPoint.y.toInt()
-        )
-        BlurRenderer.blurTextureRenderShader.enableShader()
-        BlurRenderer.renderQuad()
-        BlurRenderer.blurTextureRenderShader.disableShader()
-
-        drawContext.disableScissor()
-
-        // println("mana percentage: ${manaPercentage()}, minPoint: $minPoint, maxPoint: $maxPoint")
         renderer.renderRectangle(Rectangle(minPoint, maxPoint), manaBarColor)
 
-        val usagePercentage = manaUsageClock.transform(easingFunction) / maxMana.animatedValue
+        val usagePercentage = manaUsage.animatedValue / maxMana.animatedValue
         val usageMinPoint = Point(
             (maxPoint.x - usagePercentage * (renderer.scaledWindowWidth - 100)).coerceAtLeast(50.0),
             minPoint.y
         )
         renderer.renderRectangle(Rectangle(usageMinPoint, maxPoint), usageManaColor)
 
-        val costPercentage = manaCostClock.transform(easingFunction) / maxMana.animatedValue
+        val costPercentage = manaCost.animatedValue / maxMana.animatedValue
         val costMinPoint = Point(
             (usageMinPoint.x - costPercentage * (renderer.scaledWindowWidth - 100)).coerceAtLeast(50.0),
             maxPoint.y
@@ -127,32 +74,29 @@ class ManaBar {
     }
 
     private fun renderManaText(renderer: LegacyMatrixUIRenderer) {
-        // val manaUsage = manaUsageClock.transform(easingFunction)
-        val mana = (mana.animatedValue * 10).toInt() / 10.0
-        val maxMana = (maxMana.animatedValue * 10).toInt() / 10.0
+        val mana = mana.animatedValue
+        val manaUsage = this.manaUsage.animatedValue
+        val currentMana = ((mana * 10).toLong() - (manaUsage * 10).toLong()) / 10.0
+        val maxMana = (maxMana.animatedValue * 10).toLong() / 10.0
         renderer.render(
-            Text.literal("${MatrixLanguage.mana.string} - ${mana}/${maxMana}"),
+            Text.literal("${MatrixLanguage.mana.string} - ${currentMana}/${maxMana}"),
             Point(55.0, 12.5 + shownAnimation.animatedValue), Color(255, 255, 255, 255),
             true
         )
     }
 
-    fun render(drawContext: DrawContext, renderer: LegacyMatrixUIRenderer) {
-        if (!visibility && manaClock.getValue() >= 1.0) {
-            opacityClock.let {
-                it.from = it.transform(easingFunction)
-                it.to = 0.0
-                it.start()
-            }
+    val animationRemaining: Boolean
+        get() = manaUsage.isAnimating || mana.isAnimating
 
-            shownAnimationClock.let {
-                it.from = shownAnimation.animatedValue
-                it.to = -50.0
-                it.start()
-            }
+    fun render(drawContext: DrawContext, renderer: LegacyMatrixUIRenderer) {
+        if (!visibility) {
+            opacityAnimation.value = .0
+            shownAnimation.value = -50.0
         }
 
-        manaBarColor.alpha = opacityClock.transform(easingFunction).toInt()
+        manaBarColor.alpha = (opacityAnimation.animatedValue * 127.5).toInt()
+        usageManaColor.alpha = (opacityAnimation.animatedValue * 127.5).toInt()
+        costManaColor.alpha = (opacityAnimation.animatedValue * 127.5).toInt()
 
         renderManaBar(drawContext, renderer)
         renderManaText(renderer)
@@ -161,16 +105,8 @@ class ManaBar {
     fun onHudVisibilityChanged(visibility: Boolean) {
         this.visibility = visibility
         if (visibility) {
-            opacityClock.let {
-                it.from = it.transform(easingFunction)
-                it.to = 128.0
-                it.start()
-            }
-            shownAnimationClock.let {
-                it.from = shownAnimation.animatedValue
-                it.to = 0.0
-                it.start()
-            }
+            opacityAnimation.value = 1.0
+            shownAnimation.value = .0
         }
     }
 

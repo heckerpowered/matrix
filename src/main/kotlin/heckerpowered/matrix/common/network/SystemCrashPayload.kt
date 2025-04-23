@@ -24,7 +24,7 @@ class SystemCrashPayload : CustomPayload {
 
     fun handle(context: Context) {
         context.client().execute {
-            SystemCrashBar.systemCrach()
+            SystemCrashBar.systemCrash()
         }
     }
 }

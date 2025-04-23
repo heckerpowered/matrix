@@ -25,6 +25,7 @@ class ChannelAnimation(
 
     var channelTime = 0L
     var currentChannelTime = 0L
+    var initialProgressOffset = 0F
 
     init {
         shownAnimationClock.start()

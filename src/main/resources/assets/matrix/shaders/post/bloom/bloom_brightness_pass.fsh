@@ -26,6 +26,5 @@ void main() {
     // Output the final color:
     // If brightness is above threshold (factor = 1.0), keep the original color.
     // If brightness is below threshold (factor = 0.0), output black.
-    // We keep the original alpha value.
-    fragColor = vec4(color.rgb * factor, color.a);
+    fragColor = color * factor;
 }

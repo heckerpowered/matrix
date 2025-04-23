@@ -150,7 +150,7 @@ class ChannelSequenceRenderer(
             } else {
                 .0f
             }
-            val channelProgress = ((channelAnimation.currentChannelTime + partialProgress) / channelAnimation.channelTime.toDouble()).coerceAtMost(1.0)
+            val channelProgress = ((channelAnimation.currentChannelTime + partialProgress - channelAnimation.initialProgressOffset) / channelAnimation.channelTime.toDouble()).coerceAtMost(1.0)
             val progressRectangle = Rectangle(
                 Point(
                     -8.0 + index * 24 + animatedX, 16.0 + channelAnimation.shownAnimation.animatedValue

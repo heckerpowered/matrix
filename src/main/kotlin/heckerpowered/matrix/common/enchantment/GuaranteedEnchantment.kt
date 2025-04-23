@@ -8,7 +8,7 @@ import net.minecraft.util.ActionResult
 
 object GuaranteedEnchantment {
     fun onInitialize() {
-        LivingAttackCallback.event.register(::onLivingAttack)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {

@@ -67,7 +67,8 @@ object MatrixItems {
         WizardHelmetApogee,
         WizardHelmetWarpDancer,
 
-        LightningChestplateBorrowedTime
+        LightningChestplateBorrowedTime,
+        MagicTalismanItem
     )
 
     private fun register(item: Item, name: String): Item {
@@ -137,5 +138,6 @@ object MatrixItems {
         register(WizardHelmetWarpDancer, "wizard_helmet_warp_dancer")
 
         register(LightningChestplateBorrowedTime, "lightning_chestplate_borrowed_time")
+        register(MagicTalismanItem, "magic_talisman")
     }
 }

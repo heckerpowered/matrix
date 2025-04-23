@@ -4,13 +4,17 @@ import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.network.MatrixClientPlayNetworking
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
 import heckerpowered.matrix.client.render.ScreenEffectRenderer
+import heckerpowered.matrix.client.render.entity.EmptyRenderer
 import heckerpowered.matrix.client.render.entity.MagicLightningEntityRenderer
+import heckerpowered.matrix.client.render.item.VortexItemRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.entity.MatrixEntityType
+import heckerpowered.matrix.common.item.MagicTalismanItem
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback
 import net.minecraft.client.MinecraftClient
@@ -49,12 +53,13 @@ class MatrixClient : ClientModInitializer {
             @Suppress("UNCHECKED_CAST")
             registrationHelper.register(ChannelSequenceRenderer(entityRenderer as FeatureRendererContext<LivingEntity, EntityModel<LivingEntity>>))
         }
+
+        BuiltinItemRendererRegistry.INSTANCE.register(MagicTalismanItem, VortexItemRenderer)
     }
 
     private fun registerEntityRenderers() {
-        EntityRendererRegistry.register(MatrixEntityType.magicLightningEntity) { context ->
-            MagicLightningEntityRenderer(context)
-        }
+        EntityRendererRegistry.register(MatrixEntityType.magicLightningEntity) { context -> MagicLightningEntityRenderer(context) }
+        EntityRendererRegistry.register(MatrixEntityType.attractorEntity) { context -> EmptyRenderer(context) }
     }
 
     companion object {

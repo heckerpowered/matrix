@@ -13,7 +13,7 @@ object BorrowedTimeEffect : StatusEffect(
     0x5A89C0
 ) {
     init {
-        LivingAttackCallback.event.register(::onLivingAttack)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {

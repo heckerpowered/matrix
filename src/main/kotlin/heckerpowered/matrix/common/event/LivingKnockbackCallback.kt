@@ -10,7 +10,7 @@ data class LivingKnockbackEvent(val entity: LivingEntity, var strength: Double, 
 fun interface LivingKnockbackCallback {
     companion object {
         @JvmField
-        val event: Event<LivingKnockbackCallback> =
+        val EVENT: Event<LivingKnockbackCallback> =
             EventFactory.createArrayBacked(LivingKnockbackCallback::class.java) { listeners ->
                 LivingKnockbackCallback { event ->
                     for (listener in listeners) {

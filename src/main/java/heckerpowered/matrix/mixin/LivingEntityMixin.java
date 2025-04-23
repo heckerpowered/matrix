@@ -67,7 +67,7 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "onDeath", at = @At("HEAD"), cancellable = true)
     private void onDeath(DamageSource damageSource, CallbackInfo info) {
-        if (LivingDeathCallback.event.invoker().onDeath(self(), damageSource) == ActionResult.FAIL) {
+        if (LivingDeathCallback.EVENT.invoker().onDeath(self(), damageSource) == ActionResult.FAIL) {
             info.cancel();
         }
         if (!(damageSource.getAttacker() instanceof final ServerPlayerEntity serverPlayer)) {
@@ -89,24 +89,24 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "writeCustomDataToNbt", at = @At("HEAD"))
     private void writeCustomDataToNbt(NbtCompound nbt, CallbackInfo ci) {
-        WriteDataCallback.event.invoker().writeData(self(), nbt);
+        WriteDataCallback.EVENT.invoker().writeData(self(), nbt);
     }
 
     @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
     private void readCustomDataFromNbt(NbtCompound nbt, CallbackInfo ci) {
-        ReadDataCallback.event.invoker().readData(self(), nbt);
+        ReadDataCallback.EVENT.invoker().readData(self(), nbt);
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void tick(CallbackInfo ci) {
-        EntityTickCallback.event.invoker().onEntityTick(self());
+        EntityTickCallback.EVENT.invoker().onEntityTick(self());
     }
 
     @Inject(method = "getArmor", at = @At("TAIL"), cancellable = true)
     private void getArmor(CallbackInfoReturnable<Integer> cir) {
         final var thoughness = cir.getReturnValueI();
         final var accumulator = new Accumulator(thoughness);
-        GetArmorCallback.event.invoker().getArmor(self(), accumulator);
+        GetArmorCallback.EVENT.invoker().getArmor(self(), accumulator);
 
         final var result = accumulator.accumulate();
         cir.setReturnValue((int) Math.floor(result));
@@ -116,7 +116,7 @@ class LivingEntityMixin implements MatrixLivingEntity {
     public void getAttributeValue(RegistryEntry<EntityAttribute> attribute, CallbackInfoReturnable<Double> cir) {
         final var thoughness = cir.getReturnValueD();
         final var accumulator = new Accumulator(thoughness);
-        GetAttributeValueCallback.event.invoker().getAttributeValue(self(), attribute, accumulator);
+        GetAttributeValueCallback.EVENT.invoker().getAttributeValue(self(), attribute, accumulator);
 
         final var result = accumulator.accumulate();
         cir.setReturnValue(result);
@@ -125,15 +125,15 @@ class LivingEntityMixin implements MatrixLivingEntity {
     @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
     private void damage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
         final var attacker = source.getAttacker() instanceof LivingEntity ? (LivingEntity) source.getAttacker() : null;
-        final var damageAccumulator = new DamageAccumulator(attacker, self(), source, amount, .0, 1.0, false);
+        final var damageAccumulator = new DamageAccumulator(attacker, self(), source, amount, .0, 1.0, 1.0, false);
         if (attacker != null) {
-            final var result = LivingAttackCallback.event.invoker().onAttack(damageAccumulator);
+            final var result = LivingAttackCallback.EVENT.invoker().onAttack(damageAccumulator);
             if (result == ActionResult.FAIL) {
                 cir.setReturnValue(false);
                 return;
             }
         }
-        final var result = LivingHurtCallback.event.invoker().onHurt(damageAccumulator);
+        final var result = LivingHurtCallback.EVENT.invoker().onHurt(damageAccumulator);
         if (result == ActionResult.FAIL) {
             cir.setReturnValue(false);
         }
@@ -145,7 +145,7 @@ class LivingEntityMixin implements MatrixLivingEntity {
     @Inject(method = "applyDamage", at = @At("HEAD"), cancellable = true)
     private void applyDamage(DamageSource source, float amount, CallbackInfo ci, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
         final var livingDamageEvent = new LivingDamageEvent(self(), source, amount);
-        final var result = LivingDamageCallback.event.invoker().onHurt(livingDamageEvent);
+        final var result = LivingDamageCallback.EVENT.invoker().onHurt(livingDamageEvent);
         if (result == ActionResult.FAIL) {
             ci.cancel();
         }
@@ -156,7 +156,7 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "onStatusEffectRemoved", at = @At(value = "HEAD"), cancellable = true)
     private void onStatusEffectRemoved(StatusEffectInstance effect, CallbackInfo ci) {
-        final var result = StatusEffectRemovedCallback.event.invoker().onStatusEffectRemoved(self(), effect);
+        final var result = StatusEffectRemovedCallback.EVENT.invoker().onStatusEffectRemoved(self(), effect);
         if (result == ActionResult.FAIL) {
             ci.cancel();
         }
@@ -164,13 +164,13 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "onEquipStack", at = @At("HEAD"))
     private void onEquipStack(EquipmentSlot slot, ItemStack oldStack, ItemStack newStack, CallbackInfo ci) {
-        ItemStackEquippedCallback.event.invoker().onItemStackEquipped(self(), slot, oldStack, newStack);
+        ItemStackEquippedCallback.EVENT.invoker().onItemStackEquipped(self(), slot, oldStack, newStack);
     }
 
     @Inject(method = "takeKnockback", at = @At("HEAD"), cancellable = true)
     private void takeKnockback(double strength, double x, double z, CallbackInfo ci, @Local(argsOnly = true, ordinal = 0) LocalDoubleRef strengthReference, @Local(argsOnly = true, ordinal = 1) LocalDoubleRef xReference, @Local(argsOnly = true, ordinal = 2) LocalDoubleRef zReference) {
         final var event = new LivingKnockbackEvent(self(), strength, x, z);
-        final var result = LivingKnockbackCallback.event.invoker().onKnockback(event);
+        final var result = LivingKnockbackCallback.EVENT.invoker().onKnockback(event);
         strengthReference.set(event.getStrength());
         xReference.set(event.getX());
         zReference.set(event.getZ());
@@ -191,6 +191,12 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
     @Inject(method = "canHaveStatusEffect", at = @At("HEAD"), cancellable = true)
     private void canHaveStatusEffect(StatusEffectInstance effect, CallbackInfoReturnable<Boolean> cir) {
+        final var result = CanHaveStatusEffectCallback.EVENT.invoker().canHaveStatusEffect(self(), effect);
+        if (result == ActionResult.FAIL) {
+            cir.setReturnValue(false);
+            return;
+        }
+
         if (!WardenChestplateItem.isAngered(self())) {
             return;
         }
@@ -221,7 +227,7 @@ class LivingEntityMixin implements MatrixLivingEntity {
     @Inject(method = "heal", at = @At("HEAD"), cancellable = true)
     private void heal(float amount, CallbackInfo ci, @Local(argsOnly = true) LocalFloatRef amountReference) {
         final var livingHealEvent = new LivingHealEvent(self(), amount);
-        final var result = LivingHealCallback.event.invoker().onHeal(livingHealEvent);
+        final var result = LivingHealCallback.EVENT.invoker().onHeal(livingHealEvent);
         if (result == ActionResult.FAIL) {
             ci.cancel();
         }

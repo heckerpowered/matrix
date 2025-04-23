@@ -22,7 +22,7 @@ object RedstoneLeggingsItem : ArmorItem(
 ), RedstoneSuit {
 
     init {
-        LivingDamageCallback.event.register(this::onLivingDamage)
+        LivingDamageCallback.EVENT.register(this::onLivingDamage)
     }
 
     private fun onLivingDamage(event: LivingDamageEvent): ActionResult {

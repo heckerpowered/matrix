@@ -8,7 +8,7 @@ import net.minecraft.util.ActionResult
 
 object RevivalEnchantment {
     fun onInitialize() {
-        LivingHealCallback.event.register(::onLivingHeal)
+        LivingHealCallback.EVENT.register(::onLivingHeal)
     }
 
     private fun onLivingHeal(event: LivingHealEvent): ActionResult {

@@ -8,7 +8,7 @@ import net.minecraft.nbt.NbtCompound
 fun interface WriteDataCallback {
     companion object {
         @JvmField
-        val event: Event<WriteDataCallback> =
+        val EVENT: Event<WriteDataCallback> =
             EventFactory.createArrayBacked(WriteDataCallback::class.java) { listeners ->
                 WriteDataCallback { entity, nbt ->
                     for (listener in listeners) {

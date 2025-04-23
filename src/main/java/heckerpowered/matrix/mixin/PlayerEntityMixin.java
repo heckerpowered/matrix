@@ -33,7 +33,7 @@ class PlayerEntityMixin {
     @Inject(method = "applyDamage", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/entity/player/PlayerEntity;modifyAppliedDamage(Lnet/minecraft/entity/damage/DamageSource;F)F"), cancellable = true)
     private void applyDamage(DamageSource source, float amount, CallbackInfo ci, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
         final var livingDamageEvent = new LivingDamageEvent(self(), source, amount);
-        final var result = LivingDamageCallback.event.invoker().onHurt(livingDamageEvent);
+        final var result = LivingDamageCallback.EVENT.invoker().onHurt(livingDamageEvent);
         if (result == ActionResult.FAIL) {
             ci.cancel();
         }

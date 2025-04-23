@@ -9,6 +9,7 @@ class SimpleDoubleAnimation(
     duration: Duration = animationDuration,
     startTime: Duration = Duration.ZERO,
     easingFunction: EasingFunction = heckerpowered.matrix.client.easingFunction,
+    initValue: Double = .0,
 ) {
     private val animationClock = AnimationClock(duration, from, to)
     private val doubleAnimation = DoubleAnimation(animationClock, easingFunction)
@@ -57,6 +58,10 @@ class SimpleDoubleAnimation(
     val isAnimating: Boolean
         get() = doubleAnimation.isAnimating
 
+    init {
+        animatedValue = initValue
+    }
+
     fun start() {
         animationClock.start()
     }
@@ -72,4 +77,5 @@ class SimpleDoubleAnimation(
     fun suspend() {
         animationClock.suspend()
     }
+
 }

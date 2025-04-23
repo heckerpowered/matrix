@@ -26,7 +26,7 @@ class EntityMixin {
 
     @Inject(method = "remove", at = @At("HEAD"))
     private void onRemove(Entity.RemovalReason reason, CallbackInfo ci) {
-        EntityRemovedCallback.event.invoker().onEntityRemoved((Entity) (Object) this, reason);
+        EntityRemovedCallback.EVENT.invoker().onEntityRemoved((Entity) (Object) this, reason);
     }
 
     @Inject(method = "setPos", at = @At("HEAD"), cancellable = true)

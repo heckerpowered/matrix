@@ -39,7 +39,7 @@ class MatrixModEnglishLangProvider(
         translationBuilder.addMagic(MatrixLanguage.magicManaOverload.key, "Mana Overload")
         translationBuilder.add(
             MatrixLanguage.magicManaOverloadDescription.key,
-            "Marks a target for §a10§r seconds. Killing the target during the mark duration restores §a20§r mana.\n\nUntraceable."
+            "Overloads the target with mana, disabling their spell abilities.\n\nDeal §a15§r% more damage to affected enemies.\n\n§cSuppresses§r Enderman's §dteleportation§r and §devasion§r abilities.\n§cSuppresses§r Wardens' ability to channel §9sonic boom§r.\n§cSuppresses§r Illagers' §call spells§r.\n§cSuppresses§r Guardians' §9laser attacks§r and Elder Guardians' ability to inflict §7mining fatigue§r on players.\nPrevents Witches from §cthrowing potions§r.\n\n§cSuppression§r immediately interrupts and prevents the use of related abilities for the effect's duration.\n\nRemoves and blocks beneficial effects on the target at §a2§r stacks.\n\nDeals §9continuous spell damage§r at §a3§r stacks.\n\nAt §cmaximum§r stacks, deals spell damage equal to 100% of target's current health and prevents further stacking until the effect ends.\n\nCan be tracked."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicHealthSteal.key, "Life Steal")
@@ -143,7 +143,7 @@ class MatrixModEnglishLangProvider(
         translationBuilder.addMagic(MatrixLanguage.magicTeleport.key, "Teleport")
         translationBuilder.add(
             MatrixLanguage.magicTeleportDescription.key,
-            "Grants §9invisibility§r for §a10§r seconds and teleports to the target's location.\n\nUntraceable."
+            "Teleports to the target's location and attacks entities surrounds the target within 3m.\n\nUntraceable."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicSonicBoom.key, "Sonic Shriek")
@@ -158,9 +158,9 @@ class MatrixModEnglishLangProvider(
         // translationBuilder.addMagic(MatrixLanguage.magicBloodPact.key, "Blood Pact")
         // translationBuilder.add(MatrixLanguage.magicBloodPactDescription.key, "Curse the target, transferring §a50§r% of the damage you take to the target, with no limit on the amount transferred.\n\nIf the target cannot withstand the transferred damage, the amount transferred will be reduced.\n\nIf multiple targets are cursed, they will all share the transferred damage.\n\nThe effect lasts as long as the curse remains.")
 
-        translationBuilder.addMagic(MatrixLanguage.magicPull.key, "Invisible Hand")
+        translationBuilder.addMagic(MatrixLanguage.magicAttract.key, "The Hands")
         translationBuilder.add(
-            MatrixLanguage.magicPullDescription.key,
+            MatrixLanguage.magicAttractDescription.key,
             "§cThe invisible hand exerts its force§r, pulling entities within §a6§r meters of the target to the target's location. §r\n\nUntraceable."
         )
 
@@ -299,6 +299,8 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(WizardHelmetWarpDancer, "Wizard 5 'Warp Dancer'")
 
         translationBuilder.add(LightningChestplateBorrowedTime, "Lightning 1 'Borrowed Time'")
+
+        translationBuilder.add(MagicTalismanItem, "Magic Talisman")
 
         // Potions
         translationBuilder.add("item.minecraft.potion.effect.angered", "Potion of Angered")

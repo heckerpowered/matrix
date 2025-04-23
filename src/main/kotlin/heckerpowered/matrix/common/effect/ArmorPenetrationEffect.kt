@@ -15,8 +15,8 @@ object ArmorPenetrationEffect : StatusEffect(
     0xFF4500
 ) {
     init {
-        GetArmorCallback.event.register(::getArmor)
-        GetAttributeValueCallback.event.register(::getAttributeValue)
+        GetArmorCallback.EVENT.register(::getArmor)
+        GetAttributeValueCallback.EVENT.register(::getAttributeValue)
     }
 
     private fun getAttributeValue(entity: LivingEntity, attribute: RegistryEntry<EntityAttribute>, accumulator: Accumulator) {

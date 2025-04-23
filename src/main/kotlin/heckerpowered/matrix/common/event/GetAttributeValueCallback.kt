@@ -10,7 +10,7 @@ import net.minecraft.registry.entry.RegistryEntry
 fun interface GetAttributeValueCallback {
     companion object {
         @JvmField
-        val event: Event<GetAttributeValueCallback> =
+        val EVENT: Event<GetAttributeValueCallback> =
             EventFactory.createArrayBacked(GetAttributeValueCallback::class.java) { listeners ->
                 GetAttributeValueCallback { entity, attribute, accumulator ->
                     for (listener in listeners) {

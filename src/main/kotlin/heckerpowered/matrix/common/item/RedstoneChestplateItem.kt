@@ -22,7 +22,7 @@ object RedstoneChestplateItem : ArmorItem(
 ), RedstoneSuit {
     init {
         ItemTags.ARMOR_ENCHANTABLE
-        LivingDamageCallback.event.register(this::onLivingDamage)
+        LivingDamageCallback.EVENT.register(this::onLivingDamage)
     }
 
     private fun onLivingDamage(event: LivingDamageEvent): ActionResult {

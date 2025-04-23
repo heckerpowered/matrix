@@ -17,8 +17,8 @@ import net.minecraft.registry.entry.RegistryEntry
 
 object MagicShieldEnchantment {
     fun onInitialize() {
-        GetArmorCallback.event.register(::getArmor)
-        GetAttributeValueCallback.event.register(::getAttributeValue)
+        GetArmorCallback.EVENT.register(::getArmor)
+        GetAttributeValueCallback.EVENT.register(::getAttributeValue)
     }
 
     private fun getAttributeValue(entity: LivingEntity, attribute: RegistryEntry<EntityAttribute>, accumulator: Accumulator) {

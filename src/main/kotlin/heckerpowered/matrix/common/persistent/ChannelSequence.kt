@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.persistent
 
+import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.ChannelAnimation
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
 import heckerpowered.matrix.common.Magic
@@ -56,46 +57,57 @@ class ChannelSequence(
     var locked = false
 
     companion object {
-        fun channelMagic(magic: Magic, player: PlayerEntity, target: LivingEntity, costMana: Boolean = true, bypassLock: Boolean = false): Boolean {
-            if (target !is MatrixLivingEntity) {
-                return false
-            }
+        fun channelMagic(
+            magic: Magic,
+            player: PlayerEntity,
+            target: LivingEntity,
+            costMana: Boolean = true,
+            bypassLock: Boolean = false,
+        ): Boolean {
+            if (target !is MatrixLivingEntity) return false
 
             val sequences = target.getChannelSequence()
-            val channelSequence = sequences.computeIfAbsent(player.uuid) { ChannelSequence(player, player.uuid, target, mutableListOf()) }
-            channelSequence.player = player
-            channelSequence.playerUUID = player.uuid
-
-            if (channelSequence.locked && !bypassLock) {
-                return false
+            val channelSequence = sequences.computeIfAbsent(player.uuid) {
+                ChannelSequence(player, player.uuid, target, mutableListOf())
+            }.apply {
+                this.player = player
+                this.playerUUID = player.uuid
             }
+
+            if (channelSequence.locked && !bypassLock) return false
 
             val channelTime = magic.getChannelTime(player, target, channelSequence)
             val cost = magic.getCost(player, target, channelSequence)
             val convertRatio = magic.getBloodPactConvertRatio(player, target, channelSequence)
-            if (player is ServerPlayerEntity) {
-                if (player.isInfiniteMana || !costMana) {
-                    channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
-                    magic.channel(player, target, channelSequence)
-                } else if (player.mana >= cost) {
-                    channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
-                    magic.channel(player, target, channelSequence)
-                    player.mana -= cost
-                } else if (player.bloodPactActive && player.mana + player.health * convertRatio >= cost) {
-                    val usedHealth = (cost - player.mana) / convertRatio
-                    player.health -= usedHealth.toFloat()
-                    player.health = player.health.coerceAtLeast(1F)
-                    ServerPlayNetworking.send(player, SyncHealthPayload(player))
-                    
-                    player.mana = .0
-                    channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
-                    magic.channel(player, target, channelSequence)
-                } else {
-                    return false
-                }
-            } else {
+
+            fun performChannel() {
                 channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
                 magic.channel(player, target, channelSequence)
+            }
+
+            if (player is ServerPlayerEntity) {
+                when {
+                    player.isInfiniteMana || !costMana -> {
+                        performChannel()
+                    }
+
+                    player.mana >= cost -> {
+                        player.mana -= cost
+                        performChannel()
+                    }
+
+                    player.bloodPactActive && (player.mana + player.health * convertRatio >= cost) -> {
+                        val usedHealth = (cost - player.mana) / convertRatio
+                        player.health = maxOf(player.health - usedHealth.toFloat(), 1f)
+                        player.mana = 0.0
+                        ServerPlayNetworking.send(player, SyncHealthPayload(player))
+                        performChannel()
+                    }
+
+                    else -> return false
+                }
+            } else {
+                performChannel()
             }
 
             return true
@@ -116,15 +128,16 @@ class ChannelSequence(
                 .computeIfAbsent(target) { mutableListOf() }
                 .add(ChannelAnimation(magic.magic).also {
                     it.channelTime = magic.channelTime
+                    it.initialProgressOffset = minecraft.getRenderTickCounter().getTickDelta(true)
                 })
             ChannelSequenceRenderer.offsetAnimationMap
                 .computeIfAbsent(target) { ChannelSequenceRenderer.Companion.OffsetAnimation() }
         }
 
         fun onInitialize() {
-            EntityTickCallback.event.register(::onEntityTick)
-            WriteDataCallback.event.register(::onWriteData)
-            ReadDataCallback.event.register(::onReadData)
+            EntityTickCallback.EVENT.register(::onEntityTick)
+            WriteDataCallback.EVENT.register(::onWriteData)
+            ReadDataCallback.EVENT.register(::onReadData)
         }
 
         private fun onReadData(entity: Entity, nbt: NbtCompound) {

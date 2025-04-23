@@ -16,7 +16,7 @@ object WizardHelmetApogee : WizardHelmet(
         .component(MatrixComponents.maxLoad, 20.0)
 ) {
     init {
-        LivingAttackCallback.event.register(::onLivingAttack)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {

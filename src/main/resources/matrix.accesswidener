@@ -16,3 +16,7 @@ accessible method net/minecraft/client/render/GameRenderer updateFovMultiplier (
 accessible method net/minecraft/client/MinecraftClient handleInputEvents ()V
 accessible method net/minecraft/entity/LivingEntity setAbsorptionAmountUnclamped (F)V
 accessible method net/minecraft/entity/player/PlayerEntity setAbsorptionAmountUnclamped (F)V
+accessible class net/minecraft/client/gui/hud/InGameHud$HeartType
+accessible class net/minecraft/entity/mob/SpellcastingIllagerEntity$CastSpellGoal
+accessible method net/minecraft/entity/mob/SpellcastingIllagerEntity$CastSpellGoal castSpell ()V
+accessible class net/minecraft/entity/mob/GuardianEntity$FireBeamGoal

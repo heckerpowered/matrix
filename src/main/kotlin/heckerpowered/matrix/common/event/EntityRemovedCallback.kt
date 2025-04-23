@@ -7,7 +7,7 @@ import net.minecraft.entity.Entity
 fun interface EntityRemovedCallback {
     companion object {
         @JvmField
-        val event: Event<EntityRemovedCallback> =
+        val EVENT: Event<EntityRemovedCallback> =
             EventFactory.createArrayBacked(EntityRemovedCallback::class.java) { listeners ->
                 EntityRemovedCallback { entity, removalReason ->
                     for (listener in listeners) {

@@ -36,7 +36,7 @@ object LightningChestplateBorrowedTime : ArmorItem(
         .component(borrowedTimeStateComponent, false)
 ) {
     init {
-        LivingDeathCallback.event.register(::onLivingDeath)
+        LivingDeathCallback.EVENT.register(::onLivingDeath)
     }
 
     private fun onLivingDeath(entity: LivingEntity, damageSource: DamageSource): ActionResult {

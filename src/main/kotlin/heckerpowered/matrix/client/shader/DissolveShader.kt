@@ -1,12 +1,10 @@
 package heckerpowered.matrix.client.shader
 
-import com.mojang.blaze3d.platform.GlConst
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.texture.ResourceTexture
-import org.lwjgl.opengl.GL20
-import org.lwjgl.opengl.GL31
+import org.lwjgl.opengl.GL46.*
 
 class DissolveShader : AutoCloseable {
     private val shader = Shader(
@@ -16,12 +14,15 @@ class DissolveShader : AutoCloseable {
             modelViewMatrixProvider,
             projectionMatrixProvider,
             UniformProvider("noiseTexture") { pointer ->
-                GL31.glActiveTexture(GlConst.GL_TEXTURE0)
-                GL31.glBindTexture(GL31.GL_TEXTURE_2D, noiseTexture)
-                GL20.glUniform1i(pointer, 0)
+                glActiveTexture(GL_TEXTURE0)
+                glBindTexture(GL_TEXTURE_2D, noiseTexture)
+                glUniform1i(pointer, 0)
             },
             UniformProvider("dissolveFactor") { pointer ->
-                GL20.glUniform1f(pointer, dissolveFactor)
+                glUniform1f(pointer, dissolveFactor)
+            },
+            UniformProvider("resolution") { pointer ->
+                glUniform2f(pointer, resolutionX, resolutionY)
             }
         )
     )
@@ -32,6 +33,10 @@ class DissolveShader : AutoCloseable {
         private fun loadPerlinNoiseTexture() {
             perlinNoiseTexture.load(minecraft.resourceManager)
             perlinNoiseTextureId = perlinNoiseTexture.glId
+
+            glBindTexture(GL_TEXTURE_2D, perlinNoiseTextureId)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT)
         }
 
         init {
@@ -42,6 +47,9 @@ class DissolveShader : AutoCloseable {
     var noiseTexture: Int = perlinNoiseTextureId
     var dissolveFactor: Float = 1.0f
     val normalTexture: Int = 0
+
+    var resolutionX: Float = 1.0F
+    var resolutionY: Float = 1.0F
 
     fun enableShader() {
         shader.enableShader()

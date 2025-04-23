@@ -2,7 +2,7 @@ package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
-import heckerpowered.matrix.core.approximatelyEqual
+import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.registry.RegistryKeys
@@ -10,7 +10,7 @@ import net.minecraft.util.ActionResult
 
 object BrutalStrengthEnchantment {
     fun onInitialize() {
-        LivingAttackCallback.event.register(::onLivingAttack)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
     }
 
     private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
@@ -26,11 +26,10 @@ object BrutalStrengthEnchantment {
             return ActionResult.PASS
         }
 
-        if (target.health.approximatelyEqual(target.maxHealth)) {
-            accumulator.damageMultiplier += 1
-        }
-        if (attacker.attacking != target) {
-            accumulator.damageMultiplier += 1
+        if (attacker.attacking != target &&
+            accumulator.damageSource.isOf(MatrixDamageTypes.magic)
+        ) {
+            accumulator.damageMultiplier += enchantmentLevel * 0.08
             attacker.onAttacking(target)
         }
         return ActionResult.PASS

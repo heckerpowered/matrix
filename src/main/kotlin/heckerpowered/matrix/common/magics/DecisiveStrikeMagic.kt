@@ -39,9 +39,9 @@ object DecisiveStrikeMagic : Magic(MatrixLanguage.magicDecisiveStrike, 15, Matri
 
     override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
         val damageSource = if (sequence?.sequencedAfter<MemoryEraseMagic>() == true) {
-            player.damageSources.magic()
+            player.world.damageSources.create(MatrixDamageTypes.magic)
         } else {
-            player.damageSources.indirectMagic(player, player)
+            player.world.damageSources.create(MatrixDamageTypes.magic, player)
         }
 
         if (target?.isInvulnerable == true || target?.isInvulnerableTo(damageSource) == true) {

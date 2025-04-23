@@ -10,7 +10,7 @@ import net.minecraft.network.packet.CustomPayload
 
 data class UseMagicPayload(
     private val index: Int,
-    private val entityId: Int
+    private val entityId: Int,
 ) : CustomPayload {
     companion object {
         val id: CustomPayload.Id<UseMagicPayload> = CustomPayload.id("use_magic")
@@ -43,5 +43,7 @@ data class UseMagicPayload(
 
         val magic = MagicManager.getMagicById(index) ?: return
         ChannelSequence.channelMagic(magic, player, targetedEntity)
+
+        context.responseSender().sendPacket(SyncHealthPayload(player))
     }
 }

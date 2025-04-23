@@ -1,7 +1,7 @@
 package heckerpowered.matrix.common
 
 import heckerpowered.matrix.common.enchantment.getEnchantmentLevel
-import heckerpowered.matrix.common.enchantment.manaOverflow
+import heckerpowered.matrix.common.enchantment.manaRegeneration
 import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.magics.*
 import heckerpowered.matrix.common.network.SyncManaPayload
@@ -56,7 +56,7 @@ object MagicManager {
         registerMagic(ArmorPenetrationMagic)
         registerMagic(SonicBoomMagic)
         registerMagic(BruteForceMagic)
-        registerMagic(PullMagic)
+        registerMagic(AttractMagic)
         registerMagic(LevitationMagic)
     }
 
@@ -91,9 +91,9 @@ object MagicManager {
                 }
 
                 var manaRegen = 1.0
-                val manaOverflowLevel = wizardHelmet.getEnchantmentLevel(manaOverflow)
-                if (manaOverflowLevel > 0) {
-                    manaRegen += manaRegen * (manaOverflowLevel * 0.3)
+                val manaRegenerationLevel = wizardHelmet.getEnchantmentLevel(manaRegeneration)
+                if (manaRegenerationLevel > 0) {
+                    manaRegen += manaRegen * (manaRegenerationLevel * 0.3)
                 }
                 it.mana += manaRegen
                 ServerPlayNetworking.send(it, SyncManaPayload(it.mana, it.maxMana))

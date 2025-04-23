@@ -1,22 +1,26 @@
 package heckerpowered.matrix.client.shader
 
+import com.mojang.blaze3d.platform.GlConst
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.MatrixHud
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
+import heckerpowered.matrix.client.render.linearCopyTo
+import heckerpowered.matrix.client.render.nearestCopyTo
 import heckerpowered.matrix.client.render.post.ScaleSampling
+import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
+import heckerpowered.matrix.client.render.spoofFramebuffer
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gl.Framebuffer
-import net.minecraft.client.gl.SimpleFramebuffer
 import net.minecraft.client.render.BufferRenderer
 import net.minecraft.client.render.Tessellator
 import net.minecraft.client.render.VertexFormat
 import net.minecraft.client.render.VertexFormats
 import net.minecraft.client.texture.NativeImage
-import org.lwjgl.opengl.GL13
-import org.lwjgl.opengl.GL20
+import org.joml.Vector2f
+import org.lwjgl.opengl.GL46.*
 import java.io.File
 
 
@@ -26,32 +30,30 @@ object BlurRenderer {
 
     var radius = 5.0F
     var kawaseOffset = 1.0F
+    var useDownscaling: Boolean = true
 
     private val imageProvider = UniformProvider("image") { pointer ->
-        GlStateManager._activeTexture(GL13.GL_TEXTURE0)
+        GlStateManager._activeTexture(GL_TEXTURE0)
         GlStateManager._bindTexture(currentFramebuffer.colorAttachment)
-        GL20.glUniform1i(pointer, 0)
+        glUniform1i(pointer, 0)
     }
 
     private val radiusProvider = UniformProvider("radius") { pointer ->
-        GL20.glUniform1f(pointer, radius * MatrixHud.magicShownOpacityAnimation.animatedValue.toFloat())
+        glUniform1f(pointer, radius * MatrixHud.magicShownOpacityAnimation.animatedValue.toFloat())
     }
 
     private val kawaseOffsetProvider = UniformProvider("offset") { pointer ->
         kawaseOffset += 3F
         val progress = MatrixHud.magicShownOpacityAnimation.animatedValue.toFloat()
-        GL20.glUniform2f(pointer, progress * kawaseOffset, progress * kawaseOffset)
+        glUniform2f(pointer, progress * kawaseOffset, progress * kawaseOffset)
+    }
+
+    private val halfResolutionBlurFramebuffer by lazy {
+        ScaleSampling.createManagedScalingFramebuffer(0.5)
     }
 
     val blurFramebuffer by lazy {
-        val framebuffer = SimpleFramebuffer(
-            minecraft.window.framebufferWidth,
-            minecraft.window.framebufferHeight,
-            true,
-            MinecraftClient.IS_SYSTEM_MAC
-        )
-        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
-        framebuffer
+        PostProcessRenderer.createManagedFramebuffer()
     }
 
     val horizontalBlurShader = BlitShader(
@@ -81,15 +83,16 @@ object BlurRenderer {
     private val colorfulShader = BlitShader(
         resourceToString("/assets/matrix/shaders/sobel.vert"),
         resourceToString("/assets/matrix/shaders/post/color/colorful.fsh"),
-        arrayOf(PostProcessRenderer.framebufferProvider,
+        arrayOf(
+            PostProcessRenderer.framebufferProvider,
             UniformProvider("brightness") { pointer ->
-                GL20.glUniform1f(pointer, 1.1F)
+                glUniform1f(pointer, 1.1F)
             },
             UniformProvider("saturation") { pointer ->
-                GL20.glUniform1f(pointer, 2.0F)
+                glUniform1f(pointer, 2.0F)
             },
             UniformProvider("contrast") { pointer ->
-                GL20.glUniform1f(pointer, 1.0F)
+                glUniform1f(pointer, 1.0F)
             })
     )
 
@@ -97,9 +100,9 @@ object BlurRenderer {
         resourceToString("/assets/matrix/shaders/sobel.vert"),
         resourceToString("/assets/matrix/shaders/blur_mask.fsh"),
         arrayOf(UniformProvider("image") { pointer ->
-            GlStateManager._activeTexture(GL13.GL_TEXTURE0)
+            GlStateManager._activeTexture(GL_TEXTURE0)
             GlStateManager._bindTexture(blurFramebuffer.colorAttachment)
-            GL20.glUniform1i(pointer, 0)
+            glUniform1i(pointer, 0)
         })
     )
 
@@ -130,21 +133,107 @@ object BlurRenderer {
         BufferRenderer.draw(buffer.end())
     }
 
+    fun renderGaussianBlurFullResolution() {
+        spoofFramebuffer {
+            glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            glBindTexture(GlConst.GL_TEXTURE_2D, blurFramebuffer.colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            blurFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
+            GaussianBlurRenderer.fullPing.beginWrite(true)
+            GaussianBlurRenderer.direction = Vector2f(1F, 0F)
+            GaussianBlurRenderer.colorAttachment = PostProcessRenderer.sourceFramebuffer.colorAttachment
+            GaussianBlurRenderer.gaussianBlurShader.blit()
+
+            GaussianBlurRenderer.fullPong.beginWrite(true)
+            GaussianBlurRenderer.direction = Vector2f(0F, 1F)
+            GaussianBlurRenderer.colorAttachment = GaussianBlurRenderer.fullPing.colorAttachment
+            GaussianBlurRenderer.gaussianBlurShader.blit()
+
+            GaussianBlurRenderer.fullPong nearestCopyTo blurFramebuffer
+        }
+    }
+
+    fun renderGaussianBlur() {
+        spoofFramebuffer {
+            glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            glBindTexture(GlConst.GL_TEXTURE_2D, ScaleSampling.getDownScalingFramebuffer(1.0 / 2).colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            glBindTexture(GlConst.GL_TEXTURE_2D, ScaleSampling.getDownScalingFramebuffer(1.0 / 4).colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            glBindTexture(GlConst.GL_TEXTURE_2D, blurFramebuffer.colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            PostProcessRenderer.sourceFramebuffer linearCopyTo ScaleSampling.getDownScalingFramebuffer(1.0 / 2)
+            ScaleSampling.getDownScalingFramebuffer(1.0 / 2) linearCopyTo ScaleSampling.getDownScalingFramebuffer(1.0 / 4)
+            val downscalingFramebuffer = ScaleSampling.getDownScalingFramebuffer(1.0 / 4)
+
+            // blurFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
+            GaussianBlurRenderer.ping.beginWrite(true)
+            GaussianBlurRenderer.direction = Vector2f(1F, 0F)
+            GaussianBlurRenderer.colorAttachment = downscalingFramebuffer.colorAttachment
+            GaussianBlurRenderer.gaussianBlurShader.blit()
+
+            GaussianBlurRenderer.pong.beginWrite(true)
+            GaussianBlurRenderer.direction = Vector2f(0F, 1F)
+            GaussianBlurRenderer.colorAttachment = GaussianBlurRenderer.ping.colorAttachment
+            GaussianBlurRenderer.gaussianBlurShader.blit()
+
+            GaussianBlurRenderer.pong linearCopyTo halfResolutionBlurFramebuffer
+            halfResolutionBlurFramebuffer linearCopyTo blurFramebuffer
+        }
+    }
+
+    fun renderKawaseBlur() {
+        spoofFramebuffer {
+            glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            glBindTexture(GlConst.GL_TEXTURE_2D, ScaleSampling.getDownScalingFramebuffer(1.0 / 2).colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            glBindTexture(GlConst.GL_TEXTURE_2D, ScaleSampling.getDownScalingFramebuffer(1.0 / 4).colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            glBindTexture(GlConst.GL_TEXTURE_2D, blurFramebuffer.colorAttachment)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            PostProcessRenderer.sourceFramebuffer linearCopyTo ScaleSampling.getDownScalingFramebuffer(1.0 / 2)
+            ScaleSampling.getDownScalingFramebuffer(1.0 / 2) linearCopyTo ScaleSampling.getDownScalingFramebuffer(1.0 / 4)
+            val downscalingFramebuffer = ScaleSampling.getDownScalingFramebuffer(1.0 / 4)
+
+            blurFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
+
+            kawaseOffset = 0F
+            val shaders = mutableListOf<BlitShader>()
+            for (i in 0..4) {
+                shaders.add(kawaseBlurShader)
+            }
+            PostProcessRenderer.useFramebuffer(downscalingFramebuffer) {
+                PostProcessRenderer.renderShadersToFramebuffer(shaders, blurFramebuffer)
+            }
+        }
+    }
+
     fun renderBlur() {
-        val lowersamplingFramebuffer = ScaleSampling.getScaledFramebuffer(1.0 / 4)
-        ScaleSampling.sample(PostProcessRenderer.sourceFramebuffer, lowersamplingFramebuffer, ScaleSampling.bilinearSample)
-
-        blurFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
-        minecraft.framebuffer.beginWrite(false)
-        kawaseOffset = 0F
-        val shaders = mutableListOf<BlitShader>()
-        for (i in 0..4) {
-            shaders.add(kawaseBlurShader)
-        }
-
-        PostProcessRenderer.useFramebuffer(lowersamplingFramebuffer) {
-            PostProcessRenderer.renderShadersToFramebuffer(shaders, blurFramebuffer)
-        }
+        renderGaussianBlur()
+        // renderKawaseBlur()
     }
 
     @JvmStatic

@@ -15,23 +15,26 @@ object MatrixCommands {
         CommandRegistrationCallback.EVENT.register { commandDispatcher, commandRegistryAccess, registrationEnvironment ->
             commandDispatcher.register(
                 literal("matrix").then(
-                    literal("mana").requires { it.hasPermissionLevel(2) }.then(
-                        literal("set").then(argument("amount", DoubleArgumentType.doubleArg(0.0))).executes {
-                            val player = (it.source as ServerCommandSource).playerOrThrow
-                            player.mana = DoubleArgumentType.getDouble(it, "amount")
-                            return@executes Command.SINGLE_SUCCESS
-                        }.then(argument("target", EntityArgumentType.players()).executes {
-                            val players = EntityArgumentType.getPlayers(it, "target")
-                            players.forEach { player -> player.mana = DoubleArgumentType.getDouble(it, "amount") }
-                            return@executes Command.SINGLE_SUCCESS
-                        })
-                    ).then(
-                        literal("infinite").executes {
-                            val player = (it.source as ServerCommandSource).playerOrThrow
-                            player.isInfiniteMana = !player.isInfiniteMana
-                            return@executes Command.SINGLE_SUCCESS
-                        }
-                    )
+                    literal("mana")
+                        .requires { it.hasPermissionLevel(2) }
+                        .then(
+                            literal("set")
+                                .then(argument("amount", DoubleArgumentType.doubleArg(0.0)).executes {
+                                    val player = (it.source as ServerCommandSource).playerOrThrow
+                                    player.mana = DoubleArgumentType.getDouble(it, "amount")
+                                    return@executes Command.SINGLE_SUCCESS
+                                }.then(argument("target", EntityArgumentType.players()).executes {
+                                    val players = EntityArgumentType.getPlayers(it, "target")
+                                    players.forEach { player -> player.mana = DoubleArgumentType.getDouble(it, "amount") }
+                                    return@executes Command.SINGLE_SUCCESS
+                                }))
+                        ).then(
+                            literal("infinite").executes {
+                                val player = (it.source as ServerCommandSource).playerOrThrow
+                                player.isInfiniteMana = !player.isInfiniteMana
+                                return@executes Command.SINGLE_SUCCESS
+                            }
+                        )
                 )
             )
         }

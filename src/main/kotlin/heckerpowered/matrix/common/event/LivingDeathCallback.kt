@@ -9,7 +9,7 @@ import net.minecraft.util.ActionResult
 fun interface LivingDeathCallback {
     companion object {
         @JvmField
-        val event: Event<LivingDeathCallback> =
+        val EVENT: Event<LivingDeathCallback> =
             EventFactory.createArrayBacked(LivingDeathCallback::class.java) { listeners ->
                 LivingDeathCallback { entity, damageSource ->
                     for (listener in listeners) {

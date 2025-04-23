@@ -14,7 +14,7 @@ object AngeredEffect : StatusEffect(
     0xFF4500
 ) {
     init {
-        EntityTickCallback.event.register(::onEntityTick)
+        EntityTickCallback.EVENT.register(::onEntityTick)
 
         addAttributeModifier(
             EntityAttributes.GENERIC_MOVEMENT_SPEED, Matrix.identifier("angered"), 0.2, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL

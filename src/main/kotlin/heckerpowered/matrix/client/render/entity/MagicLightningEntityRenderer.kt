@@ -16,7 +16,6 @@ import org.joml.Matrix4f
 
 @Environment(EnvType.CLIENT)
 class MagicLightningEntityRenderer(context: EntityRendererFactory.Context) : EntityRenderer<MagicLightningEntity>(context) {
-
     override fun render(lightningEntity: MagicLightningEntity, f: Float, g: Float, matrixStack: MatrixStack, vertexConsumerProvider: VertexConsumerProvider, i: Int) {
         val fs = FloatArray(8)
         val gs = FloatArray(8)
@@ -61,7 +60,7 @@ class MagicLightningEntityRenderer(context: EntityRendererFactory.Context) : Ent
                         p += (random2.nextInt(31) - 15).toFloat()
                         q += (random2.nextInt(31) - 15).toFloat()
                     }
-                    
+
                     var y = 0.1f + l.toFloat() * 0.2f
                     if (m == 0) {
                         y *= r.toFloat() * 0.1f + 1.0f

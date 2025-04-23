@@ -20,7 +20,7 @@ object RedstoneHelmetItem : ArmorItem(
         .component(redstoneSuitPowerComponent, 0)
 ), RedstoneSuit {
     init {
-        EntityTickCallback.event.register(this::onEntityTick)
+        EntityTickCallback.EVENT.register(this::onEntityTick)
     }
 
     private fun onEntityTick(entity: LivingEntity) {

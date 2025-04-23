@@ -7,7 +7,7 @@ import net.minecraft.util.ActionResult
 
 object QueueMasteryEnchantment {
     fun onInitialize() {
-        LivingHurtCallback.event.register(::onLivingHurt)
+        LivingHurtCallback.EVENT.register(::onLivingHurt)
     }
 
     private fun onLivingHurt(event: DamageAccumulator): ActionResult {

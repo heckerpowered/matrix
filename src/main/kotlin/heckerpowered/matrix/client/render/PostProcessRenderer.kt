@@ -3,6 +3,7 @@ package heckerpowered.matrix.client.render
 import com.mojang.blaze3d.platform.GlConst
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.event.PostProcessCallback
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.shader.BlitShader
 import heckerpowered.matrix.client.shader.UniformProvider
@@ -23,17 +24,29 @@ object PostProcessRenderer {
      */
     var sourceFramebuffer = minecraft.framebuffer
     private var boundFramebuffer = minecraft.framebuffer
+
     val framebufferProvider = UniformProvider("framebuffer") { pointer ->
         GL31.glActiveTexture(GlConst.GL_TEXTURE0)
         GL31.glBindTexture(GlConst.GL_TEXTURE_2D, boundFramebuffer.colorAttachment)
         RenderSystem.glUniform1i(pointer, 0)
     }
 
+    var useDepthAttachment = false
+    private val depthAttachmentProvider = UniformProvider("depthAttachment") { pointer ->
+        if (pointer == -1 || !boundFramebuffer.useDepthAttachment || !useDepthAttachment) {
+            return@UniformProvider
+        }
+
+        GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 1)
+        GL31.glBindTexture(GlConst.GL_TEXTURE_2D, boundFramebuffer.depthAttachment)
+        RenderSystem.glUniform1i(pointer, 1)
+    }
+
     private val blitShader by lazy {
         BlitShader(
             resourceToString("/assets/matrix/shaders/sobel.vert"),
             resourceToString("/assets/matrix/shaders/blit.fsh"),
-            arrayOf(framebufferProvider)
+            arrayOf(framebufferProvider, depthAttachmentProvider)
         )
     }
 
@@ -41,11 +54,11 @@ object PostProcessRenderer {
     private val framebuffers = mutableListOf(createFramebuffer(), createFramebuffer())
     private var currentFramebufferIndex = 0
 
-    private fun currentFramebuffer(): Framebuffer {
+    fun currentFramebuffer(): Framebuffer {
         return framebuffers[currentFramebufferIndex]
     }
 
-    private fun nextFramebuffer() {
+    fun nextFramebuffer() {
         currentFramebufferIndex++
         if (currentFramebufferIndex >= framebuffers.size) {
             currentFramebufferIndex = 0
@@ -122,6 +135,7 @@ object PostProcessRenderer {
     @JvmStatic
     fun renderToMinecraftFramebuffer() {
         renderToFramebuffer(minecraft.framebuffer)
+        PostProcessCallback.event.invoker().onPostProcess()
     }
 
     @JvmStatic

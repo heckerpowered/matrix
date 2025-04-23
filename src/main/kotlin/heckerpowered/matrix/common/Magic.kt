@@ -7,6 +7,7 @@ import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.WizardHelmetWarpDancer
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
 import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.queueSize
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.core.inverseLerp
@@ -39,30 +40,35 @@ import kotlin.math.floor
  * @see ChannelSequence
  */
 abstract class Magic(
-    /**
-     * The name of the magic.
-     */
+    /** The display name of the magic. */
     val name: Text,
 
-    /**
-     * The cost of the magic.
-     */
+    /** The base mana cost of the magic. */
     private val cost: Long,
 
-    /**
-     * The description of the magic.
-     */
+    /** The description of the magic, shown in tooltips or GUIs. */
     val description: Text,
 
-    /**
-     * The time it takes for the magic to channel, in ticks.
-     */
+    /** The base time (in ticks) it takes to channel the magic. */
     private val channelTime: Long = 10,
 ) {
     /**
-     * Called when the magic is casting.
+     * Called when the magic is actually cast.
+     *
+     * @param player The player casting the magic, may be null.
+     * @param target The living entity being targeted.
+     * @param sequence The channel sequence involved.
      */
     open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {}
+
+    /**
+     * Called when the magic is channeled (but not yet cast).
+     * Can trigger effects like enchantment bonuses or state updates.
+     *
+     * @param player The player channeling the magic.
+     * @param target The target of the magic.
+     * @param sequence The channel sequence being updated.
+     */
     open fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence) {
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
@@ -80,9 +86,11 @@ abstract class Magic(
         }
     }
 
+    /**
+     * Triggers Peak Overdrive effects such as increasing load on wizard helmet.
+     */
     protected open fun channelPeakOverdrive(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence) {
-        val wizardHelmet = player.wizardHelmet
-        val currentLoad = wizardHelmet.getOrDefault(MatrixComponents.load, .0)
+        val currentLoad = player.wizardHelmet.getOrDefault(MatrixComponents.load, .0)
         player.wizardHelmet.set(MatrixComponents.load, currentLoad + 1)
     }
 
@@ -90,15 +98,12 @@ abstract class Magic(
         if (!checkMana(player, target, sequence)) {
             return MagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
         }
-
         if (target == null && !mayChannelWithoutTarget(player)) {
             return MagicAvailableStatus.TARGET_MISSING
         }
-
         if (checkChannelSequenceIsFull(player, target, sequence)) {
             return MagicAvailableStatus.CHANNEL_QUEUE_FULL
         }
-
         if (checkChannelSequenceIsLocked(player, target, sequence)) {
             return MagicAvailableStatus.CHANNEL_QUEUE_LOCKED
         }
@@ -106,50 +111,42 @@ abstract class Magic(
         return MagicAvailableStatus.AVAILABLE
     }
 
+    /**
+     * @return true if the sequence is locked.
+     */
     protected open fun checkChannelSequenceIsLocked(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Boolean {
         return sequence?.locked ?: false
     }
 
     /**
-     * Check whether the channel sequence is full.
+     * @return true if the player's channel sequence is full.
      */
     protected open fun checkChannelSequenceIsFull(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Boolean {
-        if (sequence == null) {
-            return false
-        }
-
-        if (sequence.channelingMagicCount() >= player.queueSize) {
-            return true
-        }
-
-        return false
+        return (sequence?.channelingMagicCount() ?: 0) >= player.queueSize
     }
 
     /**
      * Whether the magic can be channeled without a target.
      */
-    protected open fun mayChannelWithoutTarget(player: PlayerEntity): Boolean {
-        return false
-    }
+    protected open fun mayChannelWithoutTarget(player: PlayerEntity): Boolean = false
 
     /**
-     * Check whether the player has enough mana to channel the magic
+     * Determines if the player has enough mana (or health via Blood Pact) to channel the magic.
+     * @return true if channeling is affordable.
      */
     protected open fun checkMana(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Boolean {
-        var mana = player.mana
+        if (player is ServerPlayerEntity && player.isInfiniteMana) {
+            return true
+        }
 
+        var mana = player.mana
         val cost = getCost(player, target, sequence)
         if (player.bloodPactActive) {
             val convertRatio = getBloodPactConvertRatio(player, target, sequence)
-            val healthToMana = player.health * convertRatio // 1 health = 5 mana
-            mana += healthToMana
+            mana += player.health * convertRatio
         }
 
-        if (cost > mana) {
-            return false
-        }
-
-        return true
+        return cost <= mana
     }
 
     /**
@@ -164,28 +161,32 @@ abstract class Magic(
      * Gets the mana needed to channel this magic.
      */
     open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Long {
-        var cost = getNormalCost().toDouble()
-        when (target) {
-            is WitchEntity -> cost *= 1.85
-            is WitherEntity, is EnderDragonEntity -> cost *= 2
-            is WardenEntity -> cost *= 3
+        val cost = getNormalCost().toDouble()
+        var costMultiplier = 1.0
+        costMultiplier += when (target) {
+            is WitchEntity -> 1.85
+            is WitherEntity, is EnderDragonEntity -> 2.0
+            is WardenEntity -> 3.0
+            else -> .0
         }
 
         val difficulty = player.world.difficulty!!
-        when (difficulty) {
-            Difficulty.PEACEFUL -> cost *= 0.5
-            Difficulty.EASY -> cost *= 0.6
-            Difficulty.NORMAL -> cost *= 0.7
-            Difficulty.HARD -> cost *= 1
+        costMultiplier -= when (difficulty) {
+            Difficulty.PEACEFUL -> 0.5
+            Difficulty.EASY -> 0.4
+            Difficulty.NORMAL -> 0.3
+            Difficulty.HARD -> .0
         }
 
-        val entry = player.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(proximatePropagationEnchantmentKey)
-        if (target != null && EnchantmentHelper.getLevel(entry, player.wizardHelmet) > 0) {
-            val distance = player.squaredDistanceTo(target)
-            val maxDistance = 12.0 * 12.0
-            val minDistance = 4.0 * 4.0
-            val ratio = 1 - distance.inverseLerp(minDistance..maxDistance).coerceIn(.0..1.0)
-            cost -= cost * ratio.lerp(.0..0.35)
+        val enchantment = player.world.registryManager
+            .getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
+            .getOrThrow(proximatePropagationEnchantmentKey)
+        if (target != null && EnchantmentHelper.getLevel(enchantment, player.wizardHelmet) > 0) {
+            val dist = player.squaredDistanceTo(target)
+            val maxDistanceSquare = 12.0 * 12.0
+            val minDistanceSquare = 4.0 * 4.0
+            val lerpRatio = 1 - dist.inverseLerp(minDistanceSquare..maxDistanceSquare).coerceIn(0.0, 1.0)
+            costMultiplier -= lerpRatio.lerp(0.0..0.35)
         }
 
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
@@ -193,70 +194,70 @@ abstract class Magic(
         if (player.wizardHelmet.getEnchantmentLevel(queueMastery) > 0 &&
             sequence?.channelingMagicCount()?.toLong() == player.queueSize - 1
         ) {
-            cost *= 0.5
+            costMultiplier -= 0.5
         }
 
-        return floor(cost).toLong().coerceAtLeast(0)
+        return floor(cost * costMultiplier).toLong().coerceAtLeast(0)
     }
 
     /**
      * Gets the time it takes for the magic to channel, in ticks; this value is not necessarily the value needed to
      * channel the magic, but can be used to compare whether the channel time has increased or decreased.
      */
-    fun getNormalChannelTime(): Long {
-        return channelTime
-    }
+    fun getNormalChannelTime(): Long = channelTime
 
     /**
-     * Gets the time it takes for the magic to channel, in ticks.
+     * Calculates actual channel time based on player enchantments, helmet effects, and active states.
+     * @return Time in ticks required to channel the magic.
      */
     open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?): Long {
-        var basicChannelTime = channelTime.toDouble()
-        var channelSpeed = 1.0
+        var effectiveTime = channelTime.toDouble()
+        var channelSpeedBonus = 1.0
 
         // Magic Queue: +30% channel speed for the second magic in a queue.
+        // Queue Acceleration: +60% channel speed for magics third or later in the queue.
+        // Wrap Dancer: +100% channel speed.
+        // Peak Overdrive: + 50% channel speed when blood pact is activated.
         if (player.wizardHelmet.getEnchantmentLevel(magicQueue) > 0 &&
             sequence?.channelingMagicCount() == 2
         ) {
-            channelSpeed += 0.3
+            channelSpeedBonus += 0.3
         }
-
-        // Queue Acceleration: +60% channel speed for magics third or later in the queue.
         if (player.wizardHelmet.getEnchantmentLevel(queueAcceleration) > 0 &&
             (sequence?.channelingMagicCount()?.toLong() ?: 0L) >= 3
         ) {
-            channelSpeed += 0.6
+            channelSpeedBonus += 0.6
         }
-
-        // Wrap Dancer: +100% channel speed.
         if (player.wizardHelmet.item is WizardHelmetWarpDancer) {
-            channelSpeed += 1.0
+            channelSpeedBonus += 1.0
         }
-
-        // Peak Overdrive: + 50% channel speed when blood pact is activated.
         if (player.wizardHelmet.getEnchantmentLevel(peakOverdrive) > 0 &&
             player.bloodPactActive
         ) {
-            channelSpeed += 0.5
+            channelSpeedBonus += 0.5
         }
 
-        basicChannelTime /= channelSpeed
-        return floor(basicChannelTime).toLong().coerceAtLeast(0)
+        effectiveTime /= channelSpeedBonus
+        return floor(effectiveTime).toLong().coerceAtLeast(0)
     }
 
+    /**
+     * @return Ratio used when converting health to mana during Blood Pact.
+     */
     open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Double {
         var ratio = 2.0
 
         // Peak Overdrive: + 100% health to mana conversion efficiency.
-        if (player.wizardHelmet.getEnchantmentLevel(peakOverdrive) > 0 &&
-            player.bloodPactActive
-        ) {
+        if (player.wizardHelmet.getEnchantmentLevel(peakOverdrive) > 0 && player.bloodPactActive) {
             ratio += 1.0
         }
 
         return ratio
     }
 
+    /**
+     * Unique ID of the magic, derived from its name.
+     */
     val id: Int
         get() = name.hashCode()
 }

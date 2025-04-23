@@ -10,7 +10,7 @@ import net.minecraft.util.ActionResult
 
 object LastStandEnchantment {
     fun onInitialize() {
-        LivingAttackCallback.event.register(::onLivingAttack)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {

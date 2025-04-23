@@ -1,5 +1,6 @@
 package heckerpowered.matrix.mixin;
 
+import heckerpowered.matrix.common.effect.ManaOverloadEffect;
 import heckerpowered.matrix.common.effect.MatrixStatusEffectsKt;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -26,13 +27,22 @@ abstract class EndermanEntityMixin extends LivingEntity {
 
     @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
     private void damage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+        final var self = (EndermanEntity) (Object) this;
         final var crippleMovement = MatrixStatusEffectsKt.getCrippleMovementEffect();
         final var effect = self().getStatusEffect(crippleMovement);
-        if (effect == null) {
+        if (effect == null && !ManaOverloadEffect.INSTANCE.isMagicAbilityDisabled(self)) {
             return;
         }
 
         final var result = super.damage(source, amount);
         cir.setReturnValue(result);
+    }
+
+    @Inject(method = "teleportTo(DDD)Z", at = @At("HEAD"), cancellable = true)
+    private void teleportTo(double x, double y, double z, CallbackInfoReturnable<Boolean> cir) {
+        final var self = (EndermanEntity) (Object) this;
+        if (ManaOverloadEffect.INSTANCE.isMagicAbilityDisabled(self)) {
+            cir.setReturnValue(false);
+        }
     }
 }

@@ -10,6 +10,7 @@ data class DamageAccumulator(
     val baseDamage: Double,
     var baseDamageBonus: Double = 0.0,
     var damageMultiplier: Double = 1.0,
+    var damageReductionMultiplier: Double = 1.0,
     var immune: Boolean = false,
 ) {
     fun accumulateDamage(): Double {
@@ -17,6 +18,7 @@ data class DamageAccumulator(
             return .0
         }
 
-        return (baseDamage + baseDamageBonus) * damageMultiplier
+        val damage = (baseDamage + baseDamageBonus) * damageMultiplier * damageReductionMultiplier
+        return damage.coerceAtLeast(.0)
     }
 }

@@ -16,7 +16,7 @@ class ServerPlayerEntityMixin {
 
     @Inject(method = "onStatusEffectRemoved", at = @At("HEAD"), cancellable = true)
     private void onStatusEffectRemoved(StatusEffectInstance effect, CallbackInfo ci) {
-        final var result = StatusEffectRemovedCallback.event.invoker().onStatusEffectRemoved((ServerPlayerEntity) (Object) this, effect);
+        final var result = StatusEffectRemovedCallback.EVENT.invoker().onStatusEffectRemoved((ServerPlayerEntity) (Object) this, effect);
         if (result == ActionResult.FAIL) {
             ci.cancel();
         }

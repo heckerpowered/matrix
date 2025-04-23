@@ -41,6 +41,6 @@ class ActiveBloodPactPayload : CustomPayload {
 
         player.addStatusEffect(StatusEffectInstance(bloodPactEffect, 20 * 30, 0, false, true))
         player.serverWorld.playSound(null, player.x, player.y, player.z, SoundEvents.ENTITY_WITHER_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.0F)
-        player.itemCooldownManager.set(player.wizardHelmet.item, 20 * 60)
+        player.itemCooldownManager.set(player.wizardHelmet.item, 20 * (30 + 14)) // 30 = duration, 14 = cooldown
     }
 }

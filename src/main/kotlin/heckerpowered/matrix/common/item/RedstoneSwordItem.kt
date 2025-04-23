@@ -18,7 +18,7 @@ object RedstoneSwordItem : SwordItem(
         .component(redstoneSuitPowerComponent, 0)
 ), RedstoneSuit {
     init {
-        LivingAttackCallback.event.register(::onLivingAttack)
+        LivingAttackCallback.EVENT.register(::onLivingAttack)
     }
 
     private fun onLivingAttack(damageAccumulator: DamageAccumulator): ActionResult {

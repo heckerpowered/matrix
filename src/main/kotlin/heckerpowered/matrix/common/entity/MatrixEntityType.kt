@@ -17,6 +17,17 @@ object MatrixEntityType {
             .build()
     )
 
+    val attractorEntity: EntityType<AttractorEntity> = Registry.register(
+        Registries.ENTITY_TYPE, Matrix.identifier("attractor"),
+        EntityType.Builder.create({ entityType, world -> AttractorEntity(entityType, world) }, SpawnGroup.MISC)
+            .makeFireImmune()
+            .dimensions(0.98F, 0.98F)
+            .eyeHeight(0.15F)
+            .maxTrackingRange(10)
+            .trackingTickInterval(10)
+            .build()
+    )
+
     fun onInitialize() {
     }
 }
