@@ -11,8 +11,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object BruteForceMagic : Magic(MatrixLanguage.magicBruteForce, 45, MatrixLanguage.magicBruteForceDescription, 40) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
-        super.cast(player, target, sequence)
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         target.addStatusEffect(StatusEffectInstance(EXPOSED_EFFECT, 200, 0, false, true))
     }
 

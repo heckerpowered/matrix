@@ -69,13 +69,13 @@ class MatrixModChineseLangProvider(
         translationBuilder.addMagic(MatrixLanguage.magicIgniteMagic.key, "点燃")
         translationBuilder.add(
             MatrixLanguage.magicIgniteMagicDescription.key,
-            "§c点燃§r目标§a10§r秒，造成持续伤害。\n\n持续性§c融化§r敌人的护甲，持续时间内至多减少其§a40§r%的护甲。\n\n如果目标处于§2中毒§r状态则§c引爆§r敌人。\n\n§c爆炸§r的威力为§a4§r。\n\n§c爆炸§r造成的伤害视为§9法术伤害§r。\n\n§c爆炸§r不会破坏方块，也不会生成§c火焰§r。\n\n可被追踪。"
+            "§c点燃§r目标§a5§r秒，造成持续伤害。\n\n对已经受到§c点燃§r影响的敌人引导§c点燃§r会延长效果的持续时间至§a8§r秒。\n\n§c融化§r敌人的护甲，减少目标§a40§r%的护甲和韧性。\n\n如果目标处于§2中毒§r状态则§c引爆§r敌人。\n\n§c爆炸§r的威力为§a4§r。\n\n§c爆炸§r造成的伤害视为§9法术伤害§r。\n\n§c爆炸§r不会破坏方块，也不会生成§c火焰§r。\n\n可被追踪。"
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicBreakingBad.key, "绝命毒师")
         translationBuilder.add(
             MatrixLanguage.magicBreakingBadDescription.key,
-            "使目标§2中毒§r、失明，持续§a10§r秒。\n\n如果敌人处于§c点燃§r状态，则会§c引爆§r敌人。\n\n§c爆炸§r的威力为§a4§r。\n\n§c爆炸§r造成的伤害视为§9法术伤害§r。\n\n§c爆炸§r不会破坏方块，也不会生成§c火焰§r。\n\n可被追踪。"
+            "使目标§2中毒§r、失明，持续§a5§r秒。\n\n可以散布到§a8§r米内的§a4§r名敌人身上。\n\n如果敌人处于§c点燃§r状态，则会§c引爆§r敌人。\n\n§c爆炸§r的威力为§a4§r。\n\n§c爆炸§r造成的伤害视为§9法术伤害§r。\n\n§c爆炸§r不会破坏方块，也不会生成§c火焰§r。\n\n可被追踪。"
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicSpread.key, "连带传染")

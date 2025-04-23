@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalDoubleRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import heckerpowered.matrix.common.effect.MatrixStatusEffectsKt;
+import heckerpowered.matrix.common.effect.MatrixStatusEffects;
 import heckerpowered.matrix.common.event.*;
 import heckerpowered.matrix.common.item.RedstoneSuitKt;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
@@ -76,7 +76,7 @@ class LivingEntityMixin implements MatrixLivingEntity {
 
         var restoreAmount = 0;
         final var self = self();
-        final var manaOverload = MatrixStatusEffectsKt.getManaOverloadEffect();
+        final var manaOverload = MatrixStatusEffects.getManaOverloadEffect();
         final var effect = self.getStatusEffect(manaOverload);
         if (effect != null) {
             restoreAmount += (effect.getAmplifier() + 1) * 20;

@@ -6,6 +6,7 @@ import heckerpowered.matrix.common.enchantment.*
 import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.WizardHelmetWarpDancer
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
+import heckerpowered.matrix.common.magics.MagicData
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.queueSize
@@ -59,7 +60,7 @@ abstract class Magic(
      * @param target The living entity being targeted.
      * @param sequence The channel sequence involved.
      */
-    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {}
+    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData = MagicData()) {}
 
     /**
      * Called when the magic is channeled (but not yet cast).
@@ -69,7 +70,7 @@ abstract class Magic(
      * @param target The target of the magic.
      * @param sequence The channel sequence being updated.
      */
-    open fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence) {
+    open fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence, data: MagicData = MagicData()) {
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
         if (player.wizardHelmet.getEnchantmentLevel(queueMastery) > 0 &&

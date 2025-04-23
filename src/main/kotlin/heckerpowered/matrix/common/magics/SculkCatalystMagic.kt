@@ -14,7 +14,7 @@ import net.minecraft.network.packet.s2c.play.EntityStatusEffectS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
 
 object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 30, MatrixLanguage.sculkCatalystMagicDescription, 100) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         val effect = target.getStatusEffect(SCULK_CATALYST_EFFECT)
         val amplifier = (effect?.amplifier ?: 0) + 1
         val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { player?.damageSources?.create(MatrixDamageTypes.magic, player) }

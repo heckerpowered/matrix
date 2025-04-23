@@ -6,5 +6,6 @@ data class ChannelingMagic(
     val magic: Magic,
     var currentChannelTime: Long,
     val channelTime: Long,
-    val cost: Long
+    val cost: Long,
+    val data: MagicData,
 )

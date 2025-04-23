@@ -14,7 +14,7 @@ import net.minecraft.util.math.Box
 import kotlin.math.floor
 
 object SonicBoomMagic : Magic(MatrixLanguage.magicSonicBoom, 40, MatrixLanguage.magicSonicBoomDescription, 34) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         if (player == null) {
             return
         }

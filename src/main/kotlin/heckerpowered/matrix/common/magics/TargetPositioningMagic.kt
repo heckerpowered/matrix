@@ -9,7 +9,7 @@ import net.minecraft.entity.effect.StatusEffects
 import net.minecraft.server.network.ServerPlayerEntity
 
 object TargetPositioningMagic : Magic(MatrixLanguage.magicTargetPositioning, 2, MatrixLanguage.magicTargetPositioningDescription, 2) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         target.world.getOtherEntities(player, target.boundingBox.expand(24.0)).forEach {
             if (it is LivingEntity) {
                 it.addStatusEffect(StatusEffectInstance(StatusEffects.GLOWING, 200, 0, true, false))

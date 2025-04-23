@@ -7,7 +7,7 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object HealthStealMagic : Magic(MatrixLanguage.magicHealthSteal, 8, MatrixLanguage.magicHealthStealDescription, 20) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         if (player == null) {
             return
         }

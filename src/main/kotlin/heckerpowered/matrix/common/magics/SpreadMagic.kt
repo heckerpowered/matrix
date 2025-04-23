@@ -9,7 +9,7 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object SpreadMagic : Magic(MatrixLanguage.magicSpread, 9, MatrixLanguage.magicSpreadDescription, 9) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         if (player == null) {
             return
         }

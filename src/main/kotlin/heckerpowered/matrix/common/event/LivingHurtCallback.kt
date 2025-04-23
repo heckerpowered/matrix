@@ -2,11 +2,7 @@ package heckerpowered.matrix.common.event
 
 import net.fabricmc.fabric.api.event.Event
 import net.fabricmc.fabric.api.event.EventFactory
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.damage.DamageSource
 import net.minecraft.util.ActionResult
-
-data class LivingHurtEvent(val entity: LivingEntity, var damageSource: DamageSource, var amount: Float)
 
 fun interface LivingHurtCallback {
     companion object {

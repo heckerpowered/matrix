@@ -1,6 +1,6 @@
 package heckerpowered.matrix.mixin;
 
-import heckerpowered.matrix.common.effect.MatrixStatusEffectsKt;
+import heckerpowered.matrix.common.effect.MatrixStatusEffects;
 import heckerpowered.matrix.common.event.EntityRemovedCallback;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
 import net.minecraft.block.BlockState;
@@ -38,7 +38,7 @@ class EntityMixin {
         // This function may be called before the living entity's constructor is called,
         // exception will be thrown in that case.
         try {
-            final var crippleMovement = MatrixStatusEffectsKt.getCrippleMovementEffect();
+            final var crippleMovement = MatrixStatusEffects.getCrippleMovementEffect();
             final var effect = self.getStatusEffect(crippleMovement);
             if (effect == null || effect.getDuration() <= 0) {
                 return;

@@ -11,7 +11,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object ArmorPenetrationMagic : Magic(MatrixLanguage.magicArmorPenetrationMagic, 30, MatrixLanguage.magicArmorPenetrationMagicDescription, 60) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         target.addStatusEffect(StatusEffectInstance(ARMOR_PENETRATION_EFFECT, 200, 0, false, false))
     }
 

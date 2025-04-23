@@ -1,9 +1,9 @@
-// 1.21	2025-04-18T16:28:41.886207	matrix/MatrixEnchantmentGenerator
+// 1.21	2025-04-24T01:17:20.423246	matrix/MatrixEnchantmentGenerator
 c7a05b2fd06dfc3d8e10a9d6743a3fed9bab0fea data/matrix/enchantment/health_steal.json
-d6313b8cfc50003e4f5cc0173022b55c4f9e9c47 data/matrix/enchantment/guaranteed.json
 5ff3f4c99ec7cfbfbf9f79095d68d263c49e573d data/matrix/enchantment/brute_force.json
-b01a3b1c0651c64ae9cd05f1181747f24c827bbb data/matrix/enchantment/peak_overdrive.json
+d6313b8cfc50003e4f5cc0173022b55c4f9e9c47 data/matrix/enchantment/guaranteed.json
 80a00a919a449758d7d5a9c05a9bf800acfe5ea7 data/matrix/enchantment/lightning_bolt.json
+b01a3b1c0651c64ae9cd05f1181747f24c827bbb data/matrix/enchantment/peak_overdrive.json
 16d841cb7c457e003cb22f6cd01741ef51be7ff5 data/matrix/enchantment/sculk_catalyst.json
 b64be14ac1653cd05d77663eeef4d4d91a95cd05 data/matrix/enchantment/proximate_propagation.json
 43a9d2ad093a4939a977cd64489fe6f69c8eec86 data/matrix/enchantment/attract.json
@@ -24,8 +24,8 @@ fabfb2fa62911c61b5a5649c2f881af3fac281dd data/matrix/enchantment/revival.json
 d63ef13ec6dd05feaaae05f1721867b10fcd0610 data/matrix/enchantment/memory_erase.json
 cfb3c83fc2fd41db0dbef41039a7cbf7c6fd16a8 data/matrix/enchantment/mana_regeneration.json
 348c1890bed5bf8d202fc9d28a5c819b796bafb2 data/matrix/enchantment/teleport.json
-e40e2071a52a545f3abe89b77d5622152b262edc data/matrix/enchantment/magic_shield.json
 d10f05b5b39a2422c1a84cc6ed622e7a245576df data/matrix/enchantment/second_wind.json
+e40e2071a52a545f3abe89b77d5622152b262edc data/matrix/enchantment/magic_shield.json
 8487b88d3ba6f7f3a3be3b3130458342a71c70bf data/matrix/enchantment/mana_overflow.json
 33162044849a848ba38f41354bff1b20b4bbc09a data/matrix/enchantment/wither_armor.json
 afac4075444eaf1e45b6c484a78e4cd516c93716 data/matrix/enchantment/mana_overload.json

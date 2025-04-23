@@ -13,7 +13,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 
 object CrippleMovementMagic : Magic(MatrixLanguage.magicCrippleMovement, 6, MatrixLanguage.magicCrippleMovementDescription, 2) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         if (target is PlayerEntity) {
             target.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 3, 0))
             return

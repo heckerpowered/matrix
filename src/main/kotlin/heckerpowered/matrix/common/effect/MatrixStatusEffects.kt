@@ -7,16 +7,48 @@ import net.minecraft.registry.Registry
 import net.minecraft.registry.entry.RegistryEntry
 
 object MatrixStatusEffects {
+    @JvmStatic
+    @get:JvmName("getManaOverloadEffect")
     val MANA_OVERLOAD_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ManaOverloadEffect) }
+
+    @JvmStatic
+    @get:JvmName("getArmorPenetrationEffect")
     val ARMOR_PENETRATION_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ArmorPenetrationEffect) }
+
+    @JvmStatic
+    @get:JvmName("getCrippleMovementEffect")
     val CRIPPLE_MOVEMENT_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(CrippleMovementEffect) }
+
+    @JvmStatic
+    @get:JvmName("getWitherArmorChargedEffect")
     val WITHER_ARMOR_CHARGED_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorChargedEffect) }
+
+    @JvmStatic
+    @get:JvmName("getWitherArmorEffect")
     val WITHER_ARMOR_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(WitherArmorEffect) }
+
+    @JvmStatic
+    @get:JvmName("getAngeredEffect")
     val ANGERED_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(AngeredEffect) }
+
+    @JvmStatic
+    @get:JvmName("getExposedEffect")
     val EXPOSED_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ExposedEffect) }
+
+    @JvmStatic
+    @get:JvmName("getSculkCatalystEffect")
     val SCULK_CATALYST_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(SculkCatalystEffect) }
+
+    @JvmStatic
+    @get:JvmName("getBloodPactEffect")
     val BLOOD_PACT_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(BloodPactEffect) }
+
+    @JvmStatic
+    @get:JvmName("getBorrowedTimeEffect")
     val BORROWED_TIME_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(BorrowedTimeEffect) }
+
+    @JvmStatic
+    @get:JvmName("getIgniteEffect")
     val IGNITE_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(IgniteEffect) }
 
     fun onInitialize() {

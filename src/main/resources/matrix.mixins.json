@@ -21,15 +21,12 @@
     "WorldMixin"
   ],
   "client": [
-    "EntityRenderDispatcherMixin",
     "FramebufferMixin",
     "GameRendererMixin",
     "KeyboardMixin",
     "MinecraftClientMixin",
     "MixinInGameHud",
     "MouseMixin",
-    "PlayerEntityRendererMixin",
-    "RenderTickCounterDynamicMixin",
     "WorldRendererMixin"
   ],
   "injectors": {

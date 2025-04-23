@@ -7,7 +7,7 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object KillMagic : Magic(MatrixLanguage.killMagic, 1000, MatrixLanguage.killMagicDescription, 20 * 10) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         target.health = .0f
         val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { player?.damageSources?.playerAttack(player) }
         target.onDeath(damageSource)

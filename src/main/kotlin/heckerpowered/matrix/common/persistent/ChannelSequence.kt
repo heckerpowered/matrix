@@ -10,6 +10,7 @@ import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
 import heckerpowered.matrix.common.magics.ChannelingMagic
+import heckerpowered.matrix.common.magics.MagicData
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import heckerpowered.matrix.core.MatrixLivingEntity
 import net.fabricmc.api.EnvType
@@ -63,6 +64,7 @@ class ChannelSequence(
             target: LivingEntity,
             costMana: Boolean = true,
             bypassLock: Boolean = false,
+            data: MagicData = MagicData(),
         ): Boolean {
             if (target !is MatrixLivingEntity) return false
 
@@ -81,8 +83,8 @@ class ChannelSequence(
             val convertRatio = magic.getBloodPactConvertRatio(player, target, channelSequence)
 
             fun performChannel() {
-                channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost))
-                magic.channel(player, target, channelSequence)
+                channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost, data))
+                magic.channel(player, target, channelSequence, data)
             }
 
             if (player is ServerPlayerEntity) {
@@ -160,7 +162,10 @@ class ChannelSequence(
                             MagicManager.getMagicById(it.getInt("MagicId"))!!,
                             it.getLong("CurrentChannelTime"),
                             it.getLong("ChannelTime"),
-                            it.getLong("Cost")
+                            it.getLong("Cost"),
+                            MagicData(
+                                it.getBoolean("IsSpread")
+                            )
                         )
                     }
                     .toMutableList()
@@ -191,6 +196,7 @@ class ChannelSequence(
                     magicCompound.putInt("MagicId", magic.magic.name.hashCode())
                     magicCompound.putLong("CurrentChannelTime", magic.currentChannelTime)
                     magicCompound.putLong("ChannelTime", magic.channelTime)
+                    magicCompound.putBoolean("IsSpread", magic.data.isSpread)
                     channelingSequenceList.add(magicCompound)
                 }
                 sequencesCompound.put("ChannelingSequence", channelingSequenceList)
@@ -280,7 +286,7 @@ class ChannelSequence(
                 player = target.world.getPlayerByUuid(playerUUID)
             }
             if (player is ServerPlayerEntity?) {
-                currentChanneling.magic.cast(player, target, this)
+                currentChanneling.magic.cast(player, target, this, currentChanneling.data)
             }
             ++index
         }

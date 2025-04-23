@@ -19,7 +19,7 @@ object ExplosionMagic : Magic(MatrixLanguage.magicExplosion, 30, MatrixLanguage.
         Optional.empty()
     )
 
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
 
         target.world.createExplosion(player, damageSource, explosionBehavior, target.x, target.y, target.z, ((player?.magicClock ?: 1.0) * 4.0).toFloat(), false, World.ExplosionSourceType.MOB)

@@ -9,7 +9,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object LightningBoltMagic : Magic(MatrixLanguage.magicLightningBoltMagic, 20, MatrixLanguage.magicLightningBoltMagicDescription, 20) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         val lightningTypes = MagicLightningEntity.LightningType.entries
         val lightningType = if ((0..1000).random() < 6) {
             MagicLightningEntity.LightningType.BLACK
