@@ -12,6 +12,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 
 object TeleportMagic : Magic(MatrixLanguage.magicTeleport, 15, MatrixLanguage.magicTeleportDescription, 5) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+        super.cast(player, target, sequence, data)
         if (player == null) {
             return
         }

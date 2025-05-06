@@ -8,10 +8,8 @@ import heckerpowered.matrix.common.entity.MagicLightningEntity.LightningType.*
 import heckerpowered.matrix.common.magics.CrippleMovementMagic
 import heckerpowered.matrix.common.magics.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.magics.LightningBoltMagic
-import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.AbstractFireBlock
 import net.minecraft.block.Blocks
 import net.minecraft.block.LightningRodBlock
@@ -255,9 +253,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                     if (channeler == null) {
                         entity.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 4))
                     } else {
-                        if (ChannelSequence.channelMagic(CrippleMovementMagic, channeler, entity, false)) {
-                            ServerPlayNetworking.send(channeler, ChannelMagicPayload(CrippleMovementMagic.id, entity.id))
-                        }
+                        ChannelSequence.channelMagic(CrippleMovementMagic, channeler, entity, false)
                     }
                 }
             }
@@ -273,9 +269,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                         continue
                     }
 
-                    if (ChannelSequence.channelMagic(LightningBoltMagic, channeler, target)) {
-                        ServerPlayNetworking.send(channeler, ChannelMagicPayload(LightningBoltMagic.id, target.id))
-                    }
+                    ChannelSequence.channelMagic(LightningBoltMagic, channeler, target)
                 }
             }
 

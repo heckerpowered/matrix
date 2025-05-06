@@ -15,10 +15,15 @@ import heckerpowered.matrix.common.persistent.ManaState;
 import heckerpowered.matrix.core.Accumulator;
 import heckerpowered.matrix.core.MatrixLivingEntity;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.fluid.FluidState;
@@ -28,6 +33,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -44,15 +50,21 @@ import java.util.Map;
 import java.util.UUID;
 
 @Mixin(LivingEntity.class)
-abstract
-class LivingEntityMixin implements MatrixLivingEntity {
+abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
+
+    @SuppressWarnings("WrongEntityDataParameterClass")
+    @Unique
+    private static final TrackedData<Boolean> KILLED = DataTracker.registerData(LivingEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     @Unique
     private final Map<UUID, ChannelSequence> channelingSequences = new HashMap<>();
-
     @Shadow
     @Final
     private Map<RegistryEntry<StatusEffect>, StatusEffectInstance> activeStatusEffects;
+
+    public LivingEntityMixin(EntityType<?> type, World world) {
+        super(type, world);
+    }
 
     @Shadow
     public abstract @Nullable StatusEffectInstance getStatusEffect(RegistryEntry<StatusEffect> effect);
@@ -90,11 +102,16 @@ class LivingEntityMixin implements MatrixLivingEntity {
     @Inject(method = "writeCustomDataToNbt", at = @At("HEAD"))
     private void writeCustomDataToNbt(NbtCompound nbt, CallbackInfo ci) {
         WriteDataCallback.EVENT.invoker().writeData(self(), nbt);
+        final var matrixCompound = nbt.getCompound("MatrixMod");
+        matrixCompound.putBoolean("Killed", dataTracker.get(KILLED));
+        nbt.put("MatrixMod", matrixCompound);
     }
 
     @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
     private void readCustomDataFromNbt(NbtCompound nbt, CallbackInfo ci) {
         ReadDataCallback.EVENT.invoker().readData(self(), nbt);
+        final var matrixCompound = nbt.getCompound("MatrixMod");
+        dataTracker.set(KILLED, matrixCompound.getBoolean("Killed"));
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
@@ -233,5 +250,29 @@ class LivingEntityMixin implements MatrixLivingEntity {
         }
 
         amountReference.set(livingHealEvent.getAmount());
+    }
+
+    @Inject(method = "initDataTracker", at = @At("TAIL"))
+    private void initDataTracker(DataTracker.Builder builder, CallbackInfo ci) {
+        builder.add(KILLED, false);
+    }
+
+    @Inject(method = "getHealth", at = @At("HEAD"), cancellable = true)
+    private void getHealth(CallbackInfoReturnable<Float> cir) {
+        if (dataTracker.get(KILLED)) {
+            cir.setReturnValue(0F);
+        }
+    }
+
+    @SuppressWarnings("all")
+    @Override
+    public boolean getKilled() {
+        return dataTracker.get(KILLED);
+    }
+
+    @SuppressWarnings("all")
+    @Override
+    public void setKilled(boolean killed) {
+        dataTracker.set(KILLED, killed);
     }
 }

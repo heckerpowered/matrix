@@ -37,7 +37,9 @@ enum class MagicAvailableStatus {
     /**
      * The magic cannot channel without target
      */
-    TARGET_MISSING;
+    TARGET_MISSING,
+
+    SCULK_CATALYST_IS_ALREADY_ACTIVE;
 }
 
 val MagicAvailableStatus.description: Text
@@ -49,5 +51,6 @@ val MagicAvailableStatus.description: Text
         MagicAvailableStatus.CHANNEL_QUEUE_FULL -> MatrixLanguage.magicChannelQueueFull
         MagicAvailableStatus.CHANNEL_QUEUE_LOCKED -> MatrixLanguage.magicChannelQueueLocked
         MagicAvailableStatus.TARGET_MISSING -> MatrixLanguage.magicTargetMissing
+        MagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE -> MatrixLanguage.magicSculkCatalystIsAlreadyActive
     }
 

@@ -239,7 +239,7 @@ object ScreenEffectRenderer {
 
         bloomThresholdAnimation.from = .0
         bloomThresholdAnimation.to = 1.0
-        bloomThresholdAnimation.duration = Duration.ofSeconds(3)
+        bloomThresholdAnimation.duration = Duration.ofSeconds(1)
         bloomThresholdAnimation.start()
     }
 

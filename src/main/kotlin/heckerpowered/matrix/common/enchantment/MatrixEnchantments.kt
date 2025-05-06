@@ -11,39 +11,70 @@ import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.text.MutableText
 
-val witherArmorEnchantmentKey = of("wither_armor")
-val guaranteedEnchantmentKey = of("guaranteed")
-val lastStandEnchantmentKey = of("last_stand")
-val revivalEnchantmentKey = of("revival")
-val secondWindEnchantmentKey = of("second_wind")
-val proximatePropagationEnchantmentKey = of("proximate_propagation")
-val magicQueue = of("magic_queue")
-val queueAcceleration = of("queue_acceleration")
-val queueMastery = of("queue_mastery")
-val manaOverflow = of("mana_overflow")
-val manaRegeneration = of("mana_regeneration")
-val wizardForce = of("wizard_force")
-val bloodPact = of("blood_pact")
-val magicShield = of("magic_shield")
-val brutalStrength = of("brutal_strength")
-val peakOverdrive = of("peak_overdrive")
+object MatrixEnchantments {
+    @JvmField
+    val WITHER_ARMOR_ENCHANTMENT_KEY = of("wither_armor")
 
-fun LivingEntity.getEnchantmentLevel(registryKey: RegistryKey<Enchantment>): Int {
-    val entry = world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(registryKey)
-    return EnchantmentHelper.getEquipmentLevel(entry, this)
-}
+    @JvmField
+    val GUARANTEED_ENCHANTMENT_KEY = of("guaranteed")
 
-internal fun of(name: String): RegistryKey<Enchantment> {
-    val identifier = Matrix.identifier(name)
-    return RegistryKey.of(RegistryKeys.ENCHANTMENT, identifier)
-}
+    @JvmField
+    val LAST_STAND_ENCHANTMENT_KEY = of("last_stand")
 
-val Magic.enchantmentKey: RegistryKey<Enchantment>
-    get() {
-        return of((this.name as MutableText).key.substringAfterLast('.'))
+    @JvmField
+    val REVIVAL_ENCHANTMENT_KEY = of("revival")
+
+    @JvmField
+    val SECOND_WIND_ENCHANTMENT_KEY = of("second_wind")
+
+    @JvmField
+    val PROXIMATE_PROPAGATION_ENCHANTMENT_KEY = of("proximate_propagation")
+
+    @JvmField
+    val MAGIC_QUEUE_ENCHANTMENT_KEY = of("magic_queue")
+
+    @JvmField
+    val QUEUE_ACCELERATION_ENCHANTMENT_KEY = of("queue_acceleration")
+
+    @JvmField
+    val QUEUE_MASTERY_ENCHANTMENT_KEY = of("queue_mastery")
+
+    @JvmField
+    val MANA_OVERFLOW_ENCHANTMENT_KEY = of("mana_overflow")
+
+    @JvmField
+    val MANA_REGENERATION_ENCHANTMENT_KEY = of("mana_regeneration")
+
+    @JvmField
+    val WIZARD_FORCE_ENCHANTMENT_KEY = of("wizard_force")
+
+    @JvmField
+    val BLOOD_PACT_ENCHANTMENT_KEY = of("blood_pact")
+
+    @JvmField
+    val MAGIC_SHIELD_ENCHANTMENT_KEY = of("magic_shield")
+
+    @JvmField
+    val BRUTAL_STRENGTH_ENCHANTMENT_KEY = of("brutal_strength")
+
+    @JvmField
+    val PEAK_OVERDRIVE_ENCHANTMENT_KEY = of("peak_overdrive")
+
+    fun LivingEntity.getEnchantmentLevel(registryKey: RegistryKey<Enchantment>): Int {
+        val entry = world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(registryKey)
+        return EnchantmentHelper.getEquipmentLevel(entry, this)
     }
 
-object MatrixEnchantments {
+    internal fun of(name: String): RegistryKey<Enchantment> {
+        val identifier = Matrix.identifier(name)
+        return RegistryKey.of(RegistryKeys.ENCHANTMENT, identifier)
+    }
+
+    val Magic.enchantmentKey: RegistryKey<Enchantment>
+        get() {
+            return of((this.name as MutableText).key.substringAfterLast('.'))
+        }
+
     fun onInitialize() {
         WitherArmorEnchantment.onInitialize()
         GuaranteedEnchantment.onInitialize()
@@ -56,13 +87,13 @@ object MatrixEnchantments {
         MagicShieldEnchantment.onInitialize()
         PeakOverdriveEnchantment.onInitialize()
     }
-}
 
-fun ItemStack.getEnchantmentLevel(registryKey: RegistryKey<Enchantment>): Int {
-    val entry = enchantments.enchantments.filter { !it.key.isEmpty }.find { it.key.get() == registryKey }
-    if (entry == null) {
-        return -1
+    fun ItemStack.getEnchantmentLevel(registryKey: RegistryKey<Enchantment>): Int {
+        val entry = enchantments.enchantments.filter { !it.key.isEmpty }.find { it.key.get() == registryKey }
+        if (entry == null) {
+            return -1
+        }
+
+        return EnchantmentHelper.getLevel(entry, this)
     }
-
-    return EnchantmentHelper.getLevel(entry, this)
 }

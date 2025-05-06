@@ -10,8 +10,6 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object SystemCrashMagic : Magic(MatrixLanguage.magicSystemCrash, 100, MatrixLanguage.magicSystemCrashDescription, 200) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
-    }
 
     override fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         if (target is ServerPlayerEntity) {

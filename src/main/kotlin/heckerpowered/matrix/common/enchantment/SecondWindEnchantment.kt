@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.SECOND_WIND_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
 import net.minecraft.enchantment.EnchantmentHelper
@@ -15,7 +16,7 @@ object SecondWindEnchantment {
 
     private fun onLivingHurt(event: DamageAccumulator): ActionResult {
         val target = event.target
-        val secondWindEnchantmentEntry = target.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(secondWindEnchantmentKey)
+        val secondWindEnchantmentEntry = target.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(SECOND_WIND_ENCHANTMENT_KEY)
         val level = EnchantmentHelper.getEquipmentLevel(secondWindEnchantmentEntry, target)
         if (level <= 0) {
             return ActionResult.PASS

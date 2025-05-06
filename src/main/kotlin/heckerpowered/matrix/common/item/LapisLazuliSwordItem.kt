@@ -1,9 +1,7 @@
 package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.common.magics.DecisiveStrikeMagic
-import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.common.persistent.ChannelSequence
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.LivingEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.item.SwordItem
@@ -21,9 +19,7 @@ object LapisLazuliSwordItem : SwordItem(
         }
 
         if (attacker is ServerPlayerEntity) {
-            if (ChannelSequence.channelMagic(DecisiveStrikeMagic, attacker, target, false)) {
-                ServerPlayNetworking.send(attacker, ChannelMagicPayload(DecisiveStrikeMagic.id, target.id))
-            }
+            ChannelSequence.channelMagic(DecisiveStrikeMagic, attacker, target, false)
         } else {
             DecisiveStrikeMagic.cast(null, target, ChannelSequence(target))
         }

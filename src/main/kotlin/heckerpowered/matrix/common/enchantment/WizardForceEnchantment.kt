@@ -1,5 +1,7 @@
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.persistent.wizardHelmet
@@ -21,7 +23,7 @@ object WizardForceEnchantment {
             return ActionResult.PASS
         }
 
-        val level = attacker.wizardHelmet.getEnchantmentLevel(wizardForce)
+        val level = attacker.wizardHelmet.getEnchantmentLevel(WIZARD_FORCE_ENCHANTMENT_KEY)
         event.damageMultiplier += level * 0.05
         return ActionResult.PASS
     }

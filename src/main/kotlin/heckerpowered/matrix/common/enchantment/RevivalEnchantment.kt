@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.REVIVAL_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.LivingHealCallback
 import heckerpowered.matrix.common.event.LivingHealEvent
 import net.minecraft.enchantment.EnchantmentHelper
@@ -17,7 +18,7 @@ object RevivalEnchantment {
         }
 
         val entity = event.entity
-        val revivalEnchantmentEntry = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(revivalEnchantmentKey)
+        val revivalEnchantmentEntry = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(REVIVAL_ENCHANTMENT_KEY)
         val level = EnchantmentHelper.getEquipmentLevel(revivalEnchantmentEntry, entity)
         if (level <= 0) {
             return ActionResult.PASS

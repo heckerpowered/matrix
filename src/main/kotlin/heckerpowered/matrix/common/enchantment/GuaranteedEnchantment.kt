@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import net.minecraft.enchantment.EnchantmentHelper
@@ -18,7 +19,7 @@ object GuaranteedEnchantment {
 
         val attacker = event.attacker
         val target = event.target
-        val guaranteedEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(guaranteedEnchantmentKey)
+        val guaranteedEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(GUARANTEED_ENCHANTMENT_KEY)
         val guaranteedEnchantmentLevel = EnchantmentHelper.getEquipmentLevel(guaranteedEnchantmentEntry, attacker)
         if (guaranteedEnchantmentLevel <= 0) {
             return ActionResult.PASS

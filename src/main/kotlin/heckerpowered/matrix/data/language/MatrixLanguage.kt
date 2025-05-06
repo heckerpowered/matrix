@@ -100,6 +100,7 @@ object MatrixLanguage {
     val magicChannelQueueFull: MutableText = Text.translatable("matrix.magic_channel_queue_full")
     val magicChannelQueueLocked: MutableText = Text.translatable("matrix.magic_channel_queue_locked")
     val magicTargetMissing: MutableText = Text.translatable("matrix.magic_target_missing")
+    val magicSculkCatalystIsAlreadyActive: MutableText = Text.translatable("matrix.sculk_catalyst_is_already_active")
 
     val wardenChestplateDescription: MutableText = Text.translatable("matrix.warden_chestplate.description")
 

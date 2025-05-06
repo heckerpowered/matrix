@@ -36,9 +36,11 @@ class MouseMixin {
         }
     }
 
-    @Inject(method = "updateMouse", at = @At("TAIL"))
+    @Inject(method = "updateMouse", at = @At("HEAD"), cancellable = true)
     private void updateMouse(double timeDelta, CallbackInfo ci) {
-        AimAssist.onMouseUpdate(timeDelta);
+        if (AimAssist.onMouseUpdate(timeDelta)) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "onMouseButton", at = @At("HEAD"), cancellable = true)

@@ -3,13 +3,10 @@ package heckerpowered.matrix.common.magics
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.isInvulnerableToEffect
 import heckerpowered.matrix.common.magics.ExplosionMagic.explosionBehavior
-import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.persistent.getChannelSequence
-import heckerpowered.matrix.core.toBox
+import heckerpowered.matrix.core.getNearestEntities
 import heckerpowered.matrix.data.language.MatrixLanguage
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.effect.StatusEffects
@@ -17,8 +14,9 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.World
 
-object BreakingBadMagic : Magic(MatrixLanguage.magicBreakingBad, 10, MatrixLanguage.magicBreakingBadDescription, 40) {
+object BreakingBadMagic : Magic(MatrixLanguage.magicBreakingBad, 9, MatrixLanguage.magicBreakingBadDescription, 40) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+        super.cast(player, target, sequence, data)
         target.addStatusEffect(StatusEffectInstance(StatusEffects.POISON, 20 * 5, 4))
         target.addStatusEffect(StatusEffectInstance(StatusEffects.BLINDNESS, 20 * 5, 4))
 
@@ -31,26 +29,19 @@ object BreakingBadMagic : Magic(MatrixLanguage.magicBreakingBad, 10, MatrixLangu
             return
         }
 
-        fun getNearestEntities(entity: Entity): Entity? {
-            val list = entity.world.getOtherEntities(player, entity.pos.toBox().expand(8.0)) {
-                it is LivingEntity && (it.getChannelSequence(player)?.channelingMagicCount() ?: 0) == 0
-            }.also {
-                it.sortBy { it -> it.squaredDistanceTo(entity) }
-            }
-
-            return list.firstOrNull()
-        }
-
         var spreadTarget = target
         repeat(4) {
-            val nearestEntity = getNearestEntities(spreadTarget)
+            val nearestEntity = spreadTarget.getNearestEntities(8.0) {
+                it is LivingEntity
+                        && (it.getChannelSequence(player)?.channelingMagicCount() ?: 0) == 0
+                        && it != player
+                        && it.isAlive
+            }
             if (nearestEntity == null || nearestEntity !is LivingEntity) {
                 return
             }
 
-            if (ChannelSequence.channelMagic(BreakingBadMagic, player, nearestEntity, false, data = MagicData(true))) {
-                ServerPlayNetworking.send(player, ChannelMagicPayload(id, nearestEntity.id))
-            }
+            ChannelSequence.channelMagic(BreakingBadMagic, player, nearestEntity, false, data = MagicData(true))
 
             spreadTarget = nearestEntity
         }

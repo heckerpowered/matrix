@@ -11,6 +11,7 @@ import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
 import heckerpowered.matrix.common.magics.ChannelingMagic
 import heckerpowered.matrix.common.magics.MagicData
+import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import heckerpowered.matrix.core.MatrixLivingEntity
 import net.fabricmc.api.EnvType
@@ -76,15 +77,20 @@ class ChannelSequence(
                 this.playerUUID = player.uuid
             }
 
-            if (channelSequence.locked && !bypassLock) return false
+            if (channelSequence.locked && !bypassLock) {
+                return false
+            }
 
-            val channelTime = magic.getChannelTime(player, target, channelSequence)
-            val cost = magic.getCost(player, target, channelSequence)
-            val convertRatio = magic.getBloodPactConvertRatio(player, target, channelSequence)
+            val channelTime = magic.getChannelTime(player, target, channelSequence, data)
+            val cost = magic.getCost(player, target, channelSequence, data)
+            val convertRatio = magic.getBloodPactConvertRatio(player, target, channelSequence, data)
 
             fun performChannel() {
                 channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost, data))
                 magic.channel(player, target, channelSequence, data)
+                if (player is ServerPlayerEntity) {
+                    ServerPlayNetworking.send(player, ChannelMagicPayload(magic.id, target.id, channelTime))
+                }
             }
 
             if (player is ServerPlayerEntity) {
@@ -124,12 +130,12 @@ class ChannelSequence(
         }
 
         @Environment(EnvType.CLIENT)
-        fun channelMagicClient(magic: ChannelingMagic, target: LivingEntity) {
+        fun channelMagicClient(magic: ChannelingMagic, target: LivingEntity, channelTime: Long = magic.channelTime) {
             ChannelSequenceRenderer
                 .channelSequenceAnimationMap
                 .computeIfAbsent(target) { mutableListOf() }
                 .add(ChannelAnimation(magic.magic).also {
-                    it.channelTime = magic.channelTime
+                    it.channelTime = channelTime
                     it.initialProgressOffset = minecraft.getRenderTickCounter().getTickDelta(true)
                 })
             ChannelSequenceRenderer.offsetAnimationMap
@@ -163,9 +169,7 @@ class ChannelSequence(
                             it.getLong("CurrentChannelTime"),
                             it.getLong("ChannelTime"),
                             it.getLong("Cost"),
-                            MagicData(
-                                it.getBoolean("IsSpread")
-                            )
+                            MagicData(tag = it)
                         )
                     }
                     .toMutableList()
@@ -196,7 +200,8 @@ class ChannelSequence(
                     magicCompound.putInt("MagicId", magic.magic.name.hashCode())
                     magicCompound.putLong("CurrentChannelTime", magic.currentChannelTime)
                     magicCompound.putLong("ChannelTime", magic.channelTime)
-                    magicCompound.putBoolean("IsSpread", magic.data.isSpread)
+                    magic.data.tag = magicCompound
+                    magic.data.writeToTag()
                     channelingSequenceList.add(magicCompound)
                 }
                 sequencesCompound.put("ChannelingSequence", channelingSequenceList)

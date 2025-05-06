@@ -2,15 +2,20 @@ package heckerpowered.matrix.common
 
 import heckerpowered.matrix.common.effect.WitherArmorChargedEffect
 import heckerpowered.matrix.common.effect.bloodPactActive
-import heckerpowered.matrix.common.enchantment.*
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PROXIMATE_PROPAGATION_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_ACCELERATION_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
+import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes.adjustedManaResistance
 import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.WizardHelmetWarpDancer
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
 import heckerpowered.matrix.common.magics.MagicData
-import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.common.persistent.isInfiniteMana
-import heckerpowered.matrix.common.persistent.queueSize
-import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.persistent.*
+import heckerpowered.matrix.core.getNearestEntities
 import heckerpowered.matrix.core.inverseLerp
 import heckerpowered.matrix.core.lerp
 import heckerpowered.matrix.core.mana
@@ -20,14 +25,11 @@ import net.minecraft.entity.boss.WitherEntity
 import net.minecraft.entity.boss.dragon.EnderDragonEntity
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.entity.mob.WardenEntity
-import net.minecraft.entity.mob.WitchEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
-import net.minecraft.world.Difficulty
 import kotlin.math.floor
 
 /**
@@ -60,7 +62,23 @@ abstract class Magic(
      * @param target The living entity being targeted.
      * @param sequence The channel sequence involved.
      */
-    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData = MagicData()) {}
+    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData = MagicData()) {
+        if (player != null &&
+            player.bloodPactActive &&
+            player.wizardHelmet.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY) >= 5 &&
+            !data.isSpread &&
+            (0..100).random() <= 50
+        ) {
+            (target.getNearestEntities(20.0) {
+                it is LivingEntity
+                        && (it.getChannelSequence(player)?.channelingMagicCount() ?: 0) == 0
+                        && it != player
+                        && it.isAlive
+            } as? LivingEntity)?.let {
+                ChannelSequence.channelMagic(this, player, it, false, data = MagicData(isSpread = true))
+            }
+        }
+    }
 
     /**
      * Called when the magic is channeled (but not yet cast).
@@ -73,7 +91,7 @@ abstract class Magic(
     open fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence, data: MagicData = MagicData()) {
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
-        if (player.wizardHelmet.getEnchantmentLevel(queueMastery) > 0 &&
+        if (player.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) > 0 &&
             sequence.channelingMagicCount().toLong() == player.queueSize
         ) {
             sequence.locked = true
@@ -81,7 +99,7 @@ abstract class Magic(
 
         if (player.bloodPactActive) {
             WitherArmorChargedEffect.onEntityTick(player)
-            if (player.wizardHelmet.getEnchantmentLevel(peakOverdrive) > 0) {
+            if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) > 0) {
                 channelPeakOverdrive(player, target, sequence)
             }
         }
@@ -158,30 +176,21 @@ abstract class Magic(
         return cost
     }
 
+    open fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData = MagicData()): Long {
+        return getNormalCost()
+    }
+
     /**
      * Gets the mana needed to channel this magic.
      */
-    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Long {
-        val cost = getNormalCost().toDouble()
+    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData = MagicData()): Long {
+        val cost = getBaseCost(player, target, sequence, data).toDouble()
         var costMultiplier = 1.0
-        costMultiplier += when (target) {
-            is WitchEntity -> 1.85
-            is WitherEntity, is EnderDragonEntity -> 2.0
-            is WardenEntity -> 3.0
-            else -> .0
-        }
-
-        val difficulty = player.world.difficulty!!
-        costMultiplier -= when (difficulty) {
-            Difficulty.PEACEFUL -> 0.5
-            Difficulty.EASY -> 0.4
-            Difficulty.NORMAL -> 0.3
-            Difficulty.HARD -> .0
-        }
+        costMultiplier += target?.adjustedManaResistance ?: .0
 
         val enchantment = player.world.registryManager
             .getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-            .getOrThrow(proximatePropagationEnchantmentKey)
+            .getOrThrow(PROXIMATE_PROPAGATION_ENCHANTMENT_KEY)
         if (target != null && EnchantmentHelper.getLevel(enchantment, player.wizardHelmet) > 0) {
             val dist = player.squaredDistanceTo(target)
             val maxDistanceSquare = 12.0 * 12.0
@@ -192,7 +201,7 @@ abstract class Magic(
 
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
-        if (player.wizardHelmet.getEnchantmentLevel(queueMastery) > 0 &&
+        if (player.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) > 0 &&
             sequence?.channelingMagicCount()?.toLong() == player.queueSize - 1
         ) {
             costMultiplier -= 0.5
@@ -207,24 +216,28 @@ abstract class Magic(
      */
     fun getNormalChannelTime(): Long = channelTime
 
+    open fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?, data: MagicData = MagicData()): Long {
+        return getNormalChannelTime()
+    }
+
     /**
      * Calculates actual channel time based on player enchantments, helmet effects, and active states.
      * @return Time in ticks required to channel the magic.
      */
-    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?): Long {
-        var effectiveTime = channelTime.toDouble()
+    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?, data: MagicData = MagicData()): Long {
+        var effectiveTime = getBaseChannelTime(player, target, sequence, data).toDouble()
         var channelSpeedBonus = 1.0
 
         // Magic Queue: +30% channel speed for the second magic in a queue.
         // Queue Acceleration: +60% channel speed for magics third or later in the queue.
         // Wrap Dancer: +100% channel speed.
         // Peak Overdrive: + 50% channel speed when blood pact is activated.
-        if (player.wizardHelmet.getEnchantmentLevel(magicQueue) > 0 &&
+        if (player.wizardHelmet.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0 &&
             sequence?.channelingMagicCount() == 2
         ) {
             channelSpeedBonus += 0.3
         }
-        if (player.wizardHelmet.getEnchantmentLevel(queueAcceleration) > 0 &&
+        if (player.wizardHelmet.getEnchantmentLevel(QUEUE_ACCELERATION_ENCHANTMENT_KEY) > 0 &&
             (sequence?.channelingMagicCount()?.toLong() ?: 0L) >= 3
         ) {
             channelSpeedBonus += 0.6
@@ -232,24 +245,25 @@ abstract class Magic(
         if (player.wizardHelmet.item is WizardHelmetWarpDancer) {
             channelSpeedBonus += 1.0
         }
-        if (player.wizardHelmet.getEnchantmentLevel(peakOverdrive) > 0 &&
+        if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) > 0 &&
             player.bloodPactActive
         ) {
             channelSpeedBonus += 0.5
         }
 
         effectiveTime /= channelSpeedBonus
+        effectiveTime *= (1.0 + target.adjustedManaResistance)
         return floor(effectiveTime).toLong().coerceAtLeast(0)
     }
 
     /**
      * @return Ratio used when converting health to mana during Blood Pact.
      */
-    open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Double {
+    open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData = MagicData()): Double {
         var ratio = 2.0
 
         // Peak Overdrive: + 100% health to mana conversion efficiency.
-        if (player.wizardHelmet.getEnchantmentLevel(peakOverdrive) > 0 && player.bloodPactActive) {
+        if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) > 0 && player.bloodPactActive) {
             ratio += 1.0
         }
 

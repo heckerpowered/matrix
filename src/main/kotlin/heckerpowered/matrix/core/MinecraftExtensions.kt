@@ -68,3 +68,10 @@ infix fun Entity.distanceTo(other: Vec3d): Double {
 infix fun Entity.squaredDistanceTo(other: Vec3d): Double {
     return pos.distanceTo(pos)
 }
+
+fun Entity.getNearestEntities(distance: Double, filter: (Entity) -> Boolean = { true }): Entity? {
+    return world
+        .getOtherEntities(this, pos.toBox().expand(distance))
+        .filter(filter)
+        .minByOrNull { squaredDistanceTo(it) }
+}

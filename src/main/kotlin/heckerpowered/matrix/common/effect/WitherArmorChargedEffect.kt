@@ -3,7 +3,7 @@ package heckerpowered.matrix.common.effect
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
-import heckerpowered.matrix.common.enchantment.witherArmorEnchantmentKey
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.*
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
@@ -37,7 +37,7 @@ object WitherArmorChargedEffect : StatusEffect(
         if (attacker !is ServerPlayerEntity || !attacker.bloodPactActive) {
             return ActionResult.PASS
         }
-        val witherArmorEnchantment = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(witherArmorEnchantmentKey)
+        val witherArmorEnchantment = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
         val level = EnchantmentHelper.getLevel(witherArmorEnchantment, attacker.getEquippedStack(EquipmentSlot.CHEST))
         if (level <= 0) {
             return ActionResult.PASS
@@ -52,7 +52,7 @@ object WitherArmorChargedEffect : StatusEffect(
     }
 
     fun onEntityTick(entity: LivingEntity) {
-        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(witherArmorEnchantmentKey)
+        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
         val level = EnchantmentHelper.getLevel(witherArmorEnchantment, entity.getEquippedStack(EquipmentSlot.CHEST))
         if (level <= 0) {
             return
@@ -82,7 +82,7 @@ object WitherArmorChargedEffect : StatusEffect(
             entity.setAbsorptionAmountUnclamped(newAbsorptionAmount)
         }
         entity.heal(healAmount)
-        entity.setStatusEffect(StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, level - 1, false, true).also {
+        entity.setStatusEffect(StatusEffectInstance(WITHER_ARMOR_EFFECT, 200, level - 1, false, true).also {
             // Cannot add a weaker status effect to an entity, when we set the status effect directly,
             // it is not considered as a new status effect, call onApplied() manually.
             it.onApplied(entity)
@@ -113,7 +113,7 @@ object WitherArmorChargedEffect : StatusEffect(
             return ActionResult.PASS
         }
 
-        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(witherArmorEnchantmentKey)
+        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
         val level = EnchantmentHelper.getLevel(witherArmorEnchantment, entity.getEquippedStack(EquipmentSlot.CHEST))
         if (level <= 0) {
             return ActionResult.PASS
@@ -139,7 +139,7 @@ object WitherArmorChargedEffect : StatusEffect(
 
         val registryManager = entity.world.registryManager
         val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-        val witherArmorEnchantment = registryWrapper.getOrThrow(witherArmorEnchantmentKey)
+        val witherArmorEnchantment = registryWrapper.getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
         val equippedChestplate = entity.getEquippedStack(EquipmentSlot.CHEST)
         val level = EnchantmentHelper.getLevel(witherArmorEnchantment, equippedChestplate)
         if (level <= 0) {

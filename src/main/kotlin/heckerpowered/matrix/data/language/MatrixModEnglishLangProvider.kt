@@ -1,7 +1,19 @@
 package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
-import heckerpowered.matrix.common.enchantment.*
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PROXIMATE_PROPAGATION_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.REVIVAL_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.SECOND_WIND_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.item.*
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider
@@ -62,7 +74,7 @@ class MatrixModEnglishLangProvider(
         translationBuilder.addMagic(MatrixLanguage.sculkCatalystMagic.key, "Sculk Catalyst")
         translationBuilder.add(
             MatrixLanguage.sculkCatalystMagicDescription.key,
-            "After a brief delay, deals massive damage to the target. If the target dies, the magic spreads to the next entity within 20 meters, consuming mana automatically. Each spread reduces the required time, increases the mana cost, and deals more damage. Automatically highlights the spread target."
+            "This magic spreads to 5 enemies with 20m., causing§c lethal damage§r to enemies. \n\nAutomatically consumes mana every time it spreads. Each spread has a shorter channel time and a higher mana cost than the last. But the cost can be cut in half if you're willing to pay in blood..."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicMemoryErase.key, "Memory Erasure")
@@ -179,6 +191,7 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(MatrixLanguage.magicChannelQueueLocked.key, "Queue Locked")
         translationBuilder.add(MatrixLanguage.magicTargetMissing.key, "Target Missing")
         translationBuilder.add(MatrixLanguage.magicTargetImmune.key, "Target Immune")
+        translationBuilder.add(MatrixLanguage.magicSculkCatalystIsAlreadyActive.key, "SCULK CATALYST IS ALREADY ACTIVE")
 
         translationBuilder.add(ArmorPenetrationEffect, "Armor Penetration")
         translationBuilder.add(ManaOverloadEffect, "Mana Overload")
@@ -189,19 +202,19 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(BloodPactEffect, "Blood Pact")
         translationBuilder.add(BorrowedTimeEffect, "Borrowed Time")
 
-        translationBuilder.add(witherArmorEnchantmentKey, "Wither Armor")
-        translationBuilder.add(guaranteedEnchantmentKey, "Guaranteed")
-        translationBuilder.add(lastStandEnchantmentKey, "Last Stand")
-        translationBuilder.add(revivalEnchantmentKey, "Revival")
-        translationBuilder.add(secondWindEnchantmentKey, "Second Wind")
-        translationBuilder.add(proximatePropagationEnchantmentKey, "Proximate Propagation")
-        translationBuilder.add(manaOverflow, "Mana Overflow")
-        translationBuilder.add(manaRegeneration, "Mana Regeneration")
-        translationBuilder.add(wizardForce, "Wizard Force")
-        translationBuilder.add(bloodPact, "Blood Pact")
-        translationBuilder.add(magicShield, "Magic Shield")
-        translationBuilder.add(brutalStrength, "Brutal Strength")
-        translationBuilder.add(peakOverdrive, "Peak Overdrive")
+        translationBuilder.add(WITHER_ARMOR_ENCHANTMENT_KEY, "Wither Armor")
+        translationBuilder.add(GUARANTEED_ENCHANTMENT_KEY, "Guaranteed")
+        translationBuilder.add(LAST_STAND_ENCHANTMENT_KEY, "Last Stand")
+        translationBuilder.add(REVIVAL_ENCHANTMENT_KEY, "Revival")
+        translationBuilder.add(SECOND_WIND_ENCHANTMENT_KEY, "Second Wind")
+        translationBuilder.add(PROXIMATE_PROPAGATION_ENCHANTMENT_KEY, "Proximate Propagation")
+        translationBuilder.add(MANA_OVERFLOW_ENCHANTMENT_KEY, "Mana Overflow")
+        translationBuilder.add(MANA_REGENERATION_ENCHANTMENT_KEY, "Mana Regeneration")
+        translationBuilder.add(WIZARD_FORCE_ENCHANTMENT_KEY, "Wizard Force")
+        translationBuilder.add(BLOOD_PACT_ENCHANTMENT_KEY, "Blood Pact")
+        translationBuilder.add(MAGIC_SHIELD_ENCHANTMENT_KEY, "Magic Shield")
+        translationBuilder.add(BRUTAL_STRENGTH_ENCHANTMENT_KEY, "Brutal Strength")
+        translationBuilder.add(PEAK_OVERDRIVE_ENCHANTMENT_KEY, "Peak Overdrive")
 
         translationBuilder.add(WardenChestplateItem, "Sculk 'Warden' Chestplate")
         translationBuilder.add(

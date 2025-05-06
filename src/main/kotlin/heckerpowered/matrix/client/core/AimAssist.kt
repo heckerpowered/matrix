@@ -5,19 +5,46 @@ import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.core.lerp
 import heckerpowered.matrix.core.toDegrees
 import heckerpowered.matrix.core.wrapDegrees
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.util.math.Vec3d
 import java.time.Duration
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
 object AimAssist {
-    private val lockedYaw = SimpleDoubleAnimation(duration = Duration.ofMillis(300))
-    private val lockedPitch = SimpleDoubleAnimation(duration = Duration.ofMillis(300))
+    private val lockedYaw = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
+    private val lockedPitch = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
+
+    var autoApplyRotation = false
+    val isAiming: Boolean
+        get() = lockedYaw.isAnimating || lockedPitch.isAnimating
+
+    /**
+     * Whether the mouse input is locked when using aim assist.
+     */
+    var isMouseLocked = false
+
+    /**
+     * Automatically set *isMouseLocked* to false when aim assist is not active.
+     */
+    var autoUnlock = true
+
+    init {
+        HudRenderCallback.EVENT.register { drawContext, tickCounter ->
+            if (autoApplyRotation && isAiming) {
+                applyRotation()
+            }
+            if (autoUnlock && isMouseLocked && !isAiming) {
+                isMouseLocked = false
+            }
+        }
+    }
 
     @JvmStatic
-    fun onMouseUpdate(timeDelta: Double) {
-        lockedPitch.from = player.pitch.toDouble()
-        lockedYaw.from = player.yaw.toDouble()
+    fun onMouseUpdate(timeDelta: Double): Boolean {
+        lockedPitch.from = player.getPitch(timeDelta.toFloat()).toDouble()
+        lockedYaw.from = player.getYaw(timeDelta.toFloat()).toDouble()
+        return isMouseLocked && isAiming
     }
 
     fun applyRotation() {

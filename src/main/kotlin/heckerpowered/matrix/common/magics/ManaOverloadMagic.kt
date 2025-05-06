@@ -12,8 +12,9 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.packet.s2c.play.EntityStatusEffectS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
 
-object ManaOverloadMagic : Magic(MatrixLanguage.magicManaOverload, 10, MatrixLanguage.magicManaOverloadDescription, 10) {
+object ManaOverloadMagic : Magic(MatrixLanguage.magicManaOverload, 4, MatrixLanguage.magicManaOverloadDescription, 6) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+        super.cast(player, target, sequence, data)
         val manaOverloadInstance = target.getStatusEffect(MANA_OVERLOAD_EFFECT)
 
         val nextAmplifier = (manaOverloadInstance?.amplifier ?: -1) + 1

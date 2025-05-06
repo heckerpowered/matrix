@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.core.inverseLerp
@@ -19,7 +20,7 @@ object LastStandEnchantment {
         }
 
         val attacker = event.attacker
-        val lastStandEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(lastStandEnchantmentKey)
+        val lastStandEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(LAST_STAND_ENCHANTMENT_KEY)
         val lastStandEnchantmentLevel = EnchantmentHelper.getEquipmentLevel(lastStandEnchantmentEntry, attacker)
         if (lastStandEnchantmentLevel <= 0) {
             return ActionResult.PASS

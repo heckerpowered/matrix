@@ -9,6 +9,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 
 object AttractMagic : Magic(MatrixLanguage.magicAttract, 20, MatrixLanguage.magicAttractDescription, 20) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+        super.cast(player, target, sequence, data)
         target.world.spawnEntity(AttractorEntity(target.world).also {
             it.setPosition(target.pos)
             it.owner = player

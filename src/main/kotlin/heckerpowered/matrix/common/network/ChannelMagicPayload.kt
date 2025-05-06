@@ -12,6 +12,7 @@ import net.minecraft.network.packet.CustomPayload
 class ChannelMagicPayload(
     private val magicId: Int,
     private val entityId: Int,
+    private val channelTime: Long,
 ) : CustomPayload {
     companion object {
         val id: CustomPayload.Id<ChannelMagicPayload> = CustomPayload.id("channel_magic")
@@ -19,7 +20,8 @@ class ChannelMagicPayload(
             PacketCodec.of(ChannelMagicPayload::encode) { buffer ->
                 ChannelMagicPayload(
                     buffer.readInt(),
-                    buffer.readInt()
+                    buffer.readInt(),
+                    buffer.readLong()
                 )
             }
     }
@@ -27,6 +29,7 @@ class ChannelMagicPayload(
     private fun encode(buffer: PacketByteBuf) {
         buffer.writeInt(magicId)
         buffer.writeInt(entityId)
+        buffer.writeLong(channelTime)
     }
 
     override fun getId(): CustomPayload.Id<out CustomPayload> {
@@ -43,7 +46,7 @@ class ChannelMagicPayload(
             if (ChannelSequence.channelMagic(magic, context.player(), entity, false)) {
                 val channelSequence = entity.getChannelSequence(context.player())
                 val channelingMagic = channelSequence?.magics?.last() ?: return@execute
-                ChannelSequence.channelMagicClient(channelingMagic, entity)
+                ChannelSequence.channelMagicClient(channelingMagic, entity, channelTime)
             }
         }
     }

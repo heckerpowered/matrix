@@ -10,8 +10,9 @@ import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-object DecisiveStrikeMagic : Magic(MatrixLanguage.magicDecisiveStrike, 15, MatrixLanguage.magicDecisiveStrikeDescription, 20) {
+object DecisiveStrikeMagic : Magic(MatrixLanguage.magicDecisiveStrike, 16, MatrixLanguage.magicDecisiveStrikeDescription, 20 * 3) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+        super.cast(player, target, sequence, data)
         val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
         target.timeUntilRegen = 0
 
@@ -51,9 +52,9 @@ object DecisiveStrikeMagic : Magic(MatrixLanguage.magicDecisiveStrike, 15, Matri
         return super.availableStatus(player, target, sequence)
     }
 
-    override fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?): Long {
+    override fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?, data: MagicData): Long {
         val index = sequence?.index ?: 0
-        val channelTime = super.getChannelTime(player, target, sequence)
+        val channelTime = super.getChannelTime(player, target, sequence, data)
 
         val reducedChannelTime = (channelTime * (index * 0.2)).toLong()
         return (channelTime - reducedChannelTime).coerceAtLeast(1)

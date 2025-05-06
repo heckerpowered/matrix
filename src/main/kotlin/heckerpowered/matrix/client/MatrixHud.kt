@@ -8,10 +8,8 @@ import heckerpowered.matrix.client.render.*
 import heckerpowered.matrix.client.render.post.BloomEffect
 import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
 import heckerpowered.matrix.client.render.shader.opacityMask
-import heckerpowered.matrix.client.shader.BlitShader
-import heckerpowered.matrix.client.shader.BlurRenderer
-import heckerpowered.matrix.client.shader.DissolveShader
-import heckerpowered.matrix.client.shader.UniformProvider
+import heckerpowered.matrix.client.shader.*
+import heckerpowered.matrix.client.shader.component.TransformFeedback
 import heckerpowered.matrix.client.ui.element.AvailableStatusTooltip
 import heckerpowered.matrix.client.ui.element.ManaBar
 import heckerpowered.matrix.client.ui.element.ManaCostTooltip
@@ -23,13 +21,13 @@ import heckerpowered.matrix.common.item.LightningChestplateBorrowedTime
 import heckerpowered.matrix.common.item.WizardHelmetWarpDancer
 import heckerpowered.matrix.common.item.borrowedTimeActive
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
-import heckerpowered.matrix.common.magics.MagicAvailableStatus.*
+import heckerpowered.matrix.common.magics.MagicAvailableStatus.AVAILABLE
+import heckerpowered.matrix.common.magics.MagicAvailableStatus.TARGET_MISSING
 import heckerpowered.matrix.common.magics.description
 import heckerpowered.matrix.common.network.ActiveBloodPactPayload
 import heckerpowered.matrix.common.network.BorrowedTimePayload
 import heckerpowered.matrix.common.network.OverclockPayload
 import heckerpowered.matrix.common.network.UseMagicPayload
-import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.common.persistent.isWizard
 import heckerpowered.matrix.common.persistent.wizardHelmet
@@ -58,11 +56,15 @@ import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.opengl.GL31
+import org.lwjgl.opengl.GL15.glDeleteBuffers
+import org.lwjgl.opengl.GL30.glDeleteVertexArrays
+import org.lwjgl.opengl.GL46.*
+import org.lwjgl.system.MemoryUtil
 import java.time.Duration
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.random.Random
 
 object MatrixHud {
     var mana
@@ -165,9 +167,8 @@ object MatrixHud {
 
     private var fovZoomRatio = .0
     private val hudFramebuffer by lazy { PostProcessRenderer.createManagedFramebuffer() }
-    private val blurFramebuffer by lazy {
-        PostProcessRenderer.createManagedFramebuffer()
-    }
+    private val blurFramebuffer by lazy { PostProcessRenderer.createManagedFramebuffer() }
+    private val emissiveFramebuffer by lazy { PostProcessRenderer.createManagedFramebuffer() }
 
     private class MagicDisplayData {
         val statusChangedAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150))
@@ -201,8 +202,26 @@ object MatrixHud {
             arrayOf(
                 PostProcessRenderer.framebufferProvider,
                 UniformProvider("grayscaleIntensity") { pointer ->
-                    GL31.glUniform1f(pointer, grayscaleIntensityAnimation.animatedValue.toFloat())
+                    glUniform1f(pointer, grayscaleIntensityAnimation.animatedValue.toFloat())
                 }
+            )
+        )
+    }
+
+    private val pointSpriteShader by lazy {
+        Shader(
+            resourceToString("/assets/matrix/shaders/point_sprite/point_sprite.vsh"),
+            resourceToString("/assets/matrix/shaders/point_sprite/point_sprite.fsh"),
+            uniforms = arrayOf(UniformProvider("time") { pointer ->
+                val timeSeconds = System.nanoTime() / 1_000_000_000.0
+                glUniform1f(pointer, timeSeconds.toFloat())
+            }),
+            components = arrayOf(
+                TransformFeedback(
+                    arrayOf("OutPosition"),
+                    (points.size / 2),
+                    bufferSize = (points.size / 2).toLong() * 4 * 2
+                )
             )
         )
     }
@@ -476,11 +495,6 @@ object MatrixHud {
 
     private fun channelMagic(magic: Magic, target: LivingEntity) {
         ClientPlayNetworking.send(UseMagicPayload(magic.id, target.id))
-        if (ChannelSequence.channelMagic(magic, player, target)) {
-            val channelSequence = target.getChannelSequence(player)
-            val channelingMagic = channelSequence?.magics?.last() ?: return
-            ChannelSequence.channelMagicClient(channelingMagic, target)
-        }
     }
 
     private fun checkVisibilityChanges() {
@@ -538,26 +552,6 @@ object MatrixHud {
                 magic
             )
             when (status) {
-                AVAILABLE_MANA_NOT_ENOUGH -> magicColorAnimations[index].setColor(
-                    128.0, 0.0, 0.0
-                )
-
-                TARGET_IMMUNE -> magicColorAnimations[index].setColor(
-                    128.0, 0.0, 0.0
-                )
-
-                UNAVAILABLE -> magicColorAnimations[index].setColor(
-                    128.0, 0.0, 0.0
-                )
-
-                CHANNEL_QUEUE_FULL -> magicColorAnimations[index].setColor(
-                    128.0, 0.0, 0.0
-                )
-
-                CHANNEL_QUEUE_LOCKED -> magicColorAnimations[index].setColor(
-                    128.0, 0.0, 0.0
-                )
-
                 TARGET_MISSING -> magicColorAnimations[index].setColor(
                     .0, .0, .0
                 )
@@ -565,6 +559,10 @@ object MatrixHud {
                 AVAILABLE -> magicColorAnimations[index].setColor(
                     .0, .0, .0
                 )
+
+                else -> {
+                    magicColorAnimations[index].setColor(128.0, 0.0, 0.0)
+                }
             }
         }
     }
@@ -758,6 +756,14 @@ object MatrixHud {
         updateAimAssist(false, tickCounter)
     }
 
+    val points = FloatArray(1000 * 2) {
+        if (it % 2 == 0) {
+            Random.nextFloat() * 3f - 1f - 3F
+        } else {
+            1f - Random.nextFloat() * 0.2f
+        }
+    }
+
     private fun onEndHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
         if (!renderHud) {
             return
@@ -804,6 +810,69 @@ object MatrixHud {
         }
 
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+
+        val transformFeedback = (pointSpriteShader.components[0] as TransformFeedback)
+        transformFeedback.enabled = true
+        renderPoints()
+
+        val buffer = transformFeedback.readBuffer()
+        assert(buffer.size == points.size) { "TransformFeedback's buffer size doesn't match the points size" }
+        buffer.forEachIndexed { index, value ->
+            points[index] = value
+        }
+        transformFeedback.enabled = false
+
+        hudFramebuffer.clear(true)
+        hudFramebuffer.beginWrite(false)
+        renderPoints()
+        hudFramebuffer.endWrite()
+
+        BloomEffect.brightnessPassFramebuffer = hudFramebuffer
+        BloomEffect.brightnessThreshold = .0F
+        BloomEffect.renderBloom()
+
+        // glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT)
+        RenderSystem.enableBlend()
+        RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
+        PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
+        RenderSystem.defaultBlendFunc()
+        RenderSystem.disableBlend()
+
+        minecraft.framebuffer.beginWrite(true)
+    }
+
+    private fun renderPoints() {
+        val result = IntArray(1)
+        glGenVertexArrays(result)
+
+        val vertexArray = result[0]
+        val vertexBuffer = glGenBuffers()
+
+        glBindVertexArray(vertexArray)
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer)
+
+        val buffer = MemoryUtil.memAllocFloat(points.size).put(points).flip()
+        glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW)
+        MemoryUtil.memFree(buffer)
+        glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * 4, 0L)
+        glEnableVertexAttribArray(0)
+
+        pointSpriteShader.enableShader()
+        glBindVertexArray(vertexArray)
+        glEnable(GL_PROGRAM_POINT_SIZE)
+        glDrawArrays(GL_POINTS, 0, points.size / 2)
+        pointSpriteShader.disableShader()
+
+        glBindVertexArray(0)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glDisableVertexAttribArray(0)
+        glDisable(GL_PROGRAM_POINT_SIZE)
+
+        glDeleteBuffers(vertexBuffer)
+        glDeleteVertexArrays(vertexArray)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        glDisable(GL_BLEND)
     }
 
     private fun performChannelMagicAnimation() {
@@ -1492,6 +1561,9 @@ object MatrixHud {
             val progressBarX = MathHelper.lerp(percentage.toFloat(), 190, 35)
             val x1 = drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt() + sizeReduced
             val x2 = drawContext.scaledWindowWidth - progressBarX - magicShownAnimation.animatedValue.toInt() - sizeReduced
+
+            val multiplier = 1.0F
+            RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
             drawContext.fill(
                 x1.coerceAtMost(x2),
                 drawContext.scaledWindowHeight / 2 - 80 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt() - sizeReduced,
@@ -1499,6 +1571,7 @@ object MatrixHud {
                 drawContext.scaledWindowHeight / 2 - 75 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt() - sizeReduced,
                 lerpedColor
             )
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
 
             val fontSizeReduced = if (sizeScalingAnimation) {
                 entityDescriptionOpacityAnimation.animatedValue.toFloat()

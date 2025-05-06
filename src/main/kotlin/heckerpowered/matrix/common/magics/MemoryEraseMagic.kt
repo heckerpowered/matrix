@@ -15,8 +15,9 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-object MemoryEraseMagic : Magic(MatrixLanguage.magicMemoryErase, 10, MatrixLanguage.magicMemoryEraseDescription, 10) {
+object MemoryEraseMagic : Magic(MatrixLanguage.magicMemoryErase, 10, MatrixLanguage.magicMemoryEraseDescription, 30) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+        super.cast(player, target, sequence, data)
         target.brain.clear()
         if (target is MobEntity) {
             target.target = null

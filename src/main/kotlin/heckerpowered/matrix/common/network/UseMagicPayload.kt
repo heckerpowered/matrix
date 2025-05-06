@@ -43,7 +43,6 @@ data class UseMagicPayload(
 
         val magic = MagicManager.getMagicById(index) ?: return
         ChannelSequence.channelMagic(magic, player, targetedEntity)
-
         context.responseSender().sendPacket(SyncHealthPayload(player))
     }
 }

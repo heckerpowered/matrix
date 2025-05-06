@@ -1,5 +1,6 @@
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
@@ -19,7 +20,7 @@ object BrutalStrengthEnchantment {
 
         val registryManager = attacker.world.registryManager
         val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-        val enchantmentEntry = registryWrapper.getOrThrow(brutalStrength)
+        val enchantmentEntry = registryWrapper.getOrThrow(BRUTAL_STRENGTH_ENCHANTMENT_KEY)
         val equippedHelmet = attacker.getEquippedStack(EquipmentSlot.HEAD)
         val enchantmentLevel = EnchantmentHelper.getLevel(enchantmentEntry, equippedHelmet)
         if (enchantmentLevel <= 0) {

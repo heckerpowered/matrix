@@ -1,7 +1,7 @@
 package heckerpowered.matrix.common
 
-import heckerpowered.matrix.common.enchantment.getEnchantmentLevel
-import heckerpowered.matrix.common.enchantment.manaRegeneration
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.magics.*
 import heckerpowered.matrix.common.network.SyncManaPayload
@@ -91,7 +91,7 @@ object MagicManager {
                 }
 
                 var manaRegen = 1.0
-                val manaRegenerationLevel = wizardHelmet.getEnchantmentLevel(manaRegeneration)
+                val manaRegenerationLevel = wizardHelmet.getEnchantmentLevel(MANA_REGENERATION_ENCHANTMENT_KEY)
                 if (manaRegenerationLevel > 0) {
                     manaRegen += manaRegen * (manaRegenerationLevel * 0.3)
                 }

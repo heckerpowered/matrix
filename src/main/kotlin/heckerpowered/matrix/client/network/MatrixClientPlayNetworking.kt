@@ -11,5 +11,6 @@ object MatrixClientPlayNetworking {
         ClientPlayNetworking.registerGlobalReceiver(ClientboundBorrowedTimePayload.id, ClientboundBorrowedTimePayload::handle)
         ClientPlayNetworking.registerGlobalReceiver(SyncHealthPayload.id, SyncHealthPayload::handle)
         ClientPlayNetworking.registerGlobalReceiver(WitherArmorTriggerPayload.id, WitherArmorTriggerPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ImminentDangerPayload.id, ImminentDangerPayload::handle)
     }
 }

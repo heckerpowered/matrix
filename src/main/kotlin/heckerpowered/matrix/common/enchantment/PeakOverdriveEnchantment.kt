@@ -1,6 +1,7 @@
 package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.effect.bloodPactActive
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.persistent.wizardHelmet
@@ -27,7 +28,7 @@ object PeakOverdriveEnchantment {
 
         val registryManager = attacker.world.registryManager
         val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-        val enchantmentEntry = registryWrapper.getOrThrow(peakOverdrive)
+        val enchantmentEntry = registryWrapper.getOrThrow(PEAK_OVERDRIVE_ENCHANTMENT_KEY)
         val enchantmentLevel = EnchantmentHelper.getLevel(enchantmentEntry, equippedHelmet)
         if (enchantmentLevel <= 0) {
             return ActionResult.PASS

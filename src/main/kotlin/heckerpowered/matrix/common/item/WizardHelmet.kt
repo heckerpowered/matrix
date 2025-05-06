@@ -2,7 +2,12 @@ package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.MagicManager
-import heckerpowered.matrix.common.enchantment.*
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_ACCELERATION_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.event.ItemStackEquippedCallback
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.data.language.MatrixLanguage
@@ -73,13 +78,13 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
 
     open fun getMaxMana(player: PlayerEntity, itemStack: ItemStack): Double {
         var basicMaxMana = itemStack.getOrDefault(wizardHelmetMaxManaComponent, .0)
-        if (itemStack.getEnchantmentLevel(magicQueue) > 0) {
+        if (itemStack.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0) {
             basicMaxMana += 1
         }
-        if (itemStack.getEnchantmentLevel(queueAcceleration) > 0) {
+        if (itemStack.getEnchantmentLevel(QUEUE_ACCELERATION_ENCHANTMENT_KEY) > 0) {
             basicMaxMana += 1
         }
-        val manaOverflowLevel = itemStack.getEnchantmentLevel(manaOverflow)
+        val manaOverflowLevel = itemStack.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY)
         if (manaOverflowLevel > 0) {
             basicMaxMana += basicMaxMana * (manaOverflowLevel * 0.2)
         }
@@ -88,13 +93,13 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
 
     open fun getQueueSize(player: PlayerEntity, itemStack: ItemStack): Long {
         var basicQueueSize = 1L
-        if (itemStack.getEnchantmentLevel(magicQueue) > 0) {
+        if (itemStack.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0) {
             basicQueueSize += 1
         }
-        if (itemStack.getEnchantmentLevel(queueAcceleration) > 0) {
+        if (itemStack.getEnchantmentLevel(QUEUE_ACCELERATION_ENCHANTMENT_KEY) > 0) {
             basicQueueSize += 1
         }
-        if (itemStack.getEnchantmentLevel(queueMastery) > 0) {
+        if (itemStack.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) > 0) {
             basicQueueSize += 1
         }
         return basicQueueSize

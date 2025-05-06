@@ -36,10 +36,6 @@ object MatrixStatusEffects {
     val EXPOSED_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(ExposedEffect) }
 
     @JvmStatic
-    @get:JvmName("getSculkCatalystEffect")
-    val SCULK_CATALYST_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(SculkCatalystEffect) }
-
-    @JvmStatic
     @get:JvmName("getBloodPactEffect")
     val BLOOD_PACT_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(BloodPactEffect) }
 
@@ -59,7 +55,6 @@ object MatrixStatusEffects {
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("wither_armor"), WitherArmorEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("angered"), AngeredEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("exposed"), ExposedEffect)
-        Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("sculk_catalyst"), SculkCatalystEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("blood_pact"), BloodPactEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("borrowed_time"), BorrowedTimeEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("ignite"), IgniteEffect)
