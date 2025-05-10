@@ -139,7 +139,6 @@ class ChannelSequenceRenderer(
                 offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
             }
 
-
             val isChanneling = if (index == 0) {
                 true
             } else {

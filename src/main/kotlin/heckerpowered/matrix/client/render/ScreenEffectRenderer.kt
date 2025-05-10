@@ -6,6 +6,9 @@ import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.event.PostProcessCallback
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
+import heckerpowered.matrix.client.render.particle.ParticleSystem
+import heckerpowered.matrix.client.render.particle.module.particle_render.ParticleSpriteRendererModule
+import heckerpowered.matrix.client.render.particle.module.particle_spawn.InitializeParticleModule
 import heckerpowered.matrix.client.render.post.BloomEffect
 import heckerpowered.matrix.client.render.shader.RadialBlurRenderer.samples
 import heckerpowered.matrix.client.shader.BlitShader
@@ -165,11 +168,15 @@ object ScreenEffectRenderer {
 
     private fun onPostProcess() {
         if (bloomThresholdAnimation.animatedValue.approximatelyEqual(1.0)) {
-            return
+            // return
         }
 
         spoofFramebuffer {
-            BloomEffect.brightnessThreshold = bloomThresholdAnimation.animatedValue.toFloat()
+            minecraft.framebuffer.beginWrite(false)
+            particleSystem.updateParticles()
+            particleSystem.renderParticles()
+
+            BloomEffect.brightnessThreshold = 1.0F// bloomThresholdAnimation.animatedValue.toFloat()
             BloomEffect.brightnessPassFramebuffer = minecraft.framebuffer
             BloomEffect.renderBloom()
 
@@ -179,6 +186,24 @@ object ScreenEffectRenderer {
             RenderSystem.defaultBlendFunc()
         }
     }
+
+    private val particleSystem by lazy {
+        ParticleSystem(
+            100,
+            particleSpawnModules = arrayOf(
+                InitializeParticleModule()
+            ),
+            particleUpdateModules = arrayOf(
+                // ParticleStateModule(),
+                // AddVelocityModule(Vector3f(0F, 1.0F, 0F))
+            ),
+            particleRenderModules = arrayOf(
+                ParticleSpriteRendererModule()
+            )
+        )
+    }
+
+    // private var index: Int = 0
 
     fun onTick(minecraftClient: MinecraftClient) {
         if (minecraftClient.player == null) {
@@ -206,6 +231,47 @@ object ScreenEffectRenderer {
         if (edgeThresholdAnimation.animatedValue >= 1.0) {
             PostProcessRenderer.postProcessShaders.remove(edgeHighlightShader)
         }
+
+        // if (index >= particleSystem.particleStates.particleCount) {
+        //     index = 0
+        // }
+        // val particleState = (particleSystem.particleSpawnModules[0] as InitializeParticleModule).particleState
+        // if (minecraft.player != null) {
+        //     particleState.x = 0F
+        //     particleState.y = 0F
+        //     particleState.z = 0F
+//
+        //     particleState.colorR = 1.0F
+        //     particleState.colorG = 1.0F
+        //     particleState.colorB = 1000.0F
+        //     particleState.colorA = 1.0F
+//
+        //     particleState.spriteSize = 8.0F
+        //     particleState.scale = 10F
+        // }
+        // particleSystem.spawnPartialParticles(index, 2)
+        // index += 1
+        // if (index % 20 == 0) {
+        //     particleSystem.particleStates.initParticles {
+        //         it.x = 0F
+        //         it.y = Random.nextFloat() * 10
+        //         it.z = 0F
+//
+        //         it.colorR = 1.0F
+        //         it.colorG = 1.0F
+        //         it.colorB = 1000.0F
+        //         it.colorA = 1.0F
+//
+        //         it.spriteSize = 8.0F
+        //         it.scale = 10F
+        //     }
+        //     println("===index=$index===")
+        //     particleSystem.particleStates.retrieve().use {
+        //         it.particles.forEach { particle ->
+        //             println("${particle.x}, ${particle.y}, ${particle.z}")
+        //         }
+        //     }
+        // }
     }
 
     fun onWitherArmorEffectApplied() {

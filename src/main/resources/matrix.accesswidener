@@ -13,6 +13,7 @@ accessible field net/minecraft/entity/passive/VillagerEntity gossip Lnet/minecra
 accessible field net/minecraft/entity/LivingEntity itemUseTimeLeft I
 accessible field net/minecraft/entity/LivingEntity lastAttackedTicks I
 accessible method net/minecraft/client/render/GameRenderer updateFovMultiplier ()V
+accessible method net/minecraft/client/render/GameRenderer getFov (Lnet/minecraft/client/render/Camera;FZ)D
 accessible method net/minecraft/client/MinecraftClient handleInputEvents ()V
 accessible method net/minecraft/entity/LivingEntity setAbsorptionAmountUnclamped (F)V
 accessible method net/minecraft/entity/player/PlayerEntity setAbsorptionAmountUnclamped (F)V

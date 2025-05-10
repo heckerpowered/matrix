@@ -48,13 +48,13 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
 
     enum class LightningType(val color: Color) {
         NORMAL(Color(114, 114, 127, 255)),
-        RED(Color(255, 0, 0, 255)),
-        ORANGE(Color(255, 165, 0, 255)),
-        YELLOW(Color(255, 255, 0, 255)),
-        GREEN(Color(0, 255, 0, 255)),
-        CYAN(Color(0, 255, 255, 255)),
-        BLUE(Color(0, 0, 255, 255)),
-        PURPLE(Color(128, 0, 128, 255)),
+        RED(Color(255, 25, 25, 255)),
+        ORANGE(Color(255, 25, 25, 255)),
+        YELLOW(Color(255, 255, 25, 255)),
+        GREEN(Color(128, 255, 25, 255)),
+        CYAN(Color(25, 255, 255, 255)),
+        BLUE(Color(25, 25, 255, 255)),
+        PURPLE(Color(128, 25, 128, 255)),
         BLACK(Color(0, 0, 0, 255))
     }
 

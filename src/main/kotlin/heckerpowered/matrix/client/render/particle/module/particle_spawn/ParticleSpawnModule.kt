@@ -1,0 +1,5 @@
+package heckerpowered.matrix.client.render.particle.module.particle_spawn
+
+import heckerpowered.matrix.client.render.particle.module.ParticleModule
+
+abstract class ParticleSpawnModule : ParticleModule()

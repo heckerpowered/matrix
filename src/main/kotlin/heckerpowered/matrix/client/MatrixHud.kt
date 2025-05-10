@@ -702,6 +702,7 @@ object MatrixHud {
         hudFramebuffer.beginWrite(true)
     }
 
+
     private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
         onBeginHudRender(drawContext, tickCounter)
         renderHud(drawContext, tickCounter)
@@ -810,6 +811,7 @@ object MatrixHud {
         }
 
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+        return
 
         val transformFeedback = (pointSpriteShader.components[0] as TransformFeedback)
         transformFeedback.enabled = true

@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 
 object Matrix : ModInitializer {
     const val MOD_ID = "matrix"
-    private val LOGGER = LoggerFactory.getLogger("matrix")
+    val LOGGER = LoggerFactory.getLogger("matrix")
 
     var proxy = MatrixCommonProxy()
 

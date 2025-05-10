@@ -5,17 +5,22 @@ import com.mojang.blaze3d.platform.GlStateManager
 import heckerpowered.matrix.client.shader.component.ShaderComponent
 import net.minecraft.client.gl.GlProgramManager
 import org.lwjgl.opengl.GL46.*
+import org.slf4j.MarkerFactory
 import java.io.Closeable
 
 open class Shader(
-    vertexShaderPath: String?,
-    fragmentShaderPath: String?,
+    vertexShaderPath: String,
+    fragmentShaderPath: String? = null,
     private val uniforms: Array<UniformProvider> = emptyArray(),
     val components: Array<ShaderComponent> = emptyArray(),
     tessellationControlShaderPath: String? = null,
     tessellationEvaluationShaderPath: String? = null,
     geometryShaderPath: String? = null,
 ) : Closeable {
+    companion object {
+        private val MARKER = MarkerFactory.getMarker("UniformProvider")
+    }
+
     var program = 0
 
     init {
@@ -85,15 +90,22 @@ open class Shader(
 
     override fun close() {
         GlStateManager.glDeleteProgram(program)
-        components.forEach { component ->
-            component.delete()
-        }
+        components.forEach { component -> component.delete() }
     }
 
     fun enableShader() {
         GlProgramManager.useProgram(program)
-        uniforms.forEach { uniform -> uniform.set(uniform.pointer) }
+        initUniforms()
+        uploadUniforms()
         components.filter { it.enabled }.forEach { it.enable() }
+    }
+
+    fun uploadUniforms() {
+        uniforms.forEach { uniform -> uniform.set(uniform.pointer) }
+    }
+
+    fun initUniforms() {
+        uniforms.forEach { uniform -> uniform.init(program) }
     }
 
     fun disableShader() {

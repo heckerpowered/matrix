@@ -23,7 +23,7 @@ open class ParticleState(val data: FloatBuffer) {
         const val ACCELERATION_INDEX = ACCELERATION_X_INDEX
 
         const val SPRITE_SIZE_INDEX = 9
-        const val SCALE_X_INDEX = 10
+        const val SCALE_INDEX = 10
 
         const val AGE_INDEX = 11
         const val LIFETIME_INDEX = 12
@@ -34,18 +34,19 @@ open class ParticleState(val data: FloatBuffer) {
         const val COLOR_A_INDEX = 16
         const val COLOR_INDEX = COLOR_R_INDEX
 
-        const val QUATERNION_X_INDEX = 17
-        const val QUATERNION_Y_INDEX = 18
-        const val QUATERNION_Z_INDEX = 19
-        const val QUATERNION_W_INDEX = 20
-        const val QUATERNION_INDEX = QUATERNION_X_INDEX
+        const val ORIENTATION_X_INDEX = 17
+        const val ORIENTATION_Y_INDEX = 18
+        const val ORIENTATION_Z_INDEX = 19
+        const val ORIENTATION_W_INDEX = 20
+        const val ORIENTATION_INDEX = ORIENTATION_X_INDEX
 
         const val ANGULAR_VELOCITY_X_INDEX = 21
         const val ANGULAR_VELOCITY_Y_INDEX = 22
         const val ANGULAR_VELOCITY_Z_INDEX = 23
         const val ANGULAR_VELOCITY_INDEX = ANGULAR_VELOCITY_X_INDEX
 
-        const val BYTES = 24 * Float.SIZE_BYTES
+        const val ELEMENTS = 24
+        const val BYTES = ELEMENTS * Float.SIZE_BYTES
     }
 
     init {
@@ -74,6 +75,8 @@ open class ParticleState(val data: FloatBuffer) {
             y = value.y
             z = value.z
         }
+    val positionBuffer: FloatBuffer
+        get() = data.slice(POSITION_INDEX, 3)
 
     var velocityX: Float
         get() = data[VELOCITY_X_INDEX]
@@ -97,6 +100,8 @@ open class ParticleState(val data: FloatBuffer) {
             velocityY = value.y
             velocityZ = value.z
         }
+    val velocityBuffer: FloatBuffer
+        get() = data.slice(VELOCITY_INDEX, 3)
 
     var accelerationX: Float
         get() = data[ACCELERATION_X_INDEX]
@@ -120,6 +125,8 @@ open class ParticleState(val data: FloatBuffer) {
             accelerationY = value.y
             accelerationZ = value.z
         }
+    val accelerationBuffer: FloatBuffer
+        get() = data.slice(ACCELERATION_INDEX, 3)
 
     var spriteSize: Float
         get() = data[SPRITE_SIZE_INDEX]
@@ -127,9 +134,9 @@ open class ParticleState(val data: FloatBuffer) {
             data.put(SPRITE_SIZE_INDEX, value)
         }
     var scale: Float
-        get() = data[SCALE_X_INDEX]
+        get() = data[SCALE_INDEX]
         set(value) {
-            data.put(SCALE_X_INDEX, value)
+            data.put(SCALE_INDEX, value)
         }
 
     var age: Float
@@ -171,35 +178,39 @@ open class ParticleState(val data: FloatBuffer) {
             colorB = value.z
             colorA = value.w
         }
+    val colorBuffer: FloatBuffer
+        get() = data.slice(COLOR_INDEX, 4)
 
-    var quaternionX: Float
-        get() = data[QUATERNION_X_INDEX]
+    var orientationX: Float
+        get() = data[ORIENTATION_X_INDEX]
         set(value) {
-            data.put(QUATERNION_X_INDEX, value)
+            data.put(ORIENTATION_X_INDEX, value)
         }
-    var quaternionY: Float
-        get() = data[QUATERNION_Y_INDEX]
+    var orientationY: Float
+        get() = data[ORIENTATION_Y_INDEX]
         set(value) {
-            data.put(QUATERNION_Y_INDEX, value)
+            data.put(ORIENTATION_Y_INDEX, value)
         }
-    var quaternionZ: Float
-        get() = data[QUATERNION_Z_INDEX]
+    var orientationZ: Float
+        get() = data[ORIENTATION_Z_INDEX]
         set(value) {
-            data.put(QUATERNION_Z_INDEX, value)
+            data.put(ORIENTATION_Z_INDEX, value)
         }
-    var quaternionW: Float
-        get() = data[QUATERNION_W_INDEX]
+    var orientationW: Float
+        get() = data[ORIENTATION_W_INDEX]
         set(value) {
-            data.put(QUATERNION_W_INDEX, value)
+            data.put(ORIENTATION_W_INDEX, value)
         }
-    var quaternion: Quaternionf
-        get() = Quaternionf(quaternionX, quaternionY, quaternionZ, quaternionW)
+    var orientation: Quaternionf
+        get() = Quaternionf(orientationX, orientationY, orientationZ, orientationW)
         set(value) {
-            quaternionX = value.x
-            quaternionY = value.y
-            quaternionZ = value.z
-            quaternionW = value.w
+            orientationX = value.x
+            orientationY = value.y
+            orientationZ = value.z
+            orientationW = value.w
         }
+    val orientationBuffer: FloatBuffer
+        get() = data.slice(ORIENTATION_INDEX, 4)
 
     var angularVelocityX: Float
         get() = data[ANGULAR_VELOCITY_X_INDEX]
@@ -223,6 +234,8 @@ open class ParticleState(val data: FloatBuffer) {
             angularVelocityY = value.y
             angularVelocityZ = value.z
         }
+    val angularVelocityBuffer: FloatBuffer
+        get() = data.slice(ANGULAR_VELOCITY_INDEX, 3)
 
     override fun equals(other: Any?): Boolean {
         return other is ParticleState && this.data === other.data

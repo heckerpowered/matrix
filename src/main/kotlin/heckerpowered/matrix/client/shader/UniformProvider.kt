@@ -1,10 +1,12 @@
 package heckerpowered.matrix.client.shader
 
 import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.minecraft
 import net.minecraft.client.gl.GlUniform
 import org.lwjgl.opengl.GL20
 import org.lwjgl.system.MemoryUtil
+import org.slf4j.MarkerFactory
 
 private val buffer = MemoryUtil.memAllocFloat(16)
 
@@ -27,9 +29,16 @@ val resolutionProvider = UniformProvider("resolution") { pointer ->
 }
 
 open class UniformProvider(val name: String, val set: (pointer: Int) -> Unit) {
+    companion object {
+        private val MARKER = MarkerFactory.getMarker("UniformProvider")
+    }
+
     var pointer = -1
 
     fun init(program: Int) {
         pointer = GlUniform.getUniformLocation(program, name)
+        if (pointer == -1) {
+            Matrix.LOGGER.error(MARKER, "Cannot find uniform location, name: $name")
+        }
     }
 }

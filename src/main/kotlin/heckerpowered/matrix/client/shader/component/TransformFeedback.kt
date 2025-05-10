@@ -9,19 +9,23 @@ import org.lwjgl.system.MemoryUtil
 
 class TransformFeedback(
     private val varyingNames: Array<String> = emptyArray(),
-    private val vertexCount: Int,
+    private val vertexCount: Int = 0,
     private val drawMode: Int = GL_POINTS,
     // vec4 by default, 4 float for each varying, 4 byte for each float
     private val bufferSize: Long = vertexCount * 4 * 4 * varyingNames.size.toLong(),
+    private val initOnly: Boolean = false,
 ) : ShaderComponent() {
     private val transformFeedbacks = glGenTransformFeedbacks()
     val buffer = glGenBuffers()
 
     override fun init(program: Int) {
         super.init(program)
+        enabled = !initOnly
 
         glTransformFeedbackVaryings(program, varyingNames, GL_INTERLEAVED_ATTRIBS)
-        glLinkProgram(program)
+        if (initOnly) {
+            return
+        }
 
         glBindBuffer(GL_ARRAY_BUFFER, buffer)
         glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_STATIC_READ)
