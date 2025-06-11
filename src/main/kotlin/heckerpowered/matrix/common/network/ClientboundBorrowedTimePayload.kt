@@ -1,7 +1,7 @@
 package heckerpowered.matrix.common.network
 
-import heckerpowered.matrix.common.item.LightningChestplateBorrowedTime
-import heckerpowered.matrix.common.item.borrowedTimeStateComponent
+import heckerpowered.matrix.common.item.LightningChestplate1
+import heckerpowered.matrix.common.item.MatrixComponents.BORROWED_TIME_STATE
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.network.PacketByteBuf
@@ -28,10 +28,10 @@ class ClientboundBorrowedTimePayload(private val state: Boolean) : CustomPayload
     fun handle(context: Context) {
         val player = context.player()
         val lightningChestplate = player.getEquippedStack(EquipmentSlot.CHEST)
-        if (lightningChestplate.item !is LightningChestplateBorrowedTime) {
+        if (lightningChestplate.item !is LightningChestplate1) {
             return
         }
 
-        lightningChestplate.set(borrowedTimeStateComponent, state)
+        lightningChestplate.set(BORROWED_TIME_STATE, state)
     }
 }

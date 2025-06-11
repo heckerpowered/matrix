@@ -11,7 +11,7 @@ class DoubleAnimation(
     var currentValue: Double
         get() = privateCurrentValue
         set(value) {
-            if (abs(value - privateCurrentValue) < 0.001) {
+            if (value.isNaN() || abs(value - privateCurrentValue) < 0.001) {
                 return
             }
 

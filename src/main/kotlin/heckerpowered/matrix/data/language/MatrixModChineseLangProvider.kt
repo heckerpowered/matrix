@@ -5,6 +5,7 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENC
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRIKE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
@@ -213,6 +214,7 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(MAGIC_SHIELD_ENCHANTMENT_KEY, "法术护盾")
         translationBuilder.add(BRUTAL_STRENGTH_ENCHANTMENT_KEY, "所向无敌")
         translationBuilder.add(PEAK_OVERDRIVE_ENCHANTMENT_KEY, "大力神超")
+        translationBuilder.add(LIGHTNING_STRIKE_ENCHANTMENT_KEY, "闪电五连鞭")
 
         translationBuilder.add(WardenChestplateItem, "幽匿“坚守”胸甲")
         translationBuilder.add(
@@ -300,15 +302,17 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(WoodenBootsItem, "木靴子")
 
         translationBuilder.add(WizardHelmetHacker, "巫师9000型“黑客”")
-        translationBuilder.add(WizardHelmetBasic, "巫师1型“基础巫师头盔”")
-        translationBuilder.add(WizardHelmetDoom, "巫师2型“厄运”")
-        translationBuilder.add(WizardHelmetRuin, "巫师3型“毁灭”")
-        translationBuilder.add(WizardHelmetApogee, "巫师4型“顶点”")
-        translationBuilder.add(WizardHelmetWarpDancer, "巫师5型“实境扭曲”")
+        translationBuilder.add(WizardHelmet1, "巫师1型“基础巫师头盔”")
+        translationBuilder.add(WizardHelmet2, "巫师2型“厄运”")
+        translationBuilder.add(WizardHelmet3, "巫师3型“血铸湮灭”")
+        translationBuilder.add(WizardHelmet4, "巫师4型“力气和手段”")
+        translationBuilder.add(WizardHelmet5, "巫师5型“灭律构式”")
 
-        translationBuilder.add(LightningChestplateBorrowedTime, "闪电1型“时不我待”")
+        translationBuilder.add(LightningChestplate1, "闪电1型“实境扭曲”")
 
         translationBuilder.add(MagicTalismanItem, "魔法护符")
+        translationBuilder.add(FinderArrowItem, "探测箭矢")
+        translationBuilder.add(MetaBowItem, "超雄弓")
 
         // Potions
         translationBuilder.add("item.minecraft.potion.effect.angered", "狂暴药水")
@@ -323,7 +327,7 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(MatrixLanguage.manaCostReduced.key, "法力消耗降低")
         translationBuilder.add(MatrixLanguage.manaCostIncreased.key, "法力消耗增加")
 
-        translationBuilder.add(MatrixLanguage.borrowedTimeChargeDescription.key, "时不我待充能: ")
+        translationBuilder.add(MatrixLanguage.borrowedTimeChargeDescription.key, "实境扭曲充能: ")
         translationBuilder.add(MatrixLanguage.wizardHelmetLoadDescription.key, "当前负载: ")
     }
 }

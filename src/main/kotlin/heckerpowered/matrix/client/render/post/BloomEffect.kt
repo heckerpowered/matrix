@@ -8,6 +8,7 @@ import heckerpowered.matrix.client.shader.BlitShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.gl.Framebuffer
+import org.joml.Vector4f
 import org.lwjgl.opengl.GL31
 import org.lwjgl.opengl.GL46
 
@@ -17,6 +18,7 @@ object BloomEffect {
 
     var brightnessPassFramebuffer: Framebuffer = minecraft.framebuffer
     var brightnessThreshold = 0F
+    var bloomIntensity = 1.0F
     private val brightnessShader by lazy {
         BlitShader(
             resourceToString("/assets/matrix/shaders/sobel.vert"),
@@ -30,6 +32,9 @@ object BloomEffect {
                 },
                 UniformProvider("threshold") { pointer ->
                     GL31.glUniform1f(pointer, brightnessThreshold)
+                },
+                UniformProvider("intensity") { pointer ->
+                    GL31.glUniform1f(pointer, bloomIntensity)
                 }
             )
         )
@@ -60,6 +65,8 @@ object BloomEffect {
         }
 
         lastFramebuffer copyTo ScaleSampling.getUpScalingFramebuffer(resolutionScale)
+        bloomIntensity = 1F
+        colorMultiplier = Vector4f(bloomIntensity, bloomIntensity, bloomIntensity, bloomIntensity)
         for (i in (0..<mipLevel).reversed()) {
             resolutionScale *= resolutionScalePerLevel
 
@@ -83,6 +90,7 @@ object BloomEffect {
             }
         }
 
+        colorMultiplier = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
         RenderSystem.enableBlend()
         PostProcessRenderer.copyFramebuffer(ScaleSampling.getUpScalingFramebuffer(1.0), bloomFramebuffer, false)
     }

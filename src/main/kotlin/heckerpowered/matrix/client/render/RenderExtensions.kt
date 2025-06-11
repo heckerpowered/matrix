@@ -9,6 +9,7 @@ import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.texture.NativeImage
+import org.joml.Vector4f
 import org.lwjgl.opengl.GL46.*
 import java.io.File
 import kotlin.math.floor
@@ -27,6 +28,7 @@ fun Framebuffer.blit(target: Framebuffer, mask: Int, filter: Int) {
 
 private var primaryFramebuffer: Framebuffer? = null
 private var secondaryFramebuffer: Framebuffer? = null
+var colorMultiplier = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
 private val colorFusionShader by lazy {
     BlitShader(
         resourceToString("/assets/matrix/shaders/sobel.vert"),
@@ -45,6 +47,9 @@ private val colorFusionShader by lazy {
                 glActiveTexture(GlConst.GL_TEXTURE0 + 1)
                 glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
                 glUniform1i(pointer, 1)
+            },
+            UniformProvider("colorMultiplier") { pointer ->
+                glUniform4f(pointer, colorMultiplier.x, colorMultiplier.y, colorMultiplier.z, colorMultiplier.w)
             }
         )
     )

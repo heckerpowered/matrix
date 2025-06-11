@@ -21,3 +21,4 @@ accessible class net/minecraft/client/gui/hud/InGameHud$HeartType
 accessible class net/minecraft/entity/mob/SpellcastingIllagerEntity$CastSpellGoal
 accessible method net/minecraft/entity/mob/SpellcastingIllagerEntity$CastSpellGoal castSpell ()V
 accessible class net/minecraft/entity/mob/GuardianEntity$FireBeamGoal
+accessible method net/minecraft/world/World getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;

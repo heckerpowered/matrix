@@ -3,7 +3,8 @@
 uniform sampler2D noiseTexture;
 uniform float dissolveFactor = 0.5;
 uniform float emissiveRange = 0.05;
-uniform vec4 emissiveColor = vec4(0, 0.5, 1.0, 1.0);
+uniform vec4 emissiveColor = vec4(0.1, 0.5, 1.0, 1.0);
+uniform float emissiveStrength = 10.0;
 uniform float pixelStrength = 16.0;
 uniform float detialStrength = 1;
 uniform vec2 resolution = vec2(1.0, 1.0);
@@ -42,5 +43,5 @@ void main() {
 
     float opacityMask = clamp(0, 1, (pixelColor() + border()) - pixelAnimation());
     fragColor.a *= ceil(opacityMask);
-    fragColor.rgb = pow(1 - opacityMask, 10) * emissiveColor.rgb;
+    fragColor.rgb = pow(1 - opacityMask, 10) * (emissiveColor.rgb * emissiveStrength);
 }

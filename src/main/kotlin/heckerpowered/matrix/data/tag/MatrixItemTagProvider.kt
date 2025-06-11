@@ -207,6 +207,13 @@ class MatrixItemTagProvider(
             .forEach { tagBuilder.add(it) }
     }
 
+    private fun addArrows() {
+        val tagBuilder = getOrCreateTagBuilder(ItemTags.ARROWS)
+        allMatrixItems
+            .filterIsInstance<ArrowItem>()
+            .forEach { tagBuilder.add(it) }
+    }
+
     private fun addWitchHelmets() {
         val tagBuilder = getOrCreateTagBuilder(MatrixItemTags.wizardHelmetTag)
         allMatrixItems
@@ -241,6 +248,7 @@ class MatrixItemTagProvider(
         addAxes()
         addShovels()
         addHoes()
+        addArrows()
         addWitchHelmets()
     }
 }

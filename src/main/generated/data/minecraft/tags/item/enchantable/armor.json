@@ -26,11 +26,11 @@
     "matrix:wooden_leggings",
     "matrix:wooden_boots",
     "matrix:wizard_helmet_hacker",
-    "matrix:wizard_helmet_basic",
-    "matrix:wizard_helmet_doom",
-    "matrix:wizard_helmet_ruin",
-    "matrix:wizard_helmet_apogee",
-    "matrix:wizard_helmet_warp_dancer",
+    "matrix:wizard_helmet_1",
+    "matrix:wizard_helmet_2",
+    "matrix:wizard_helmet_3",
+    "matrix:wizard_helmet_4",
+    "matrix:wizard_helmet_5",
     "matrix:lightning_chestplate_borrowed_time"
   ]
 }

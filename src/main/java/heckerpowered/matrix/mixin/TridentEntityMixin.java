@@ -1,6 +1,5 @@
 package heckerpowered.matrix.mixin;
 
-import heckerpowered.matrix.common.item.LightningChestplateBorrowedTimeKt;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,6 +12,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import static heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking;
 
 @Mixin(TridentEntity.class)
 abstract class TridentEntityMixin extends PersistentProjectileEntity {
@@ -33,7 +34,7 @@ abstract class TridentEntityMixin extends PersistentProjectileEntity {
         if (!(owner instanceof final PlayerEntity player)) {
             return;
         }
-        if (!LightningChestplateBorrowedTimeKt.getBorrowedTimeActive(player)) {
+        if (!isPhaseWalking(player)) {
             return;
         }
         int i = this.dataTracker.get(LOYALTY);

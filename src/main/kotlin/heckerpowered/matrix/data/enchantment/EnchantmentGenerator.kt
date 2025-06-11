@@ -5,6 +5,7 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENC
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRIKE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
@@ -254,6 +255,19 @@ class EnchantmentGenerator(
             entries, PEAK_OVERDRIVE_ENCHANTMENT_KEY, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
+                    10,
+                    5,
+                    Enchantment.leveledCost(1, 10),
+                    Enchantment.leveledCost(1, 15),
+                    5,
+                    AttributeModifierSlot.HEAD
+                )
+            )
+        )
+        register(
+            entries, LIGHTNING_STRIKE_ENCHANTMENT_KEY, Enchantment.builder(
+                Enchantment.definition(
+                    registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(ItemTags.SWORD_ENCHANTABLE),
                     10,
                     5,
                     Enchantment.leveledCost(1, 10),

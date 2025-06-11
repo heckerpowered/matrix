@@ -11,7 +11,7 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes.adjustedManaResistance
 import heckerpowered.matrix.common.item.MatrixComponents
-import heckerpowered.matrix.common.item.WizardHelmetWarpDancer
+import heckerpowered.matrix.common.item.WizardHelmet5
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
 import heckerpowered.matrix.common.magics.MagicData
 import heckerpowered.matrix.common.persistent.*
@@ -109,8 +109,8 @@ abstract class Magic(
      * Triggers Peak Overdrive effects such as increasing load on wizard helmet.
      */
     protected open fun channelPeakOverdrive(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence) {
-        val currentLoad = player.wizardHelmet.getOrDefault(MatrixComponents.load, .0)
-        player.wizardHelmet.set(MatrixComponents.load, currentLoad + 1)
+        val currentLoad = player.wizardHelmet.getOrDefault(MatrixComponents.LOAD, .0)
+        player.wizardHelmet.set(MatrixComponents.LOAD, currentLoad + 1)
     }
 
     open fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
@@ -242,7 +242,7 @@ abstract class Magic(
         ) {
             channelSpeedBonus += 0.6
         }
-        if (player.wizardHelmet.item is WizardHelmetWarpDancer) {
+        if (player.wizardHelmet.item is WizardHelmet5) {
             channelSpeedBonus += 1.0
         }
         if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) > 0 &&

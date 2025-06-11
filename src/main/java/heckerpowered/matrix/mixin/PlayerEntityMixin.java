@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import heckerpowered.matrix.common.event.LivingDamageCallback;
 import heckerpowered.matrix.common.event.LivingDamageEvent;
-import heckerpowered.matrix.common.item.LightningChestplateBorrowedTimeKt;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -19,6 +18,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import static heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking;
 
 @Mixin(PlayerEntity.class)
 class PlayerEntityMixin {
@@ -44,14 +45,14 @@ class PlayerEntityMixin {
 
     @Inject(method = "getAttackCooldownProgress", at = @At(value = "HEAD"), cancellable = true)
     private void getAttackCooldownProgress(float baseTime, CallbackInfoReturnable<Float> cir) {
-        if (WardenChestplateItem.isAngered(self()) || LightningChestplateBorrowedTimeKt.getBorrowedTimeActive(self())) {
+        if (WardenChestplateItem.isAngered(self()) || isPhaseWalking(self())) {
             cir.setReturnValue(1.0F);
         }
     }
 
     @ModifyVariable(method = "attack", at = @At(value = "LOAD"), ordinal = 2)
     private boolean modifyAttackCritical(boolean isCritical) {
-        if (WardenChestplateItem.isAngered(self()) || LightningChestplateBorrowedTimeKt.getBorrowedTimeActive(self())) {
+        if (WardenChestplateItem.isAngered(self()) || isPhaseWalking(self())) {
             return true;
         }
         return isCritical;
@@ -59,7 +60,7 @@ class PlayerEntityMixin {
 
     @ModifyVariable(method = "attack", at = @At(value = "LOAD"), ordinal = 3)
     private boolean modifyAttackSweep(boolean canSweep) {
-        if (WardenChestplateItem.isAngered(self()) || LightningChestplateBorrowedTimeKt.getBorrowedTimeActive(self())) {
+        if (WardenChestplateItem.isAngered(self()) || isPhaseWalking(self())) {
             return true;
         }
         return canSweep;

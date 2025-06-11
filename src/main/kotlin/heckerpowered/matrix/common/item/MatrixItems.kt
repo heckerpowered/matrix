@@ -61,14 +61,16 @@ object MatrixItems {
         WoodenBootsItem,
 
         WizardHelmetHacker,
-        WizardHelmetBasic,
-        WizardHelmetDoom,
-        WizardHelmetRuin,
-        WizardHelmetApogee,
-        WizardHelmetWarpDancer,
+        WizardHelmet1,
+        WizardHelmet2,
+        WizardHelmet3,
+        WizardHelmet4,
+        WizardHelmet5,
 
-        LightningChestplateBorrowedTime,
-        MagicTalismanItem
+        LightningChestplate1,
+        MagicTalismanItem,
+        FinderArrowItem,
+        MetaBowItem
     )
 
     private fun register(item: Item, name: String): Item {
@@ -130,14 +132,17 @@ object MatrixItems {
         register(WoodenLeggingsItem, "wooden_leggings")
         register(WoodenBootsItem, "wooden_boots")
 
-        register(WizardHelmetBasic, "wizard_helmet_basic")
+        register(WizardHelmet1, "wizard_helmet_1")
         register(WizardHelmetHacker, "wizard_helmet_hacker")
-        register(WizardHelmetDoom, "wizard_helmet_doom")
-        register(WizardHelmetRuin, "wizard_helmet_ruin")
-        register(WizardHelmetApogee, "wizard_helmet_apogee")
-        register(WizardHelmetWarpDancer, "wizard_helmet_warp_dancer")
+        register(WizardHelmet2, "wizard_helmet_2")
+        register(WizardHelmet3, "wizard_helmet_3")
+        register(WizardHelmet4, "wizard_helmet_4")
+        register(WizardHelmet5, "wizard_helmet_5")
 
-        register(LightningChestplateBorrowedTime, "lightning_chestplate_borrowed_time")
+        register(LightningChestplate1, "lightning_chestplate_borrowed_time")
         register(MagicTalismanItem, "magic_talisman")
+
+        register(FinderArrowItem, "finder_arrow")
+        register(MetaBowItem, "meta_bow")
     }
 }

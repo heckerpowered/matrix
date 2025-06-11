@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.event.EventFactory
 fun interface PostProcessCallback {
     companion object {
         @JvmField
-        val event: Event<PostProcessCallback> =
+        val EVENT: Event<PostProcessCallback> =
             EventFactory.createArrayBacked(PostProcessCallback::class.java) { listeners ->
                 PostProcessCallback {
                     for (listener in listeners) {

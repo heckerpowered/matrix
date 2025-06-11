@@ -1,9 +1,9 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.IGNITE_EFFECT
+import heckerpowered.matrix.common.event.AccumulateAttributeValueCallback
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.GetArmorCallback
-import heckerpowered.matrix.common.event.GetAttributeValueCallback
 import heckerpowered.matrix.common.event.LivingHurtCallback
 import heckerpowered.matrix.core.Accumulator
 import net.minecraft.entity.LivingEntity
@@ -20,7 +20,7 @@ object IgniteEffect : StatusEffect(
 ) {
     init {
         GetArmorCallback.EVENT.register(::getArmor)
-        GetAttributeValueCallback.EVENT.register(::getAttributeValue)
+        AccumulateAttributeValueCallback.EVENT.register(::getAttributeValue)
         LivingHurtCallback.EVENT.register(::onLivingHurt)
     }
 

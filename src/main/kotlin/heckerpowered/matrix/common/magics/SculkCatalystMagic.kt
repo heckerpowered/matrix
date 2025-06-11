@@ -7,8 +7,8 @@ import heckerpowered.matrix.common.event.WriteDataCallback
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import heckerpowered.matrix.core.MatrixLivingEntity
 import heckerpowered.matrix.core.getNearestEntities
+import heckerpowered.matrix.core.killed
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.boss.WitherEntity
@@ -105,10 +105,10 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
         val bounces = ++sculkCatalystData.bounces
 
         val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { player?.damageSources?.create(MatrixDamageTypes.magic, player) }
-        if (target !is WitherEntity && target !is EnderDragonEntity && target !is PlayerEntity) {
-            target.damage(damageSource, Float.POSITIVE_INFINITY)
+        if (target !is WitherEntity && target !is EnderDragonEntity) {
             target.health = .0F
-            (target as MatrixLivingEntity).killed = true
+            target.killed = true
+            target.damage(damageSource, Float.POSITIVE_INFINITY)
             target.onDeath(damageSource)
         } else {
             target.damage(damageSource, target.maxHealth * 4.0F)

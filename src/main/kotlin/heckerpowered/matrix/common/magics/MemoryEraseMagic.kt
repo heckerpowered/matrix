@@ -57,4 +57,20 @@ object MemoryEraseMagic : Magic(MatrixLanguage.magicMemoryErase, 10, MatrixLangu
         val result = supplier() ?: return erasedSource
         return result
     }
+
+    @JvmStatic
+    fun LivingEntity.clearTargetingEntity() {
+        brain.clear()
+        if (this is MobEntity) {
+            target = null
+            targetSelector.goals
+                .map { it.goal }
+                .forEach { it.stop() }
+        }
+        if (this is Angerable) {
+            stopAnger()
+        }
+        attacker = null
+    }
+
 }

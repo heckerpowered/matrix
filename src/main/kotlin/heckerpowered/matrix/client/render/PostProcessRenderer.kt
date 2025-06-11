@@ -135,7 +135,7 @@ object PostProcessRenderer {
     @JvmStatic
     fun renderToMinecraftFramebuffer() {
         renderToFramebuffer(minecraft.framebuffer)
-        PostProcessCallback.event.invoker().onPostProcess()
+        PostProcessCallback.EVENT.invoker().onPostProcess()
     }
 
     @JvmStatic

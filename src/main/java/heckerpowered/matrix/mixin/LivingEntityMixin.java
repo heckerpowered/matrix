@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.sugar.ref.LocalDoubleRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import heckerpowered.matrix.common.effect.MatrixStatusEffects;
+import heckerpowered.matrix.common.entity.EntityProtection;
 import heckerpowered.matrix.common.event.*;
 import heckerpowered.matrix.common.item.RedstoneSuitKt;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
@@ -69,7 +70,10 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
     @Shadow
     public abstract ItemStack getEquippedStack(EquipmentSlot slot);
 
-    @Intrinsic
+    @Shadow
+    public abstract float getMaxHealth();
+
+    @Intrinsic(displace = true)
     private LivingEntity self() {
         return (LivingEntity) (Object) this;
     }
@@ -78,11 +82,13 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
     private void onDeath(DamageSource damageSource, CallbackInfo info) {
         if (LivingDeathCallback.EVENT.invoker().onDeath(self(), damageSource) == ActionResult.FAIL) {
             info.cancel();
+            return;
         }
         if (!(damageSource.getAttacker() instanceof final ServerPlayerEntity serverPlayer)) {
             return;
         }
 
+        // TODO: Consider to move this logic to the event.
         var restoreAmount = 0;
         final var self = self();
         final var manaOverload = MatrixStatusEffects.getManaOverloadEffect();
@@ -128,9 +134,9 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
 
     @Inject(method = "getAttributeValue", at = @At("TAIL"), cancellable = true)
     public void getAttributeValue(RegistryEntry<EntityAttribute> attribute, CallbackInfoReturnable<Double> cir) {
-        final var thoughness = cir.getReturnValueD();
-        final var accumulator = new Accumulator(thoughness);
-        GetAttributeValueCallback.EVENT.invoker().getAttributeValue(self(), attribute, accumulator);
+        final var attributeValue = cir.getReturnValueD();
+        final var accumulator = new Accumulator(attributeValue);
+        AccumulateAttributeValueCallback.EVENT.invoker().getAttributeValue(self(), attribute, accumulator);
 
         final var result = accumulator.accumulate();
         cir.setReturnValue(result);
@@ -254,22 +260,99 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
         builder.add(KILLED, false);
     }
 
-    @Inject(method = "getHealth", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getHealth", at = @At("TAIL"), cancellable = true)
     private void getHealth(CallbackInfoReturnable<Float> cir) {
-        if (dataTracker.get(KILLED)) {
-            cir.setReturnValue(0F);
+        final var protection = EntityProtection.getProtection(self());
+        switch (protection) {
+            case NONE -> {
+            }
+            case DEAD -> cir.setReturnValue(.0F);
+            case PROTECTED -> cir.setReturnValue(Math.max(cir.getReturnValueF(), 1.0F));
+            case PROTECTED_COMPLETE -> cir.setReturnValue(Math.max(getMaxHealth(), 20.0F));
         }
     }
 
-    @SuppressWarnings("all")
+    @Inject(method = "getMaxHealth", at = @At("TAIL"), cancellable = true)
+    private void getMaxHealth(CallbackInfoReturnable<Float> cir) {
+        final var maxHealth = cir.getReturnValueF();
+        final var protection = EntityProtection.getProtection(self());
+        switch (protection) {
+            case NONE, DEAD -> {
+            }
+            case PROTECTED -> {
+                if (Float.isNaN(maxHealth)) {
+                    cir.setReturnValue(1.0F);
+                } else {
+                    cir.setReturnValue(Math.max(maxHealth, 1.0F));
+                }
+            }
+            case PROTECTED_COMPLETE -> {
+                if (Float.isNaN(maxHealth)) {
+                    cir.setReturnValue(20.0F);
+                } else {
+                    cir.setReturnValue(Math.max(maxHealth, 20.0F));
+                }
+            }
+        }
+    }
+
+    @Inject(method = "setHealth", at = @At("HEAD"))
+    private void setHealth(float health, CallbackInfo ci, @Local(argsOnly = true) LocalFloatRef healthReference) {
+        final var protection = EntityProtection.getProtection(self());
+        switch (protection) {
+            case NONE -> {
+            }
+            case DEAD -> healthReference.set(0F);
+            case PROTECTED -> {
+                if (health < 1.0F || Float.isNaN(health)) {
+                    healthReference.set(1.0F);
+                }
+            }
+            case PROTECTED_COMPLETE -> healthReference.set(getMaxHealth());
+        }
+    }
+
+    @Inject(method = "isAlive", at = @At("HEAD"), cancellable = true)
+    private void isAlive(CallbackInfoReturnable<Boolean> cir) {
+        final var protection = EntityProtection.getProtection(self());
+        if (protection.isProtected()) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    @Inject(method = "canHit", at = @At("HEAD"), cancellable = true)
+    private void canHit(CallbackInfoReturnable<Boolean> cir) {
+        final var protection = EntityProtection.getProtection(self());
+        if (protection == EntityProtection.PROTECTED_COMPLETE) {
+            cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(method = "canTakeDamage", at = @At("HEAD"), cancellable = true)
+    private void canTakeDamage(CallbackInfoReturnable<Boolean> cir) {
+        final var protection = EntityProtection.getProtection(self());
+        if (protection == EntityProtection.PROTECTED_COMPLETE) {
+            cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(method = "isInvulnerableTo", at = @At("HEAD"), cancellable = true)
+    private void isInvulnerableTo(CallbackInfoReturnable<Boolean> cir) {
+        final var protection = EntityProtection.getProtection(self());
+        if (protection == EntityProtection.PROTECTED_COMPLETE) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    @Unique
     @Override
-    public boolean getKilled() {
+    public boolean getMatrix$killed() {
         return dataTracker.get(KILLED);
     }
 
-    @SuppressWarnings("all")
+    @Unique
     @Override
-    public void setKilled(boolean killed) {
+    public void setMatrix$killed(boolean killed) {
         dataTracker.set(KILLED, killed);
     }
 }

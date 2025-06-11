@@ -5,6 +5,7 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENC
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRIKE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY
@@ -215,6 +216,7 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(MAGIC_SHIELD_ENCHANTMENT_KEY, "Magic Shield")
         translationBuilder.add(BRUTAL_STRENGTH_ENCHANTMENT_KEY, "Brutal Strength")
         translationBuilder.add(PEAK_OVERDRIVE_ENCHANTMENT_KEY, "Peak Overdrive")
+        translationBuilder.add(LIGHTNING_STRIKE_ENCHANTMENT_KEY, "Lightning Strike")
 
         translationBuilder.add(WardenChestplateItem, "Sculk 'Warden' Chestplate")
         translationBuilder.add(
@@ -305,15 +307,17 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(WoodenBootsItem, "Wooden Boots")
 
         translationBuilder.add(WizardHelmetHacker, "Wizard 9000 'Hacker'")
-        translationBuilder.add(WizardHelmetBasic, "Wizard 1 'Basic Wizard Helmet'")
-        translationBuilder.add(WizardHelmetDoom, "Wizard 2 'Doom'")
-        translationBuilder.add(WizardHelmetRuin, "Wizard 3 'Ruin'")
-        translationBuilder.add(WizardHelmetApogee, "Wizard 4 'Apogee'")
-        translationBuilder.add(WizardHelmetWarpDancer, "Wizard 5 'Warp Dancer'")
+        translationBuilder.add(WizardHelmet1, "Wizard 1 'Basic'")
+        translationBuilder.add(WizardHelmet2, "Wizard 2 'Doom'")
+        translationBuilder.add(WizardHelmet3, "Wizard 3 'Blood-forged Ruin'")
+        translationBuilder.add(WizardHelmet4, "Wizard 4 'Might and Method'")
+        translationBuilder.add(WizardHelmet5, "Wizard 5 'Axiom of Annihilation'")
 
-        translationBuilder.add(LightningChestplateBorrowedTime, "Lightning 1 'Borrowed Time'")
+        translationBuilder.add(LightningChestplate1, "Lightning 1 'Warp Dancer'")
 
         translationBuilder.add(MagicTalismanItem, "Magic Talisman")
+        translationBuilder.add(FinderArrowItem, "Finder")
+        translationBuilder.add(MetaBowItem, "Meta Bow")
 
         // Potions
         translationBuilder.add("item.minecraft.potion.effect.angered", "Potion of Angered")

@@ -38,7 +38,7 @@ class AttractorEntity(entityType: EntityType<AttractorEntity>, world: World) : E
 
     var owner: LivingEntity? = null
 
-    constructor(world: World) : this(MatrixEntityType.attractorEntity, world)
+    constructor(world: World) : this(MatrixEntityType.ATTRACTOR_ENTITY, world)
 
     init {
         attractionRadius = 6.0

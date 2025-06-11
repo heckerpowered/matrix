@@ -58,7 +58,7 @@ infix fun Entity.distanceTo(other: Entity): Double {
 }
 
 infix fun Entity.squaredDistanceTo(other: Entity): Double {
-    return pos.distanceTo(other.pos)
+    return pos.squaredDistanceTo(other.pos)
 }
 
 infix fun Entity.distanceTo(other: Vec3d): Double {

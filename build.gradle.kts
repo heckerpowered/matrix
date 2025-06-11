@@ -13,6 +13,9 @@ plugins {
     id("fabric-loom") version "1.9.2"
     kotlin("jvm") version "2.1.20"
 }
+apply {
+    from("buildtools/ColoredOutput.gradle")
+}
 
 version = modVersion
 group = mavenGroup

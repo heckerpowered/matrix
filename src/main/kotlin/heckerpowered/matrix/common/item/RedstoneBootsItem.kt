@@ -1,5 +1,7 @@
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_MAX_POWER
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_POWER
 import net.minecraft.item.ArmorItem
 import net.minecraft.item.ItemStack
 import net.minecraft.item.tooltip.TooltipType
@@ -10,8 +12,8 @@ object RedstoneBootsItem : ArmorItem(
     Type.BOOTS,
     Settings()
         .maxDamage(Type.BOOTS.getMaxDamage(24))
-        .component(redstoneSuitMaxPowerComponent, 20)
-        .component(redstoneSuitPowerComponent, 0)
+        .component(REDSTONE_SUIT_MAX_POWER, 20)
+        .component(REDSTONE_SUIT_POWER, 0)
 ), RedstoneSuit {
     override fun appendTooltip(
         stack: ItemStack,

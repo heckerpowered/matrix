@@ -60,7 +60,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
 
     var channeler: ServerPlayerEntity? = null
 
-    constructor(world: World) : this(MatrixEntityType.magicLightningEntity, world)
+    constructor(world: World) : this(MatrixEntityType.MAGIC_LIGHTNING_ENTITY, world)
 
     init {
         seed = random.nextLong()

@@ -4,6 +4,9 @@ import com.mojang.blaze3d.platform.GlConst
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.core.AimAssist
+import heckerpowered.matrix.client.core.ClientOptions.aimAssistEnabled
+import heckerpowered.matrix.client.core.ClientOptions.aimAssistFov
+import heckerpowered.matrix.client.core.ClientOptions.aimAssistMaxDistance
 import heckerpowered.matrix.client.render.*
 import heckerpowered.matrix.client.render.post.BloomEffect
 import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
@@ -17,9 +20,10 @@ import heckerpowered.matrix.client.ui.element.SystemCrashBar
 import heckerpowered.matrix.client.ui.foundation.animation.*
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.effect.bloodPactActive
-import heckerpowered.matrix.common.item.LightningChestplateBorrowedTime
-import heckerpowered.matrix.common.item.WizardHelmetWarpDancer
-import heckerpowered.matrix.common.item.borrowedTimeActive
+import heckerpowered.matrix.common.item.LightningChestplate1
+import heckerpowered.matrix.common.item.LightningChestplate1.isBorrowedTime
+import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
+import heckerpowered.matrix.common.item.WizardHelmet5
 import heckerpowered.matrix.common.magics.MagicAvailableStatus
 import heckerpowered.matrix.common.magics.MagicAvailableStatus.AVAILABLE
 import heckerpowered.matrix.common.magics.MagicAvailableStatus.TARGET_MISSING
@@ -31,10 +35,8 @@ import heckerpowered.matrix.common.network.UseMagicPayload
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.common.persistent.isWizard
 import heckerpowered.matrix.common.persistent.wizardHelmet
-import heckerpowered.matrix.core.approximatelyEqual
-import heckerpowered.matrix.core.inverseLerp
-import heckerpowered.matrix.core.lerp
-import heckerpowered.matrix.core.resourceToString
+import heckerpowered.matrix.core.*
+import heckerpowered.matrix.core.utility.EntitySearch.getEntitiesNearSight
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
@@ -55,6 +57,8 @@ import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
+import org.joml.Vector2d
+import org.joml.Vector2f
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL15.glDeleteBuffers
 import org.lwjgl.opengl.GL30.glDeleteVertexArrays
@@ -86,6 +90,7 @@ object MatrixHud {
         }
 
     var targetedEntity: LivingEntity? = null
+    private var usingRayCast = false
     private var cachedTargetedEntity: LivingEntity? = null
 
     private var lastNanos = 0L
@@ -299,6 +304,8 @@ object MatrixHud {
     private val magicColorAnimations = mutableListOf<ColorAnimation>()
     private val magicExtraWidthAnimations = mutableListOf<PackedAnimation>()
 
+    private var candidateAimAssistEntities = emptyList<LivingEntity>()
+
     @JvmStatic
     fun onDoAttack() {
         if (!shouldRenderHud() || shouldSlowTime()) {
@@ -506,11 +513,16 @@ object MatrixHud {
     }
 
     private fun warp() {
+        if (TimeController.minTimeScale != 1.0 || player.isPhaseWalking) {
+            grayscaleIntensityAnimation.value = 1.0
+        } else {
+            grayscaleIntensityAnimation.value = .0
+        }
+
         if (!shouldSlowTime()) {
             return
         }
-
-        val hasLightningEffect = player.borrowedTimeActive
+        val hasLightningEffect = player.isBorrowedTime
         TimeController.playerStandaloneRenderTick = hasLightningEffect && !shouldRenderHud() && !minecraft.isPaused
         if (hasLightningEffect) {
             lightningTimeScale.value = 0.15
@@ -518,11 +530,6 @@ object MatrixHud {
             lightningTimeScale.value = 1.0
         }
         TimeController.onRenderTick()
-        if (TimeController.minTimeScale != 1.0) {
-            grayscaleIntensityAnimation.value = 1.0
-        } else {
-            grayscaleIntensityAnimation.value = .0
-        }
         PostProcessRenderer.postProcessShaders.add(theWorldShader)
     }
 
@@ -702,11 +709,52 @@ object MatrixHud {
         hudFramebuffer.beginWrite(true)
     }
 
-
     private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
         onBeginHudRender(drawContext, tickCounter)
         renderHud(drawContext, tickCounter)
         onEndHudRender(drawContext, tickCounter)
+    }
+
+    private fun renderCandidateEntities(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+        if (!shouldRenderHud()) {
+            return
+        }
+        val tickDelta = tickCounter.getTickDelta(true)
+
+        val transformationMatrix = drawContext.matrices.peek().positionMatrix
+        val tessellator = Tessellator.getInstance()
+        val buffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR)
+
+        // candidateAimAssistEntities = player.world.getOtherEntities(player, player.boundingBox.expand(1024.0)).filter { it is LivingEntity }.map { it as LivingEntity }
+        //     .sortedBy { it.squaredDistanceTo(player) }
+        val from = Vector2d(crosshairX.animatedValue + 7.5, crosshairY.animatedValue + 7.5)
+        for (candidateEntity in candidateAimAssistEntities) {
+            val targetPosition = candidateEntity.getLerpedPos(tickDelta).add(.0, candidateEntity.boundingBox.lengthY / 2, .0)
+            val to = worldToScreen(targetPosition) ?: continue
+
+            buffer.vertex(transformationMatrix, from.x.toFloat(), from.y.toFloat(), .0F)
+                .color(255, 25, 25, 255)
+            buffer.vertex(transformationMatrix, to.x.toFloat(), to.y.toFloat(), .0F)
+                .color(255, 25, 25, 255)
+            // from = to
+
+            // val multiplier = 1.0F
+            // RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
+            // drawContext.drawHorizontalLine(from.x.toInt(), to.x.toInt(), from.y.toInt(), ColorHelper.Argb.getArgb(255, 255, 25, 25))
+            // drawContext.drawVerticalLine(to.x.toInt(), from.y.toInt(), to.y.toInt(), ColorHelper.Argb.getArgb(255, 255, 25, 25))
+            // RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
+        }
+
+        glLineWidth(3.0F)
+        RenderSystem.lineWidth(3.0F)
+        RenderSystem.enableBlend()
+        RenderSystem.defaultBlendFunc()
+        RenderSystem.disableDepthTest()
+        RenderSystem.disableCull()
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram)
+        buffer.endNullable()?.let {
+            BufferRenderer.drawWithGlobalProgram(it)
+        }
     }
 
     private fun renderHud(drawContext: DrawContext, tickCounter: RenderTickCounter) {
@@ -716,8 +764,10 @@ object MatrixHud {
             selectedIndex = 1
             previousIndex = 1
         }
+
         val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
 
+        renderCandidateEntities(drawContext, tickCounter)
         checkVisibilityChanges()
         warp()
         processKeyInput()
@@ -726,6 +776,7 @@ object MatrixHud {
         performChannelMagicAnimation()
         if (!shouldRenderHud()) {
             fovZoomRatio = .0
+            targetedEntity = null
         }
         fovAnimation.value = 1.0 - fovZoomRatio
         lastNanos = Util.getMeasuringTimeNano()
@@ -790,7 +841,7 @@ object MatrixHud {
 
         GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(1.0F, maxSigma = 20F)
         PostProcessRenderer.useFramebuffer(blurFramebuffer) {
-            BlurRenderer.renderGaussianBlurFullResolution()
+            BlurRenderer.renderGaussianBlur()
         }
 
         minecraft.framebuffer.beginWrite(true)
@@ -810,37 +861,18 @@ object MatrixHud {
             blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
         }
 
-        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
-        return
-
-        val transformFeedback = (pointSpriteShader.components[0] as TransformFeedback)
-        transformFeedback.enabled = true
-        renderPoints()
-
-        val buffer = transformFeedback.readBuffer()
-        assert(buffer.size == points.size) { "TransformFeedback's buffer size doesn't match the points size" }
-        buffer.forEachIndexed { index, value ->
-            points[index] = value
-        }
-        transformFeedback.enabled = false
-
-        hudFramebuffer.clear(true)
-        hudFramebuffer.beginWrite(false)
-        renderPoints()
-        hudFramebuffer.endWrite()
-
-        BloomEffect.brightnessPassFramebuffer = hudFramebuffer
-        BloomEffect.brightnessThreshold = .0F
+        BloomEffect.bloomFramebuffer.clear(true)
+        BloomEffect.brightnessPassFramebuffer = blurFramebuffer
+        BloomEffect.brightnessThreshold = 1.0F
+        BloomEffect.bloomIntensity = 1.0F
         BloomEffect.renderBloom()
+        BloomEffect.bloomIntensity = 1.0F
 
-        // glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT)
-        RenderSystem.enableBlend()
         RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
         PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
-        RenderSystem.defaultBlendFunc()
-        RenderSystem.disableBlend()
+        RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
 
-        minecraft.framebuffer.beginWrite(true)
+        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
     }
 
     private fun renderPoints() {
@@ -1238,10 +1270,10 @@ object MatrixHud {
 
             val animationProgress = (startX - xIndent - 50) / extraWidth
             val progressColor = Color(
-                0, 192, 0, (magicShownOpacityAnimation.animatedValue * 128).toInt()
+                25, 192, 25, (magicShownOpacityAnimation.animatedValue * 128).toInt()
             )
             val brightProgressColor = Color(
-                0, 255, 0, (magicShownOpacityAnimation.animatedValue * 255).toInt().coerceAtMost(
+                25, 255, 25, (magicShownOpacityAnimation.animatedValue * 255).toInt().coerceAtMost(
                     255
                 )
             )
@@ -1250,9 +1282,7 @@ object MatrixHud {
             )
 
             RenderSystem.enableBlend()
-            RenderSystem.setShader(
-                GameRenderer::getPositionColorProgram
-            )
+            RenderSystem.setShader(GameRenderer::getPositionColorProgram)
 
             // We're drawing in triangle strip mode, the first 3 vertices form the first triangle.
             // Each added vertex forms a new triangle with the first vertex and the last vertex.
@@ -1297,9 +1327,8 @@ object MatrixHud {
             )
             BufferRenderer.drawWithGlobalProgram(buffer.end())
 
-            RenderSystem.setShaderColor(
-                1.0F, 1.0F, 1.0F, (0.7F - animationProgress).toFloat()
-            )
+            val multiplier = 4.0F
+            RenderSystem.setShaderColor(multiplier, multiplier, multiplier, (0.7F - animationProgress).toFloat())
             buffer = tessellator.begin(
                 VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR
             )
@@ -1381,10 +1410,7 @@ object MatrixHud {
                 buffer.end()
             )
 
-            RenderSystem.setShaderColor(
-                1.0F, 1.0F, 1.0F, 1.0F
-            )
-
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
 
             // val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
             // renderer.renderRectangle(
@@ -1453,15 +1479,6 @@ object MatrixHud {
     }
 
     private fun selectTargetEntity(tickCounter: RenderTickCounter) {
-        val aimEntity = this.aimEntity
-        if (aimEntity is LivingEntity) {
-            if (!aimEntity.isAlive) {
-                this.aimEntity = null
-            } else if (useAimAssist) {
-                targetedEntity = aimEntity
-                return
-            }
-        }
         var targetedEntity = getTargetedEntity(tickCounter.getTickDelta(true))
         if (targetedEntity is EnderDragonPart) {
             targetedEntity = targetedEntity.owner
@@ -1541,11 +1558,21 @@ object MatrixHud {
 
         val textRenderer = MinecraftClient.getInstance().textRenderer
         if (cachedTargetedEntity != null) {
-            val red = ColorHelper.Argb.getArgb(descriptionAlpha, 255, 0, 0)
-            val green = ColorHelper.Argb.getArgb(descriptionAlpha, 0, 255, 0)
+            val red = ColorHelper.Argb.getArgb(descriptionAlpha, 255, 25, 25)
+            val green = ColorHelper.Argb.getArgb(descriptionAlpha, 25, 255, 25)
 
             val health = cachedTargetedEntity.health.toDouble()
             val maxHealth = cachedTargetedEntity.maxHealth.toDouble()
+
+            if (healthAnimation.from.isNaN()) {
+                healthAnimation.from = .0
+            }
+            if (maxHealthAnimation.from.isNaN()) {
+                maxHealthAnimation.from = .0
+            }
+            if (healthPercentageAnimation.from.isNaN()) {
+                healthPercentageAnimation.from = .0
+            }
 
             healthAnimation.value = health
             maxHealthAnimation.value = maxHealth
@@ -1565,7 +1592,7 @@ object MatrixHud {
             val x2 = drawContext.scaledWindowWidth - progressBarX - magicShownAnimation.animatedValue.toInt() - sizeReduced
 
             val multiplier = 1.0F
-            RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
+            RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
             drawContext.fill(
                 x1.coerceAtMost(x2),
                 drawContext.scaledWindowHeight / 2 - 80 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt() - sizeReduced,
@@ -1609,7 +1636,6 @@ object MatrixHud {
                     descriptionForegroundColor,
                     false
                 )
-
                 drawContext.matrices.pop()
             }
 
@@ -1679,6 +1705,45 @@ object MatrixHud {
     }
 
     private fun getTargetedEntity(tickDelta: Float): Entity? {
+        val candidateEntities = getAssistTargetEntity(tickDelta)//.filter { entity ->
+        //    val rotationVector = player.getRotationVec(tickDelta)
+        //    val from = player.getCameraPosVec(tickDelta)
+        //    val to = player.getCameraPosVec(tickDelta).add(rotationVector.multiply(aimAssistMaxDistance))
+        //    val blockHit = player.world.raycast(RaycastContext(from, to, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.ANY, player))
+        //    val blockHitDistance = player.squaredDistanceTo(blockHit.pos)
+        //    blockHitDistance >= entity.squaredDistanceTo(player)
+        //}
+        candidateAimAssistEntities = candidateEntities
+
+        val rayCastTarget = getRayCastTargetEntity(tickDelta)
+        if (rayCastTarget != null) {
+            usingRayCast = true
+            return rayCastTarget
+        }
+        usingRayCast = false
+        return candidateEntities.firstOrNull()
+    }
+
+    private fun getAssistTargetEntity(tickDelta: Float): List<LivingEntity> {
+        val entities = minecraft.cameraEntity?.getEntitiesNearSight(
+            aimAssistMaxDistance,
+            aimAssistFov,
+            tickDelta
+        )
+        if (entities == null) {
+            return emptyList()
+        }
+
+        return entities
+            .filter { it is LivingEntity && !it.isSpectator && it.isAlive }
+            .map { it as LivingEntity }
+            .filter {
+                val channelSequence = player.getChannelSequence(it)
+                selectedMagic.availableStatus(player, it, channelSequence) == AVAILABLE
+            }
+    }
+
+    private fun getRayCastTargetEntity(tickDelta: Float): Entity? {
         val range = 10000.0
 
         val minecraftClient = MinecraftClient.getInstance()!!
@@ -1691,7 +1756,7 @@ object MatrixHud {
         val box = Box(min, max)
 
         // Wrap Dancer: Select entities through walls
-        if (player.wizardHelmet.item is WizardHelmetWarpDancer) {
+        if (player.wizardHelmet.item is WizardHelmet5) {
             val result = ProjectileUtil.raycast(camera, min, max, box, { entity ->
                 if (entity.isSpectator) {
                     return@raycast false
@@ -1712,6 +1777,42 @@ object MatrixHud {
         }, range)
 
         return result?.entity
+    }
+
+    private val crosshairX = SimpleDoubleAnimation()
+    private val crosshairY = SimpleDoubleAnimation()
+
+    @JvmStatic
+    fun translateCrosshairPosition(x: Float, y: Float): Vector2f {
+        if (!aimAssistEnabled) {
+            return Vector2f(x, y)
+        }
+
+        if (crosshairX.from == .0) {
+            crosshairX.from = x.toDouble()
+        }
+        if (crosshairY.from == .0) {
+            crosshairY.from = y.toDouble()
+        }
+        val targetedEntity = targetedEntity
+        if (targetedEntity == null) {
+            crosshairX.value = x.toDouble()
+            crosshairY.value = y.toDouble()
+        } else {
+            val tickDelta = minecraft.renderTickCounter.getTickDelta(true)
+            val lerpedPosition = targetedEntity.getLerpedPos(tickDelta).add(
+                .0,
+                targetedEntity.boundingBox.lengthY / 2,
+                .0
+            )
+            val screenPosition = worldToScreen(lerpedPosition)
+            if (screenPosition != null) {
+                crosshairX.value = screenPosition.x
+                crosshairY.value = screenPosition.y
+            }
+        }
+
+        return Vector2f(crosshairX.animatedValue.toFloat(), crosshairY.animatedValue.toFloat())
     }
 
     private fun generateIndentList(size: Int): List<Double> {
@@ -1757,7 +1858,7 @@ object MatrixHud {
         }
 
         if (isPressingTab && InputUtil.isKeyPressed(minecraft.window.handle, GLFW.GLFW_KEY_E) &&
-            player.getEquippedStack(EquipmentSlot.CHEST).item is LightningChestplateBorrowedTime
+            player.getEquippedStack(EquipmentSlot.CHEST).item is LightningChestplate1
         ) {
             ClientPlayNetworking.send(BorrowedTimePayload())
             return true

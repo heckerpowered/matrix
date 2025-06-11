@@ -19,6 +19,7 @@ object MatrixServerPlayNetworking {
         PayloadTypeRegistry.playS2C().register(SyncHealthPayload.id, SyncHealthPayload.codec)
         PayloadTypeRegistry.playS2C().register(WitherArmorTriggerPayload.id, WitherArmorTriggerPayload.codec)
         PayloadTypeRegistry.playS2C().register(ImminentDangerPayload.id, ImminentDangerPayload.codec)
+        PayloadTypeRegistry.playS2C().register(TeleportPayload.id, TeleportPayload.codec)
 
         ServerPlayNetworking.registerGlobalReceiver(UseMagicPayload.id, UseMagicPayload::handle)
         ServerPlayNetworking.registerGlobalReceiver(OverclockPayload.id, OverclockPayload::handle)

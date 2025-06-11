@@ -7,12 +7,12 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttribute
 import net.minecraft.registry.entry.RegistryEntry
 
-fun interface GetAttributeValueCallback {
+fun interface AccumulateAttributeValueCallback {
     companion object {
         @JvmField
-        val EVENT: Event<GetAttributeValueCallback> =
-            EventFactory.createArrayBacked(GetAttributeValueCallback::class.java) { listeners ->
-                GetAttributeValueCallback { entity, attribute, accumulator ->
+        val EVENT: Event<AccumulateAttributeValueCallback> =
+            EventFactory.createArrayBacked(AccumulateAttributeValueCallback::class.java) { listeners ->
+                AccumulateAttributeValueCallback { entity, attribute, accumulator ->
                     for (listener in listeners) {
                         listener.getAttributeValue(entity, attribute, accumulator)
                     }

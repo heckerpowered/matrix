@@ -1,8 +1,8 @@
 package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.event.AccumulateAttributeValueCallback
 import heckerpowered.matrix.common.event.GetArmorCallback
-import heckerpowered.matrix.common.event.GetAttributeValueCallback
 import heckerpowered.matrix.core.Accumulator
 import heckerpowered.matrix.core.inverseLerp
 import heckerpowered.matrix.core.mana
@@ -19,7 +19,7 @@ import net.minecraft.registry.entry.RegistryEntry
 object MagicShieldEnchantment {
     fun onInitialize() {
         GetArmorCallback.EVENT.register(::getArmor)
-        GetAttributeValueCallback.EVENT.register(::getAttributeValue)
+        AccumulateAttributeValueCallback.EVENT.register(::getAttributeValue)
     }
 
     private fun getAttributeValue(entity: LivingEntity, attribute: RegistryEntry<EntityAttribute>, accumulator: Accumulator) {

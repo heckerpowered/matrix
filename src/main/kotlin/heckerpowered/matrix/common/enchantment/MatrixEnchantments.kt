@@ -60,6 +60,9 @@ object MatrixEnchantments {
     @JvmField
     val PEAK_OVERDRIVE_ENCHANTMENT_KEY = of("peak_overdrive")
 
+    @JvmField
+    val LIGHTNING_STRIKE_ENCHANTMENT_KEY = of("lightning_strike")
+
     fun LivingEntity.getEnchantmentLevel(registryKey: RegistryKey<Enchantment>): Int {
         val entry = world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(registryKey)
         return EnchantmentHelper.getEquipmentLevel(entry, this)
@@ -86,6 +89,7 @@ object MatrixEnchantments {
         BrutalStrengthEnchantment.onInitialize()
         MagicShieldEnchantment.onInitialize()
         PeakOverdriveEnchantment.onInitialize()
+        LightningStrikeEnchantment.onInitialize()
     }
 
     fun ItemStack.getEnchantmentLevel(registryKey: RegistryKey<Enchantment>): Int {

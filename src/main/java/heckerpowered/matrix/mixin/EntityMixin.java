@@ -1,6 +1,7 @@
 package heckerpowered.matrix.mixin;
 
 import heckerpowered.matrix.common.effect.MatrixStatusEffects;
+import heckerpowered.matrix.common.entity.EntityProtection;
 import heckerpowered.matrix.common.event.EntityRemovedCallback;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
 import net.minecraft.block.BlockState;
@@ -79,6 +80,14 @@ class EntityMixin {
 
         if (WardenChestplateItem.isAngered(self)) {
             ci.cancel();
+        }
+    }
+
+    @Inject(method = "isInvulnerable", at = @At("TAIL"), cancellable = true)
+    private void isInvulnerable(CallbackInfoReturnable<Boolean> cir) {
+        final var protection = EntityProtection.getProtection(self());
+        if (protection == EntityProtection.PROTECTED_COMPLETE) {
+            cir.setReturnValue(true);
         }
     }
 }

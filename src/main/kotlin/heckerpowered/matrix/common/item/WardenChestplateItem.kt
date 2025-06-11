@@ -57,10 +57,15 @@ object WardenChestplateItem : ArmorItem(
 
     @JvmStatic
     fun isAngered(entity: LivingEntity): Boolean {
-        if (entity.getEquippedStack(EquipmentSlot.CHEST).item != this) {
+        try {
+            if (entity.getEquippedStack(EquipmentSlot.CHEST).item != this) {
+                return false
+            }
+
+            return isWardenArmorAngered(entity)
+        } catch (_: NullPointerException) {
+            // Is angered may be called when the entity is not initialized yet
             return false
         }
-
-        return isWardenArmorAngered(entity)
     }
 }

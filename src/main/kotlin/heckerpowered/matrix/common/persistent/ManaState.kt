@@ -80,7 +80,7 @@ var ServerPlayerEntity.mana: Double
     get() = ManaState.getPlayerState(this).mana
     set(value) {
         val manaData = ManaState.getPlayerState(this)
-        manaData.mana = value.coerceIn(.0, manaData.maxMana)
+        manaData.mana = value.coerceIn(.0, manaData.maxMana.coerceAtLeast(.0))
 
         ServerPlayNetworking.send(this, SyncManaPayload(manaData.mana, manaData.maxMana))
     }

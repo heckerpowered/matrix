@@ -1,5 +1,7 @@
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_MAX_POWER
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_POWER
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.block.BlockState
 import net.minecraft.entity.LivingEntity
@@ -15,8 +17,8 @@ object RedstoneAxeItem : AxeItem(
     redstoneToolMaterial,
     Settings()
         .attributeModifiers(createAttributeModifiers(redstoneToolMaterial, 5.0F, -3.0F))
-        .component(redstoneSuitMaxPowerComponent, 20)
-        .component(redstoneSuitPowerComponent, 0)
+        .component(REDSTONE_SUIT_POWER, 20)
+        .component(REDSTONE_SUIT_MAX_POWER, 0)
 ), RedstoneSuit {
     override fun getMiningSpeed(stack: ItemStack, state: BlockState): Float {
         val miningSpeed = super.getMiningSpeed(stack, state)
@@ -31,7 +33,7 @@ object RedstoneAxeItem : AxeItem(
         world: World,
         state: BlockState,
         pos: BlockPos,
-        miner: LivingEntity
+        miner: LivingEntity,
     ): Boolean {
         --stack.redstoneSuitPower
         return super.postMine(stack, world, state, pos, miner)
@@ -41,7 +43,7 @@ object RedstoneAxeItem : AxeItem(
         stack: ItemStack,
         context: TooltipContext,
         tooltip: MutableList<Text>,
-        type: TooltipType
+        type: TooltipType,
     ) {
         super.appendTooltip(stack, context, tooltip, type)
         RedstoneSuit.appendTooltip(stack, context, tooltip, type)

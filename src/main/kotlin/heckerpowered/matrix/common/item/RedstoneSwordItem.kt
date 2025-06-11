@@ -2,6 +2,8 @@ package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_MAX_POWER
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_POWER
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.item.ItemStack
 import net.minecraft.item.SwordItem
@@ -14,8 +16,8 @@ object RedstoneSwordItem : SwordItem(
     redstoneToolMaterial,
     Settings()
         .attributeModifiers(createAttributeModifiers(redstoneToolMaterial, 3, -2.4F))
-        .component(redstoneSuitMaxPowerComponent, 20)
-        .component(redstoneSuitPowerComponent, 0)
+        .component(REDSTONE_SUIT_MAX_POWER, 20)
+        .component(REDSTONE_SUIT_POWER, 0)
 ), RedstoneSuit {
     init {
         LivingAttackCallback.EVENT.register(::onLivingAttack)

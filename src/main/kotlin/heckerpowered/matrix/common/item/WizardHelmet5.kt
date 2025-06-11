@@ -8,12 +8,15 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Rarity
 
-object WizardHelmetWarpDancer : WizardHelmet(
+/**
+ * Wizard Helmet 5 'Axiom of Annihilation'
+ */
+object WizardHelmet5 : WizardHelmet(
     12.0,
     Settings()
         .fireproof()
         .rarity(Rarity.EPIC)
-        .component(MatrixComponents.maxLoad, 20.0)
+        .component(MatrixComponents.MAX_LOAD, 20.0)
 ) {
     init {
         LivingAttackCallback.EVENT.register(::onLivingAttack)
@@ -28,7 +31,7 @@ object WizardHelmetWarpDancer : WizardHelmet(
             return ActionResult.PASS
         }
 
-        if (attacker.wizardHelmet.item is WizardHelmetWarpDancer) {
+        if (attacker.wizardHelmet.item is WizardHelmet5) {
             event.damageMultiplier += 1
         }
         return ActionResult.PASS

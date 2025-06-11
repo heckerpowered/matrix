@@ -1,11 +1,12 @@
 #version 150 core
 
-uniform sampler2D framebuffer; // Input texture from the previous pass
-uniform float threshold;   // Brightness threshold (e.g., 0.7)
+uniform sampler2D framebuffer;// Input texture from the previous pass
+uniform float threshold;// Brightness threshold (e.g., 0.7)
+uniform float intensity = 1.0;
 
-in vec2 fragTexCoord; // Texture coordinates from vertex shader
+in vec2 fragTexCoord;// Texture coordinates from vertex shader
 
-out vec4 fragColor; // Output fragment color
+out vec4 fragColor;// Output fragment color
 
 // Function to calculate perceived brightness (luminance)
 float calculate_brightness(vec3 color) {
@@ -26,5 +27,5 @@ void main() {
     // Output the final color:
     // If brightness is above threshold (factor = 1.0), keep the original color.
     // If brightness is below threshold (factor = 0.0), output black.
-    fragColor = color * factor;
+    fragColor = color * factor;// * intensity;
 }

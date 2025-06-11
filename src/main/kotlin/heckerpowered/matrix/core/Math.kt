@@ -1,8 +1,15 @@
 package heckerpowered.matrix.core
 
+import heckerpowered.matrix.client.minecraft
+import heckerpowered.matrix.client.projectionMatrix
 import net.minecraft.util.math.Vec3d
 import org.joml.Matrix4f
+import org.joml.Quaternionf
+import org.joml.Vector2d
+import org.joml.Vector3d
 import org.joml.Vector4d
+import org.joml.Vector4f
+import java.lang.Math
 import kotlin.math.abs
 
 fun lerp(delta: Double, from: Double, to: Double): Double {
@@ -54,6 +61,10 @@ fun Vec3d.toVector4d(): Vector4d {
     return Vector4d(x, y, z, 1.0)
 }
 
+fun Vec3d.toVector4f(): Vector4f {
+    return Vector4f(x.toFloat(), y.toFloat(), z.toFloat(), 1.0F)
+}
+
 fun Vector4d.toVec3d(): Vec3d {
     return Vec3d(x / w, y / w, z / w)
 }
@@ -69,8 +80,30 @@ fun Vec3d.toMatrix4f(): Matrix4f {
     return matrix
 }
 
+fun Vec3d.toVector3d(): Vector3d {
+    return Vector3d(x, y, z)
+}
+
 operator fun Vec3d.times(matrix: Matrix4f): Vector4d {
     return matrix.times(toVector4d())
+}
+
+operator fun Vector4f.times(scalar: Float): Vector4f {
+    val result = Vector4f()
+    mul(scalar, result)
+    return result
+}
+
+operator fun Vector4f.times(matrix: Matrix4f): Vector4f {
+    return matrix.transform(this, Vector4f())
+}
+
+operator fun Vector4f.timesAssign(scalar: Float) {
+    mul(scalar)
+}
+
+operator fun Vector4f.timesAssign(matrix: Matrix4f) {
+    mul(matrix)
 }
 
 operator fun Matrix4f.times(vector: Vec3d): Vector4d {
@@ -91,4 +124,35 @@ operator fun Matrix4f.times(vector: Vector4d): Vector4d {
 
 operator fun Matrix4f.times(other: Matrix4f): Matrix4f {
     return mul(other)
+}
+
+fun worldToScreen(
+    worldPosition: Vec3d,
+    cameraPosition: Vec3d = minecraft.gameRenderer.camera.pos,
+    cameraRotation: Quaternionf = minecraft.gameRenderer.camera.rotation,
+    viewportWidth: Int = minecraft.window.scaledWidth,
+    viewportHeight: Int = minecraft.window.scaledHeight,
+): Vector2d? {
+    val viewMatrix = Matrix4f()
+        .rotate(cameraRotation.conjugate())
+        .translate(
+            -cameraPosition.x.toFloat(),
+            -cameraPosition.y.toFloat(),
+            -cameraPosition.z.toFloat(),
+        )
+    val viewProjectionMatrix = Matrix4f(projectionMatrix) * viewMatrix
+    val clipSpacePosition = worldPosition.toVector4f() * viewProjectionMatrix
+    if (clipSpacePosition.w <= 0.0F) {
+        return null
+    }
+
+    val ndcX = clipSpacePosition.x / clipSpacePosition.w
+    val ndcY = clipSpacePosition.y / clipSpacePosition.w
+    if (ndcX < -1.0F || ndcX > 1.0F || ndcY < -1.0F || ndcY > 1.0F) {
+        return null
+    }
+
+    val screenX = ((ndcX + 1.0F) / 2.0F) * viewportWidth
+    val screenY = (1.0F - (ndcY + 1.0F) / 2.0F) * viewportHeight
+    return Vector2d(screenX.toDouble(), screenY.toDouble())
 }

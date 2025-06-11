@@ -1,8 +1,8 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_EFFECT
+import heckerpowered.matrix.common.event.AccumulateAttributeValueCallback
 import heckerpowered.matrix.common.event.GetArmorCallback
-import heckerpowered.matrix.common.event.GetAttributeValueCallback
 import heckerpowered.matrix.core.Accumulator
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttribute
@@ -17,7 +17,7 @@ object ArmorPenetrationEffect : StatusEffect(
 ) {
     init {
         GetArmorCallback.EVENT.register(::getArmor)
-        GetAttributeValueCallback.EVENT.register(::getAttributeValue)
+        AccumulateAttributeValueCallback.EVENT.register(::getAttributeValue)
     }
 
     private fun getAttributeValue(entity: LivingEntity, attribute: RegistryEntry<EntityAttribute>, accumulator: Accumulator) {

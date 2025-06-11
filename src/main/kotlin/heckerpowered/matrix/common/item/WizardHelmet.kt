@@ -9,6 +9,7 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.event.ItemStackEquippedCallback
+import heckerpowered.matrix.common.item.MatrixComponents.MAX_MANA
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.component.DataComponentTypes
@@ -30,7 +31,7 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
     wizardArmorMaterial,
     Type.HELMET,
     settings
-        .component(wizardHelmetMaxManaComponent, maxMana)
+        .component(MAX_MANA, maxMana)
         .component(DataComponentTypes.MAX_STACK_SIZE, 1)
         .fireproof()
 ) {
@@ -77,7 +78,7 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
     }
 
     open fun getMaxMana(player: PlayerEntity, itemStack: ItemStack): Double {
-        var basicMaxMana = itemStack.getOrDefault(wizardHelmetMaxManaComponent, .0)
+        var basicMaxMana = itemStack.getOrDefault(MAX_MANA, .0)
         if (itemStack.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0) {
             basicMaxMana += 1
         }
@@ -111,11 +112,11 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
             return
         }
 
-        val currentLoad = stack.getOrDefault(MatrixComponents.load, .0)
+        val currentLoad = stack.getOrDefault(MatrixComponents.LOAD, .0)
         if (currentLoad <= .0) {
             return
         }
-        val maxLoad = stack.getOrDefault(MatrixComponents.maxLoad, .0)
+        val maxLoad = stack.getOrDefault(MatrixComponents.MAX_LOAD, .0)
         val extraLoad = currentLoad - maxLoad
         if (extraLoad > 0) {
             val breakChance = Random.nextDouble(100.0)
@@ -127,14 +128,14 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
         // Reduce 0.1% load per second
         if (entity.age % 20 == 0) {
             val nextLoad = currentLoad - 0.1
-            stack.set(MatrixComponents.load, nextLoad.coerceAtLeast(.0))
+            stack.set(MatrixComponents.LOAD, nextLoad.coerceAtLeast(.0))
         }
     }
 
     override fun appendTooltip(stack: ItemStack, context: TooltipContext, tooltip: MutableList<Text>, type: TooltipType) {
         super.appendTooltip(stack, context, tooltip, type)
-        val currentLoad = stack.getOrDefault(MatrixComponents.load, .0)
-        val maxLoad = stack.getOrDefault(MatrixComponents.maxLoad, .0)
+        val currentLoad = stack.getOrDefault(MatrixComponents.LOAD, .0)
+        val maxLoad = stack.getOrDefault(MatrixComponents.MAX_LOAD, .0)
         if (maxLoad <= 0 || currentLoad < 0) {
             return
         }

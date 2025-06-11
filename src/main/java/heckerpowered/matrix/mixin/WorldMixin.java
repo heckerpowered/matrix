@@ -1,6 +1,5 @@
 package heckerpowered.matrix.mixin;
 
-import heckerpowered.matrix.common.item.LightningChestplateBorrowedTimeKt;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
@@ -11,6 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.Consumer;
 
+import static heckerpowered.matrix.common.item.LightningChestplate1.isBorrowedTime;
+
 @Mixin(World.class)
 class WorldMixin {
     private WorldMixin() {
@@ -18,7 +19,7 @@ class WorldMixin {
 
     @Inject(method = "tickEntity", at = @At("HEAD"), cancellable = true)
     private void tickEntity(Consumer<Entity> tickConsumer, Entity entity, CallbackInfo ci) {
-        if (entity instanceof final PlayerEntity player && LightningChestplateBorrowedTimeKt.getBorrowedTimeActive(player)) {
+        if (entity instanceof final PlayerEntity player && isBorrowedTime(player)) {
             // Player is standalone ticking.
             ci.cancel();
         }

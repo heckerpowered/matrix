@@ -8,12 +8,15 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Rarity
 
-object WizardHelmetApogee : WizardHelmet(
+/**
+ * Wizard Helmet 4 'Might and Method'
+ */
+object WizardHelmet4 : WizardHelmet(
     11.0,
     Settings()
         .fireproof()
         .rarity(Rarity.RARE)
-        .component(MatrixComponents.maxLoad, 20.0)
+        .component(MatrixComponents.MAX_LOAD, 20.0)
 ) {
     init {
         LivingAttackCallback.EVENT.register(::onLivingAttack)
@@ -28,7 +31,7 @@ object WizardHelmetApogee : WizardHelmet(
             return ActionResult.PASS
         }
 
-        if (attacker.wizardHelmet.item !is WizardHelmetApogee) {
+        if (attacker.wizardHelmet.item !is WizardHelmet4) {
             return ActionResult.PASS
         }
         event.damageMultiplier += 0.85

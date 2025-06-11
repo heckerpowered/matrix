@@ -1,5 +1,7 @@
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_MAX_POWER
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_POWER
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.item.Item.TooltipContext
 import net.minecraft.item.ItemStack
@@ -10,7 +12,7 @@ import net.minecraft.util.Formatting
 interface RedstoneSuit {
     companion object {
         fun appendTooltip(
-            stack: ItemStack, context: TooltipContext, tooltip: MutableList<Text>, type: TooltipType
+            stack: ItemStack, context: TooltipContext, tooltip: MutableList<Text>, type: TooltipType,
         ) {
             if (!stack.isRedstoneSuit()) {
                 return
@@ -30,13 +32,13 @@ fun ItemStack.isRedstoneSuit(): Boolean {
 }
 
 var ItemStack.redstoneSuitMaxPower: Long
-    get() = getOrDefault(redstoneSuitMaxPowerComponent, 0).coerceAtLeast(0)
+    get() = getOrDefault(REDSTONE_SUIT_MAX_POWER, 0).coerceAtLeast(0)
     set(value) {
-        set(redstoneSuitMaxPowerComponent, value.coerceAtLeast(0))
+        set(REDSTONE_SUIT_MAX_POWER, value.coerceAtLeast(0))
     }
 
 var ItemStack.redstoneSuitPower: Long
-    get() = getOrDefault(redstoneSuitPowerComponent, 0).coerceAtLeast(0)
+    get() = getOrDefault(REDSTONE_SUIT_POWER, 0).coerceAtLeast(0)
     set(value) {
-        set(redstoneSuitPowerComponent, value.coerceIn(0..redstoneSuitMaxPower))
+        set(REDSTONE_SUIT_POWER, value.coerceIn(0..redstoneSuitMaxPower))
     }

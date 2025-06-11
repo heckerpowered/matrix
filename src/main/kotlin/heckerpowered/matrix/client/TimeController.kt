@@ -8,9 +8,6 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.render.RenderTickCounter
 import net.minecraft.util.Util
 
-/**
- *
- */
 object TimeController {
     private val timeControllers = mutableSetOf<SimpleDoubleAnimation>()
     private var previousMinScale = .0

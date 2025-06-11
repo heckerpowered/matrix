@@ -1,5 +1,6 @@
 package heckerpowered.matrix.client.ui.element
 
+import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
@@ -15,8 +16,8 @@ import net.minecraft.util.math.MathHelper
 class ManaBar {
     companion object {
         val manaBarColor = Color(0, 128, 255, 64)
-        val usageManaColor = Color(255, 0, 0, 128)
-        val costManaColor = Color(128, 0, 0, 128)
+        val usageManaColor = Color(255, 25, 25, 128)
+        val costManaColor = Color(128, 25, 25, 128)
     }
 
     private val easingFunction = ElasticEase()
@@ -63,6 +64,7 @@ class ManaBar {
             (maxPoint.x - usagePercentage * (renderer.scaledWindowWidth - 100)).coerceAtLeast(50.0),
             minPoint.y
         )
+
         renderer.renderRectangle(Rectangle(usageMinPoint, maxPoint), usageManaColor)
 
         val costPercentage = manaCost.animatedValue / maxMana.animatedValue
@@ -70,7 +72,11 @@ class ManaBar {
             (usageMinPoint.x - costPercentage * (renderer.scaledWindowWidth - 100)).coerceAtLeast(50.0),
             maxPoint.y
         )
+
+        val multiplier = 1.0F
+        RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
         renderer.renderRectangle(Rectangle(costMinPoint, Point(usageMinPoint.x, maxPoint.y + 3)), costManaColor)
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
     }
 
     private fun renderManaText(renderer: LegacyMatrixUIRenderer) {

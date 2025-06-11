@@ -8,3 +8,4 @@ val PlayerEntity.mana: Double
 
 val PlayerEntity.maxMana: Double
     get() = Matrix.proxy.getPlayerMaxMana(this)
+

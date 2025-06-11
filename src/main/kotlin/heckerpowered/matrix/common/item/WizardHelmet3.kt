@@ -8,12 +8,15 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Rarity
 
-object WizardHelmetRuin : WizardHelmet(
+/**
+ * Wizard Helmet 3 'Blood-forged Ruin'
+ */
+object WizardHelmet3 : WizardHelmet(
     10.0,
     Settings()
         .fireproof()
         .rarity(Rarity.UNCOMMON)
-        .component(MatrixComponents.maxLoad, 15.0)
+        .component(MatrixComponents.MAX_LOAD, 15.0)
 ) {
     init {
         LivingAttackCallback.EVENT.register(::onLivingAttack)
@@ -28,7 +31,7 @@ object WizardHelmetRuin : WizardHelmet(
             return ActionResult.PASS
         }
 
-        if (attacker.wizardHelmet.item is WizardHelmetRuin) {
+        if (attacker.wizardHelmet.item is WizardHelmet3) {
             event.damageMultiplier += 1
         }
         return ActionResult.PASS

@@ -5,6 +5,7 @@ import heckerpowered.matrix.client.network.MatrixClientPlayNetworking
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
 import heckerpowered.matrix.client.render.ScreenEffectRenderer
 import heckerpowered.matrix.client.render.entity.EmptyRenderer
+import heckerpowered.matrix.client.render.entity.FinderArrowEntityRenderer
 import heckerpowered.matrix.client.render.entity.MagicLightningEntityRenderer
 import heckerpowered.matrix.client.render.item.VortexItemRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
@@ -21,6 +22,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.render.entity.feature.FeatureRendererContext
 import net.minecraft.client.render.entity.model.EntityModel
 import net.minecraft.entity.LivingEntity
+import org.joml.Matrix4f
 import java.time.Duration
 
 val minecraft
@@ -31,6 +33,28 @@ val world
 
 val player
     get() = MinecraftClient.getInstance().player!!
+
+val projectionMatrix: Matrix4f
+    get() {
+        val gameRenderer = minecraft.gameRenderer
+        val tickDelta = minecraft.renderTickCounter.getTickDelta(true)
+        val projectionMatrix = gameRenderer.getBasicProjectionMatrix(gameRenderer.getFov(gameRenderer.camera, tickDelta, true))
+        return projectionMatrix
+    }
+
+val modelViewMatrix: Matrix4f
+    get() {
+        val camera = minecraft.gameRenderer.camera
+        return Matrix4f().apply {
+            identity()
+            set(camera.rotation.conjugate())
+            translate(
+                (-camera.pos.x).toFloat(),
+                (-camera.pos.y).toFloat(),
+                (-camera.pos.z).toFloat()
+            )
+        }
+    }
 
 val animationDuration: Duration = Duration.ofMillis(300)
 
@@ -58,8 +82,9 @@ class MatrixClient : ClientModInitializer {
     }
 
     private fun registerEntityRenderers() {
-        EntityRendererRegistry.register(MatrixEntityType.magicLightningEntity) { context -> MagicLightningEntityRenderer(context) }
-        EntityRendererRegistry.register(MatrixEntityType.attractorEntity) { context -> EmptyRenderer(context) }
+        EntityRendererRegistry.register(MatrixEntityType.MAGIC_LIGHTNING_ENTITY) { context -> MagicLightningEntityRenderer(context) }
+        EntityRendererRegistry.register(MatrixEntityType.ATTRACTOR_ENTITY) { context -> EmptyRenderer(context) }
+        EntityRendererRegistry.register(MatrixEntityType.FINDER_ARROW_ENTITY) { context -> FinderArrowEntityRenderer(context) }
     }
 
     companion object {

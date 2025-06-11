@@ -1,8 +1,9 @@
 package heckerpowered.matrix.common.network
 
-import heckerpowered.matrix.common.item.LightningChestplateBorrowedTime
-import heckerpowered.matrix.common.item.borrowedTimeChargeComponent
-import heckerpowered.matrix.common.item.borrowedTimeStateComponent
+import heckerpowered.matrix.common.item.LightningChestplate1
+import heckerpowered.matrix.common.item.MatrixComponents.BORROWED_TIME_CHARGE
+import heckerpowered.matrix.common.item.MatrixComponents.BORROWED_TIME_STATE
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.network.PacketByteBuf
@@ -28,17 +29,20 @@ class BorrowedTimePayload : CustomPayload {
     fun handle(context: Context) {
         val player = context.player()
         val lightningChestplate = player.getEquippedStack(EquipmentSlot.CHEST)
-        if (lightningChestplate.item !is LightningChestplateBorrowedTime) {
+        if (lightningChestplate.item !is LightningChestplate1) {
             return
         }
 
-        var currentState = lightningChestplate.components.getOrDefault(borrowedTimeStateComponent, false)
+        var currentState = lightningChestplate.components.getOrDefault(BORROWED_TIME_STATE, false)
         if (currentState) {
-            lightningChestplate.set(borrowedTimeStateComponent, false)
-        } else if (lightningChestplate.components.getOrDefault(borrowedTimeChargeComponent, 0) > 0) {
-            lightningChestplate.set(borrowedTimeStateComponent, true)
+            lightningChestplate.set(BORROWED_TIME_STATE, false)
+            player.server.playerManager.playerList.forEach {
+                ServerPlayNetworking.send(it, TeleportPayload(player))
+            }
+        } else if (lightningChestplate.components.getOrDefault(BORROWED_TIME_CHARGE, 0) > 0) {
+            lightningChestplate.set(BORROWED_TIME_STATE, true)
         }
-        currentState = lightningChestplate.components.getOrDefault(borrowedTimeStateComponent, false)
+        currentState = lightningChestplate.components.getOrDefault(BORROWED_TIME_STATE, false)
         context.responseSender().sendPacket(ClientboundBorrowedTimePayload(currentState))
     }
 }

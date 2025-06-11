@@ -2,10 +2,13 @@ package heckerpowered.matrix.common.item
 
 import net.minecraft.util.Rarity
 
-object WizardHelmetDoom : WizardHelmet(
-    9.0,
+/**
+ * Wizard Helmet 1 'Basic'
+ */
+object WizardHelmet1 : WizardHelmet(
+    8.0,
     Settings()
         .fireproof()
         .rarity(Rarity.COMMON)
-        .component(MatrixComponents.maxLoad, 10.0)
+        .component(MatrixComponents.MAX_LOAD, 5.0)
 )

@@ -65,6 +65,7 @@ data class WarpPayload(
 
         // Time slow can be only used in single player mode.
         player = if (playerStandaloneTick) {
+            task
             context.player()
         } else {
             null

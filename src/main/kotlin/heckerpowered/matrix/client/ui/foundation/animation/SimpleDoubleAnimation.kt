@@ -47,6 +47,9 @@ class SimpleDoubleAnimation(
     var animatedValue: Double
         get() = doubleAnimation.animatedValue
         set(value) {
+            if (value.isNaN()) {
+                return
+            }
             doubleAnimation.currentValue = value
             from = value
             to = value

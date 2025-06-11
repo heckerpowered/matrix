@@ -2,6 +2,8 @@ package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.common.event.LivingDamageCallback
 import heckerpowered.matrix.common.event.LivingDamageEvent
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_MAX_POWER
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_POWER
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.LivingEntity
@@ -17,8 +19,8 @@ object RedstoneLeggingsItem : ArmorItem(
     Type.LEGGINGS,
     Settings()
         .maxDamage(Type.LEGGINGS.getMaxDamage(24))
-        .component(redstoneSuitMaxPowerComponent, 20)
-        .component(redstoneSuitPowerComponent, 0)
+        .component(REDSTONE_SUIT_MAX_POWER, 20)
+        .component(REDSTONE_SUIT_POWER, 0)
 ), RedstoneSuit {
 
     init {

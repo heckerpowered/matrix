@@ -7,10 +7,10 @@
     "matrix:stone_helmet",
     "matrix:wooden_helmet",
     "matrix:wizard_helmet_hacker",
-    "matrix:wizard_helmet_basic",
-    "matrix:wizard_helmet_doom",
-    "matrix:wizard_helmet_ruin",
-    "matrix:wizard_helmet_apogee",
-    "matrix:wizard_helmet_warp_dancer"
+    "matrix:wizard_helmet_1",
+    "matrix:wizard_helmet_2",
+    "matrix:wizard_helmet_3",
+    "matrix:wizard_helmet_4",
+    "matrix:wizard_helmet_5"
   ]
 }

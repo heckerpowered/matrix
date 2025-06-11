@@ -8,7 +8,7 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-object LightningBoltMagic : Magic(MatrixLanguage.magicLightningBoltMagic, 20, MatrixLanguage.magicLightningBoltMagicDescription, 20) {
+object LightningBoltMagic : Magic(MatrixLanguage.magicLightningBoltMagic, 15, MatrixLanguage.magicLightningBoltMagicDescription, 20) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         super.cast(player, target, sequence, data)
         val lightningTypes = MagicLightningEntity.LightningType.entries

@@ -2,6 +2,8 @@ package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.common.event.LivingDamageCallback
 import heckerpowered.matrix.common.event.LivingDamageEvent
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_MAX_POWER
+import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_POWER
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.item.ArmorItem
@@ -17,8 +19,8 @@ object RedstoneChestplateItem : ArmorItem(
     Type.CHESTPLATE,
     Settings()
         .maxDamage(Type.CHESTPLATE.getMaxDamage(24))
-        .component(redstoneSuitMaxPowerComponent, 20)
-        .component(redstoneSuitPowerComponent, 0)
+        .component(REDSTONE_SUIT_MAX_POWER, 20)
+        .component(REDSTONE_SUIT_POWER, 0)
 ), RedstoneSuit {
     init {
         ItemTags.ARMOR_ENCHANTABLE

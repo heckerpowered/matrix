@@ -155,7 +155,7 @@ object ScreenEffectRenderer {
 
     fun onInitialize() {
         ClientTickEvents.START_CLIENT_TICK.register(::onTick)
-        PostProcessCallback.event.register(::onPostProcess)
+        PostProcessCallback.EVENT.register(::onPostProcess)
 
         colorAnimation.red.start()
         colorAnimation.green.start()
@@ -167,16 +167,15 @@ object ScreenEffectRenderer {
     }
 
     private fun onPostProcess() {
+        // bloomThresholdAnimation.animatedValue = 1.0
         if (bloomThresholdAnimation.animatedValue.approximatelyEqual(1.0)) {
-            // return
+            return
         }
 
         spoofFramebuffer {
             minecraft.framebuffer.beginWrite(false)
-            particleSystem.updateParticles()
-            particleSystem.renderParticles()
 
-            BloomEffect.brightnessThreshold = 1.0F// bloomThresholdAnimation.animatedValue.toFloat()
+            BloomEffect.brightnessThreshold = bloomThresholdAnimation.animatedValue.toFloat()
             BloomEffect.brightnessPassFramebuffer = minecraft.framebuffer
             BloomEffect.renderBloom()
 
@@ -352,7 +351,7 @@ object ScreenEffectRenderer {
         if (player.bloodPactActive) {
             useBloom = true
         } else if (previousAngryState || auraAlphaAnimation.animatedValue != .0) {
-            useAuraShader = true
+            useAuraShader = false // Disabled temporarily
         }
 
         if (!useBloom && !useAuraShader) {
@@ -380,6 +379,7 @@ object ScreenEffectRenderer {
         // PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
 
         // copyFramebuffer() will discard all full black pixels.
+        BloomEffect.bloomIntensity = 0.5F
         spoofFramebuffer {
             if (useBloom) {
                 BloomEffect.brightnessThreshold = .0F
@@ -406,5 +406,6 @@ object ScreenEffectRenderer {
         useAuraShader = false
         useBloom = false
         minecraft.framebuffer.beginWrite(true)
+        BloomEffect.bloomIntensity = 1.0F
     }
 }
