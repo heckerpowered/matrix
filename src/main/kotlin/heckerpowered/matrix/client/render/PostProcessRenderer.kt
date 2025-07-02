@@ -12,6 +12,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.gl.SimpleFramebuffer
 import org.lwjgl.opengl.GL31
+import org.lwjgl.opengl.GL46
 
 val framebufferProvider: UniformProvider
     get() = PostProcessRenderer.framebufferProvider
@@ -42,11 +43,20 @@ object PostProcessRenderer {
         RenderSystem.glUniform1i(pointer, 1)
     }
 
+    var levelOfDetail = .0F
+    private val levelOfDetailProvider = UniformProvider("lod") { pointer ->
+        if (pointer == -1) {
+            return@UniformProvider
+        }
+
+        GL46.glUniform1f(pointer, levelOfDetail)
+    }
+
     private val blitShader by lazy {
         BlitShader(
             resourceToString("/assets/matrix/shaders/sobel.vert"),
             resourceToString("/assets/matrix/shaders/blit.fsh"),
-            arrayOf(framebufferProvider, depthAttachmentProvider)
+            arrayOf(framebufferProvider, depthAttachmentProvider, levelOfDetailProvider)
         )
     }
 
@@ -57,6 +67,12 @@ object PostProcessRenderer {
     fun currentFramebuffer(): Framebuffer {
         return framebuffers[currentFramebufferIndex]
     }
+
+    val ping: Framebuffer
+        get() = framebuffers[0]
+
+    val pong: Framebuffer
+        get() = framebuffers[1]
 
     fun nextFramebuffer() {
         currentFramebufferIndex++
@@ -112,7 +128,7 @@ object PostProcessRenderer {
         renderFramebufferToScreen(renderedFramebuffer)
     }
 
-    private fun resetFramebuffers() {
+    fun resetFramebuffers() {
         currentFramebufferIndex = 0
         framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
     }
@@ -160,6 +176,7 @@ object PostProcessRenderer {
             BlitShader.blit()
             shader.disableShader()
         }
+        framebuffer.endWrite()
 
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
     }

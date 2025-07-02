@@ -181,7 +181,7 @@ object ScreenEffectRenderer {
 
             RenderSystem.enableBlend()
             RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
-            PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
+            PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
             RenderSystem.defaultBlendFunc()
         }
     }
@@ -302,9 +302,9 @@ object ScreenEffectRenderer {
         edgeThresholdAnimation.duration = Duration.ofMillis(10000)
         edgeThresholdAnimation.start()
 
-        bloomThresholdAnimation.from = .0
+        bloomThresholdAnimation.from = -1.0
         bloomThresholdAnimation.to = 1.0
-        bloomThresholdAnimation.duration = Duration.ofSeconds(1)
+        bloomThresholdAnimation.duration = Duration.ofSeconds(3)
         bloomThresholdAnimation.start()
     }
 
@@ -386,7 +386,7 @@ object ScreenEffectRenderer {
                 BloomEffect.brightnessPassFramebuffer = sceneFramebuffer
                 BloomEffect.renderBloom()
                 minecraft.framebuffer.beginWrite(true)
-                BloomEffect.bloomFramebuffer.apply {
+                BloomEffect.bloomUpFramebuffer.apply {
                     RenderSystem.enableDepthTest()
                     RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
                     draw(viewportWidth, viewportHeight, false)

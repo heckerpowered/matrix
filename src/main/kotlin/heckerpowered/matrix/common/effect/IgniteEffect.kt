@@ -41,9 +41,7 @@ object IgniteEffect : StatusEffect(
         val igniteEffect = target.getStatusEffect(IGNITE_EFFECT)
         if (igniteEffect != null) {
             event.damageMultiplier += 0.2
-            igniteEffect.mapDuration {
-                it + 10
-            }
+            igniteEffect.mapDuration { it + 10 }
             target.fireTicks += 10
         }
 

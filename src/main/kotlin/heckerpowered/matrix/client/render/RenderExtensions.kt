@@ -12,9 +12,6 @@ import net.minecraft.client.texture.NativeImage
 import org.joml.Vector4f
 import org.lwjgl.opengl.GL46.*
 import java.io.File
-import kotlin.math.floor
-import kotlin.math.log2
-import kotlin.math.max
 
 fun Framebuffer.blit(target: Framebuffer, mask: Int, filter: Int) {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo)
@@ -55,10 +52,10 @@ private val colorFusionShader by lazy {
     )
 }
 
-private val colorFusionFilterShader by lazy {
+private val blendScreenShader by lazy {
     BlitShader(
         resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/color_filter_fusion.fsh"),
+        resourceToString("/assets/matrix/shaders/post/blend_screen.fsh"),
         arrayOf(
             UniformProvider("primaryFramebuffer") { pointer ->
                 val framebuffer = primaryFramebuffer ?: return@UniformProvider
@@ -96,10 +93,10 @@ infix fun Framebuffer.blend(other: Framebuffer) {
     colorFusionShader.blit()
 }
 
-infix fun Framebuffer.filterBlend(other: Framebuffer) {
+infix fun Framebuffer.blendScreen(other: Framebuffer) {
     primaryFramebuffer = this
     secondaryFramebuffer = other
-    colorFusionFilterShader.blit()
+    blendScreenShader.blit()
 }
 
 fun Framebuffer.draw(drawFunction: () -> Unit) {
@@ -139,10 +136,59 @@ infix fun Framebuffer.nearestCopyTo(other: Framebuffer) {
     blit(other, GL_COLOR_BUFFER_BIT, GL_NEAREST)
 }
 
+/**
+ * Calculates the recommend number of mipmap levels for a given texture size.
+ *
+ * Mipmap levels are calculated based on the longest edge (width or height).
+ * The number of levels is defined as:
+ *
+ * `floor(log2(max(width, height))) + 1`
+ *
+ * This represents the total numbers of mip levels including the base level (origin size).
+ * where each subsequent level is half the size of the previous one, until reaching 1x1.
+ *
+ * This implementation uses bit-level operation to avoid floating-point math,
+ * which is faster and more efficient on the JVM.
+ *
+ * @param width the width of the texture
+ * @param height the height of the texture
+ * @return the number of mipmap levels needed.
+ * @author heckerpowered
+ */
 fun recommendMipLevel(width: Int, height: Int): Int {
-    return floor(log2(max(width, height).toDouble())).toInt() + 1
+    val size = maxOf(width, height)
+
+    // Explantation:
+    // The number of mip levels is: floor(log2(size)) + 1
+    //
+    // (size - 1).countLeadingZeroBits() gives the number of zero bits before the first 1 bit.
+    // For example: 256 (0B100000000) has 23 leading zeros in a 32-bit int.
+    //
+    // So: Int.SIZE_BITS - (size - 1).countLeadingZeroBits()
+    //   = 32 - countLeadingZeroBits(size - 1)
+    //   = floor(log2(size)) + 1
+    //
+    // This avoids using log2 and is equivalent for all positive integers.
+    return Int.SIZE_BITS - (size - 1).countLeadingZeroBits()
 }
 
+/**
+ * Calculates the recommend number of mipmap levels for this framebuffer.
+ *
+ * Mipmap levels are calculated based on the longest edge (width or height).
+ * The number of levels is defined as:
+ *
+ * `floor(log2(max(width, height))) + 1`
+ *
+ * This represents the total numbers of mip levels including the base level (origin size).
+ * where each subsequent level is half the size of the previous one, until reaching 1x1.
+ *
+ * This implementation uses bit-level operation to avoid floating-point math,
+ * which is faster and more efficient on the JVM.
+ *
+ * @return the number of mipmap levels needed.
+ * @author heckerpowered
+ */
 fun Framebuffer.recommendMipLevel(): Int {
     return recommendMipLevel(textureWidth, textureHeight)
 }

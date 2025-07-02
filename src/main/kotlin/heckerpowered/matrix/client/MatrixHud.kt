@@ -344,11 +344,7 @@ object MatrixHud {
                 1.0..10.0
             )
             magicOverclock.currentValue = newOverclock
-            ClientPlayNetworking.send(
-                OverclockPayload(
-                    manaOverclock.currentValue, magicOverclock.currentValue
-                )
-            )
+            ClientPlayNetworking.send(OverclockPayload(manaOverclock.currentValue, magicOverclock.currentValue))
         }
 
         while (MatrixKeyBindings.overclockMana.wasPressed()) {
@@ -835,7 +831,7 @@ object MatrixHud {
 
             BloomEffect.renderBloom()
             RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
-            PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
+            PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
             RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
         }
 
@@ -861,7 +857,6 @@ object MatrixHud {
             blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
         }
 
-        BloomEffect.bloomFramebuffer.clear(true)
         BloomEffect.brightnessPassFramebuffer = blurFramebuffer
         BloomEffect.brightnessThreshold = 1.0F
         BloomEffect.bloomIntensity = 1.0F
@@ -869,7 +864,7 @@ object MatrixHud {
         BloomEffect.bloomIntensity = 1.0F
 
         RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
-        PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
+        PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
         RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
 
         GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
@@ -1871,6 +1866,8 @@ object MatrixHud {
         return false
     }
 
+    private var debug = false
+
     @JvmStatic
     fun onMouseButton(window: Long, button: Int, action: Int, mods: Int): Boolean {
         if (window != minecraft.window.handle) {
@@ -1879,6 +1876,8 @@ object MatrixHud {
 
         if (shouldRenderHud() && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
             if (action == GLFW.GLFW_PRESS) {
+                debug = true
+
                 fovZoomRatio += 0.2
                 isPressingRightMouseButton = true
                 return true

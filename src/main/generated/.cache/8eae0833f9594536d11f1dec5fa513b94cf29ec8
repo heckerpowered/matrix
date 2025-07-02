@@ -1,4 +1,4 @@
-// 1.21	2025-06-10T20:21:21.777526	matrix/Tags for minecraft:item
+// 1.21	2025-06-21T22:37:44.137969	matrix/Tags for minecraft:item
 601216415c5932fef46338f674668335de84a695 data/minecraft/tags/item/axes.json
 4d2a91a43addc79539b93bc838f7b1a5ca648b65 data/minecraft/tags/item/swords.json
 3710937a7995e1f6b895c946326f84fe10512445 data/minecraft/tags/item/enchantable/mining.json
@@ -20,8 +20,8 @@ e91c97fd560037a265b842b9f754a82c11f23759 data/minecraft/tags/item/shovels.json
 31b8cb36fc5f41b0be4c0d7e242e74083006cc50 data/minecraft/tags/item/enchantable/vanishing.json
 87a9052cb8326380df28a0073e814abfb7ba18e0 data/minecraft/tags/item/enchantable/foot_armor.json
 4d2a91a43addc79539b93bc838f7b1a5ca648b65 data/minecraft/tags/item/enchantable/fire_aspect.json
-37bf4d34cf94607e0e61f471f70e9cf250644bbd data/minecraft/tags/item/arrows.json
 8eb16b26ec912f262b7a97fa47fb8e6cb103eba3 data/matrix/tags/item/wizard_helmet.json
+37bf4d34cf94607e0e61f471f70e9cf250644bbd data/minecraft/tags/item/arrows.json
 4caef7283266db549752f44b1846661ea99f7548 data/minecraft/tags/item/enchantable/head_armor.json
 ce30669f5b3966409611514bfb7e7ef72a83e834 data/minecraft/tags/item/enchantable/armor.json
 35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/minecraft/tags/item/enchantable/trident.json

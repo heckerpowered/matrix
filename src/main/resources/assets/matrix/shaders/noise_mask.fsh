@@ -4,9 +4,10 @@ uniform sampler2D noiseTexture;
 uniform float dissolveFactor = 0.5;
 uniform float emissiveRange = 0.05;
 uniform vec4 emissiveColor = vec4(0.1, 0.5, 1.0, 1.0);
-uniform float emissiveStrength = 10.0;
+uniform float emissiveStrength = 15.0;
 uniform float pixelStrength = 16.0;
 uniform float detialStrength = 1;
+uniform float time;
 uniform vec2 resolution = vec2(1.0, 1.0);
 
 layout (location = 0) out vec4 fragColor;
@@ -20,11 +21,11 @@ vec2 texCoord() {
 
 float pixelColor() {
     vec2 pixelTexCoord = ceil(texCoord() * pixelStrength) / pixelStrength;
-    return texture(noiseTexture, pixelTexCoord).b;
+    return texture(noiseTexture, pixelTexCoord + vec2(time * 0.1, time * 0.1)).b;
 }
 
 float pixelAnimation() {
-    float pixelNoise = ceil(texCoord().x * pixelStrength) / pixelStrength;
+    float pixelNoise = ceil(texCoord().r * pixelStrength) / pixelStrength;
     return pixelNoise - mix(-1.5, 1.5F, 1.0F - dissolveFactor);
 }
 

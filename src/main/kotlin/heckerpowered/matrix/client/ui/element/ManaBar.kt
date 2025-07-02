@@ -15,7 +15,7 @@ import net.minecraft.util.math.MathHelper
 
 class ManaBar {
     companion object {
-        val manaBarColor = Color(0, 128, 255, 64)
+        val manaBarColor = Color(25, 128, 255, 64)
         val usageManaColor = Color(255, 25, 25, 128)
         val costManaColor = Color(128, 25, 25, 128)
     }
@@ -57,7 +57,10 @@ class ManaBar {
             25.0 + shownAnimation.animatedValue
         )
 
+        val multiplier = 1F
+        RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
         renderer.renderRectangle(Rectangle(minPoint, maxPoint), manaBarColor)
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
 
         val usagePercentage = manaUsage.animatedValue / maxMana.animatedValue
         val usageMinPoint = Point(
@@ -73,10 +76,10 @@ class ManaBar {
             maxPoint.y
         )
 
-        val multiplier = 1.0F
-        RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
+        // val multiplier = 1.0F
+        // RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
         renderer.renderRectangle(Rectangle(costMinPoint, Point(usageMinPoint.x, maxPoint.y + 3)), costManaColor)
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
+        // RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
     }
 
     private fun renderManaText(renderer: LegacyMatrixUIRenderer) {

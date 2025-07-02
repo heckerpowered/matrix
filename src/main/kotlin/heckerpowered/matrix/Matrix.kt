@@ -16,11 +16,14 @@ import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.recipe.MatrixRecipeSerializer
 import net.fabricmc.api.ModInitializer
 import net.minecraft.util.Identifier
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 object Matrix : ModInitializer {
     const val MOD_ID = "matrix"
-    val LOGGER = LoggerFactory.getLogger("matrix")
+
+    @JvmField
+    val LOGGER: Logger = LoggerFactory.getLogger("matrix")
 
     var proxy = MatrixCommonProxy()
 

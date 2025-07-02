@@ -13,7 +13,7 @@ void main() {
     vec4 primaryFramebufferColor = texture(primaryFramebuffer, fragTexCoord);
     vec4 secondaryFramebufferColor = texture(secondaryFramebuffer, fragTexCoord);
     vec3 rgbColor = primaryFramebufferColor.rgb + secondaryFramebufferColor.rgb;
-    float alpha = (primaryFramebufferColor.a + secondaryFramebufferColor.a) / 2;
+    // float alpha = (primaryFramebufferColor.a + secondaryFramebufferColor.a) / 2;
     fragColor = (primaryFramebufferColor + secondaryFramebufferColor) * colorMultiplier;
     // fragColor.a = alpha;
 }

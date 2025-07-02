@@ -5,7 +5,8 @@ import heckerpowered.matrix.common.isInvulnerableToEffect
 import heckerpowered.matrix.common.magics.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.persistent.getChannelSequence
-import heckerpowered.matrix.core.getNearestEntities
+import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
+import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
@@ -29,22 +30,33 @@ object BreakingBadMagic : Magic(MatrixLanguage.magicBreakingBad, 9, MatrixLangua
             return
         }
 
-        var spreadTarget = target
-        repeat(4) {
-            val nearestEntity = spreadTarget.getNearestEntities(8.0) {
+        target.getAdjacentEntities(8.0)
+            .filter {
                 it is LivingEntity
                         && (it.getChannelSequence(player)?.channelingMagicCount() ?: 0) == 0
                         && it != player
                         && it.isAlive
             }
-            if (nearestEntity == null || nearestEntity !is LivingEntity) {
-                return
+            .map { it as LivingEntity }
+            .consumeWhile(4) {
+                ChannelSequence.channelMagic(BreakingBadMagic, player, it, false, data = MagicData(true))
             }
-
-            ChannelSequence.channelMagic(BreakingBadMagic, player, nearestEntity, false, data = MagicData(true))
-
-            spreadTarget = nearestEntity
-        }
+        // var spreadTarget = target
+        // repeat(4) {
+        //     val nearestEntity = spreadTarget.getNearestEntities(8.0) {
+        //         it is LivingEntity
+        //                 && (it.getChannelSequence(player)?.channelingMagicCount() ?: 0) == 0
+        //                 && it != player
+        //                 && it.isAlive
+        //     }
+        //     if (nearestEntity == null || nearestEntity !is LivingEntity) {
+        //         return
+        //     }
+//
+        //     ChannelSequence.channelMagic(BreakingBadMagic, player, nearestEntity, false, data = MagicData(true))
+//
+        //     spreadTarget = nearestEntity
+        // }
     }
 
     override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {

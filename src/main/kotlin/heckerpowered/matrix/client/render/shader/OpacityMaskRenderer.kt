@@ -47,7 +47,7 @@ object OpacityMaskRenderer {
      *
      * The actual discard logic is implemented in the `opacity_mask.fsh` shader.
      */
-    private val opacityMaskShader = Shader(
+    private val opacityMaskShader = BlitShader(
         resourceToString("/assets/matrix/shaders/sobel.vert"),
         resourceToString("/assets/matrix/shaders/post/opacity_mask.fsh"),
         arrayOf(

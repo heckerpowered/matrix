@@ -1,24 +1,51 @@
 package heckerpowered.matrix.client.render.post
 
 import com.mojang.blaze3d.platform.GlConst
+import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.minecraft
-import heckerpowered.matrix.client.render.*
+import heckerpowered.matrix.client.render.PostProcessRenderer
+import heckerpowered.matrix.client.render.recommendMipLevel
+import heckerpowered.matrix.client.render.shader.TentShader
 import heckerpowered.matrix.client.shader.BlitShader
 import heckerpowered.matrix.client.shader.UniformProvider
+import heckerpowered.matrix.core.FramebufferExtension.Companion.allocateMipmaps
+import heckerpowered.matrix.core.FramebufferExtension.Companion.beginReadLod
+import heckerpowered.matrix.core.FramebufferExtension.Companion.beginWriteLod
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.gl.Framebuffer
-import org.joml.Vector4f
-import org.lwjgl.opengl.GL31
-import org.lwjgl.opengl.GL46
+import org.lwjgl.opengl.GL46.*
+import org.slf4j.MarkerFactory
 
 object BloomEffect {
+    private val MARKER = MarkerFactory.getMarker("BLOOM_RENDERER")
+
     private val brightFramebuffer = PostProcessRenderer.createManagedFramebuffer()
-    val bloomFramebuffer = PostProcessRenderer.createManagedFramebuffer()
+    val bloomDownFramebuffer = PostProcessRenderer.createManagedFramebuffer()
+    val bloomUpFramebuffer = PostProcessRenderer.createManagedFramebuffer()
+
+    init {
+        bloomDownFramebuffer.allocateMipmaps = true
+        bloomDownFramebuffer.resize(bloomDownFramebuffer.textureWidth, bloomDownFramebuffer.textureHeight, true)
+
+        bloomDownFramebuffer.beginRead()
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        bloomDownFramebuffer.endRead()
+
+        bloomUpFramebuffer.allocateMipmaps = true
+        bloomUpFramebuffer.resize(bloomDownFramebuffer.textureWidth, bloomDownFramebuffer.textureHeight, true)
+
+        bloomUpFramebuffer.beginRead()
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        bloomUpFramebuffer.endRead()
+    }
 
     var brightnessPassFramebuffer: Framebuffer = minecraft.framebuffer
     var brightnessThreshold = 0F
     var bloomIntensity = 1.0F
+
     private val brightnessShader by lazy {
         BlitShader(
             resourceToString("/assets/matrix/shaders/sobel.vert"),
@@ -26,72 +53,113 @@ object BloomEffect {
             arrayOf(
                 UniformProvider("framebuffer") { pointer ->
                     val framebuffer = brightnessPassFramebuffer
-                    GL31.glActiveTexture(GlConst.GL_TEXTURE0)
-                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                    GL31.glUniform1i(pointer, 0)
+                    glActiveTexture(GlConst.GL_TEXTURE0)
+                    glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
+                    glUniform1i(pointer, 0)
                 },
                 UniformProvider("threshold") { pointer ->
-                    GL31.glUniform1f(pointer, brightnessThreshold)
+                    glUniform1f(pointer, brightnessThreshold)
                 },
                 UniformProvider("intensity") { pointer ->
-                    GL31.glUniform1f(pointer, bloomIntensity)
+                    glUniform1f(pointer, bloomIntensity)
                 }
             )
         )
     }
 
-    fun renderBloom() {
-        brightFramebuffer.clear(false)
-        bloomFramebuffer.clear(false)
+    private fun clearBloomPasses(mipLevel: Int) {
+        brightFramebuffer.clear(true)
 
-        PostProcessRenderer.renderShaderToFramebuffer(brightnessShader, brightFramebuffer)
-
-        var lastFramebuffer = ScaleSampling.getDownScalingFramebuffer(1.0)
-        brightFramebuffer copyTo lastFramebuffer
-        val mipLevel = minecraft.framebuffer.recommendMipLevel()
-        var resolutionScale = 1.0
-        val resolutionScalePerLevel = 2
         for (i in 0..<mipLevel) {
-            resolutionScale /= resolutionScalePerLevel
-            val currentScalingFramebuffer = ScaleSampling.getDownScalingFramebuffer(resolutionScale)
-            val previousScalingFramebuffer = ScaleSampling.getDownScalingFramebuffer(resolutionScale * resolutionScalePerLevel)
+            bloomDownFramebuffer.beginWriteLod(i)
+            bloomUpFramebuffer.beginWriteLod(i)
 
-            GL46.glBindTexture(GlConst.GL_TEXTURE_2D, previousScalingFramebuffer.colorAttachment)
-            GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MIN_FILTER, GL31.GL_LINEAR)
-            GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MAG_FILTER, GL31.GL_LINEAR)
-
-            previousScalingFramebuffer tent currentScalingFramebuffer
-            lastFramebuffer = currentScalingFramebuffer
+            bloomDownFramebuffer.clear(true)
+            bloomUpFramebuffer.clear(true)
         }
+    }
 
-        lastFramebuffer copyTo ScaleSampling.getUpScalingFramebuffer(resolutionScale)
-        bloomIntensity = 1F
-        colorMultiplier = Vector4f(bloomIntensity, bloomIntensity, bloomIntensity, bloomIntensity)
-        for (i in (0..<mipLevel).reversed()) {
-            resolutionScale *= resolutionScalePerLevel
+    private fun computeBloomPass() {
+        PostProcessRenderer.renderShaderToFramebuffer(brightnessShader, brightFramebuffer)
+    }
 
-            val currentScalingFramebuffer = ScaleSampling.getUpScalingFramebuffer(resolutionScale)
-            val previousScalingFramebuffer = ScaleSampling.getUpScalingFramebuffer(resolutionScale / resolutionScalePerLevel)
+    private fun prepareDownsamplePass() {
+        TentShader.framebufferObject = brightFramebuffer.colorAttachment
+        // PostProcessRenderer.renderShaderToFramebuffer(TentShader.tentBlurShader, bloomDownFramebuffer)
+        bloomDownFramebuffer.beginWriteLod(0)
+        PostProcessRenderer.copyFramebuffer(brightFramebuffer, bloomDownFramebuffer)
+    }
 
-            val previousDownScalingFramebuffer = ScaleSampling.getDownScalingFramebuffer(resolutionScale / resolutionScalePerLevel)
+    private fun generateDownsamplePasses(mipLevel: Int) {
+        prepareDownsamplePass()
 
-            GL46.glBindTexture(GlConst.GL_TEXTURE_2D, previousScalingFramebuffer.colorAttachment)
-            GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MIN_FILTER, GL31.GL_LINEAR)
-            GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MAG_FILTER, GL31.GL_LINEAR)
+        TentShader.levelOfDetail = .0F
+        for (i in 1..<mipLevel) {
+            TentShader.framebufferObject = bloomDownFramebuffer.colorAttachment
+            TentShader.levelOfDetail = i - 1.0F
 
-            GL46.glBindTexture(GlConst.GL_TEXTURE_2D, previousDownScalingFramebuffer.colorAttachment)
-            GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MIN_FILTER, GL31.GL_LINEAR)
-            GL31.glTexParameteri(GL31.GL_TEXTURE_2D, GL31.GL_TEXTURE_MAG_FILTER, GL31.GL_LINEAR)
-
-            previousScalingFramebuffer copyTo currentScalingFramebuffer
-            previousDownScalingFramebuffer tent previousDownScalingFramebuffer
-            currentScalingFramebuffer.draw {
-                previousDownScalingFramebuffer blend currentScalingFramebuffer
-            }
+            bloomDownFramebuffer.beginWriteLod(i)
+            bloomDownFramebuffer.beginReadLod(i - 1)
+            bloomDownFramebuffer.beginWrite(true)
+            PostProcessRenderer.renderShaderToFramebuffer(TentShader.tentBlurShader, bloomDownFramebuffer)
         }
+    }
 
-        colorMultiplier = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
+    private fun prepareUpsamplePass(mipLevel: Int) {
+        PostProcessRenderer.levelOfDetail = mipLevel - 1.0F
+        TentShader.levelOfDetail = mipLevel - 1.0F
+        bloomDownFramebuffer.beginReadLod(mipLevel - 1)
+        bloomUpFramebuffer.beginWriteLod(mipLevel - 1)
+        bloomUpFramebuffer.beginWrite(true)
+        PostProcessRenderer.copyFramebuffer(bloomDownFramebuffer, bloomUpFramebuffer)
+
         RenderSystem.enableBlend()
-        PostProcessRenderer.copyFramebuffer(ScaleSampling.getUpScalingFramebuffer(1.0), bloomFramebuffer, false)
+        RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
+    }
+
+    private fun generateUpsamplePasses(mipLevel: Int) {
+        prepareUpsamplePass(mipLevel)
+        for (i in (0..<(mipLevel - 1)).reversed()) {
+            // Copy LOD(n-1) to LOD(n)
+            PostProcessRenderer.levelOfDetail = i + 1.0F
+            bloomUpFramebuffer.beginReadLod(i + 1)
+            bloomUpFramebuffer.beginWriteLod(i)
+            bloomUpFramebuffer.beginWrite(true)
+            PostProcessRenderer.copyFramebuffer(
+                bloomUpFramebuffer /* LOD(n - 1) */,
+                bloomUpFramebuffer /* LOD(n) */,
+                false
+            )
+
+            TentShader.framebufferObject = bloomDownFramebuffer.colorAttachment
+            bloomDownFramebuffer.beginReadLod(i)
+            bloomUpFramebuffer.beginWriteLod(i)
+            bloomUpFramebuffer.beginWrite(true)
+            PostProcessRenderer.renderShaderToFramebuffer(TentShader.tentBlurShader, bloomUpFramebuffer, false)
+
+            TentShader.levelOfDetail = i.toFloat()
+        }
+    }
+
+    private fun resetBloomPasses() {
+        bloomUpFramebuffer.beginReadLod(0)
+        bloomUpFramebuffer.beginWriteLod(0)
+
+        RenderSystem.enableBlend()
+        RenderSystem.defaultBlendFunc()
+        minecraft.framebuffer.beginWrite(true)
+    }
+
+    private fun generateMipmaps(mipLevel: Int) {
+        generateDownsamplePasses(mipLevel)
+        generateUpsamplePasses(mipLevel)
+    }
+
+    fun renderBloom() {
+        val mipLevel = minecraft.framebuffer.recommendMipLevel()
+        clearBloomPasses(mipLevel)
+        computeBloomPass()
+        generateMipmaps(mipLevel)
+        resetBloomPasses()
     }
 }

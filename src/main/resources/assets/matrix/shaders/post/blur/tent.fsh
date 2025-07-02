@@ -3,6 +3,7 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D framebuffer;
+uniform float lod = .0;
 
 out vec4 fragColor;
 
@@ -24,7 +25,7 @@ void main() {
 
     for (int i = 0;i < 9; ++i) {
         vec3 kernel = tentKernel[i];
-        vec4 sampledColor = texture(framebuffer, fragTexCoord + kernel.xy * texelSize);
+        vec4 sampledColor = textureLod(framebuffer, fragTexCoord + kernel.xy * texelSize, lod);
         float l = kernel.z / (1 + luminance(sampledColor.rgb));
         color += sampledColor * l;
         weight += l;

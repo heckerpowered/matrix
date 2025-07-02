@@ -5,6 +5,8 @@ import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.texture.ResourceTexture
 import org.lwjgl.opengl.GL46.*
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.DurationUnit
 
 class DissolveShader : AutoCloseable {
     private val shader = Shader(
@@ -23,6 +25,9 @@ class DissolveShader : AutoCloseable {
             },
             UniformProvider("resolution") { pointer ->
                 glUniform2f(pointer, resolutionX, resolutionY)
+            },
+            UniformProvider("time") { pointer ->
+                glUniform1f(pointer, System.nanoTime().nanoseconds.toDouble(DurationUnit.SECONDS).toFloat())
             }
         )
     )
