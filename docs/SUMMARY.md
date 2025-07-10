@@ -26,7 +26,7 @@
 * [点燃](magics/ignite.md)
 * [绝命毒师](magics/breaking-bad.md)
 * [闪电旋风劈](magics/lightning-whirlstrike.md)
-* [原地爆炸](magics/explosion.md)
+* [原地爆炸](magics/yuan-di-bao-zha.md)
 * [传送](magics/teleport.md)
 * [法力过载](magics/mana-overload.md)
 * [生命偷取](magics/health-steal.md)
