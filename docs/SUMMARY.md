@@ -33,6 +33,15 @@
 * [记忆擦除](magics/memory-wipe.md)
 * [毁灭打击](magics/decisive-strike.md)
 
+***
+
+* [阻碍移动](cripple-movement.md)
+* [护甲穿透](armor-penetration.md)
+* [幽匿催发](sulk-catalyst.md)
+* [无形的大手](the-hands.md)
+* [装逼让你飞起来](levitation.md)
+* [力大砖飞](brute-force.md)
+
 ## 细节 <a href="#detail" id="detail"></a>
 
 * [法术可用状态](detail/magic-available-status.md)
