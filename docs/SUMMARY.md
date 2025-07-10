@@ -21,6 +21,17 @@
 ## 法术技能 <a href="#magics" id="magics"></a>
 
 * [所有法术技能](magics/all-magics.md)
+* [目标定位](magics/target-positioning.md)
+* [连带传染](magics/spread.md)
+* [点燃](magics/ignite.md)
+* [绝命毒师](magics/breaking-bad.md)
+* [闪电旋风劈](magics/lightning-whirlstrike.md)
+* [原地爆炸](magics/explosion.md)
+* [传送](magics/teleport.md)
+* [法力过载](magics/mana-overload.md)
+* [生命偷取](magics/health-steal.md)
+* [记忆擦除](magics/memory-wipe.md)
+* [毁灭打击](magics/decisive-strike.md)
 
 ## 细节 <a href="#detail" id="detail"></a>
 
