@@ -1,8 +1,10 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
-import heckerpowered.matrix.common.event.*
-import heckerpowered.matrix.common.tag.MatrixDamageTypes
+import heckerpowered.matrix.common.event.CanHaveStatusEffectCallback
+import heckerpowered.matrix.common.event.DamageAccumulator
+import heckerpowered.matrix.common.event.LivingAttackCallback
+import heckerpowered.matrix.common.event.LivingHurtCallback
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.damage.DamageTypes
 import net.minecraft.entity.effect.StatusEffect
@@ -18,14 +20,6 @@ object ManaOverloadEffect : StatusEffect(
         LivingHurtCallback.EVENT.register(::onLivingHurt)
         CanHaveStatusEffectCallback.EVENT.register(::canHaveStatusEffect)
         LivingAttackCallback.EVENT.register(::onLivingAttack)
-        EntityTickCallback.EVENT.register(::onEntityTick)
-    }
-
-    private fun onEntityTick(entity: LivingEntity) {
-        val effect = entity.getStatusEffect(MANA_OVERLOAD_EFFECT) ?: return
-        if (effect.amplifier >= 2 && entity.age % 20 == 0) {
-            entity.damage(entity.damageSources.create(MatrixDamageTypes.magic), entity.health * 0.08F)
-        }
     }
 
     private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
@@ -53,8 +47,10 @@ object ManaOverloadEffect : StatusEffect(
 
     private fun onLivingHurt(accumulator: DamageAccumulator): ActionResult {
         val target = accumulator.target
-        if (target.hasStatusEffect(MANA_OVERLOAD_EFFECT)) {
-            accumulator.damageMultiplier += 0.15
+        val effect = target.getStatusEffect(MANA_OVERLOAD_EFFECT) ?: return ActionResult.PASS
+        accumulator.damageMultiplier += 0.15
+        if (effect.amplifier >= 2) {
+            accumulator.baseDamageBonus += target.health * 0.08F
         }
 
         return ActionResult.PASS

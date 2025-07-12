@@ -55,8 +55,16 @@ object PostProcessRenderer {
     private val blitShader by lazy {
         BlitShader(
             resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/blit.fsh"),
+            resourceToString("/assets/matrix/shaders/blit/blit.fsh"),
             arrayOf(framebufferProvider, depthAttachmentProvider, levelOfDetailProvider)
+        )
+    }
+
+    private val blitNoDepthShader by lazy {
+        BlitShader(
+            resourceToString("/assets/matrix/shaders/sobel.vert"),
+            resourceToString("/assets/matrix/shaders/blit/blit_no_depth.fsh"),
+            arrayOf(framebufferProvider, levelOfDetailProvider)
         )
     }
 
@@ -129,8 +137,16 @@ object PostProcessRenderer {
     }
 
     fun resetFramebuffers() {
-        currentFramebufferIndex = 0
-        framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
+        spoofFramebuffer {
+            currentFramebufferIndex = 0
+            framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
+        }
+    }
+
+    fun clearFramebuffers() {
+        spoofFramebuffer {
+            framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
+        }
     }
 
     @JvmStatic
@@ -211,9 +227,10 @@ object PostProcessRenderer {
     }
 
     @JvmStatic
-    fun copyFramebuffer(from: Framebuffer, to: Framebuffer, disableBlend: Boolean = true) {
+    fun copyFramebuffer(from: Framebuffer, to: Framebuffer, disableBlend: Boolean = true, copyDepth: Boolean = false) {
         boundFramebuffer = from
-        renderShaderToFramebuffer(blitShader, to, disableBlend)
+        val shader = if (copyDepth) blitShader else blitNoDepthShader
+        renderShaderToFramebuffer(shader, to, disableBlend)
     }
 
     fun useFramebuffer(framebuffer: Framebuffer, action: () -> Unit) {

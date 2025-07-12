@@ -5,7 +5,6 @@ import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.shader.BlitShader
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderTickCounter
 import java.time.Duration
@@ -17,7 +16,7 @@ object OverlayPostProcessEffectRenderer {
     private var previousState = false
 
     init {
-        HudRenderCallback.EVENT.register(::onHudRender)
+        // HudRenderCallback.EVENT.register(::onHudRender)
     }
 
     private fun onHudRender(drawContext: DrawContext, renderTickCounter: RenderTickCounter) {

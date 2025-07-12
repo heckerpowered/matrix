@@ -2,17 +2,23 @@ package heckerpowered.matrix.core
 
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.projectionMatrix
+import heckerpowered.matrix.core.math.Matrix4fExtensions.times
 import net.minecraft.util.math.Vec3d
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector2d
 import org.joml.Vector3d
+import org.joml.Vector3f
 import org.joml.Vector4d
 import org.joml.Vector4f
 import java.lang.Math
 import kotlin.math.abs
 
 fun lerp(delta: Double, from: Double, to: Double): Double {
+    return from + delta * (to - from)
+}
+
+fun lerp(delta: Float, from: Float, to: Float): Float {
     return from + delta * (to - from)
 }
 
@@ -123,7 +129,7 @@ operator fun Matrix4f.times(vector: Vector4d): Vector4d {
 }
 
 operator fun Matrix4f.times(other: Matrix4f): Matrix4f {
-    return mul(other)
+    return mul(other, Matrix4f())
 }
 
 fun worldToScreen(
@@ -134,7 +140,7 @@ fun worldToScreen(
     viewportHeight: Int = minecraft.window.scaledHeight,
 ): Vector2d? {
     val viewMatrix = Matrix4f()
-        .rotate(cameraRotation.conjugate())
+        .rotate(cameraRotation.conjugate(Quaternionf()))
         .translate(
             -cameraPosition.x.toFloat(),
             -cameraPosition.y.toFloat(),
@@ -155,4 +161,36 @@ fun worldToScreen(
     val screenX = ((ndcX + 1.0F) / 2.0F) * viewportWidth
     val screenY = (1.0F - (ndcY + 1.0F) / 2.0F) * viewportHeight
     return Vector2d(screenX.toDouble(), screenY.toDouble())
+}
+
+object MatrixMath {
+    fun worldToNdc(
+        worldPosition: Vector3f,
+        viewMatrix: Matrix4f,
+        projectionMatrix: Matrix4f,
+    ): Vector3f {
+        val clipSpacePosition = projectionMatrix * viewMatrix * worldPosition
+        val ndc = Vector3f(
+            clipSpacePosition.x / clipSpacePosition.w,
+            clipSpacePosition.y / clipSpacePosition.w,
+            clipSpacePosition.z / clipSpacePosition.w,
+        )
+
+        return ndc
+    }
+
+    fun createScreenSpaceMatrix(
+        viewMatrix: Matrix4f,
+        projectionMatrix: Matrix4f,
+        viewportWidth: Float = minecraft.window.framebufferWidth.toFloat(),
+        viewportHeight: Float = minecraft.window.framebufferHeight.toFloat(),
+    ): Matrix4f {
+        val ndcToScreen = Matrix4f()
+            .m00(viewportWidth / 2F)
+            .m11(-viewportHeight / 2F)
+            .m30(viewportWidth / 2F)
+            .m31(viewportHeight / 2f)
+
+        return ndcToScreen.mul(projectionMatrix).mul(viewMatrix)
+    }
 }

@@ -59,10 +59,10 @@ object LightningChestplate1 : ArmorItem(
         }
 
         val chestplate = attacker.getEquippedStack(EquipmentSlot.CHEST)
-        if (chestplate.item is LightningChestplate1 && attacker.isPhaseWalking) {
+        if (chestplate.item is LightningChestplate1) {
             val charge = chestplate.components.getOrDefault(BORROWED_TIME_CHARGE, 0)
             val maxCharge = chestplate.components.getOrDefault(BORROWED_TIME_MAX_CHARGE, 4000)
-            chestplate.set(BORROWED_TIME_CHARGE, (charge + 50).coerceAtMost(maxCharge))
+            chestplate.set(BORROWED_TIME_CHARGE, (charge + maxCharge / 10).coerceAtMost(maxCharge))
         }
         return ActionResult.PASS
     }

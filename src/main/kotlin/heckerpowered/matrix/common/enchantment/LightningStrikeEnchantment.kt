@@ -8,6 +8,7 @@ import heckerpowered.matrix.core.minus
 import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.damage.DamageTypes
 import net.minecraft.particle.ParticleTypes
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.world.ServerWorld
@@ -23,6 +24,9 @@ object LightningStrikeEnchantment {
     }
 
     fun onHurt(event: DamageAccumulator): ActionResult {
+        if (event.damageSource.isOf(DamageTypes.LIGHTNING_BOLT)) {
+            return ActionResult.PASS
+        }
         val attacker = event.attacker ?: return ActionResult.PASS
         val serverWorld = attacker.world as? ServerWorld ?: return ActionResult.PASS
 
@@ -34,12 +38,15 @@ object LightningStrikeEnchantment {
             return ActionResult.PASS
         }
 
-        val damageSource = event.target.damageSources.lightningBolt()
+        val damageSource = event.target.damageSources.create(DamageTypes.LIGHTNING_BOLT, attacker)
         var previousEntity = attacker
         event.target.getAdjacentEntities(8.0)
             .filterIsInstance<LivingEntity>()
-            .filter { it != attacker }
-            .consumeWhile(5) { it.damage(damageSource, event.baseDamage.toFloat()) }
+            .filter { it != attacker && it != event.target }
+            .consumeWhile(5) {
+                val result = it.damage(damageSource, event.baseDamage.toFloat())
+                return@consumeWhile result
+            }
             .forEach { entity ->
                 val startPosition = previousEntity.pos
                 val endPosition = entity.pos

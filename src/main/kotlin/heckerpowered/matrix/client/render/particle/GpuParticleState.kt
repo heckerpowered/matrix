@@ -20,27 +20,31 @@ data class GpuParticleState(
 
             val bufferSize = particleCount * ParticleState.BYTES.toLong()
 
-            glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPing)
-            glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_COPY)
-
             fun defineAttrib(index: Int, size: Int, offsetIndex: Int) {
                 glEnableVertexAttribArray(index)
                 glVertexAttribPointer(index, size, GL_FLOAT, false, ParticleState.BYTES, (offsetIndex * Float.SIZE_BYTES).toLong())
             }
 
-            defineAttrib(0, 3, ParticleState.POSITION_INDEX)          // position.xyz
-            defineAttrib(1, 3, ParticleState.VELOCITY_INDEX)          // velocity.xyz
-            defineAttrib(2, 3, ParticleState.ACCELERATION_INDEX)      // acceleration.xyz
-            defineAttrib(3, 1, ParticleState.SPRITE_SIZE_INDEX)       // sprite size
-            defineAttrib(4, 1, ParticleState.SCALE_INDEX)             // size scale
-            defineAttrib(5, 1, ParticleState.AGE_INDEX)               // age
-            defineAttrib(6, 1, ParticleState.LIFETIME_INDEX)          // lifetime
-            defineAttrib(7, 4, ParticleState.COLOR_INDEX)             // color.rgba
-            defineAttrib(8, 4, ParticleState.ORIENTATION_INDEX)       // orientation quaternion
-            defineAttrib(9, 3, ParticleState.ANGULAR_VELOCITY_INDEX)  // angular velocity
+            fun defineAttributes() {
+                defineAttrib(0, 3, ParticleState.POSITION_INDEX)          // position.xyz
+                defineAttrib(1, 3, ParticleState.VELOCITY_INDEX)          // velocity.xyz
+                defineAttrib(2, 3, ParticleState.ACCELERATION_INDEX)      // acceleration.xyz
+                defineAttrib(3, 1, ParticleState.SPRITE_SIZE_INDEX)       // sprite size
+                defineAttrib(4, 1, ParticleState.SCALE_INDEX)             // size scale
+                defineAttrib(5, 1, ParticleState.AGE_INDEX)               // age
+                defineAttrib(6, 1, ParticleState.LIFETIME_INDEX)          // lifetime
+                defineAttrib(7, 4, ParticleState.COLOR_INDEX)             // color.rgba
+                defineAttrib(8, 4, ParticleState.ORIENTATION_INDEX)       // orientation quaternion
+                defineAttrib(9, 3, ParticleState.ANGULAR_VELOCITY_INDEX)  // angular velocity
+            }
+
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPing)
+            glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_COPY)
+            defineAttributes()
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPong)
             glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_COPY)
+            defineAttributes()
 
             glBindVertexArray(0)
             glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -52,6 +56,25 @@ data class GpuParticleState(
     fun bind() {
         glBindVertexArray(vertexArrayObject)
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPing)
+
+        fun defineAttrib(index: Int, size: Int, offsetIndex: Int) {
+            glEnableVertexAttribArray(index)
+            glVertexAttribPointer(index, size, GL_FLOAT, false, ParticleState.BYTES, (offsetIndex * Float.SIZE_BYTES).toLong())
+        }
+
+        fun defineAttributes() {
+            defineAttrib(0, 3, ParticleState.POSITION_INDEX)          // position.xyz
+            defineAttrib(1, 3, ParticleState.VELOCITY_INDEX)          // velocity.xyz
+            defineAttrib(2, 3, ParticleState.ACCELERATION_INDEX)      // acceleration.xyz
+            defineAttrib(3, 1, ParticleState.SPRITE_SIZE_INDEX)       // sprite size
+            defineAttrib(4, 1, ParticleState.SCALE_INDEX)             // size scale
+            defineAttrib(5, 1, ParticleState.AGE_INDEX)               // age
+            defineAttrib(6, 1, ParticleState.LIFETIME_INDEX)          // lifetime
+            defineAttrib(7, 4, ParticleState.COLOR_INDEX)             // color.rgba
+            defineAttrib(8, 4, ParticleState.ORIENTATION_INDEX)       // orientation quaternion
+            defineAttrib(9, 3, ParticleState.ANGULAR_VELOCITY_INDEX)  // angular velocity
+        }
+        defineAttributes()
     }
 
     fun unbind() {

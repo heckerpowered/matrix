@@ -27,7 +27,7 @@ class DissolveShader : AutoCloseable {
                 glUniform2f(pointer, resolutionX, resolutionY)
             },
             UniformProvider("time") { pointer ->
-                glUniform1f(pointer, System.nanoTime().nanoseconds.toDouble(DurationUnit.SECONDS).toFloat())
+                glUniform1f(pointer, System.nanoTime().nanoseconds.toDouble(DurationUnit.SECONDS).toFloat() % 10)
             }
         )
     )

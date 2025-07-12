@@ -3,14 +3,17 @@ package heckerpowered.matrix.common.magics
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
 import heckerpowered.matrix.common.isInvulnerableToEffect
+import heckerpowered.matrix.common.network.ExplosionPayload
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.data.language.MatrixLanguage
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.packet.s2c.play.EntityStatusEffectS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 
 object ManaOverloadMagic : Magic(MatrixLanguage.magicManaOverload, 4, MatrixLanguage.magicManaOverloadDescription, 6) {
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
@@ -36,6 +39,11 @@ object ManaOverloadMagic : Magic(MatrixLanguage.magicManaOverload, 4, MatrixLang
 
             7 -> {
                 target.damage(target.damageSources.create(MatrixDamageTypes.magic), target.health)
+                if (target.world is ServerWorld) {
+                    target.world.server?.playerManager?.playerList?.forEach {
+                        ServerPlayNetworking.send(it, ExplosionPayload(target.id))
+                    }
+                }
             }
         }
         val server = target.world.server ?: return

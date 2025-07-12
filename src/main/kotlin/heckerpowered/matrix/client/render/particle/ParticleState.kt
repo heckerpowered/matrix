@@ -244,4 +244,8 @@ open class ParticleState(val data: FloatBuffer) {
     override fun hashCode(): Int {
         return data.hashCode()
     }
+
+    override fun toString(): String {
+        return "ParticleState(data=$data, x=$x, y=$y, z=$z, position=$position, positionBuffer=$positionBuffer, velocityX=$velocityX, velocityY=$velocityY, velocityZ=$velocityZ, velocity=$velocity, velocityBuffer=$velocityBuffer, accelerationX=$accelerationX, accelerationY=$accelerationY, accelerationZ=$accelerationZ, acceleration=$acceleration, accelerationBuffer=$accelerationBuffer, spriteSize=$spriteSize, scale=$scale, age=$age, lifetime=$lifetime, colorR=$colorR, colorG=$colorG, colorB=$colorB, colorA=$colorA, colorRGBA=$colorRGBA, colorBuffer=$colorBuffer, orientationX=$orientationX, orientationY=$orientationY, orientationZ=$orientationZ, orientationW=$orientationW, orientation=$orientation, orientationBuffer=$orientationBuffer, angularVelocityX=$angularVelocityX, angularVelocityY=$angularVelocityY, angularVelocityZ=$angularVelocityZ, angularVelocity=$angularVelocity, angularVelocityBuffer=$angularVelocityBuffer)"
+    }
 }

@@ -3,6 +3,7 @@ package heckerpowered.matrix.client.render.post
 import com.mojang.blaze3d.platform.GlConst
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.event.InitAttachmentCallback
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.render.recommendMipLevel
@@ -21,25 +22,24 @@ object BloomEffect {
     private val MARKER = MarkerFactory.getMarker("BLOOM_RENDERER")
 
     private val brightFramebuffer = PostProcessRenderer.createManagedFramebuffer()
-    val bloomDownFramebuffer = PostProcessRenderer.createManagedFramebuffer()
-    val bloomUpFramebuffer = PostProcessRenderer.createManagedFramebuffer()
+    val bloomDownFramebuffer: Framebuffer = PostProcessRenderer.createManagedFramebuffer()
+    val bloomUpFramebuffer: Framebuffer = PostProcessRenderer.createManagedFramebuffer()
 
     init {
-        bloomDownFramebuffer.allocateMipmaps = true
+        InitAttachmentCallback.EVENT.register(::onInitAttachment)
+
         bloomDownFramebuffer.resize(bloomDownFramebuffer.textureWidth, bloomDownFramebuffer.textureHeight, true)
-
-        bloomDownFramebuffer.beginRead()
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        bloomDownFramebuffer.endRead()
-
-        bloomUpFramebuffer.allocateMipmaps = true
         bloomUpFramebuffer.resize(bloomDownFramebuffer.textureWidth, bloomDownFramebuffer.textureHeight, true)
+    }
 
-        bloomUpFramebuffer.beginRead()
+    private fun onInitAttachment(framebuffer: Framebuffer) {
+        if (framebuffer != bloomDownFramebuffer && framebuffer != bloomUpFramebuffer) {
+            return
+        }
+
+        framebuffer.allocateMipmaps = true
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        bloomUpFramebuffer.endRead()
     }
 
     var brightnessPassFramebuffer: Framebuffer = minecraft.framebuffer
@@ -162,4 +162,6 @@ object BloomEffect {
         generateMipmaps(mipLevel)
         resetBloomPasses()
     }
+
+    var renderBloom = false
 }

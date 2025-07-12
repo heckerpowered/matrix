@@ -15,7 +15,7 @@ class TransformFeedback(
     private val bufferSize: Long = vertexCount * 4 * 4 * varyingNames.size.toLong(),
     private val initOnly: Boolean = false,
 ) : ShaderComponent() {
-    private val transformFeedbacks = glGenTransformFeedbacks()
+    val id = glGenTransformFeedbacks()
     val buffer = glGenBuffers()
 
     override fun init(program: Int) {
@@ -34,7 +34,7 @@ class TransformFeedback(
     override fun enable() {
         glEnable(GL_RASTERIZER_DISCARD)
 
-        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, transformFeedbacks)
+        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, id)
         glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, buffer)
 
         glBeginTransformFeedback(drawMode)
@@ -50,7 +50,7 @@ class TransformFeedback(
     }
 
     override fun delete() {
-        glDeleteTransformFeedbacks(transformFeedbacks)
+        glDeleteTransformFeedbacks(id)
         glDeleteBuffers(buffer)
     }
 

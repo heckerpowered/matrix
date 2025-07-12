@@ -87,7 +87,6 @@ interface FramebufferExtension {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxMipLevel)
             endRead()
         }
-
     }
 
     var useMipmaps: Boolean

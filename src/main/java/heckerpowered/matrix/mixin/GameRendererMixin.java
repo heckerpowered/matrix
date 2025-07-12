@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import heckerpowered.matrix.client.MatrixHud;
 import heckerpowered.matrix.client.TimeController;
 import heckerpowered.matrix.client.render.PostProcessRenderer;
+import heckerpowered.matrix.client.render.post.CameraShake;
 import heckerpowered.matrix.client.shader.BlurRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
@@ -87,5 +88,10 @@ class GameRendererMixin {
         if (player != null && isPhaseWalking(player)) {
             ci.cancel();
         }
+    }
+
+    @Inject(method = "renderWorld", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;setupFrustum(Lnet/minecraft/util/math/Vec3d;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V", shift = At.Shift.BEFORE))
+    private void renderWorld(RenderTickCounter tickCounter, CallbackInfo ci, @Local(ordinal = 1) Matrix4f viewMatrix) {
+        CameraShake.applyCameraShake(viewMatrix);
     }
 }

@@ -3,6 +3,7 @@ package heckerpowered.matrix.mixin;
 import heckerpowered.matrix.client.MatrixHud;
 import heckerpowered.matrix.client.TimeController;
 import heckerpowered.matrix.client.core.FramebufferSpoof;
+import heckerpowered.matrix.client.event.FinishRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.render.RenderTickCounter;
@@ -35,9 +36,9 @@ abstract class MinecraftClientMixin {
         }
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/Framebuffer;draw(II)V", shift = At.Shift.AFTER))
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/Framebuffer;draw(II)V", shift = At.Shift.BEFORE))
     private void onFinishedRender(boolean tick, CallbackInfo ci) {
-        // PostProcessRenderer.clearPostProcessFramebuffer();
+        FinishRenderCallback.EVENT.invoker().onFinishRender();
     }
 
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/RenderTickCounter$Dynamic;beginRenderTick(JZ)I"))

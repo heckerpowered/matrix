@@ -34,12 +34,6 @@ class FinderArrowEntity : PersistentProjectileEntity {
             .filterIsInstance<LivingEntity>()
             .filter {
                 val blockPos = BlockPos.ofFloored(it.x, it.y, it.z)
-
-                if (this squaredDistanceTo it > 144 && !it.world.isSkyVisible(blockPos)
-                ) {
-                    println("Entity ${it.displayName.toString()} is out of 12m but the sky is not visible at it's position.")
-                }
-
                 this squaredDistanceTo it <= 144 // 144 = 12 * 12 (radius)
                         || it.world.isSkyVisible(blockPos)
             }

@@ -14,6 +14,7 @@ import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.entity.MatrixEntityType
 import heckerpowered.matrix.common.item.MagicTalismanItem
+import heckerpowered.matrix.core.math.Vector3fExtensions.unaryMinus
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
@@ -23,6 +24,7 @@ import net.minecraft.client.render.entity.feature.FeatureRendererContext
 import net.minecraft.client.render.entity.model.EntityModel
 import net.minecraft.entity.LivingEntity
 import org.joml.Matrix4f
+import org.joml.Quaternionf
 import java.time.Duration
 
 val minecraft
@@ -42,18 +44,15 @@ val projectionMatrix: Matrix4f
         return projectionMatrix
     }
 
-val modelViewMatrix: Matrix4f
+val viewMatrix: Matrix4f
     get() {
         val camera = minecraft.gameRenderer.camera
-        return Matrix4f().apply {
-            identity()
-            set(camera.rotation.conjugate())
-            translate(
-                (-camera.pos.x).toFloat(),
-                (-camera.pos.y).toFloat(),
-                (-camera.pos.z).toFloat()
-            )
-        }
+        val cameraPosition = camera.pos.toVector3f()
+        val cameraRotation = camera.rotation
+
+        return Matrix4f()
+            .rotate(cameraRotation.conjugate(Quaternionf()))
+            .translate(-cameraPosition)
     }
 
 val animationDuration: Duration = Duration.ofMillis(300)

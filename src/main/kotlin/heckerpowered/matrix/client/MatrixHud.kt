@@ -1,22 +1,20 @@
 package heckerpowered.matrix.client
 
-import com.mojang.blaze3d.platform.GlConst
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.core.AimAssist
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistEnabled
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistFov
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistMaxDistance
+import heckerpowered.matrix.client.event.KeyEvent
+import heckerpowered.matrix.client.event.MouseButtonEvent
 import heckerpowered.matrix.client.render.*
 import heckerpowered.matrix.client.render.post.BloomEffect
 import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
 import heckerpowered.matrix.client.render.shader.opacityMask
 import heckerpowered.matrix.client.shader.*
 import heckerpowered.matrix.client.shader.component.TransformFeedback
-import heckerpowered.matrix.client.ui.element.AvailableStatusTooltip
-import heckerpowered.matrix.client.ui.element.ManaBar
-import heckerpowered.matrix.client.ui.element.ManaCostTooltip
-import heckerpowered.matrix.client.ui.element.SystemCrashBar
+import heckerpowered.matrix.client.ui.element.*
 import heckerpowered.matrix.client.ui.foundation.animation.*
 import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.effect.bloodPactActive
@@ -66,7 +64,6 @@ import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import java.time.Duration
 import kotlin.math.abs
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
@@ -168,7 +165,7 @@ object MatrixHud {
     private var sizeScalingAnimation = true
 
     @JvmField
-    val fovAnimation = SimpleDoubleAnimation(from = 1.0, to = 1.0)
+    val fovAnimation = SimpleDoubleAnimation(initValue = 1.0)
 
     private var fovZoomRatio = .0
     private val hudFramebuffer by lazy { PostProcessRenderer.createManagedFramebuffer() }
@@ -368,6 +365,8 @@ object MatrixHud {
     fun onInitialize() {
         HudRenderCallback.EVENT.register(this::onHudRender)
         SystemCrashBar.onInitialize()
+        StatusHud.onInitialize()
+        DamageNumberHud.onInitialize()
     }
 
     @JvmStatic
@@ -681,14 +680,28 @@ object MatrixHud {
         get() = magicShownOpacityAnimation.animatedValue == .0
 
     private var previousFramebuffer = 0
-    private var useBloom = false
-    private var renderHud = false
-    private fun onBeginHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        if (isHudInvisible) {
-            renderHud = false
-            return
+    var useBloom = false
+    var renderHud = false
+    var useBlur = false
+
+    private fun renderOtherHuds(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+        spoofFramebuffer {
+            hudFramebuffer.beginWrite(true)
+            renderWitherArmorHud(drawContext, tickCounter)
         }
-        renderHud = true
+    }
+
+    private fun onBeginHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+        previousFramebuffer = GlStateManager.getBoundFramebuffer()
+        renderOtherHuds(drawContext, tickCounter)
+
+        if (!isHudInvisible) {
+            useBlur = true
+            renderHud = true
+
+            useBloom = !hudBloomThreshold.animatedValue.approximatelyEqual(1.0) &&
+                    !magicShownOpacityAnimation.animatedValue.approximatelyEqual(.0)
+        }
 
         val bloodPact = player.bloodPactActive
         hudBloomThreshold.value = if (bloodPact) {
@@ -697,11 +710,6 @@ object MatrixHud {
             1.0
         }
 
-        useBloom = !hudBloomThreshold.animatedValue.approximatelyEqual(1.0) &&
-                !magicShownOpacityAnimation.animatedValue.approximatelyEqual(.0)
-        previousFramebuffer = GlStateManager.getBoundFramebuffer()
-        hudFramebuffer.clear(true)
-        blurFramebuffer.clear(true)
         hudFramebuffer.beginWrite(true)
     }
 
@@ -753,6 +761,10 @@ object MatrixHud {
         }
     }
 
+    private fun renderWitherArmorHud(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+        StatusHud.onHudRender(drawContext, tickCounter)
+    }
+
     private fun renderHud(drawContext: DrawContext, tickCounter: RenderTickCounter) {
         if (selectedIndex - 1 !in MatrixClient.getPlayerMagics().indices ||
             previousIndex - 1 !in MatrixClient.getPlayerMagics().indices
@@ -762,7 +774,6 @@ object MatrixHud {
         }
 
         val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
-
         renderCandidateEntities(drawContext, tickCounter)
         checkVisibilityChanges()
         warp()
@@ -814,60 +825,63 @@ object MatrixHud {
 
     private fun onEndHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
         if (!renderHud) {
+            RenderSystem.enableBlend()
+            minecraft.framebuffer.beginWrite(true)
             return
         }
 
         RenderSystem.enableBlend()
         RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
-
-        blurFramebuffer.beginWrite(true)
-        hudFramebuffer opacityMask BlurRenderer.blurFramebuffer
-        hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-
-        if (useBloom) {
-            useBloom = false
-            BloomEffect.brightnessPassFramebuffer = blurFramebuffer
-            BloomEffect.brightnessThreshold = max(1 - magicShownOpacityAnimation.animatedValue, hudBloomThreshold.animatedValue).toFloat()
-
-            BloomEffect.renderBloom()
-            RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
-            PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
-            RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
-        }
-
-        GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(1.0F, maxSigma = 20F)
-        PostProcessRenderer.useFramebuffer(blurFramebuffer) {
-            BlurRenderer.renderGaussianBlur()
-        }
-
-        minecraft.framebuffer.beginWrite(true)
-        BlurRenderer.blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-
-        val strength = 1.0F - magicShownOpacityAnimation.animatedValue.toFloat()
-        if (strength != .0F) {
-            GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(strength, maxSigma = 20F)
-            PostProcessRenderer.useFramebuffer(blurFramebuffer) {
-                BlurRenderer.renderGaussianBlurFullResolution()
+        if (useBlur) {
+            GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(1.0F, maxSigma = 20F)
+            PostProcessRenderer.useFramebuffer(hudFramebuffer) {
+                BlurRenderer.renderGaussianBlur(blurFramebuffer)
             }
 
-            minecraft.framebuffer.beginWrite(true)
-            BlurRenderer.blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            blurFramebuffer.beginWrite(true)
+            hudFramebuffer opacityMask BlurRenderer.blurFramebuffer
+            hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+
+            val strength = 1.0F - magicShownOpacityAnimation.animatedValue.toFloat()
+            if (strength != .0F) {
+                GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(strength, maxSigma = 20F)
+                PostProcessRenderer.useFramebuffer(blurFramebuffer) {
+                    BlurRenderer.renderGaussianBlurFullResolution()
+                }
+
+                minecraft.framebuffer.beginWrite(true)
+                BlurRenderer.blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            } else {
+                minecraft.framebuffer.beginWrite(true)
+                blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            }
         } else {
+            blurFramebuffer.beginWrite(true)
+            hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+
             minecraft.framebuffer.beginWrite(true)
             blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
         }
 
+        blurFramebuffer.endWrite()
         BloomEffect.brightnessPassFramebuffer = blurFramebuffer
-        BloomEffect.brightnessThreshold = 1.0F
-        BloomEffect.bloomIntensity = 1.0F
+        BloomEffect.brightnessThreshold = 1F
         BloomEffect.renderBloom()
-        BloomEffect.bloomIntensity = 1.0F
 
         RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
         PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
         RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
 
-        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+        hudFramebuffer.clear(true)
+        blurFramebuffer.clear(true)
+
+        renderHud = false
+        useBlur = false
+        useBloom = false
+
+        // GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+        RenderSystem.enableBlend()
+        minecraft.framebuffer.beginWrite(true)
     }
 
     private fun renderPoints() {
@@ -930,6 +944,9 @@ object MatrixHud {
     @JvmField
     var isPressingRightMouseButton = false
 
+    @JvmField
+    var isPressingLeftMouseButton = false
+
     private fun shouldSlowTime(): Boolean {
         val minecraft = MinecraftClient.getInstance()
         val server = minecraft.server
@@ -973,7 +990,6 @@ object MatrixHud {
     }
 
     private fun onHudShown() {
-        // StandardBloomRenderer.render(minecraft.framebuffer)
         if (shouldSlowTime()) {
             magicTimeScale.value = 0.01
         }
@@ -1401,10 +1417,11 @@ object MatrixHud {
             ).color(
                 brightProgressColor.toInt()
             )
-            BufferRenderer.drawWithGlobalProgram(
-                buffer.end()
-            )
 
+            RenderSystem.enableBlend()
+            // RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_DST_ALPHA)
+            BufferRenderer.drawWithGlobalProgram(buffer.end())
+            RenderSystem.defaultBlendFunc()
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
 
             // val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
@@ -1863,6 +1880,10 @@ object MatrixHud {
             ClientPlayNetworking.send(ActiveBloodPactPayload())
             return true
         }
+
+        if (!KeyEvent.EVENT.invoker().onKey(key, scancode, action, mods)) {
+            return true
+        }
         return false
     }
 
@@ -1888,6 +1909,9 @@ object MatrixHud {
             }
         }
 
+        if (!MouseButtonEvent.EVENT.invoker().onMouseButton(button, action, mods)) {
+            return true
+        }
         return false
     }
 

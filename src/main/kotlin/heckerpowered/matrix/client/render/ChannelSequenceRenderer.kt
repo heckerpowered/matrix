@@ -1,11 +1,13 @@
 package heckerpowered.matrix.client.render
 
 import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.event.EntityTickCallback
+import heckerpowered.matrix.common.magics.SculkCatalystMagic
 import heckerpowered.matrix.core.MatrixLivingEntity
 import heckerpowered.matrix.core.worldToScreen
 import net.minecraft.client.MinecraftClient
@@ -285,6 +287,11 @@ class ChannelSequenceRenderer(
                     -0.01f
                 }
             )
+            if (channelAnimations[index].magic == SculkCatalystMagic &&
+                channelAnimations[index].currentChannelTime < channelAnimations[index].channelTime
+            ) {
+                CollapseEffectRenderer.dissolveFactor.value = channelProgress / 4.0
+            }
         }
 
         RenderSystem.disableBlend()

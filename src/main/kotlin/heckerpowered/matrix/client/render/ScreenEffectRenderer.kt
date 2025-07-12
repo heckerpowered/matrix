@@ -9,7 +9,11 @@ import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.render.particle.ParticleSystem
 import heckerpowered.matrix.client.render.particle.module.particle_render.ParticleSpriteRendererModule
 import heckerpowered.matrix.client.render.particle.module.particle_spawn.InitializeParticleModule
+import heckerpowered.matrix.client.render.particle.module.particle_spawn.RandomVelocityModule
+import heckerpowered.matrix.client.render.particle.module.particle_update.ParticleStateModule
 import heckerpowered.matrix.client.render.post.BloomEffect
+import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
+import heckerpowered.matrix.client.render.post.ShockwaveRenderer
 import heckerpowered.matrix.client.render.shader.RadialBlurRenderer.samples
 import heckerpowered.matrix.client.shader.BlitShader
 import heckerpowered.matrix.client.shader.DissolveShader
@@ -19,14 +23,13 @@ import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
 import heckerpowered.matrix.common.effect.bloodPactActive
+import heckerpowered.matrix.common.magics.SculkCatalystMagic
 import heckerpowered.matrix.core.approximatelyEqual
 import heckerpowered.matrix.core.resourceToString
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.MinecraftClient
-import org.lwjgl.opengl.GL20
-import org.lwjgl.opengl.GL31
-import org.lwjgl.opengl.GL46.glUniform1f
-import org.lwjgl.opengl.GL46.glUniform1i
+import net.minecraft.util.math.Vec3d
+import org.lwjgl.opengl.GL46.*
 import java.time.Duration
 
 object ScreenEffectRenderer {
@@ -50,29 +53,29 @@ object ScreenEffectRenderer {
             resourceToString("/assets/matrix/shaders/post/aura.fsh"),
             arrayOf(
                 UniformProvider("entityDepthAttachment") { pointer ->
-                    GL31.glActiveTexture(GlConst.GL_TEXTURE0)
-                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, sceneFramebuffer.depthAttachment)
+                    glActiveTexture(GlConst.GL_TEXTURE0)
+                    glBindTexture(GlConst.GL_TEXTURE_2D, sceneFramebuffer.depthAttachment)
                     RenderSystem.glUniform1i(pointer, 0)
                 },
                 UniformProvider("entityColorAttachment") { pointer ->
-                    GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 1)
-                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, sceneFramebuffer.colorAttachment)
+                    glActiveTexture(GlConst.GL_TEXTURE0 + 1)
+                    glBindTexture(GlConst.GL_TEXTURE_2D, sceneFramebuffer.colorAttachment)
                     RenderSystem.glUniform1i(pointer, 1)
                 },
                 UniformProvider("sceneDepthAttachment") { pointer ->
-                    GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 2)
-                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, minecraft.framebuffer.depthAttachment)
-                    RenderSystem.glUniform1i(pointer, 2)
+                    glActiveTexture(GlConst.GL_TEXTURE0 + 2)
+                    glBindTexture(GlConst.GL_TEXTURE_2D, minecraft.framebuffer.depthAttachment)
+                    glUniform1i(pointer, 2)
                 },
                 UniformProvider("sceneColorAttachment") { pointer ->
-                    GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 3)
-                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, minecraft.framebuffer.colorAttachment)
-                    RenderSystem.glUniform1i(pointer, 3)
+                    glActiveTexture(GlConst.GL_TEXTURE0 + 3)
+                    glBindTexture(GlConst.GL_TEXTURE_2D, minecraft.framebuffer.colorAttachment)
+                    glUniform1i(pointer, 3)
                 },
                 UniformProvider("noiseColorAttachment") { pointer ->
-                    GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 4)
-                    GL31.glBindTexture(GlConst.GL_TEXTURE_2D, DissolveShader.perlinNoiseTextureId)
-                    RenderSystem.glUniform1i(pointer, 4)
+                    glActiveTexture(GlConst.GL_TEXTURE0 + 4)
+                    glBindTexture(GlConst.GL_TEXTURE_2D, DissolveShader.perlinNoiseTextureId)
+                    glUniform1i(pointer, 4)
                 },
                 UniformProvider("time") { pointer ->
                     val age = minecraft.player?.age?.toFloat() ?: 0F
@@ -85,7 +88,7 @@ object ScreenEffectRenderer {
                 },
                 UniformProvider("auraColor") { pointer ->
                     val color = colorAnimation
-                    GL31.glUniform4f(
+                    glUniform4f(
                         pointer,
                         color.red.animatedValue.toFloat() / color.red.to.toFloat(),
                         color.red.animatedValue.toFloat() / color.red.to.toFloat(),
@@ -100,7 +103,7 @@ object ScreenEffectRenderer {
     private val blurRadiusAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
 
     private val edgeThresholdAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
-    private val bloomThresholdAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
+    val bloomThresholdAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
 
     private val colorFilterShader by lazy {
         BlitShader(
@@ -109,7 +112,7 @@ object ScreenEffectRenderer {
             arrayOf(
                 PostProcessRenderer.framebufferProvider,
                 UniformProvider("color") { pointer ->
-                    GL20.glUniform4f(
+                    glUniform4f(
                         pointer,
                         colorAnimation.red.animatedValue.toFloat(),
                         colorAnimation.green.animatedValue.toFloat(),
@@ -131,7 +134,7 @@ object ScreenEffectRenderer {
                     glUniform1f(pointer, edgeThresholdAnimation.animatedValue.toFloat())
                 },
                 UniformProvider("edgeColor") { pointer ->
-                    GL20.glUniform4f(pointer, 0.7F, 0.1F, 0.1F, 1.0F)
+                    glUniform4f(pointer, 0.7F, 0.1F, 0.1F, 1.0F)
                 }
             )
         )
@@ -166,9 +169,16 @@ object ScreenEffectRenderer {
         bloomThresholdAnimation.animatedValue = 1.0
     }
 
+    private fun shouldRenderBloom(): Boolean {
+        return true
+        return !bloomThresholdAnimation.animatedValue.approximatelyEqual(1.0) ||
+                CollapseEffectRenderer.dissolveFactor.animatedValue != .0 ||
+                ShockwaveRenderer.waveSize.animatedValue != .0
+    }
+
     private fun onPostProcess() {
         // bloomThresholdAnimation.animatedValue = 1.0
-        if (bloomThresholdAnimation.animatedValue.approximatelyEqual(1.0)) {
+        if (!shouldRenderBloom()) {
             return
         }
 
@@ -186,15 +196,15 @@ object ScreenEffectRenderer {
         }
     }
 
-    private val particleSystem by lazy {
+    val particleSystem by lazy {
         ParticleSystem(
-            100,
+            10000,
             particleSpawnModules = arrayOf(
-                InitializeParticleModule()
+                InitializeParticleModule(),
+                RandomVelocityModule(),
             ),
             particleUpdateModules = arrayOf(
-                // ParticleStateModule(),
-                // AddVelocityModule(Vector3f(0F, 1.0F, 0F))
+                ParticleStateModule(),
             ),
             particleRenderModules = arrayOf(
                 ParticleSpriteRendererModule()
@@ -202,7 +212,144 @@ object ScreenEffectRenderer {
         )
     }
 
-    // private var index: Int = 0
+    /**
+    val particleSystems by lazy {
+    listOf(
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    ParticleSystem(100000, particleSpawnModules = arrayOf(InitializeParticleModule(), RandomVelocityModule()), particleUpdateModules = arrayOf(ParticleStateModule()), particleRenderModules = arrayOf(ParticleSpriteRendererModule())),
+    )
+    }
+     */
+
+    fun spawnParticleAt(position: Vec3d, count: Int = 1) {
+        val particleState = (particleSystem.particleSpawnModules.first { it is InitializeParticleModule } as InitializeParticleModule).particleState
+        if (minecraft.player != null) {
+            particleState.x = position.x.toFloat()
+            particleState.y = position.y.toFloat()
+            particleState.z = position.z.toFloat()
+
+            val multiplier = 4F
+
+            particleState.colorR = 1.0F * multiplier
+            particleState.colorG = 0.5F * multiplier
+            particleState.colorB = 1.0F * multiplier
+            particleState.colorA = 1.0F
+
+            particleState.spriteSize = 8.0F
+            particleState.scale = 10F
+
+            particleState.velocityX = 0F
+            particleState.velocityY = 0F
+            particleState.velocityZ = 0F
+        }
+
+        index += count
+        if (index > particleSystem.particleCount) {
+            index = 0
+        }
+        particleSystem.spawnPartialParticles(index, count)
+    }
+
+    var index: Int = 0
+    var resetTicks: Int = 0
 
     fun onTick(minecraftClient: MinecraftClient) {
         if (minecraftClient.player == null) {
@@ -231,45 +378,51 @@ object ScreenEffectRenderer {
             PostProcessRenderer.postProcessShaders.remove(edgeHighlightShader)
         }
 
-        // if (index >= particleSystem.particleStates.particleCount) {
+        /**
+        for (particleSystem in particleSystems) {
+        val particleState = (particleSystem.particleSpawnModules.first { it is InitializeParticleModule } as InitializeParticleModule).particleState
+        if (minecraft.player != null) {
+        particleState.x = 0F
+        particleState.y = 0F
+        particleState.z = 0F
+
+        val multiplier = 4F
+
+        particleState.colorR = 1.0F * multiplier
+        particleState.colorG = 0.5F * multiplier
+        particleState.colorB = 1.0F * multiplier
+        particleState.colorA = 1.0F
+
+        particleState.spriteSize = 8.0F
+        particleState.scale = 10F
+
+        particleState.velocityX = 0F
+        particleState.velocityY = 0F
+        particleState.velocityZ = 0F
+        }
+        }
+         **/
+        // val count = 10
+
+        // index += count
+        // if (index > particleSystem.particleCount) {
         //     index = 0
         // }
-        // val particleState = (particleSystem.particleSpawnModules[0] as InitializeParticleModule).particleState
-        // if (minecraft.player != null) {
-        //     particleState.x = 0F
-        //     particleState.y = 0F
-        //     particleState.z = 0F
-//
-        //     particleState.colorR = 1.0F
-        //     particleState.colorG = 1.0F
-        //     particleState.colorB = 1000.0F
-        //     particleState.colorA = 1.0F
-//
-        //     particleState.spriteSize = 8.0F
-        //     particleState.scale = 10F
+        // println("Spawn: ")
+        // particleSystem.particleStates.retrieve().use {
+        //     it.particles.forEach { particle ->
+        //         println("${particle.x}, ${particle.y}, ${particle.z}, colorRGBA: ${particle.colorR},${particle.colorG},${particle.colorB},${particle.colorA}, velocity: ${particle.velocityX}, ${particle.velocityY}, ${particle.velocityZ}")
+        //     }
         // }
-        // particleSystem.spawnPartialParticles(index, 2)
-        // index += 1
-        // if (index % 20 == 0) {
-        //     particleSystem.particleStates.initParticles {
-        //         it.x = 0F
-        //         it.y = Random.nextFloat() * 10
-        //         it.z = 0F
-//
-        //         it.colorR = 1.0F
-        //         it.colorG = 1.0F
-        //         it.colorB = 1000.0F
-        //         it.colorA = 1.0F
-//
-        //         it.spriteSize = 8.0F
-        //         it.scale = 10F
+        // println("Update: ")
+        // particleSystem.updateParticles()
+        // particleSystem.particleStates.retrieve().use {
+        //     it.particles.forEach { particle ->
+        //         println("$particle")
         //     }
-        //     println("===index=$index===")
-        //     particleSystem.particleStates.retrieve().use {
-        //         it.particles.forEach { particle ->
-        //             println("${particle.x}, ${particle.y}, ${particle.z}")
-        //         }
-        //     }
+        // }
+        // println("===index=$index===")
+
         // }
     }
 
@@ -304,8 +457,25 @@ object ScreenEffectRenderer {
 
         bloomThresholdAnimation.from = -1.0
         bloomThresholdAnimation.to = 1.0
-        bloomThresholdAnimation.duration = Duration.ofSeconds(3)
+        bloomThresholdAnimation.duration = Duration.ofMillis(1500)
         bloomThresholdAnimation.start()
+
+        CollapseEffectRenderer.dissolveFactor.from = 1.0
+        CollapseEffectRenderer.dissolveFactor.to = .0
+        CollapseEffectRenderer.dissolveFactor.duration = Duration.ofMillis(1000)
+        CollapseEffectRenderer.dissolveFactor.start()
+
+        ShockwaveRenderer.wavePosition = player.pos.toVector3f()
+
+        ShockwaveRenderer.waveRadius.from = .0
+        ShockwaveRenderer.waveRadius.to = 128.0
+        ShockwaveRenderer.waveRadius.duration = Duration.ofMillis(1000)
+        ShockwaveRenderer.waveRadius.start()
+
+        ShockwaveRenderer.waveSize.from = 1.0
+        ShockwaveRenderer.waveSize.to = .0
+        ShockwaveRenderer.waveSize.duration = Duration.ofMillis(1000)
+        ShockwaveRenderer.waveSize.start()
     }
 
     private fun onAngeredEffectApplied() {
@@ -365,6 +535,43 @@ object ScreenEffectRenderer {
 
     @JvmStatic
     fun endRenderEntity() {
+        // ShockwaveRenderer.wavePosition = player.getLerpedPos(minecraft.renderTickCounter.getTickDelta(true)).toVector3f()
+        // if (ShockwaveRenderer.waveSize.animatedValue == .0) {
+        //     ShockwaveRenderer.waveColor = Vector4f(0.3F, 0.5F, 1.0F, 1.0F) * 10F
+//
+        //     ShockwaveRenderer.waveSize.value = .01
+        //     ShockwaveRenderer.waveRadius.value = 1.0
+        //     ShockwaveRenderer.waveSize.duration = Duration.ofMillis(1000)
+        // } else if (!ShockwaveRenderer.waveSize.isAnimating) {
+        //     ShockwaveRenderer.waveSize.value = .0
+        //     ShockwaveRenderer.waveRadius.value = 1.0
+        //     ShockwaveRenderer.waveSize.duration = Duration.ofMillis(1000)
+        // }
+
+        val sculkCatalystIsAlreadyActive = SculkCatalystMagic.isSculkCatalystActive(player)
+        if (!sculkCatalystIsAlreadyActive) {
+            CollapseEffectRenderer.dissolveFactor.value = .0
+            CollapseEffectRenderer.dissolveFactor.duration = Duration.ofMillis(300)
+        }
+        if (CollapseEffectRenderer.dissolveFactor.animatedValue != .0) {
+            PostProcessRenderer.clearFramebuffers()
+
+            CollapseEffectRenderer.depthAttachment = minecraft.framebuffer.depthAttachment
+            PostProcessRenderer.renderShaderToFramebuffer(CollapseEffectRenderer.shader, PostProcessRenderer.ping)
+            PostProcessRenderer.copyFramebuffer(PostProcessRenderer.ping, minecraft.framebuffer, false)
+        }
+        if (ShockwaveRenderer.waveRadius.animatedValue != .0) {
+            PostProcessRenderer.clearFramebuffers()
+
+            ShockwaveRenderer.depthAttachment = minecraft.framebuffer.depthAttachment
+            PostProcessRenderer.renderShaderToFramebuffer(ShockwaveRenderer.shockwaveShader, PostProcessRenderer.ping)
+            PostProcessRenderer.copyFramebuffer(PostProcessRenderer.ping, minecraft.framebuffer, false)
+        }
+        minecraft.framebuffer.beginWrite(true)
+
+        particleSystem.updateParticles()
+        particleSystem.renderParticles()
+
         if (!useAuraShader && !useBloom) {
             return
         }
@@ -385,14 +592,21 @@ object ScreenEffectRenderer {
                 BloomEffect.brightnessThreshold = .0F
                 BloomEffect.brightnessPassFramebuffer = sceneFramebuffer
                 BloomEffect.renderBloom()
-                minecraft.framebuffer.beginWrite(true)
-                BloomEffect.bloomUpFramebuffer.apply {
-                    RenderSystem.enableDepthTest()
-                    RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
-                    draw(viewportWidth, viewportHeight, false)
-                    RenderSystem.defaultBlendFunc()
-                    sceneFramebuffer.draw(viewportWidth, viewportHeight, false)
-                }
+
+                RenderSystem.enableBlend()
+                RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
+                PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
+
+                RenderSystem.defaultBlendFunc()
+                PostProcessRenderer.copyFramebuffer(sceneFramebuffer, minecraft.framebuffer, false)
+
+                // BloomEffect.bloomUpFramebuffer.apply {
+                //     RenderSystem.enableDepthTest()
+                //     RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
+                //     draw(viewportWidth, viewportHeight, false)
+                //     RenderSystem.defaultBlendFunc()
+                //     sceneFramebuffer.draw(viewportWidth, viewportHeight, false)
+                // }
             }
             if (useAuraShader) {
                 PostProcessRenderer.useDepthAttachment = true

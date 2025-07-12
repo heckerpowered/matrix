@@ -19,12 +19,12 @@ class ParticleSpriteRendererModule : ParticleRenderModule() {
         )
     }
 
-    override fun bind(particleStates: GpuParticleState) {
+    override fun bind(particleStates: GpuParticleState, first: Int, count: Int) {
         RenderSystem.enableBlend()
         RenderSystem.defaultBlendFunc()
         glEnable(GL_PROGRAM_POINT_SIZE)
         SHADER.enableShader()
-        super.bind(particleStates)
+        super.bind(particleStates, first, count)
     }
 
     override fun unbind(particleStates: GpuParticleState) {

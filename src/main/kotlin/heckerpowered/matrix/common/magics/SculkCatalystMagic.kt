@@ -4,15 +4,18 @@ import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.effect.bloodPactActive
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
+import heckerpowered.matrix.common.network.ExplosionPayload
 import heckerpowered.matrix.common.persistent.ChannelSequence
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.core.getNearestEntities
 import heckerpowered.matrix.core.killed
 import heckerpowered.matrix.data.language.MatrixLanguage
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.boss.WitherEntity
 import net.minecraft.entity.boss.dragon.EnderDragonEntity
+import net.minecraft.entity.damage.DamageTypes
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
@@ -91,12 +94,15 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
     }
 
     private val sculkCatalystTracker = mutableMapOf<PlayerEntity, MutableList<LivingEntity>>()
+    private val lock = Any()
 
     override fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
         super.channel(player, target, sequence, data)
-        sculkCatalystTracker.computeIfAbsent(player) {
-            mutableListOf()
-        }.add(target)
+        synchronized(lock) {
+            sculkCatalystTracker.computeIfAbsent(player) {
+                mutableListOf()
+            }.add(target)
+        }
     }
 
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
@@ -108,7 +114,7 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
         if (target !is WitherEntity && target !is EnderDragonEntity) {
             target.health = .0F
             target.killed = true
-            target.damage(damageSource, Float.POSITIVE_INFINITY)
+            target.damage(target.damageSources.create(DamageTypes.OUT_OF_WORLD, player), Float.POSITIVE_INFINITY)
             target.onDeath(damageSource)
         } else {
             target.damage(damageSource, target.maxHealth * 4.0F)
@@ -118,9 +124,16 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
                 repeat(10) {
                     spawnParticles(ParticleTypes.SCULK_SOUL, target.x, target.y, target.z, 20, 0.1, .1, 0.1, 0.25)
                 }
+                repeat(128) {
+                    spawnParticles(ParticleTypes.SONIC_BOOM, target.x, target.y + it, target.z, 1, 0.0, 0.0, 0.0, 0.0)
+                }
 
                 playSound(null, target.x, target.y, target.z, SoundEvents.BLOCK_SCULK_SENSOR_CLICKING, SoundCategory.PLAYERS, 1.0F, 1.0F, random.nextLong())
                 playSound(null, target.x, target.y, target.z, SoundEvents.BLOCK_SCULK_SHRIEKER_SHRIEK, SoundCategory.PLAYERS, 1.0F, 1.0F, random.nextLong())
+
+                target.world.server?.playerManager?.playerList?.forEach {
+                    ServerPlayNetworking.send(it, ExplosionPayload(target.id))
+                }
             }
         }
 
@@ -168,12 +181,18 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
             return@removeIf !it.isAlive || sequence.channelingMagicCount() == 0
         }
 
-        val sculkCatalystIsAlreadyActive = sculkCatalystTracker[player]?.any {
-            it.isAlive && (it.getChannelSequence(player)?.channelingMagics()?.firstOrNull()?.magic == SculkCatalystMagic)
-        }
-        if (sculkCatalystIsAlreadyActive == true) {
+        val sculkCatalystIsAlreadyActive = isSculkCatalystActive(player)
+        if (sculkCatalystIsAlreadyActive) {
             return MagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE
         }
         return super.availableStatus(player, target, sequence)
+    }
+
+    fun isSculkCatalystActive(player: PlayerEntity): Boolean {
+        synchronized(lock) {
+            return sculkCatalystTracker[player]?.any {
+                it.isAlive && (it.getChannelSequence(player)?.channelingMagics()?.firstOrNull()?.magic == SculkCatalystMagic)
+            } == true
+        }
     }
 }

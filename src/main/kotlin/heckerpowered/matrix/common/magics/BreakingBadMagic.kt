@@ -24,6 +24,11 @@ object BreakingBadMagic : Magic(MatrixLanguage.magicBreakingBad, 9, MatrixLangua
         if (target.isOnFire) {
             val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { player?.damageSources?.explosion(target, player) }
             target.world.createExplosion(player, damageSource, explosionBehavior, target.x, target.y, target.z, 4.0F, false, World.ExplosionSourceType.MOB)
+            // if (target.world is ServerWorld) {
+            //     target.world.server?.playerManager?.playerList?.forEach {
+            //         ServerPlayNetworking.send(it, ExplosionPayload(target.id))
+            //     }
+            // }
         }
 
         if (player == null || data.isSpread) {

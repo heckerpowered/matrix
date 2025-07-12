@@ -158,7 +158,7 @@ object BlurRenderer {
         }
     }
 
-    fun renderGaussianBlur() {
+    fun renderGaussianBlur(target: Framebuffer = blurFramebuffer) {
         spoofFramebuffer {
             glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
@@ -192,7 +192,7 @@ object BlurRenderer {
             GaussianBlurRenderer.gaussianBlurShader.blit()
 
             GaussianBlurRenderer.pong linearCopyTo halfResolutionBlurFramebuffer
-            halfResolutionBlurFramebuffer linearCopyTo blurFramebuffer
+            halfResolutionBlurFramebuffer linearCopyTo target
         }
     }
 

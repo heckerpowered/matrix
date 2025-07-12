@@ -1,5 +1,6 @@
 package heckerpowered.matrix.mixin;
 
+import heckerpowered.matrix.client.event.InitAttachmentCallback;
 import heckerpowered.matrix.client.render.OpenGLExtensions;
 import heckerpowered.matrix.client.render.RenderExtensionsKt;
 import heckerpowered.matrix.core.FramebufferExtension;
@@ -69,6 +70,7 @@ class FramebufferMixin implements FramebufferExtension {
             )
     )
     private void texImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, @Nullable IntBuffer pixels) {
+        InitAttachmentCallback.EVENT.invoker().onInitAttachment((Framebuffer) (Object) this);
         final var isDepthAttachment = format == GL_DEPTH_COMPONENT;
         if (!useMipmaps || isDepthAttachment) {
             _texImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
@@ -90,10 +92,10 @@ class FramebufferMixin implements FramebufferExtension {
         });
 
         final var packedPixelDataType = OpenGLExtensions.getPackedPixelDataTypeForFormat(internalFormat);
-        final var bytesPerPixel = OpenGLExtensions.getBytesPerPixel(internalFormat);
+        final var bytesPerPixel = OpenGLExtensions.getBytesPerPixel(format, type);
         final var bufferSize = width * height * bytesPerPixel;
         final var buffer = MemoryUtil.memAlloc(bufferSize);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_SHORT, buffer);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, buffer);
         MemoryUtil.memFree(buffer);
 
         OpenGLExtensions.checkGLError(error -> {
@@ -104,8 +106,5 @@ class FramebufferMixin implements FramebufferExtension {
             LOGGER.error(MARKER, "Width: {}, Height: {}, Format: {} Type: {}:", width, height, format, packedPixelDataType);
             return Unit.INSTANCE;
         });
-
-        // glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, 0);
-        // glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, recommendMipLevels - 1);
     }
 }

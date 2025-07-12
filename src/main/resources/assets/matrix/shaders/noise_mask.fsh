@@ -16,17 +16,19 @@ layout (location = 0) in vec2 fragTexCoord;
 layout (location = 1) in vec4 vertexColor;
 
 vec2 texCoord() {
-    return fragTexCoord;
+    vec2 uv = fragTexCoord - 0.5;
+    uv.y *= resolution.y / resolution.x;
+    return uv + 0.5;
 }
 
 float pixelColor() {
-    vec2 pixelTexCoord = ceil(texCoord() * pixelStrength) / pixelStrength;
+    vec2 pixelTexCoord = texCoord();// ceil(texCoord() * pixelStrength) / pixelStrength;
     return texture(noiseTexture, pixelTexCoord + vec2(time * 0.1, time * 0.1)).b;
 }
 
 float pixelAnimation() {
-    float pixelNoise = ceil(texCoord().r * pixelStrength) / pixelStrength;
-    return pixelNoise - mix(-1.5, 1.5F, 1.0F - dissolveFactor);
+    float pixelNoise = texCoord().r;// ceil(texCoord().r * pixelStrength) / pixelStrength;
+    return pixelNoise - mix(1.5, -1.5F, dissolveFactor);
 }
 
 float border() {

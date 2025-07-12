@@ -26,16 +26,16 @@ class InitializeParticleModule() : ParticleSpawnModule(), AutoCloseable {
                 UniformProvider("SpriteSize") { pointer -> GL20.glUniform1f(pointer, particleState!!.spriteSize) },
                 UniformProvider("Scale") { pointer -> GL20.glUniform1f(pointer, particleState!!.scale) }
             ),
-            components = arrayOf(PARTICLE_TRANSFORM_FEEDBACK)
+            components = arrayOf(TRANSFORM_FEEDBACK)
         )
     }
 
-    val particleState = ParticleState(MemoryUtil.memAllocFloat(24).also { it.clear() })
+    val particleState = ParticleState(MemoryUtil.memCallocFloat(24))
 
-    override fun bind(particleStates: GpuParticleState) {
+    override fun bind(particleStates: GpuParticleState, first: Int, count: Int) {
         InitializeParticleModule.particleState = particleState
         shader.enableShader()
-        super.bind(particleStates)
+        super.bind(particleStates, first, count)
     }
 
     override fun unbind(particleStates: GpuParticleState) {

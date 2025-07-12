@@ -42,6 +42,14 @@ object OpenGLExtensions {
         else -> "Unknown error occurred: ${getErrorName(error)}"
     }
 
+    fun fastCheck(name: String) {
+        checkGLError { error ->
+            val message = getErrorName(error)
+            val description = getErrorDescription(error)
+            println("Error at $name: ($message): $description")
+        }
+    }
+
     fun getFramebufferStatusName(status: Int) = when (status) {
         GL_FRAMEBUFFER_COMPLETE -> "GL_FRAMEBUFFER_COMPLETE"
         GL_FRAMEBUFFER_UNDEFINED -> "GL_FRAMEBUFFER_UNDEFINED"
@@ -96,16 +104,32 @@ object OpenGLExtensions {
     }
 
     @JvmStatic
-    fun getBytesPerPixel(format: Int): Int {
+    fun getBytesPerPixel(format: Int, type: Int): Int {
         return when (format) {
-            GL_RGBA8, GL_RGB8, GL_RG8, GL_R8 -> 4
-            GL_RGBA16F, GL_RGB16F, GL_RG16F, GL_R16F -> 8
-            GL_RGBA32F, GL_RGB32F, GL_RG32F, GL_R32F -> 16
-            GL_RGBA8UI, GL_RGB8UI, GL_RG8UI, GL_R8UI -> 4
-            GL_RGBA16UI, GL_RGB16UI, GL_RG16UI, GL_R16UI -> 8
-            GL_RGBA32UI, GL_RGB32UI, GL_RG32UI, GL_R32UI -> 16
-            GL_DEPTH_COMPONENT24 -> 3
-            GL_DEPTH_COMPONENT32F -> 4
+            GL_RGBA -> when (type) {
+                GL_UNSIGNED_BYTE -> 4
+                GL_UNSIGNED_SHORT -> 8
+                else -> throw IllegalArgumentException("Unsupported type for GL_RGBA")
+            }
+
+            GL_RGB -> when (type) {
+                GL_UNSIGNED_BYTE -> 3
+                GL_UNSIGNED_SHORT -> 6
+                else -> throw IllegalArgumentException("Unsupported type for GL_RGB")
+            }
+
+            GL_RG -> when (type) {
+                GL_UNSIGNED_BYTE -> 2
+                GL_UNSIGNED_SHORT -> 4
+                else -> throw IllegalArgumentException("Unsupported type for GL_RG")
+            }
+
+            GL_RED -> when (type) {
+                GL_UNSIGNED_BYTE -> 1
+                GL_UNSIGNED_SHORT -> 2
+                else -> throw IllegalArgumentException("Unsupported type for GL_RED")
+            }
+
             else -> throw IllegalArgumentException("Unsupported format: 0x${format.toString(16)}")
         }
     }

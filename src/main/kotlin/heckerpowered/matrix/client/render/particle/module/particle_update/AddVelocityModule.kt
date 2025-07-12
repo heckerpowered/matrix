@@ -19,14 +19,14 @@ class AddVelocityModule(var velocity: Vector3f) : ParticleUpdateModule() {
                 DELTA_TIME_PROVIDER,
                 VELOCITY_PROVIDER
             ),
-            components = arrayOf(PARTICLE_TRANSFORM_FEEDBACK)
+            components = arrayOf(TRANSFORM_FEEDBACK)
         )
     }
 
-    override fun bind(particleStates: GpuParticleState) {
+    override fun bind(particleStates: GpuParticleState, first: Int, count: Int) {
         AddVelocityModule.velocity = this.velocity
         SHADER.enableShader()
-        super.bind(particleStates)
+        super.bind(particleStates, first, count)
     }
 
     override fun unbind(particleStates: GpuParticleState) {
