@@ -254,6 +254,7 @@ fun framebufferGuard(action: () -> Unit) {
     val previousViewportHeight = Viewport.getHeight()
 
     action()
+
     glBindFramebuffer(GL_FRAMEBUFFER, previousBindingFramebuffer)
     GlStateManager._viewport(previousViewportX, previousViewportY, previousViewportWidth, previousViewportHeight)
 }
