@@ -229,7 +229,7 @@ fun Framebuffer.dump(name: String, levelOfDetail: Int = 0, generateMipmap: Boole
  * This function backs up the current framebuffer binding and viewport dimensions,
  * then invokes the specified [action]. After the action completes, the original framebuffer
  * and viewport state are restored. This ensures that temporary framebuffer or viewport changes
- * inside [action] do not leak outside of the function scope.
+ * inside [action] do not leak outside the function scope.
  *
  * This is especially useful when performing off-screen rendering or rendering to custom framebuffers,
  * as it guarantees rendering state isolation.
