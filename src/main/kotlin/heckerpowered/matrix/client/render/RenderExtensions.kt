@@ -223,7 +223,30 @@ fun Framebuffer.dump(name: String, levelOfDetail: Int = 0, generateMipmap: Boole
     }
 }
 
-fun spoofFramebuffer(action: () -> Unit) {
+/**
+ * Executes the given [action] while preserving the currently bound framebuffer and viewport state.
+ *
+ * This function backs up the current framebuffer binding and viewport dimensions,
+ * then invokes the specified [action]. After the action completes, the original framebuffer
+ * and viewport state are restored. This ensures that temporary framebuffer or viewport changes
+ * inside [action] do not leak outside of the function scope.
+ *
+ * This is especially useful when performing off-screen rendering or rendering to custom framebuffers,
+ * as it guarantees rendering state isolation.
+ *
+ * Example usage:
+ * ```
+ * framebufferGuard {
+ *     glBindFramebuffer(GL_FRAMEBUFFER, customFramebuffer)
+ *     GlStateManager._viewport(0, 0, width, height)
+ *     renderSomething()
+ * }
+ * // Original framebuffer and viewport are now restored
+ * ```
+ *
+ * @param action The block of code to execute within the guarded framebuffer and viewport state.
+ */
+fun framebufferGuard(action: () -> Unit) {
     val previousBindingFramebuffer = glGetInteger(GL_FRAMEBUFFER_BINDING)
     val previousViewportX = Viewport.getX()
     val previousViewportY = Viewport.getY()
