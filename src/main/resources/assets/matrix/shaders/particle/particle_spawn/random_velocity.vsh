@@ -58,5 +58,5 @@ void main() {
     InitParticleStates();
 
     vec3 Velocity = randomDirection(gl_VertexID + time);
-    OutVelocity += Velocity;
+    OutVelocity += Velocity * 0.05;
 }

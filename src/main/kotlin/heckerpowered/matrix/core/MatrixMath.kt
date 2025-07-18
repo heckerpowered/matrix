@@ -12,6 +12,8 @@ import org.joml.Vector3f
 import org.joml.Vector4d
 import org.joml.Vector4f
 import java.lang.Math
+import java.lang.Math.toRadians
+import kotlin.math.PI
 import kotlin.math.abs
 
 fun lerp(delta: Double, from: Double, to: Double): Double {
@@ -60,7 +62,7 @@ fun toDegrees(radians: Double): Double {
 }
 
 fun toRadians(degrees: Double): Double {
-    return Math.toRadians(degrees)
+    return toRadians(degrees)
 }
 
 fun Vec3d.toVector4d(): Vector4d {
@@ -192,5 +194,13 @@ object MatrixMath {
             .m31(viewportHeight / 2f)
 
         return ndcToScreen.mul(projectionMatrix).mul(viewMatrix)
+    }
+
+    fun eulerToQuaternion(yaw: Float, pitch: Float): Quaternionf {
+        return Quaternionf().rotationYXZ(
+            toRadians(PI - yaw).toFloat(),
+            toRadians(-pitch.toDouble()).toFloat(),
+            0F
+        )
     }
 }

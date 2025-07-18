@@ -1,5 +1,6 @@
 package heckerpowered.matrix.client.render.state
 
+import net.minecraft.client.gl.Framebuffer
 import org.lwjgl.opengl.GL46
 
 class ViewportState(val viewportX: Int, val viewportY: Int, val viewportWidth: Int, val viewportHeight: Int) : RenderPipelineState {
@@ -17,6 +18,8 @@ class ViewportState(val viewportX: Int, val viewportY: Int, val viewportWidth: I
             return snapshot
         }
     }
+
+    constructor(framebuffer: Framebuffer) : this(0, 0, framebuffer.viewportWidth, framebuffer.viewportHeight)
 
     override fun apply(): RenderPipelineSnapshot {
         val snapshot = captureSnapshot()

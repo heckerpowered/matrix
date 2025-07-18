@@ -1,5 +1,6 @@
 package heckerpowered.matrix.client.render.state
 
+import net.minecraft.client.gl.Framebuffer
 import org.lwjgl.opengl.GL11.glGetInteger
 import org.lwjgl.opengl.GL30.*
 
@@ -11,6 +12,8 @@ class FramebufferState(val framebuffer: Int) : RenderPipelineState {
             return snapshot
         }
     }
+
+    constructor(framebuffer: Framebuffer) : this(framebuffer.fbo)
 
     override fun apply(): RenderPipelineSnapshot {
         val snapshot = captureSnapshot()

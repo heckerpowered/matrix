@@ -15,6 +15,9 @@ import heckerpowered.matrix.client.render.post.BloomEffect
 import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
 import heckerpowered.matrix.client.render.post.ShockwaveRenderer
 import heckerpowered.matrix.client.render.shader.RadialBlurRenderer.samples
+import heckerpowered.matrix.client.render.state.StateIsolation
+import heckerpowered.matrix.client.render.state.capabilities.BlendState
+import heckerpowered.matrix.client.render.state.capabilities.DepthTestState
 import heckerpowered.matrix.client.shader.BlitShader
 import heckerpowered.matrix.client.shader.DissolveShader
 import heckerpowered.matrix.client.shader.UniformProvider
@@ -182,7 +185,7 @@ object ScreenEffectRenderer {
             return
         }
 
-        spoofFramebuffer {
+        framebufferGuard {
             minecraft.framebuffer.beginWrite(false)
 
             BloomEffect.brightnessThreshold = bloomThresholdAnimation.animatedValue.toFloat()
@@ -201,7 +204,7 @@ object ScreenEffectRenderer {
             10000,
             particleSpawnModules = arrayOf(
                 InitializeParticleModule(),
-                RandomVelocityModule(),
+                RandomVelocityModule()
             ),
             particleUpdateModules = arrayOf(
                 ParticleStateModule(),
@@ -321,25 +324,19 @@ object ScreenEffectRenderer {
 
     fun spawnParticleAt(position: Vec3d, count: Int = 1) {
         val particleState = (particleSystem.particleSpawnModules.first { it is InitializeParticleModule } as InitializeParticleModule).particleState
-        if (minecraft.player != null) {
-            particleState.x = position.x.toFloat()
-            particleState.y = position.y.toFloat()
-            particleState.z = position.z.toFloat()
+        particleState.x = position.x.toFloat()
+        particleState.y = position.y.toFloat()
+        particleState.z = position.z.toFloat()
 
-            val multiplier = 4F
+        val multiplier = 4F
 
-            particleState.colorR = 1.0F * multiplier
-            particleState.colorG = 0.5F * multiplier
-            particleState.colorB = 1.0F * multiplier
-            particleState.colorA = 1.0F
+        particleState.colorR = 1.0F * multiplier
+        particleState.colorG = 0.5F * multiplier
+        particleState.colorB = 1.0F * multiplier
+        particleState.colorA = 1.0F
 
-            particleState.spriteSize = 8.0F
-            particleState.scale = 10F
-
-            particleState.velocityX = 0F
-            particleState.velocityY = 0F
-            particleState.velocityZ = 0F
-        }
+        particleState.spriteSize = 8.0F
+        particleState.scale = 10F
 
         index += count
         if (index > particleSystem.particleCount) {
@@ -570,24 +567,18 @@ object ScreenEffectRenderer {
         minecraft.framebuffer.beginWrite(true)
 
         particleSystem.updateParticles()
-        particleSystem.renderParticles()
+
+        StateIsolation.isolate(DepthTestState(true), BlendState(false)) {
+            particleSystem.renderParticles()
+        }
 
         if (!useAuraShader && !useBloom) {
             return
         }
-        // RenderSystem.enableBlend()
-        // PostProcessRenderer.copyFramebuffer(sceneFramebuffer, sceneFramebuffer)
 
-        // BloomEffect.brightnessThreshold = 0F
-        // BloomEffect.brightnessPassFramebuffer = sceneFramebuffer
-        // BloomEffect.renderBloom()
-//
-        // RenderSystem.enableBlend()
-        // PostProcessRenderer.copyFramebuffer(BloomEffect.bloomFramebuffer, minecraft.framebuffer, false)
-
-        // copyFramebuffer() will discard all full black pixels.
+        // copyFramebuffer() will discard all full black pixels (RGB == 0)
         BloomEffect.bloomIntensity = 0.5F
-        spoofFramebuffer {
+        framebufferGuard {
             if (useBloom) {
                 BloomEffect.brightnessThreshold = .0F
                 BloomEffect.brightnessPassFramebuffer = sceneFramebuffer
@@ -599,14 +590,6 @@ object ScreenEffectRenderer {
 
                 RenderSystem.defaultBlendFunc()
                 PostProcessRenderer.copyFramebuffer(sceneFramebuffer, minecraft.framebuffer, false)
-
-                // BloomEffect.bloomUpFramebuffer.apply {
-                //     RenderSystem.enableDepthTest()
-                //     RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
-                //     draw(viewportWidth, viewportHeight, false)
-                //     RenderSystem.defaultBlendFunc()
-                //     sceneFramebuffer.draw(viewportWidth, viewportHeight, false)
-                // }
             }
             if (useAuraShader) {
                 PostProcessRenderer.useDepthAttachment = true

@@ -137,14 +137,14 @@ object PostProcessRenderer {
     }
 
     fun resetFramebuffers() {
-        spoofFramebuffer {
+        framebufferGuard {
             currentFramebufferIndex = 0
             framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
         }
     }
 
     fun clearFramebuffers() {
-        spoofFramebuffer {
+        framebufferGuard {
             framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
         }
     }

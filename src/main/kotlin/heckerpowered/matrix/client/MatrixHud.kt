@@ -1,6 +1,5 @@
 package heckerpowered.matrix.client
 
-import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.core.AimAssist
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistEnabled
@@ -12,6 +11,10 @@ import heckerpowered.matrix.client.render.*
 import heckerpowered.matrix.client.render.post.BloomEffect
 import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
 import heckerpowered.matrix.client.render.shader.opacityMask
+import heckerpowered.matrix.client.render.state.*
+import heckerpowered.matrix.client.render.state.capabilities.BlendState
+import heckerpowered.matrix.client.render.state.capabilities.CullFaceState
+import heckerpowered.matrix.client.render.state.capabilities.DepthTestState
 import heckerpowered.matrix.client.shader.*
 import heckerpowered.matrix.client.shader.component.TransformFeedback
 import heckerpowered.matrix.client.ui.element.*
@@ -679,20 +682,15 @@ object MatrixHud {
     private val isHudInvisible
         get() = magicShownOpacityAnimation.animatedValue == .0
 
-    private var previousFramebuffer = 0
     var useBloom = false
     var renderHud = false
     var useBlur = false
 
     private fun renderOtherHuds(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        spoofFramebuffer {
-            hudFramebuffer.beginWrite(true)
-            renderWitherArmorHud(drawContext, tickCounter)
-        }
+        renderWitherArmorHud(drawContext, tickCounter)
     }
 
     private fun onBeginHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        previousFramebuffer = GlStateManager.getBoundFramebuffer()
         renderOtherHuds(drawContext, tickCounter)
 
         if (!isHudInvisible) {
@@ -709,14 +707,14 @@ object MatrixHud {
         } else {
             1.0
         }
-
-        hudFramebuffer.beginWrite(true)
     }
 
     private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        onBeginHudRender(drawContext, tickCounter)
-        renderHud(drawContext, tickCounter)
-        onEndHudRender(drawContext, tickCounter)
+        StateIsolation.isolate(FramebufferState(hudFramebuffer), ViewportState(hudFramebuffer)) {
+            onBeginHudRender(drawContext, tickCounter)
+            renderHud(drawContext, tickCounter)
+            onEndHudRender(drawContext, tickCounter)
+        }
     }
 
     private fun renderCandidateEntities(drawContext: DrawContext, tickCounter: RenderTickCounter) {
@@ -729,8 +727,6 @@ object MatrixHud {
         val tessellator = Tessellator.getInstance()
         val buffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR)
 
-        // candidateAimAssistEntities = player.world.getOtherEntities(player, player.boundingBox.expand(1024.0)).filter { it is LivingEntity }.map { it as LivingEntity }
-        //     .sortedBy { it.squaredDistanceTo(player) }
         val from = Vector2d(crosshairX.animatedValue + 7.5, crosshairY.animatedValue + 7.5)
         for (candidateEntity in candidateAimAssistEntities) {
             val targetPosition = candidateEntity.getLerpedPos(tickDelta).add(.0, candidateEntity.boundingBox.lengthY / 2, .0)
@@ -740,24 +736,19 @@ object MatrixHud {
                 .color(255, 25, 25, 255)
             buffer.vertex(transformationMatrix, to.x.toFloat(), to.y.toFloat(), .0F)
                 .color(255, 25, 25, 255)
-            // from = to
-
-            // val multiplier = 1.0F
-            // RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
-            // drawContext.drawHorizontalLine(from.x.toInt(), to.x.toInt(), from.y.toInt(), ColorHelper.Argb.getArgb(255, 255, 25, 25))
-            // drawContext.drawVerticalLine(to.x.toInt(), from.y.toInt(), to.y.toInt(), ColorHelper.Argb.getArgb(255, 255, 25, 25))
-            // RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
         }
 
-        glLineWidth(3.0F)
-        RenderSystem.lineWidth(3.0F)
-        RenderSystem.enableBlend()
-        RenderSystem.defaultBlendFunc()
-        RenderSystem.disableDepthTest()
-        RenderSystem.disableCull()
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram)
-        buffer.endNullable()?.let {
-            BufferRenderer.drawWithGlobalProgram(it)
+        StateIsolation.isolate(
+            LineWidthState(3.0F),
+            BlendState(true),
+            BlendFuncSeparateState(),
+            DepthTestState(false),
+            CullFaceState(false),
+            MinecraftShaderState(GameRenderer::getPositionColorProgram)
+        ) {
+            buffer.endNullable()?.let {
+                BufferRenderer.drawWithGlobalProgram(it)
+            }
         }
     }
 
@@ -796,10 +787,6 @@ object MatrixHud {
             return
         }
 
-        val strength = magicShownOpacityAnimation.animatedValue.toFloat()
-        GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(strength, maxSigma = 8F)
-        BlurRenderer.renderGaussianBlur()
-
         ManaCostTooltip.render(drawContext, tickCounter)
         renderLeftPart(drawContext, tickCounter)
         renderRightPart(drawContext, tickCounter)
@@ -825,52 +812,38 @@ object MatrixHud {
 
     private fun onEndHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
         if (!renderHud) {
-            RenderSystem.enableBlend()
-            minecraft.framebuffer.beginWrite(true)
             return
         }
 
-        RenderSystem.enableBlend()
-        RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
         if (useBlur) {
-            GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(1.0F, maxSigma = 20F)
-            PostProcessRenderer.useFramebuffer(hudFramebuffer) {
-                BlurRenderer.renderGaussianBlur(blurFramebuffer)
-            }
+            val strength = magicShownOpacityAnimation.animatedValue.toFloat()
+            GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(strength, maxSigma = 8F)
+            BlurRenderer.renderGaussianBlur(minecraft.framebuffer)
 
-            blurFramebuffer.beginWrite(true)
-            hudFramebuffer opacityMask BlurRenderer.blurFramebuffer
-            hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            dropHudShadow()
 
-            val strength = 1.0F - magicShownOpacityAnimation.animatedValue.toFloat()
-            if (strength != .0F) {
-                GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(strength, maxSigma = 20F)
-                PostProcessRenderer.useFramebuffer(blurFramebuffer) {
-                    BlurRenderer.renderGaussianBlurFullResolution()
-                }
-
-                minecraft.framebuffer.beginWrite(true)
-                BlurRenderer.blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-            } else {
-                minecraft.framebuffer.beginWrite(true)
-                blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            StateIsolation.isolate(
+                FramebufferState(minecraft.framebuffer), ViewportState(minecraft.framebuffer),
+                BlendState(true), BlendFuncState(GL_ONE, GL_ONE_MINUS_SRC_ALPHA),
+            ) {
+                renderHudBlur()
             }
         } else {
-            blurFramebuffer.beginWrite(true)
-            hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-
-            minecraft.framebuffer.beginWrite(true)
-            blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            StateIsolation.isolate(FramebufferState(blurFramebuffer), ViewportState(blurFramebuffer)) {
+                hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            }
+            StateIsolation.isolate(FramebufferState(minecraft.framebuffer), ViewportState(minecraft.framebuffer)) {
+                blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            }
         }
 
-        blurFramebuffer.endWrite()
         BloomEffect.brightnessPassFramebuffer = blurFramebuffer
         BloomEffect.brightnessThreshold = 1F
         BloomEffect.renderBloom()
 
-        RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE)
-        PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
-        RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA)
+        StateIsolation.isolate(BlendFuncState(GL_ONE, GL_ONE)) {
+            PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
+        }
 
         hudFramebuffer.clear(true)
         blurFramebuffer.clear(true)
@@ -878,10 +851,36 @@ object MatrixHud {
         renderHud = false
         useBlur = false
         useBloom = false
+    }
 
-        // GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
-        RenderSystem.enableBlend()
-        minecraft.framebuffer.beginWrite(true)
+    private fun dropHudShadow() {
+        GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(1.0F, maxSigma = 20F)
+        BlurRenderer.renderGaussianBlur(hudFramebuffer, blurFramebuffer)
+
+        StateIsolation.isolate(
+            FramebufferState(blurFramebuffer),
+            ViewportState(blurFramebuffer),
+            BlendState(true),
+            BlendFuncState(GL_ONE, GL_ONE_MINUS_SRC_ALPHA),
+        ) {
+            // Render the blurred hud background to blurFramebuffer
+            hudFramebuffer opacityMask BlurRenderer.blurFramebuffer
+
+            // Render half-transparent hud on the blurred hud background
+            hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+        }
+    }
+
+    private fun renderHudBlur() {
+        val strength = 1.0F - magicShownOpacityAnimation.animatedValue.toFloat()
+        if (strength == .0F) {
+            blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            return
+        }
+
+        GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(strength, maxSigma = 20F)
+        BlurRenderer.renderGaussianBlurFullResolution(blurFramebuffer)
+        BlurRenderer.blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
     }
 
     private fun renderPoints() {
@@ -1419,7 +1418,6 @@ object MatrixHud {
             )
 
             RenderSystem.enableBlend()
-            // RenderSystem.blendFunc(GlStateManager.SrcFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_DST_ALPHA)
             BufferRenderer.drawWithGlobalProgram(buffer.end())
             RenderSystem.defaultBlendFunc()
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
@@ -1510,29 +1508,9 @@ object MatrixHud {
         this.targetedEntity = targetedEntity as? LivingEntity?
     }
 
-    private fun renderRightPart(
-        drawContext: DrawContext,
-        tickCounter: RenderTickCounter,
-    ) {
-        val backgroundColor = ColorHelper.Argb.getArgb(
-            (magicShownOpacityAnimation.animatedValue * 127.5).toInt(), 255, 255, 255
-        )
-        val alpha = (magicShownOpacityAnimation.animatedValue * 255).coerceIn(
-            .0..255.0
-        ).toInt()
-        ColorHelper.Argb.getArgb(alpha, 255, 255, 255)
-
-        RenderSystem.disableBlend()
-        // drawContext.enableScissor(
-        //     drawContext.scaledWindowWidth - 200 - magicShownAnimation.animatedValue.toInt(),
-        //     drawContext.scaledWindowHeight / 2 - 100 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt(),
-        //     drawContext.scaledWindowWidth - 25 - magicShownAnimation.animatedValue.toInt(),
-        //     drawContext.scaledWindowHeight / 2 + 100 + (descriptionExtraHeightAnimation.animatedValue / 2).toInt()
-        // )
-        // BlurRenderer.blurTextureRenderShader.enableShader()
-        // BlurRenderer.renderQuad()
-        // BlurRenderer.blurTextureRenderShader.disableShader()
-        // drawContext.disableScissor()
+    private fun renderRightPart(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+        val backgroundColor = ColorHelper.Argb.getArgb((magicShownOpacityAnimation.animatedValue * 127.5).toInt(), 255, 255, 255)
+        val alpha = (magicShownOpacityAnimation.animatedValue * 255).coerceIn(.0..255.0).toInt()
 
         val builder = Tessellator.getInstance()
         val buffer = builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR)
@@ -1554,16 +1532,19 @@ object MatrixHud {
         buffer.vertex(leftX, topY, 0F).texture(1F, 0F).color(backgroundColor)
         buffer.vertex(leftX, bottomY, 0F).texture(1F, 1F).color(backgroundColor)
         buffer.vertex(rightX, bottomY, 0F).texture(0F, 1F).color(backgroundColor)
-        RenderSystem.enableBlend()
+
         dissolveShader.dissolveFactor = dissolveAnimation.animatedValue.toFloat()
         dissolveShader.resolutionX = width
         dissolveShader.resolutionY = height
         dissolveShader.enableShader()
-        BufferRenderer.draw(buffer.end())
+
+        StateIsolation.isolate(BlendState(true)) {
+            BufferRenderer.draw(buffer.end())
+        }
+
         dissolveShader.disableShader()
         dissolveShader.resolutionX = 1.0F
         dissolveShader.resolutionY = 1.0F
-        RenderSystem.disableBlend()
 
         val descriptionAlpha = min(magicShownOpacityAnimation.animatedValue * 255, entityDescriptionOpacityAnimation.animatedValue * 255).toInt()
         val cachedTargetedEntity = this.cachedTargetedEntity

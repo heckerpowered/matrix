@@ -87,6 +87,9 @@ val tentBlurShader = BlitShader(
     })
 )
 
+/**
+ *
+ */
 infix fun Framebuffer.blend(other: Framebuffer) {
     primaryFramebuffer = this
     secondaryFramebuffer = other
@@ -99,12 +102,20 @@ infix fun Framebuffer.blendScreen(other: Framebuffer) {
     blendScreenShader.blit()
 }
 
+/**
+ * Executes the given [drawFunction] with this [Framebuffer] as the current framebuffer,
+ * ensuring the previous framebuffer and viewport state are preserved and restored afterward.
+ *
+ * The [drawFunction] is responsible for binding this [Framebuffer] and setting an appropriate
+ * viewport, if required. This function guarantees restoration of only the relevant OpenGL state,
+ * specifically the framebuffer and viewport bindings.
+ *
+ * @param drawFunction the rendering operation to perform with framebuffer state isolation.
+ */
 fun Framebuffer.draw(drawFunction: () -> Unit) {
-    val previousFramebuffer = GlStateManager.getBoundFramebuffer()
-    beginWrite(true)
-    drawFunction()
-    endWrite()
-    GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+    framebufferGuard {
+        drawFunction()
+    }
 }
 
 infix fun Framebuffer.tent(other: Framebuffer): Framebuffer {
@@ -113,11 +124,6 @@ infix fun Framebuffer.tent(other: Framebuffer): Framebuffer {
         tentBlurShader.blit()
     }
     return other
-}
-
-fun Framebuffer.inplaceTent(): Framebuffer {
-    this tent this
-    return this
 }
 
 infix fun Framebuffer.copyTo(other: Framebuffer) {
@@ -207,7 +213,7 @@ fun Framebuffer.dump(name: String, levelOfDetail: Int = 0, generateMipmap: Boole
     val height = glGetTexLevelParameteri(GL_TEXTURE_2D, levelOfDetail, GL_TEXTURE_HEIGHT)
 
     if (width <= 0 || height <= 0) {
-        checkGLError("dump_framebuffer")
+        OpenGLExtensions.fastCheck("Framebuffer dump: invalid texture size")
         return
     }
 
@@ -246,6 +252,7 @@ fun Framebuffer.dump(name: String, levelOfDetail: Int = 0, generateMipmap: Boole
  *
  * @param action The block of code to execute within the guarded framebuffer and viewport state.
  */
+@Deprecated("Use StateIsolation.isolate(FramebufferState(this)) { action() } instead")
 fun framebufferGuard(action: () -> Unit) {
     val previousBindingFramebuffer = glGetInteger(GL_FRAMEBUFFER_BINDING)
     val previousViewportX = Viewport.getX()
@@ -257,11 +264,4 @@ fun framebufferGuard(action: () -> Unit) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, previousBindingFramebuffer)
     GlStateManager._viewport(previousViewportX, previousViewportY, previousViewportWidth, previousViewportHeight)
-}
-
-fun checkGLError(tag: String = "") {
-    val err = glGetError()
-    if (err != GL_NO_ERROR) {
-        println("OpenGL Error at $tag: 0x${err.toString(16)}")
-    }
 }

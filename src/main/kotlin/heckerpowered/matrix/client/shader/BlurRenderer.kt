@@ -10,7 +10,9 @@ import heckerpowered.matrix.client.render.linearCopyTo
 import heckerpowered.matrix.client.render.nearestCopyTo
 import heckerpowered.matrix.client.render.post.ScaleSampling
 import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
-import heckerpowered.matrix.client.render.spoofFramebuffer
+import heckerpowered.matrix.client.render.state.FramebufferState
+import heckerpowered.matrix.client.render.state.StateIsolation
+import heckerpowered.matrix.client.render.state.ViewportState
 import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gl.Framebuffer
@@ -133,8 +135,8 @@ object BlurRenderer {
         BufferRenderer.draw(buffer.end())
     }
 
-    fun renderGaussianBlurFullResolution() {
-        spoofFramebuffer {
+    fun renderGaussianBlurFullResolution(source: Framebuffer = PostProcessRenderer.sourceFramebuffer) {
+        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
             glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -146,7 +148,7 @@ object BlurRenderer {
             blurFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
             GaussianBlurRenderer.fullPing.beginWrite(true)
             GaussianBlurRenderer.direction = Vector2f(1F, 0F)
-            GaussianBlurRenderer.colorAttachment = PostProcessRenderer.sourceFramebuffer.colorAttachment
+            GaussianBlurRenderer.colorAttachment = source.colorAttachment
             GaussianBlurRenderer.gaussianBlurShader.blit()
 
             GaussianBlurRenderer.fullPong.beginWrite(true)
@@ -158,8 +160,8 @@ object BlurRenderer {
         }
     }
 
-    fun renderGaussianBlur(target: Framebuffer = blurFramebuffer) {
-        spoofFramebuffer {
+    fun renderGaussianBlur(source: Framebuffer = PostProcessRenderer.sourceFramebuffer, target: Framebuffer = blurFramebuffer) {
+        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
             glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -176,7 +178,7 @@ object BlurRenderer {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-            PostProcessRenderer.sourceFramebuffer linearCopyTo ScaleSampling.getDownScalingFramebuffer(1.0 / 2)
+            source linearCopyTo ScaleSampling.getDownScalingFramebuffer(1.0 / 2)
             ScaleSampling.getDownScalingFramebuffer(1.0 / 2) linearCopyTo ScaleSampling.getDownScalingFramebuffer(1.0 / 4)
             val downscalingFramebuffer = ScaleSampling.getDownScalingFramebuffer(1.0 / 4)
 
@@ -197,7 +199,7 @@ object BlurRenderer {
     }
 
     fun renderKawaseBlur() {
-        spoofFramebuffer {
+        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
             glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
