@@ -102,30 +102,6 @@ infix fun Framebuffer.blendScreen(other: Framebuffer) {
     blendScreenShader.blit()
 }
 
-/**
- * Executes the given [drawFunction] with this [Framebuffer] as the current framebuffer,
- * ensuring the previous framebuffer and viewport state are preserved and restored afterward.
- *
- * The [drawFunction] is responsible for binding this [Framebuffer] and setting an appropriate
- * viewport, if required. This function guarantees restoration of only the relevant OpenGL state,
- * specifically the framebuffer and viewport bindings.
- *
- * @param drawFunction the rendering operation to perform with framebuffer state isolation.
- */
-fun Framebuffer.draw(drawFunction: () -> Unit) {
-    framebufferGuard {
-        drawFunction()
-    }
-}
-
-infix fun Framebuffer.tent(other: Framebuffer): Framebuffer {
-    primaryFramebuffer = this
-    other.draw {
-        tentBlurShader.blit()
-    }
-    return other
-}
-
 infix fun Framebuffer.copyTo(other: Framebuffer) {
     blit(other, GL_COLOR_BUFFER_BIT, GL_LINEAR)
 }
