@@ -8,6 +8,11 @@ import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.render.recommendMipLevel
 import heckerpowered.matrix.client.render.shader.TentShader
+import heckerpowered.matrix.client.render.state.BlendFuncSeparateState
+import heckerpowered.matrix.client.render.state.FramebufferState
+import heckerpowered.matrix.client.render.state.StateIsolation
+import heckerpowered.matrix.client.render.state.ViewportState
+import heckerpowered.matrix.client.render.state.capabilities.BlendState
 import heckerpowered.matrix.client.shader.BlitShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.core.FramebufferExtension.Companion.allocateMipmaps
@@ -85,7 +90,6 @@ object BloomEffect {
 
     private fun prepareDownsamplePass() {
         TentShader.framebufferObject = brightFramebuffer.colorAttachment
-        // PostProcessRenderer.renderShaderToFramebuffer(TentShader.tentBlurShader, bloomDownFramebuffer)
         bloomDownFramebuffer.beginWriteLod(0)
         PostProcessRenderer.copyFramebuffer(brightFramebuffer, bloomDownFramebuffer)
     }
@@ -144,10 +148,6 @@ object BloomEffect {
     private fun resetBloomPasses() {
         bloomUpFramebuffer.beginReadLod(0)
         bloomUpFramebuffer.beginWriteLod(0)
-
-        RenderSystem.enableBlend()
-        RenderSystem.defaultBlendFunc()
-        minecraft.framebuffer.beginWrite(true)
     }
 
     private fun generateMipmaps(mipLevel: Int) {
@@ -156,11 +156,16 @@ object BloomEffect {
     }
 
     fun renderBloom() {
-        val mipLevel = minecraft.framebuffer.recommendMipLevel()
-        clearBloomPasses(mipLevel)
-        computeBloomPass()
-        generateMipmaps(mipLevel)
-        resetBloomPasses()
+        StateIsolation.isolate(
+            FramebufferState.captureSnapshot(), ViewportState.captureSnapshot(),
+            BlendState.captureSnapshot(), BlendFuncSeparateState.captureSnapshot()
+        ) {
+            val mipLevel = minecraft.framebuffer.recommendMipLevel()
+            clearBloomPasses(mipLevel)
+            computeBloomPass()
+            generateMipmaps(mipLevel)
+            resetBloomPasses()
+        }
     }
 
     var renderBloom = false
