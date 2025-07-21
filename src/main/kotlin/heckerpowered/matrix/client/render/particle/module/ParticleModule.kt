@@ -18,6 +18,8 @@ abstract class ParticleModule {
             ),
             initOnly = true
         )
+
+        val QUERY_OBJECT = glGenQueries()
     }
 
     protected open fun disableRasterizer() {
@@ -41,8 +43,13 @@ abstract class ParticleModule {
         glBeginTransformFeedback(GL_POINTS)
     }
 
-    open fun dispatchCompute(particleStates: GpuParticleState, first: Int = 0, count: Int = particleStates.particleCount) {
+    open fun dispatchCompute(particleStates: GpuParticleState, first: Int = 0, count: Int = particleStates.particleCount): Int {
+        glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, QUERY_OBJECT)
         glDrawArrays(GL_POINTS, first, count)
+        glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN)
+
+        val written = glGetQueryObjecti(QUERY_OBJECT, GL_QUERY_RESULT)
+        return written
     }
 
     open fun unbind(particleStates: GpuParticleState) {
@@ -56,9 +63,11 @@ abstract class ParticleModule {
         particleStates.swapBuffers()
     }
 
-    open fun run(particleStates: GpuParticleState, first: Int = 0, count: Int = particleStates.particleCount) {
+    open fun run(particleStates: GpuParticleState, first: Int = 0, count: Int = particleStates.particleCount): Int {
         bind(particleStates, first, count)
-        dispatchCompute(particleStates, first, count)
+        val written = dispatchCompute(particleStates, first, count)
         unbind(particleStates)
+
+        return written
     }
 }

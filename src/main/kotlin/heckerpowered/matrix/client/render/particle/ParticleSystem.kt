@@ -1,71 +1,72 @@
 package heckerpowered.matrix.client.render.particle
 
+import heckerpowered.matrix.client.render.particle.module.ParticleModule
 import heckerpowered.matrix.client.render.particle.module.ParticleRenderModule
 import heckerpowered.matrix.client.render.particle.module.particle_spawn.ParticleSpawnModule
 import heckerpowered.matrix.client.render.particle.module.particle_update.ParticleUpdateModule
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.nanoseconds
 
 class ParticleSystem(
     val particleCount: Int,
     val particleSpawnModules: Array<ParticleSpawnModule> = emptyArray(),
     val particleUpdateModules: Array<ParticleUpdateModule> = emptyArray(),
     val particleRenderModules: Array<ParticleRenderModule> = emptyArray(),
-    var lifeTime: Duration = Duration.INFINITE,
-    var maxLifeTime: Duration = Duration.INFINITE,
 ) {
-    private var lastFrameTime: Duration = Duration.ZERO
     val particleStates = GpuParticleState.createGpuParticleState(particleCount)
+    var activeParticleCount = 0
+        private set
+
+    private fun clampRange(first: Int, count: Int, total: Int): Pair<Int, Int>? {
+        val first = first.coerceIn(0..total)
+        val count = count.coerceIn(0, total - first)
+        return if (count > 0) first to count else null
+    }
+
+    private inline fun <T : ParticleModule> runPartial(
+        first: Int, count: Int, modules: Array<out T>,
+        action: T.(particleStates: GpuParticleState, first: Int, count: Int) -> Int,
+    ): Int {
+        clampRange(first, count, particleCount)?.let { (first, count) ->
+            var written = count
+            for (module in modules) {
+                written = module.action(particleStates, first, written)
+            }
+            return written
+        }
+        return 0
+    }
 
     fun spawnParticles() {
-        for (particleSpawnModule in particleSpawnModules) {
-            particleSpawnModule.run(particleStates)
-        }
-        lastFrameTime = System.nanoTime().nanoseconds
+        spawnPartialParticles(0, particleCount)
     }
 
     fun spawnPartialParticles(first: Int, count: Int) {
-        for (particleSpawnModule in particleSpawnModules) {
-            particleSpawnModule.run(particleStates, first, count)
+        runPartial(first, count, particleSpawnModules) { particleStates, first, count ->
+            run(particleStates, first, count)
         }
-        lastFrameTime = System.nanoTime().nanoseconds
+        activeParticleCount = particleCount
     }
 
-    fun spawnPartialParticles(range: IntRange) {
-        spawnPartialParticles(range.first, range.count())
-    }
-
-    fun updateParticles(deltaTime: Duration = (System.nanoTime().nanoseconds - lastFrameTime)) {
-        for (particleUpdateModule in particleUpdateModules) {
-            particleUpdateModule.run(particleStates)
-        }
-        lifeTime += deltaTime
-        lastFrameTime = System.nanoTime().nanoseconds
+    fun updateParticles() {
+        updatePartialParticles(0, activeParticleCount)
     }
 
     fun updatePartialParticles(first: Int, count: Int) {
-        for (particleUpdateModules in particleUpdateModules) {
-            particleUpdateModules.run(particleStates, first, count)
+        activeParticleCount = runPartial(first, count, particleUpdateModules) { particleStates, first, count ->
+            run(particleStates, first, count)
         }
-    }
-
-    fun updatePartialParticles(range: IntRange) {
-        updatePartialParticles(range.first, range.count())
     }
 
     fun renderParticles() {
         for (particleRenderModules in particleRenderModules) {
-            particleRenderModules.run(particleStates)
+            particleRenderModules.run(particleStates, 0, activeParticleCount)
         }
     }
 
     fun renderPartialParticles(first: Int, count: Int) {
-        for (particleRenderModules in particleRenderModules) {
-            particleRenderModules.run(particleStates, first, count)
+        clampRange(first, count, particleCount)?.let { (first, count) ->
+            for (mod in particleRenderModules) {
+                mod.run(particleStates, first, count)
+            }
         }
-    }
-
-    fun renderPartialParticles(range: IntRange) {
-        renderPartialParticles(range.first, range.count())
     }
 }
