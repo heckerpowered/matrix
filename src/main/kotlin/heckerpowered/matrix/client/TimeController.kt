@@ -7,10 +7,16 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.render.RenderTickCounter
 import net.minecraft.util.Util
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 object TimeController {
     private val timeControllers = mutableSetOf<SimpleDoubleAnimation>()
     private var previousMinScale = .0
+
+    private var lastFrameTime = Duration.ZERO
+    var deltaTime = Duration.ZERO
+        private set
 
     fun allocateTimeController(): SimpleDoubleAnimation {
         val controller = SimpleDoubleAnimation(1.0, 1.0)
@@ -52,6 +58,10 @@ object TimeController {
 
     @JvmStatic
     fun beginRenderTick(timeMillis: Long, tick: Boolean) {
+        if (lastFrameTime != Duration.ZERO) {
+            deltaTime = System.nanoTime().nanoseconds - lastFrameTime
+        }
+        lastFrameTime = System.nanoTime().nanoseconds
         val ticks = standaloneRenderTickCounter.beginRenderTick(Util.getMeasuringTimeMs(), tick)
         if (minecraft.world == null || minecraft.player == null) {
             return
