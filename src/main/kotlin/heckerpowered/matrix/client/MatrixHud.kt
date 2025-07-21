@@ -710,7 +710,10 @@ object MatrixHud {
     }
 
     private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        StateIsolation.isolate(FramebufferState(hudFramebuffer), ViewportState(hudFramebuffer)) {
+        StateIsolation.isolate(
+            FramebufferState(hudFramebuffer), ViewportState(hudFramebuffer),
+            BlendState.captureSnapshot(), BlendFuncSeparateState.captureSnapshot()
+        ) {
             onBeginHudRender(drawContext, tickCounter)
             renderHud(drawContext, tickCounter)
             onEndHudRender(drawContext, tickCounter)
@@ -779,6 +782,15 @@ object MatrixHud {
         fovAnimation.value = 1.0 - fovZoomRatio
         lastNanos = Util.getMeasuringTimeNano()
 
+        // magicShownAnimationClock.let {
+        //     it.from = magicShownAnimation.animatedValue
+        //     it.to = .0
+        // }
+
+        // magicShownOpacityAnimationClock.let {
+        //     it.from = magicShownOpacityAnimation.animatedValue
+        //     it.to = 1.0
+        // }
         if (magicShownOpacityAnimation.animatedValue == .0) {
             for (animation in magicExtraWidthAnimations) {
                 animation.animation.currentValue = .0
@@ -829,19 +841,20 @@ object MatrixHud {
                 renderHudBlur()
             }
         } else {
-            StateIsolation.isolate(FramebufferState(blurFramebuffer), ViewportState(blurFramebuffer)) {
-                hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-            }
-            StateIsolation.isolate(FramebufferState(minecraft.framebuffer), ViewportState(minecraft.framebuffer)) {
-                blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
+            StateIsolation.isolate(
+                FramebufferState(blurFramebuffer), ViewportState(blurFramebuffer),
+                BlendState(true), BlendFuncState(GL_ONE, GL_ONE_MINUS_SRC_ALPHA),
+            ) {
+                PostProcessRenderer.copyFramebuffer(hudFramebuffer, blurFramebuffer, false)
+                PostProcessRenderer.copyFramebuffer(hudFramebuffer, minecraft.framebuffer, false)
             }
         }
 
         BloomEffect.brightnessPassFramebuffer = blurFramebuffer
         BloomEffect.brightnessThreshold = 1F
-        BloomEffect.renderBloom()
 
-        StateIsolation.isolate(BlendFuncState(GL_ONE, GL_ONE)) {
+        StateIsolation.isolate(BlendState(true), BlendFuncState(GL_ONE, GL_ONE)) {
+            BloomEffect.renderBloom()
             PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
         }
 
