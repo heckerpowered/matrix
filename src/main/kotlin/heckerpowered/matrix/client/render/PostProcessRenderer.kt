@@ -5,6 +5,9 @@ import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.event.PostProcessCallback
 import heckerpowered.matrix.client.minecraft
+import heckerpowered.matrix.client.render.state.FramebufferState
+import heckerpowered.matrix.client.render.state.StateIsolation
+import heckerpowered.matrix.client.render.state.ViewportState
 import heckerpowered.matrix.client.shader.BlitShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.core.resourceToString
@@ -137,14 +140,14 @@ object PostProcessRenderer {
     }
 
     fun resetFramebuffers() {
-        framebufferGuard {
+        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
             currentFramebufferIndex = 0
             framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
         }
     }
 
     fun clearFramebuffers() {
-        framebufferGuard {
+        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
             framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
         }
     }
