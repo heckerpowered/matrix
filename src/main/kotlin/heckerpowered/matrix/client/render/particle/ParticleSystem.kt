@@ -1,5 +1,6 @@
 package heckerpowered.matrix.client.render.particle
 
+import heckerpowered.matrix.client.render.particle.memory.MemoryLayout
 import heckerpowered.matrix.client.render.particle.module.ParticleModule
 import heckerpowered.matrix.client.render.particle.module.ParticleRenderModule
 import heckerpowered.matrix.client.render.particle.module.particle_spawn.ParticleSpawnModule
@@ -10,8 +11,9 @@ class ParticleSystem(
     val particleSpawnModules: Array<ParticleSpawnModule> = emptyArray(),
     val particleUpdateModules: Array<ParticleUpdateModule> = emptyArray(),
     val particleRenderModules: Array<ParticleRenderModule> = emptyArray(),
+    val layout: MemoryLayout,
 ) {
-    val particleStates = GpuParticleState.createGpuParticleState(particleCount)
+    val particleStates = GpuParticleState.createGpuParticleState(particleCount, layout)
     var activeParticleCount = 0
         private set
 

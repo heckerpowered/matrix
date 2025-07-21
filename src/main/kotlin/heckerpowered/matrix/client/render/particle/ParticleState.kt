@@ -1,72 +1,31 @@
 package heckerpowered.matrix.client.render.particle
 
+import heckerpowered.matrix.client.render.particle.memory.MemoryLayout
+import heckerpowered.matrix.client.render.particle.module.ParticleStateElement.*
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import org.joml.Vector4f
 import java.nio.FloatBuffer
 
-open class ParticleState(val data: FloatBuffer) {
-    companion object {
-        const val X_INDEX = 0
-        const val Y_INDEX = 1
-        const val Z_INDEX = 2
-        const val POSITION_INDEX = X_INDEX
-
-        const val VELOCITY_X_INDEX = 3
-        const val VELOCITY_Y_INDEX = 4
-        const val VELOCITY_Z_INDEX = 5
-        const val VELOCITY_INDEX = VELOCITY_X_INDEX
-
-        const val ACCELERATION_X_INDEX = 6
-        const val ACCELERATION_Y_INDEX = 7
-        const val ACCELERATION_Z_INDEX = 8
-        const val ACCELERATION_INDEX = ACCELERATION_X_INDEX
-
-        const val SPRITE_SIZE_INDEX = 9
-        const val SCALE_INDEX = 10
-
-        const val AGE_INDEX = 11
-        const val LIFETIME_INDEX = 12
-
-        const val COLOR_R_INDEX = 13
-        const val COLOR_G_INDEX = 14
-        const val COLOR_B_INDEX = 15
-        const val COLOR_A_INDEX = 16
-        const val COLOR_INDEX = COLOR_R_INDEX
-
-        const val ORIENTATION_X_INDEX = 17
-        const val ORIENTATION_Y_INDEX = 18
-        const val ORIENTATION_Z_INDEX = 19
-        const val ORIENTATION_W_INDEX = 20
-        const val ORIENTATION_INDEX = ORIENTATION_X_INDEX
-
-        const val ANGULAR_VELOCITY_X_INDEX = 21
-        const val ANGULAR_VELOCITY_Y_INDEX = 22
-        const val ANGULAR_VELOCITY_Z_INDEX = 23
-        const val ANGULAR_VELOCITY_INDEX = ANGULAR_VELOCITY_X_INDEX
-
-        const val ELEMENTS = 24
-        const val BYTES = ELEMENTS * Float.SIZE_BYTES
-    }
-
+open class ParticleState(val data: FloatBuffer, val layout: MemoryLayout) {
     init {
-        require(data.capacity() >= 24) { "Particle data's size is too small." }
+        require(data.capacity() >= layout.floats) { "${layout.name} requires at least ${layout.floats} floats, but only ${data.capacity()} are available" }
     }
 
     var x: Float
-        get() = data[X_INDEX]
+        get() = data[layout[POSITION_X]]
         set(value) {
-            data.put(X_INDEX, value)
+            data.put(layout[POSITION_X], value)
         }
     var y: Float
-        get() = data[Y_INDEX]
+        get() = data[layout[POSITION_Y]]
         set(value) {
-            data.put(Y_INDEX, value)
+            data.put(layout[POSITION_Y], value)
         }
     var z: Float
-        get() = data[Z_INDEX]
+        get() = data[layout[POSITION_Z]]
         set(value) {
-            data.put(Z_INDEX, value)
+            data.put(layout[POSITION_Z], value)
         }
     var position: Vector3f
         get() = Vector3f(x, y, z)
@@ -76,22 +35,22 @@ open class ParticleState(val data: FloatBuffer) {
             z = value.z
         }
     val positionBuffer: FloatBuffer
-        get() = data.slice(POSITION_INDEX, 3)
+        get() = data.slice(layout[POSITION_X], 3)
 
     var velocityX: Float
-        get() = data[VELOCITY_X_INDEX]
+        get() = data[layout[VELOCITY_X]]
         set(value) {
-            data.put(VELOCITY_X_INDEX, value)
+            data.put(layout[VELOCITY_X], value)
         }
     var velocityY: Float
-        get() = data[VELOCITY_Y_INDEX]
+        get() = data[layout[VELOCITY_Y]]
         set(value) {
-            data.put(VELOCITY_Y_INDEX, value)
+            data.put(layout[VELOCITY_Y], value)
         }
     var velocityZ: Float
-        get() = data[VELOCITY_Z_INDEX]
+        get() = data[layout[VELOCITY_Z]]
         set(value) {
-            data.put(VELOCITY_Z_INDEX, value)
+            data.put(layout[VELOCITY_Z], value)
         }
     var velocity: Vector3f
         get() = Vector3f(velocityX, velocityY, velocityZ)
@@ -101,22 +60,22 @@ open class ParticleState(val data: FloatBuffer) {
             velocityZ = value.z
         }
     val velocityBuffer: FloatBuffer
-        get() = data.slice(VELOCITY_INDEX, 3)
+        get() = data.slice(layout[VELOCITY_X], 3)
 
     var accelerationX: Float
-        get() = data[ACCELERATION_X_INDEX]
+        get() = data[layout[ACCELERATION_X]]
         set(value) {
-            data.put(ACCELERATION_X_INDEX, value)
+            data.put(layout[ACCELERATION_X], value)
         }
     var accelerationY: Float
-        get() = data[ACCELERATION_Y_INDEX]
+        get() = data[layout[ACCELERATION_Y]]
         set(value) {
-            data.put(ACCELERATION_Y_INDEX, value)
+            data.put(layout[ACCELERATION_Y], value)
         }
     var accelerationZ: Float
-        get() = data[ACCELERATION_Z_INDEX]
+        get() = data[layout[ACCELERATION_Z]]
         set(value) {
-            data.put(ACCELERATION_Z_INDEX, value)
+            data.put(layout[ACCELERATION_Z], value)
         }
     var acceleration: Vector3f
         get() = Vector3f(accelerationX, accelerationY, accelerationZ)
@@ -126,49 +85,49 @@ open class ParticleState(val data: FloatBuffer) {
             accelerationZ = value.z
         }
     val accelerationBuffer: FloatBuffer
-        get() = data.slice(ACCELERATION_INDEX, 3)
+        get() = data.slice(layout[ACCELERATION_X], 3)
 
     var spriteSize: Float
-        get() = data[SPRITE_SIZE_INDEX]
+        get() = data[layout[SPRITE_SIZE]]
         set(value) {
-            data.put(SPRITE_SIZE_INDEX, value)
+            data.put(layout[SPRITE_SIZE], value)
         }
     var scale: Float
-        get() = data[SCALE_INDEX]
+        get() = data[layout[SCALE]]
         set(value) {
-            data.put(SCALE_INDEX, value)
+            data.put(layout[SCALE], value)
         }
 
     var age: Float
-        get() = data[AGE_INDEX]
+        get() = data[layout[AGE]]
         set(value) {
-            data.put(AGE_INDEX, value)
+            data.put(layout[AGE], value)
         }
     var lifetime: Float
-        get() = data[LIFETIME_INDEX]
+        get() = data[layout[LIFETIME]]
         set(value) {
-            data.put(LIFETIME_INDEX, value)
+            data.put(layout[LIFETIME], value)
         }
 
     var colorR: Float
-        get() = data[COLOR_R_INDEX]
+        get() = data[layout[COLOR_R]]
         set(value) {
-            data.put(COLOR_R_INDEX, value)
+            data.put(layout[COLOR_R], value)
         }
     var colorG: Float
-        get() = data[COLOR_G_INDEX]
+        get() = data[layout[COLOR_G]]
         set(value) {
-            data.put(COLOR_G_INDEX, value)
+            data.put(layout[COLOR_G], value)
         }
     var colorB: Float
-        get() = data[COLOR_B_INDEX]
+        get() = data[layout[COLOR_B]]
         set(value) {
-            data.put(COLOR_B_INDEX, value)
+            data.put(layout[COLOR_B], value)
         }
     var colorA: Float
-        get() = data[COLOR_A_INDEX]
+        get() = data[layout[COLOR_A]]
         set(value) {
-            data.put(COLOR_A_INDEX, value)
+            data.put(layout[COLOR_A], value)
         }
     var colorRGBA: Vector4f
         get() = Vector4f(colorR, colorG, colorB, colorA)
@@ -179,27 +138,27 @@ open class ParticleState(val data: FloatBuffer) {
             colorA = value.w
         }
     val colorBuffer: FloatBuffer
-        get() = data.slice(COLOR_INDEX, 4)
+        get() = data.slice(layout[COLOR_R], 4)
 
     var orientationX: Float
-        get() = data[ORIENTATION_X_INDEX]
+        get() = data[layout[ORIENTATION_X]]
         set(value) {
-            data.put(ORIENTATION_X_INDEX, value)
+            data.put(layout[ORIENTATION_X], value)
         }
     var orientationY: Float
-        get() = data[ORIENTATION_Y_INDEX]
+        get() = data[layout[ORIENTATION_Y]]
         set(value) {
-            data.put(ORIENTATION_Y_INDEX, value)
+            data.put(layout[ORIENTATION_Y], value)
         }
     var orientationZ: Float
-        get() = data[ORIENTATION_Z_INDEX]
+        get() = data[layout[ORIENTATION_Z]]
         set(value) {
-            data.put(ORIENTATION_Z_INDEX, value)
+            data.put(layout[ORIENTATION_Z], value)
         }
     var orientationW: Float
-        get() = data[ORIENTATION_W_INDEX]
+        get() = data[layout[ORIENTATION_W]]
         set(value) {
-            data.put(ORIENTATION_W_INDEX, value)
+            data.put(layout[ORIENTATION_W], value)
         }
     var orientation: Quaternionf
         get() = Quaternionf(orientationX, orientationY, orientationZ, orientationW)
@@ -210,22 +169,22 @@ open class ParticleState(val data: FloatBuffer) {
             orientationW = value.w
         }
     val orientationBuffer: FloatBuffer
-        get() = data.slice(ORIENTATION_INDEX, 4)
+        get() = data.slice(layout[ORIENTATION_X], 4)
 
     var angularVelocityX: Float
-        get() = data[ANGULAR_VELOCITY_X_INDEX]
+        get() = data[layout[ANGULAR_VELOCITY_X]]
         set(value) {
-            data.put(ANGULAR_VELOCITY_X_INDEX, value)
+            data.put(layout[ANGULAR_VELOCITY_X], value)
         }
     var angularVelocityY: Float
-        get() = data[ANGULAR_VELOCITY_Y_INDEX]
+        get() = data[layout[ANGULAR_VELOCITY_Y]]
         set(value) {
-            data.put(ANGULAR_VELOCITY_Y_INDEX, value)
+            data.put(layout[ANGULAR_VELOCITY_Y], value)
         }
     var angularVelocityZ: Float
-        get() = data[ANGULAR_VELOCITY_Z_INDEX]
+        get() = data[layout[ANGULAR_VELOCITY_Z]]
         set(value) {
-            data.put(ANGULAR_VELOCITY_Z_INDEX, value)
+            data.put(layout[ANGULAR_VELOCITY_Z], value)
         }
     var angularVelocity: Vector3f
         get() = Vector3f(angularVelocityX, angularVelocityY, angularVelocityZ)
@@ -235,7 +194,7 @@ open class ParticleState(val data: FloatBuffer) {
             angularVelocityZ = value.z
         }
     val angularVelocityBuffer: FloatBuffer
-        get() = data.slice(ANGULAR_VELOCITY_INDEX, 3)
+        get() = data.slice(layout[ANGULAR_VELOCITY_X], 3)
 
     override fun equals(other: Any?): Boolean {
         return other is ParticleState && this.data === other.data

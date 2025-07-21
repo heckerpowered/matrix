@@ -2,6 +2,8 @@ package heckerpowered.matrix.client.render.particle.module
 
 import heckerpowered.matrix.client.projectionMatrix
 import heckerpowered.matrix.client.render.particle.GpuParticleState
+import heckerpowered.matrix.client.render.state.StateIsolation
+import heckerpowered.matrix.client.render.state.capabilities.RasterizerDiscardState
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.client.viewMatrix
 import org.lwjgl.opengl.GL46
@@ -24,12 +26,15 @@ abstract class ParticleRenderModule : ParticleModule() {
         }
     }
 
-    override fun bind(particleStates: GpuParticleState, first: Int, count: Int) {
-        enableRasterizer()
-        particleStates.bind()
+    override fun disableRasterizer(stateIsolation: StateIsolation) {
     }
 
-    override fun unbind(particleStates: GpuParticleState) {
-        particleStates.unbind()
+    override fun bind(particleStates: GpuParticleState, first: Int, count: Int, stateIsolation: StateIsolation) {
+        stateIsolation.push(RasterizerDiscardState(false))
+        particleStates.bind(stateIsolation)
+    }
+
+    override fun unbind(particleStates: GpuParticleState, stateIsolation: StateIsolation) {
+        // particleStates.unbind()
     }
 }

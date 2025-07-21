@@ -1,5 +1,10 @@
 package heckerpowered.matrix.client.render.particle
 
+import heckerpowered.matrix.client.render.particle.memory.MemoryLayout
+import heckerpowered.matrix.client.render.particle.module.ParticleStateElement.*
+import heckerpowered.matrix.client.render.state.ArrayBufferState
+import heckerpowered.matrix.client.render.state.StateIsolation
+import heckerpowered.matrix.client.render.state.VertexArrayState
 import org.lwjgl.opengl.GL15.glBufferData
 import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
@@ -9,72 +14,64 @@ data class GpuParticleState(
     var vertexBufferObjectPing: Int,
     var vertexBufferObjectPong: Int,
     val particleCount: Int,
+    /**
+     * The memory layout of input parameter of shader.
+     */
+    val layout: MemoryLayout,
 ) {
     companion object {
-        fun createGpuParticleState(particleCount: Int): GpuParticleState {
+        fun defineAttributes(layout: MemoryLayout) {
+            fun defineAttrib(index: Int, size: Int, offsetIndex: Int) {
+                glEnableVertexAttribArray(index)
+                glVertexAttribPointer(index, size, GL_FLOAT, false, layout.bufferSizeBytes, (offsetIndex * Float.SIZE_BYTES).toLong())
+            }
+
+            defineAttrib(0, 3, layout[POSITION_X])          // position.xyz
+            defineAttrib(1, 3, layout[VELOCITY_X])          // velocity.xyz
+            defineAttrib(2, 3, layout[ACCELERATION_X])      // acceleration.xyz
+            defineAttrib(3, 1, layout[SPRITE_SIZE])         // sprite size
+            defineAttrib(4, 1, layout[SCALE])               // size scale
+            defineAttrib(5, 1, layout[AGE])                 // age
+            defineAttrib(6, 1, layout[LIFETIME])            // lifetime
+            defineAttrib(7, 4, layout[COLOR_R])             // color.rgba
+            defineAttrib(8, 4, layout[ORIENTATION_X])       // orientation quaternion
+            defineAttrib(9, 3, layout[ANGULAR_VELOCITY_X])  // angular velocity
+        }
+
+        fun createGpuParticleState(particleCount: Int, layout: MemoryLayout): GpuParticleState {
             val vertexArrayObject = glGenVertexArrays()
             val vertexBufferObjectPing = glGenBuffers()
             val vertexBufferObjectPong = glGenBuffers()
 
             glBindVertexArray(vertexArrayObject)
 
-            val bufferSize = particleCount * ParticleState.BYTES.toLong()
-
-            fun defineAttrib(index: Int, size: Int, offsetIndex: Int) {
-                glEnableVertexAttribArray(index)
-                glVertexAttribPointer(index, size, GL_FLOAT, false, ParticleState.BYTES, (offsetIndex * Float.SIZE_BYTES).toLong())
-            }
-
-            fun defineAttributes() {
-                defineAttrib(0, 3, ParticleState.POSITION_INDEX)          // position.xyz
-                defineAttrib(1, 3, ParticleState.VELOCITY_INDEX)          // velocity.xyz
-                defineAttrib(2, 3, ParticleState.ACCELERATION_INDEX)      // acceleration.xyz
-                defineAttrib(3, 1, ParticleState.SPRITE_SIZE_INDEX)       // sprite size
-                defineAttrib(4, 1, ParticleState.SCALE_INDEX)             // size scale
-                defineAttrib(5, 1, ParticleState.AGE_INDEX)               // age
-                defineAttrib(6, 1, ParticleState.LIFETIME_INDEX)          // lifetime
-                defineAttrib(7, 4, ParticleState.COLOR_INDEX)             // color.rgba
-                defineAttrib(8, 4, ParticleState.ORIENTATION_INDEX)       // orientation quaternion
-                defineAttrib(9, 3, ParticleState.ANGULAR_VELOCITY_INDEX)  // angular velocity
-            }
+            val bufferSize = particleCount * layout.bufferSizeBytes.toLong()
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPing)
             glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_COPY)
-            defineAttributes()
+            defineAttributes(layout)
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPong)
             glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_COPY)
-            defineAttributes()
+            defineAttributes(layout)
 
             glBindVertexArray(0)
             glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-            return GpuParticleState(vertexArrayObject, vertexBufferObjectPing, vertexBufferObjectPong, particleCount)
+            return GpuParticleState(vertexArrayObject, vertexBufferObjectPing, vertexBufferObjectPong, particleCount, layout)
         }
     }
 
     fun bind() {
         glBindVertexArray(vertexArrayObject)
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPing)
+        defineAttributes(layout)
+    }
 
-        fun defineAttrib(index: Int, size: Int, offsetIndex: Int) {
-            glEnableVertexAttribArray(index)
-            glVertexAttribPointer(index, size, GL_FLOAT, false, ParticleState.BYTES, (offsetIndex * Float.SIZE_BYTES).toLong())
-        }
-
-        fun defineAttributes() {
-            defineAttrib(0, 3, ParticleState.POSITION_INDEX)          // position.xyz
-            defineAttrib(1, 3, ParticleState.VELOCITY_INDEX)          // velocity.xyz
-            defineAttrib(2, 3, ParticleState.ACCELERATION_INDEX)      // acceleration.xyz
-            defineAttrib(3, 1, ParticleState.SPRITE_SIZE_INDEX)       // sprite size
-            defineAttrib(4, 1, ParticleState.SCALE_INDEX)             // size scale
-            defineAttrib(5, 1, ParticleState.AGE_INDEX)               // age
-            defineAttrib(6, 1, ParticleState.LIFETIME_INDEX)          // lifetime
-            defineAttrib(7, 4, ParticleState.COLOR_INDEX)             // color.rgba
-            defineAttrib(8, 4, ParticleState.ORIENTATION_INDEX)       // orientation quaternion
-            defineAttrib(9, 3, ParticleState.ANGULAR_VELOCITY_INDEX)  // angular velocity
-        }
-        defineAttributes()
+    fun bind(stateIsolation: StateIsolation) {
+        stateIsolation.push(VertexArrayState(vertexArrayObject))
+        stateIsolation.push(ArrayBufferState(vertexBufferObjectPing))
+        defineAttributes(layout)
     }
 
     fun unbind() {
@@ -99,11 +96,11 @@ data class GpuParticleState(
     }
 
     fun initParticles(initializer: (ParticleState) -> Unit) {
-        val buffer = MemoryUtil.memAllocFloat(particleCount * ParticleState.ELEMENTS)
+        val buffer = MemoryUtil.memAllocFloat(particleCount * layout.floats)
         buffer.clear()
         bind()
         repeat(particleCount) {
-            val particleState = ParticleState(buffer.slice(it * ParticleState.ELEMENTS, ParticleState.ELEMENTS))
+            val particleState = ParticleState(buffer.slice(it * layout.floats, layout.floats), layout)
             initializer(particleState)
         }
         buffer.rewind()

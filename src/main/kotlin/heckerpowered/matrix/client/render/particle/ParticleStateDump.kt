@@ -7,7 +7,7 @@ import org.lwjgl.system.MemoryUtil
 import java.nio.FloatBuffer
 
 class ParticleStateDump(val particleStates: GpuParticleState) : AutoCloseable {
-    val buffer: FloatBuffer = MemoryUtil.memAllocFloat(particleStates.particleCount * ParticleState.ELEMENTS)
+    val buffer: FloatBuffer = MemoryUtil.memAllocFloat(particleStates.particleCount * particleStates.layout.floats)
     val particles: Array<ParticleState> = run {
         buffer.clear()
         println("Dump from: ${particleStates.vertexBufferObjectPing}")
@@ -18,7 +18,7 @@ class ParticleStateDump(val particleStates: GpuParticleState) : AutoCloseable {
 
         buffer.rewind()
         Array(particleStates.particleCount) {
-            ParticleState(buffer.slice(it * ParticleState.ELEMENTS, ParticleState.ELEMENTS))
+            ParticleState(buffer.slice(it * particleStates.layout.floats, particleStates.layout.floats), particleStates.layout)
         }
     }
 

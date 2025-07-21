@@ -1,6 +1,11 @@
 package heckerpowered.matrix.client.render
 
+import org.lwjgl.opengl.GL20.glGetActiveUniform
+import org.lwjgl.opengl.GL31.glGetActiveUniformBlockiv
+import org.lwjgl.opengl.GL31.glGetActiveUniformsiv
 import org.lwjgl.opengl.GL46.*
+import org.lwjgl.system.MemoryStack
+import org.lwjgl.system.MemoryUtil
 
 object OpenGLExtensions {
     @JvmStatic
@@ -132,5 +137,36 @@ object OpenGLExtensions {
 
             else -> throw IllegalArgumentException("Unsupported format: 0x${format.toString(16)}")
         }
+    }
+
+    fun getUniformBlockUniforms(program: Int, uniformBlockIndex: Int): Int {
+        return glGetActiveUniformBlocki(program, uniformBlockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS)
+    }
+
+    fun getUniformBlockIndices(program: Int, uniformBlockIndex: Int, count: Int): IntArray {
+        val indices = IntArray(count)
+        glGetActiveUniformBlockiv(program, uniformBlockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, indices)
+        return indices
+    }
+
+    fun getUniformBlockUniformNames(program: Int, count: Int): Array<String> {
+        val maxLength = glGetProgrami(program, GL_ACTIVE_UNIFORM_MAX_LENGTH)
+        val length = IntArray(1)
+        val size = IntArray(1)
+        val type = IntArray(1)
+
+        MemoryStack.stackPush().use { memoryStack ->
+            val nameBuffer = memoryStack.malloc(maxLength)
+            return Array(count) { index ->
+                glGetActiveUniform(program, index, length, size, type, nameBuffer)
+                MemoryUtil.memUTF8(nameBuffer, length[0])
+            }
+        }
+    }
+
+    fun getUniformBlockOffsets(program: Int, uniformBlockIndex: Int, indices: IntArray): IntArray {
+        val offsets = IntArray(indices.size)
+        glGetActiveUniformsiv(program, indices, GL_UNIFORM_OFFSET, offsets)
+        return offsets
     }
 }

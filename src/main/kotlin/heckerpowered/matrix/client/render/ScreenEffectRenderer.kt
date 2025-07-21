@@ -7,6 +7,7 @@ import heckerpowered.matrix.client.event.PostProcessCallback
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.render.particle.ParticleSystem
+import heckerpowered.matrix.client.render.particle.memory.MemoryLayout
 import heckerpowered.matrix.client.render.particle.module.particle_render.ParticleSpriteRendererModule
 import heckerpowered.matrix.client.render.particle.module.particle_spawn.InitializeParticleModule
 import heckerpowered.matrix.client.render.particle.module.particle_spawn.RandomLifetimeModule
@@ -217,7 +218,8 @@ object ScreenEffectRenderer {
             ),
             particleRenderModules = arrayOf(
                 ParticleSpriteRendererModule()
-            )
+            ),
+            MemoryLayout.DEFAULT_LAYOUT
         )
     }
 
@@ -240,7 +242,6 @@ object ScreenEffectRenderer {
         index += count
         if (index > particleSystem.particleCount) {
             index = 0
-            println("index = 0")
         }
         particleSystem.spawnPartialParticles(index, count)
     }

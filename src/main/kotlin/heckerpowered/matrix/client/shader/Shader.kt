@@ -12,6 +12,7 @@ open class Shader(
     vertexShaderPath: String,
     fragmentShaderPath: String? = null,
     private val uniforms: Array<UniformProvider> = emptyArray(),
+    private val uniformBuffers: Array<UniformBufferProvider> = emptyArray(),
     val components: Array<ShaderComponent> = emptyArray(),
     tessellationControlShaderPath: String? = null,
     tessellationEvaluationShaderPath: String? = null,
@@ -102,10 +103,12 @@ open class Shader(
 
     fun uploadUniforms() {
         uniforms.forEach { uniform -> uniform.set(uniform.pointer) }
+        uniformBuffers.forEach { uniformBuffer -> uniformBuffer.set(program, uniformBuffer.pointer) }
     }
 
     fun initUniforms() {
         uniforms.forEach { uniform -> uniform.init(program) }
+        uniformBuffers.forEach { uniformBuffer -> uniformBuffer.init(program) }
     }
 
     fun disableShader() {

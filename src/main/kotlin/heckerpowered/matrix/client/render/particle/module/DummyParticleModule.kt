@@ -1,6 +1,7 @@
 package heckerpowered.matrix.client.render.particle.module
 
 import heckerpowered.matrix.client.render.particle.GpuParticleState
+import heckerpowered.matrix.client.render.state.StateIsolation
 import heckerpowered.matrix.client.shader.Shader
 import heckerpowered.matrix.core.resourceToString
 
@@ -13,13 +14,13 @@ object DummyParticleModule : ParticleModule() {
         components = arrayOf(TRANSFORM_FEEDBACK)
     )
 
-    override fun bind(particleStates: GpuParticleState, first: Int, count: Int) {
+    override fun bind(particleStates: GpuParticleState, first: Int, count: Int, stateIsolation: StateIsolation) {
         shader.enableShader()
-        super.bind(particleStates, first, count)
+        super.bind(particleStates, first, count, stateIsolation)
     }
 
-    override fun unbind(particleStates: GpuParticleState) {
-        super.unbind(particleStates)
+    override fun unbind(particleStates: GpuParticleState, stateIsolation: StateIsolation) {
+        super.unbind(particleStates, stateIsolation)
         shader.disableShader()
     }
 }

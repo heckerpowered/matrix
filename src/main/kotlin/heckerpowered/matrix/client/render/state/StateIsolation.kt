@@ -22,8 +22,10 @@ import org.slf4j.MarkerFactory
  * @author heckerpowered
  */
 class StateIsolation(
-    val states: Array<out RenderPipelineState>,
-) {
+    states: MutableList<out RenderPipelineState> = mutableListOf(),
+) : AutoCloseable {
+    private val snapshots: MutableList<RenderPipelineSnapshot> = mutableListOf()
+
     companion object {
         val MARKER: Marker = MarkerFactory.getMarker("STATE_ISOLATION")
 
@@ -39,28 +41,37 @@ class StateIsolation(
          * @param operation the operation to execute while the specified states are active.
          */
         fun isolate(vararg states: RenderPipelineState, operation: () -> Unit) {
-            StateIsolation(states).isolate(operation)
+            // Apply each state and collect snapshots so they can be restored later.
+            val snapshots = states.map { it.apply() } // Note: apply() may have side effects
+            try {
+                operation()
+            } finally {
+                // Restore the previous states in reverse order (last-applied is restored first).
+                snapshots.asReversed().forEach { it.restore() }
+            }
         }
     }
 
+    init {
+        push(*states.toTypedArray())
+    }
+
     /**
-     * Applies the given render pipeline states to the current rendering context,
-     * executes the specified operation, and then restores all previously modified states.
+     * Applies one or more render pipeline states immediately and records their snapshots
+     * so they can be restored later (in reverse order) when this isolation scope is closed.
      *
-     * States are applied in the order they are provided, and restored in reverse order.
-     * The restoration are guaranteed to be executed even if [operation] throws an exception,
-     * does not guarantee restoration of any states that are modified within the [operation].
+     * Each provided state’s `apply()` method will be invoked, and the resulting
+     * `RenderPipelineSnapshot` will be added to this instance’s snapshot stack.
      *
-     * @param operation the operation to execute while the specified states are active.
+     * @param states one or more [RenderPipelineState] instances to apply; their
+     *               snapshots will be stored for subsequent restoration.
      */
-    fun isolate(operation: () -> Unit) {
-        // Apply each state and collect snapshots so they can be restored later.
-        val snapshots = states.map { it.apply() } // Note: apply() may have side effects
-        try {
-            operation()
-        } finally {
-            // Restore the previous states in reverse order (last-applied is restored first).
-            snapshots.asReversed().forEach { it.restore() }
-        }
+    fun push(vararg states: RenderPipelineState) {
+        val snapshots = states.map { it.apply() }
+        this.snapshots.addAll(snapshots.toTypedArray())
+    }
+
+    override fun close() {
+        snapshots.asReversed().forEach { it.restore() }
     }
 }
