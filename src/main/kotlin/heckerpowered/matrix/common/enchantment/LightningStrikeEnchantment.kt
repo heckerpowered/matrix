@@ -44,7 +44,7 @@ object LightningStrikeEnchantment {
             .filterIsInstance<LivingEntity>()
             .filter { it != attacker && it != event.target }
             .consumeWhile(5) {
-                val result = it.damage(damageSource, event.baseDamage.toFloat())
+                val result = it.damage(damageSource, event.baseDamage.toFloat() * 0.2F)
                 return@consumeWhile result
             }
             .forEach { entity ->
