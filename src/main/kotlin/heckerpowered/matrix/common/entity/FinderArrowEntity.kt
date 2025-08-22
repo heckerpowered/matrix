@@ -43,7 +43,7 @@ class FinderArrowEntity : PersistentProjectileEntity {
             }
     }
 
-    override fun getDefaultItemStack(): ItemStack? {
+    override fun getDefaultItemStack(): ItemStack {
         return ItemStack(FinderArrowItem)
     }
 }
