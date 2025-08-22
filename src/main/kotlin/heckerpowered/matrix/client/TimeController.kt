@@ -17,6 +17,8 @@ object TimeController {
     private var lastFrameTime = Duration.ZERO
     var deltaTime = Duration.ZERO
         private set
+    val strictDeltaTime
+        get() = deltaTime * previousMinScale
 
     fun allocateTimeController(): SimpleDoubleAnimation {
         val controller = SimpleDoubleAnimation(1.0, 1.0)
