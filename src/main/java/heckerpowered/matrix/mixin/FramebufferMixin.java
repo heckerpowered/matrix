@@ -85,7 +85,7 @@ class FramebufferMixin implements FramebufferExtension {
         OpenGLExtensions.checkGLError(error -> {
             final var name = OpenGLExtensions.getErrorName(error);
             final var message = OpenGLExtensions.getErrorDescription(error);
-            LOGGER.error(MARKER, "Error occurs during call `glTexStorage2D`: " + name);
+            LOGGER.error(MARKER, "Error occurs during call `glTexStorage2D`: {}", name);
             LOGGER.error(MARKER, message);
             LOGGER.error(MARKER, "Target: {}, Level: {}, InternalFormat: {}, Width: {}, Height: {}", target, level, internalFormat, width, height);
             return Unit.INSTANCE;
