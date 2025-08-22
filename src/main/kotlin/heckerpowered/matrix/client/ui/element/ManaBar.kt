@@ -58,7 +58,7 @@ class ManaBar {
         )
 
         val multiplier = 1F
-        RenderSystem.setShaderColor(multiplier, multiplier, multiplier, multiplier)
+        RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
         renderer.renderRectangle(Rectangle(minPoint, maxPoint), manaBarColor)
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
 
