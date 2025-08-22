@@ -6,11 +6,13 @@ import com.mojang.blaze3d.platform.GlStateManager.Viewport
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gl.Framebuffer
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 import org.lwjgl.opengl.GL31
 
 object ScaleSampling {
@@ -95,18 +97,18 @@ object ScaleSampling {
 
     // Bi-linear sampling method
     val bilinearSample by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/sampling/bilinear.fsh"),
-            arrayOf(sourceFramebufferProvider, sourceResolutionProvider, targetResolutionProvider)
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/sampling/bilinear.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(sourceFramebufferProvider, sourceResolutionProvider, targetResolutionProvider)
         )
     }
 
     val textureLod by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/lower_sampling/lod.fsh"),
-            arrayOf(
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/lower_sampling/lod.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(
                 sourceFramebufferProvider,
                 UniformProvider("levelOfDetail") { pointer ->
                     GL31.glUniform1f(pointer, levelOfDetail)
@@ -115,7 +117,7 @@ object ScaleSampling {
         )
     }
 
-    fun sample(sourceFramebuffer: Framebuffer, targetFramebuffer: Framebuffer, sampler: BlitShader) {
+    fun sample(sourceFramebuffer: Framebuffer, targetFramebuffer: Framebuffer, sampler: BlitProgram) {
         val previousFramebuffer = GlStateManager.getBoundFramebuffer()
         val previousViewportX = Viewport.getX()
         val previousViewportY = Viewport.getY()

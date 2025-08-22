@@ -6,12 +6,12 @@ import heckerpowered.matrix.client.render.state.StateIsolation
 
 class DummyParticleUpdateModule : ParticleUpdateModule() {
     override fun bind(particleStates: GpuParticleState, first: Int, count: Int, stateIsolation: StateIsolation) {
-        DummyParticleModule.shader.enableShader()
+        DummyParticleModule.program.enableShader()
         super.bind(particleStates, first, count, stateIsolation)
     }
 
     override fun unbind(particleStates: GpuParticleState, stateIsolation: StateIsolation) {
         super.unbind(particleStates, stateIsolation)
-        DummyParticleModule.shader.disableShader()
+        DummyParticleModule.program.disableShader()
     }
 }

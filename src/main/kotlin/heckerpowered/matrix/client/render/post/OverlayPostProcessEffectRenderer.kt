@@ -3,7 +3,7 @@ package heckerpowered.matrix.client.render.post
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderTickCounter
@@ -38,9 +38,9 @@ object OverlayPostProcessEffectRenderer {
     fun endRenderOverlay() {
         TextureDissolveShader.colorAttachment = framebuffer.colorAttachment
         TextureDissolveShader.dissolveFactor = dissolveAnimation.animatedValue.toFloat()
-        TextureDissolveShader.shader.enableShader()
-        BlitShader.blit()
-        TextureDissolveShader.shader.disableShader()
+        TextureDissolveShader.program.enableShader()
+        BlitProgram.blit()
+        TextureDissolveShader.program.disableShader()
         RenderSystem.disableBlend()
         minecraft.framebuffer.beginWrite(false)
     }

@@ -11,6 +11,7 @@ import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.Vec3d
 import org.joml.Vector3f
 import java.time.Duration
+import kotlin.math.floor
 
 object DamageNumberHud {
     private data class DamageNumber(val damage: Float, val rgbColor: Vector3f, val position: Vec3d, val size: SimpleDoubleAnimation, var opacity: SimpleDoubleAnimation, val uid: Long)
@@ -36,7 +37,7 @@ object DamageNumberHud {
     fun addDamageNumber(damage: Float, color: Vector3f, position: Vec3d) {
         val damageNumber = DamageNumber(damage, color, position, SimpleDoubleAnimation(), SimpleDoubleAnimation(), counter++)
 
-        damageNumber.size.from = 10.0
+        damageNumber.size.from = 20.0
         damageNumber.size.to = 2.0
         damageNumber.size.duration = Duration.ofMillis(300)
         damageNumber.size.start()
@@ -51,7 +52,7 @@ object DamageNumberHud {
             damageNumber.opacity = SimpleDoubleAnimation().apply {
                 from = 255.0
                 to = .0
-                startTime = Duration.ofMillis(0)
+                startTime = Duration.ofMillis(300)
                 start()
             }
         }
@@ -64,8 +65,10 @@ object DamageNumberHud {
         val textRenderer = minecraft.textRenderer
         val damageText = if (damageNumber.damage.isInfinite()) {
             "9999"
+        } else if (damageNumber.damage >= 1) {
+            "${floor(damageNumber.damage).toULong()}"
         } else {
-            "${damageNumber.damage.toULong()}"
+            "${(damageNumber.damage * 10.0).toULong().toDouble() / 10.0}"
         }
         val damageTextWidth = textRenderer.getWidth(damageText)
         val damageTextHeight = textRenderer.fontHeight

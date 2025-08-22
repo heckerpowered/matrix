@@ -3,26 +3,27 @@ package heckerpowered.matrix.client.shader
 import com.mojang.blaze3d.platform.GlConst
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.minecraft
-import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.texture.ResourceTexture
 import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 
-object TexturePixelDissolveShader : BlitShader(
-    resourceToString("/assets/matrix/shaders/sobel.vert"),
-    resourceToString("/assets/matrix/shaders/texture_pixel_dissolve.fsh"),
-    arrayOf(
+object TexturePixelDissolveProgram : BlitProgram(
+    ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+    ResourceShader("/assets/matrix/shaders/texture_pixel_dissolve.fsh", GL_FRAGMENT_SHADER),
+    uniforms = arrayOf(
         UniformProvider("noiseTexture") { pointer ->
             GL20.glActiveTexture(GlConst.GL_TEXTURE0)
-            GL20.glBindTexture(GL20.GL_TEXTURE_2D, TexturePixelDissolveShader.noiseTexture)
+            GL20.glBindTexture(GL20.GL_TEXTURE_2D, TexturePixelDissolveProgram.noiseTexture)
             GL20.glUniform1i(pointer, 0)
         },
         UniformProvider("normalTexture") { pointer ->
             GL20.glActiveTexture(GlConst.GL_TEXTURE1)
-            GL20.glBindTexture(GL20.GL_TEXTURE_2D, TexturePixelDissolveShader.normalTexture)
+            GL20.glBindTexture(GL20.GL_TEXTURE_2D, TexturePixelDissolveProgram.normalTexture)
             GL20.glUniform1i(pointer, 1)
         },
         UniformProvider("dissolveFactor") { pointer ->
-            GL20.glUniform1f(pointer, TexturePixelDissolveShader.dissolveFactor)
+            GL20.glUniform1f(pointer, TexturePixelDissolveProgram.dissolveFactor)
         }
     )
 ) {

@@ -1,11 +1,7 @@
 package heckerpowered.matrix.client.render.post
 
-import heckerpowered.matrix.client.shader.BlitShader
-import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.client.shader.inverseProjectionMatrixProvider
-import heckerpowered.matrix.client.shader.inverseViewMatrixProvider
+import heckerpowered.matrix.client.shader.*
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.core.resourceToString
 import heckerpowered.matrix.core.times
 import org.joml.Vector3f
 import org.joml.Vector4f
@@ -19,10 +15,10 @@ object ShockwaveRenderer {
     var waveRadius = SimpleDoubleAnimation()
     var waveSize = SimpleDoubleAnimation()
 
-    val shockwaveShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/shockwave.fsh"),
-        arrayOf(
+    val shockwaveShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/shockwave.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("depthAttachment") { pointer ->
                 glActiveTexture(GL_TEXTURE0)
                 glBindTexture(GL_TEXTURE_2D, depthAttachment)

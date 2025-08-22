@@ -1,8 +1,8 @@
 package heckerpowered.matrix.client.render.shader
 
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import org.lwjgl.opengl.GL46.*
 
 /**
@@ -36,10 +36,10 @@ object RadialBlurRenderer : PostProcessEffect {
      * Uses a vertex shader (`sobel.vert`) and a fragment shader (`radial_blur.fsh`) to perform
      * the blur in a post-processing step.
      */
-    val radialBlurShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/blur/radial_blur.fsh"),
-        arrayOf(
+    val radialBlurShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/blur/radial_blur.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("framebuffer") { pointer ->
                 glActiveTexture(GL_TEXTURE0)
                 glBindTexture(GL_TEXTURE_2D, colorAttachment)

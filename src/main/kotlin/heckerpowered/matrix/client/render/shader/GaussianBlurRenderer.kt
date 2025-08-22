@@ -2,9 +2,9 @@ package heckerpowered.matrix.client.render.shader
 
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.render.post.ScaleSampling
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import org.joml.Vector2f
 import org.lwjgl.opengl.GL46.*
 
@@ -19,10 +19,10 @@ object GaussianBlurRenderer {
     val fullPing = PostProcessRenderer.createManagedFramebuffer()
     val fullPong = PostProcessRenderer.createManagedFramebuffer()
 
-    val gaussianBlurShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/blur/gaussian_blur.fsh"),
-        arrayOf(
+    val gaussianBlurShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/blur/gaussian_blur.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("framebuffer") { pointer ->
                 glActiveTexture(GL_TEXTURE0)
                 glBindTexture(GL_TEXTURE_2D, colorAttachment)

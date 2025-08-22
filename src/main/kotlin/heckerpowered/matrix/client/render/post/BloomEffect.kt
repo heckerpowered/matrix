@@ -13,12 +13,12 @@ import heckerpowered.matrix.client.render.state.FramebufferState
 import heckerpowered.matrix.client.render.state.StateIsolation
 import heckerpowered.matrix.client.render.state.ViewportState
 import heckerpowered.matrix.client.render.state.capabilities.BlendState
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.core.FramebufferExtension.Companion.allocateMipmaps
 import heckerpowered.matrix.core.FramebufferExtension.Companion.beginReadLod
 import heckerpowered.matrix.core.FramebufferExtension.Companion.beginWriteLod
-import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.gl.Framebuffer
 import org.lwjgl.opengl.GL46.*
 import org.slf4j.MarkerFactory
@@ -52,10 +52,10 @@ object BloomEffect {
     var bloomIntensity = 1.0F
 
     private val brightnessShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/bloom/bloom_brightness_pass.fsh"),
-            arrayOf(
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/bloom/bloom_brightness_pass.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(
                 UniformProvider("framebuffer") { pointer ->
                     val framebuffer = brightnessPassFramebuffer
                     glActiveTexture(GlConst.GL_TEXTURE0)

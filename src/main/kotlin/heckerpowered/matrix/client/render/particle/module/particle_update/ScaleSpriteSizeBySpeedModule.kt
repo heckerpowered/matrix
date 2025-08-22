@@ -2,10 +2,11 @@ package heckerpowered.matrix.client.render.particle.module.particle_update
 
 import heckerpowered.matrix.client.render.particle.GpuParticleState
 import heckerpowered.matrix.client.render.state.StateIsolation
-import heckerpowered.matrix.client.shader.Shader
+import heckerpowered.matrix.client.shader.Program
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import org.lwjgl.opengl.GL20.glUniform1f
+import org.lwjgl.opengl.GL46
 
 class ScaleSpriteSizeBySpeedModule : ParticleUpdateModule() {
     companion object {
@@ -13,8 +14,8 @@ class ScaleSpriteSizeBySpeedModule : ParticleUpdateModule() {
         var maxScaleFactor = 1.0F
         var velocityThreshold = 1.0F
 
-        private val SHADER = Shader(
-            resourceToString("/assets/matrix/shaders/particle/particle_update/scale_sprite_size_by_speed.vsh"),
+        private val Program = Program(
+            ResourceShader("/assets/matrix/shaders/particle/particle_update/scale_sprite_size_by_speed.vsh", GL46.GL_VERTEX_SHADER),
             components = arrayOf(TRANSFORM_FEEDBACK),
             uniforms = arrayOf(
                 UniformProvider("MinScaleFactor") { pointer -> glUniform1f(pointer, minScaleFactor) },
@@ -25,12 +26,12 @@ class ScaleSpriteSizeBySpeedModule : ParticleUpdateModule() {
     }
 
     override fun bind(particleStates: GpuParticleState, first: Int, count: Int, stateIsolation: StateIsolation) {
-        SHADER.enableShader()
+        Program.enableShader()
         super.bind(particleStates, first, count, stateIsolation)
     }
 
     override fun unbind(particleStates: GpuParticleState, stateIsolation: StateIsolation) {
         super.unbind(particleStates, stateIsolation)
-        SHADER.disableShader()
+        Program.disableShader()
     }
 }

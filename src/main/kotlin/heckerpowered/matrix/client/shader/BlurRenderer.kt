@@ -13,7 +13,7 @@ import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
 import heckerpowered.matrix.client.render.state.FramebufferState
 import heckerpowered.matrix.client.render.state.StateIsolation
 import heckerpowered.matrix.client.render.state.ViewportState
-import heckerpowered.matrix.core.resourceToString
+import heckerpowered.matrix.client.render.state.capabilities.BlendState
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.render.BufferRenderer
@@ -58,34 +58,34 @@ object BlurRenderer {
         PostProcessRenderer.createManagedFramebuffer()
     }
 
-    val horizontalBlurShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/gaussian_blur_horizontal.fsh"),
-        arrayOf(PostProcessRenderer.framebufferProvider, radiusProvider)
+    val horizontalBlurShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/gaussian_blur_horizontal.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(PostProcessRenderer.framebufferProvider, radiusProvider)
     )
 
-    val verticalBlurShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/gaussian_blur_vertical.fsh"),
-        arrayOf(PostProcessRenderer.framebufferProvider, radiusProvider)
+    val verticalBlurShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/gaussian_blur_vertical.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(PostProcessRenderer.framebufferProvider, radiusProvider)
     )
 
-    val kawaseBlurShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/blur/kawase_blur.fsh"),
-        arrayOf(PostProcessRenderer.framebufferProvider, kawaseOffsetProvider)
+    val kawaseBlurShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/blur/kawase_blur.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(PostProcessRenderer.framebufferProvider, kawaseOffsetProvider)
     )
 
-    val tentBlurShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/blur/tent.fsh"),
-        arrayOf(PostProcessRenderer.framebufferProvider)
+    val tentBlurShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/blur/tent.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(PostProcessRenderer.framebufferProvider)
     )
 
-    private val colorfulShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/color/colorful.fsh"),
-        arrayOf(
+    private val colorfulShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/color/colorful.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             PostProcessRenderer.framebufferProvider,
             UniformProvider("brightness") { pointer ->
                 glUniform1f(pointer, 1.1F)
@@ -98,10 +98,10 @@ object BlurRenderer {
             })
     )
 
-    val blurTextureRenderShader = Shader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/blur_mask.fsh"),
-        arrayOf(UniformProvider("image") { pointer ->
+    val blurTextureRenderProgram = Program(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/blur_mask.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(UniformProvider("image") { pointer ->
             GlStateManager._activeTexture(GL_TEXTURE0)
             GlStateManager._bindTexture(blurFramebuffer.colorAttachment)
             glUniform1i(pointer, 0)
@@ -136,7 +136,7 @@ object BlurRenderer {
     }
 
     fun renderGaussianBlurFullResolution(source: Framebuffer = PostProcessRenderer.sourceFramebuffer) {
-        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
+        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot(), BlendState(false)) {
             glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -161,7 +161,7 @@ object BlurRenderer {
     }
 
     fun renderGaussianBlur(source: Framebuffer = PostProcessRenderer.sourceFramebuffer, target: Framebuffer = blurFramebuffer) {
-        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
+        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot(), BlendState(false)) {
             glBindTexture(GlConst.GL_TEXTURE_2D, PostProcessRenderer.sourceFramebuffer.colorAttachment)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -223,7 +223,7 @@ object BlurRenderer {
             blurFramebuffer.clear(MinecraftClient.IS_SYSTEM_MAC)
 
             kawaseOffset = 0F
-            val shaders = mutableListOf<BlitShader>()
+            val shaders = mutableListOf<BlitProgram>()
             for (i in 0..4) {
                 shaders.add(kawaseBlurShader)
             }

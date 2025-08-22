@@ -1,13 +1,19 @@
 package heckerpowered.matrix.client.shader
 
 import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.shader.component.ShaderComponent
 import net.minecraft.client.gl.VertexBuffer
 import net.minecraft.client.render.Tessellator
 import net.minecraft.client.render.VertexFormat
 import net.minecraft.client.render.VertexFormats
 
-open class BlitShader(vertex: String, fragment: String, uniform: Array<UniformProvider> = emptyArray()) :
-    Shader(vertex, fragment, uniform) {
+open class BlitProgram(
+    vararg shaders: Shader,
+    uniforms: Array<UniformProvider> = emptyArray(),
+    uniformBuffers: Array<UniformBufferProvider> = emptyArray(),
+    components: Array<ShaderComponent> = emptyArray(),
+) :
+    Program(*shaders, uniforms = uniforms, uniformBuffers = uniformBuffers, components = components) {
     companion object {
         private var buffer = VertexBuffer(VertexBuffer.Usage.DYNAMIC)
 

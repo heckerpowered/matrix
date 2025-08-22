@@ -6,11 +6,8 @@ import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.projectionMatrix
 import heckerpowered.matrix.client.viewMatrix
-import net.minecraft.client.gl.GlUniform
 import org.joml.Matrix4f
-import org.lwjgl.opengl.GL20
-import org.lwjgl.opengl.GL20.glUniform1f
-import org.lwjgl.opengl.GL20.glUniform3f
+import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import org.slf4j.MarkerFactory
 import kotlin.time.Duration.Companion.milliseconds
@@ -21,13 +18,13 @@ private val buffer = MemoryUtil.memAllocFloat(16)
 val projectionMatrixProvider = UniformProvider("projectionMatrix") { pointer ->
     buffer.position(0)
     RenderSystem.getProjectionMatrix().get(buffer)
-    GL20.glUniformMatrix4fv(pointer, false, buffer)
+    glUniformMatrix4fv(pointer, false, buffer)
 }
 
 val modelViewMatrixProvider = UniformProvider("modelViewMatrix") { pointer ->
     buffer.position(0)
     RenderSystem.getModelViewMatrix().get(buffer)
-    GL20.glUniformMatrix4fv(pointer, false, buffer)
+    glUniformMatrix4fv(pointer, false, buffer)
 }
 
 val inverseProjectionMatrixProvider = UniformProvider("inverseProjectionMatrix") { pointer ->
@@ -37,7 +34,7 @@ val inverseProjectionMatrixProvider = UniformProvider("inverseProjectionMatrix")
     val invertProjectionMatrix = Matrix4f(projectionMatrix).invert()
     invertProjectionMatrix.get(buffer)
 
-    GL20.glUniformMatrix4fv(pointer, false, buffer)
+    glUniformMatrix4fv(pointer, false, buffer)
 }
 
 val inverseModelViewMatrixProvider = UniformProvider("inverseModelViewMatrix") { pointer ->
@@ -47,19 +44,19 @@ val inverseModelViewMatrixProvider = UniformProvider("inverseModelViewMatrix") {
     val invertModelViewMatrix = Matrix4f(modelViewMatrix).invert()
     invertModelViewMatrix.get(buffer)
 
-    GL20.glUniformMatrix4fv(pointer, false, buffer)
+    glUniformMatrix4fv(pointer, false, buffer)
 }
 
 val inverseViewMatrixProvider = UniformProvider("inverseViewMatrix") { pointer ->
     buffer.position(0)
     viewMatrix.invert().get(buffer)
-    GL20.glUniformMatrix4fv(pointer, false, buffer)
+    glUniformMatrix4fv(pointer, false, buffer)
 }
 
 val viewMatrixProvider = UniformProvider("inverseViewMatrix") { pointer ->
     buffer.position(0)
     viewMatrix.get(buffer)
-    GL20.glUniformMatrix4fv(pointer, false, buffer)
+    glUniformMatrix4fv(pointer, false, buffer)
 }
 
 val playerPositionProvider = UniformProvider("playerPosition") { pointer ->
@@ -76,7 +73,7 @@ val cameraPositionProvider = UniformProvider("cameraPosition") { pointer ->
 val resolutionProvider = UniformProvider("resolution") { pointer ->
     val width = minecraft.window.framebufferWidth.toFloat()
     val height = minecraft.window.framebufferHeight.toFloat()
-    GL20.glUniform2f(pointer, width, height)
+    glUniform2f(pointer, width, height)
 }
 
 val timeProvider = UniformProvider("time") { pointer ->
@@ -91,7 +88,7 @@ open class UniformProvider(val name: String, val set: (pointer: Int) -> Unit) {
     var pointer = -1
 
     fun init(program: Int) {
-        pointer = GlUniform.getUniformLocation(program, name)
+        pointer = glGetUniformLocation(program, name)
         if (pointer == -1) {
             Matrix.LOGGER.error(MARKER, "Cannot find uniform location, name: $name")
         }

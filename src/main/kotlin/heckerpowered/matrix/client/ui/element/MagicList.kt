@@ -190,9 +190,9 @@ object MagicList {
 
         drawContext.enableScissor(startX.toInt(), startY.toInt(), endX.toInt(), endY.toInt())
 
-        BlurRenderer.blurTextureRenderShader.enableShader()
+        BlurRenderer.blurTextureRenderProgram.enableShader()
         BlurRenderer.renderQuad()
-        BlurRenderer.blurTextureRenderShader.disableShader()
+        BlurRenderer.blurTextureRenderProgram.disableShader()
 
         val transformationMatrix = drawContext.matrices.peek().positionMatrix
         val builder = Tessellator.getInstance()
@@ -220,8 +220,6 @@ object MagicList {
         drawContext.drawText(textRenderer, magic.name, startX.toInt() + 5, startY.toInt() + 5, foregroundColor, false)
         drawContext.drawText(textRenderer, Text.literal(costString), startX.toInt() + magicNameWidth + 15, startY.toInt() + 5, foregroundColor, false)
         drawContext.drawText(textRenderer, statusString, startX.toInt() + magicNameWidth + costWidth + 25, startY.toInt() + 5, foregroundColor, false)
-
-        val usingAnimation = animationList[index]
 
         drawContext.disableScissor()
     }

@@ -1,9 +1,9 @@
 package heckerpowered.matrix.client.render.shader.sdf
 
 import com.mojang.blaze3d.platform.GlConst
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.gl.Framebuffer
 import org.joml.Vector2f
 import org.joml.Vector4f
@@ -27,10 +27,10 @@ object DropShadowRenderer {
      */
     var shadowColor = Vector4f()
 
-    val dropShadowShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/sdf/drop_shadow.fsh"),
-        arrayOf(
+    val dropShadowShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/sdf/drop_shadow.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("signedDistanceField") { pointer ->
                 glActiveTexture(GlConst.GL_TEXTURE0)
                 glBindTexture(GlConst.GL_TEXTURE_2D, signedDistanceField)
@@ -51,7 +51,7 @@ object DropShadowRenderer {
     fun render(signedDistanceField: Framebuffer) {
         this.signedDistanceField = signedDistanceField.colorAttachment
         dropShadowShader.enableShader()
-        BlitShader.blit()
+        BlitProgram.blit()
         dropShadowShader.disableShader()
         this.signedDistanceField = -1
     }

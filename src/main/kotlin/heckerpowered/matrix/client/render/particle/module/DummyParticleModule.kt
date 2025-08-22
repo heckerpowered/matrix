@@ -2,25 +2,26 @@ package heckerpowered.matrix.client.render.particle.module
 
 import heckerpowered.matrix.client.render.particle.GpuParticleState
 import heckerpowered.matrix.client.render.state.StateIsolation
-import heckerpowered.matrix.client.shader.Shader
-import heckerpowered.matrix.core.resourceToString
+import heckerpowered.matrix.client.shader.Program
+import heckerpowered.matrix.client.shader.ResourceShader
+import org.lwjgl.opengl.GL46
 
 /**
  * Dummy particle module shader, does nothing, used for testing purposes.
  */
 object DummyParticleModule : ParticleModule() {
-    val shader = Shader(
-        resourceToString("/assets/matrix/shaders/particle/template.glsl"),
+    val program = Program(
+        ResourceShader("/assets/matrix/shaders/particle/template.glsl", GL46.GL_VERTEX_SHADER),
         components = arrayOf(TRANSFORM_FEEDBACK)
     )
 
     override fun bind(particleStates: GpuParticleState, first: Int, count: Int, stateIsolation: StateIsolation) {
-        shader.enableShader()
+        program.enableShader()
         super.bind(particleStates, first, count, stateIsolation)
     }
 
     override fun unbind(particleStates: GpuParticleState, stateIsolation: StateIsolation) {
         super.unbind(particleStates, stateIsolation)
-        shader.disableShader()
+        program.disableShader()
     }
 }

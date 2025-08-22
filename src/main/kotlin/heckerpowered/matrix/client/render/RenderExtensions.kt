@@ -4,9 +4,9 @@ import com.mojang.blaze3d.platform.GlConst
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.platform.GlStateManager.Viewport
 import com.mojang.blaze3d.systems.RenderSystem
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.texture.NativeImage
 import org.joml.Vector4f
@@ -27,10 +27,10 @@ private var primaryFramebuffer: Framebuffer? = null
 private var secondaryFramebuffer: Framebuffer? = null
 var colorMultiplier = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
 private val colorFusionShader by lazy {
-    BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/color_fusion.fsh"),
-        arrayOf(
+    BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/color_fusion.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("primaryFramebuffer") { pointer ->
                 val framebuffer = primaryFramebuffer ?: return@UniformProvider
 
@@ -53,10 +53,10 @@ private val colorFusionShader by lazy {
 }
 
 private val blendScreenShader by lazy {
-    BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/blend_screen.fsh"),
-        arrayOf(
+    BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/blend_screen.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("primaryFramebuffer") { pointer ->
                 val framebuffer = primaryFramebuffer ?: return@UniformProvider
 
@@ -75,10 +75,10 @@ private val blendScreenShader by lazy {
     )
 }
 
-val tentBlurShader = BlitShader(
-    resourceToString("/assets/matrix/shaders/sobel.vert"),
-    resourceToString("/assets/matrix/shaders/post/blur/tent.fsh"),
-    arrayOf(UniformProvider("framebuffer") { pointer ->
+val tentBlurShader = BlitProgram(
+    ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+    ResourceShader("/assets/matrix/shaders/post/blur/tent.fsh", GL_FRAGMENT_SHADER),
+    uniforms = arrayOf(UniformProvider("framebuffer") { pointer ->
         val framebuffer = primaryFramebuffer ?: return@UniformProvider
 
         glActiveTexture(GlConst.GL_TEXTURE0)

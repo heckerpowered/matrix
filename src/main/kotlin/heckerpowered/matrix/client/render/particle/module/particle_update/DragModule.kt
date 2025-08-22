@@ -2,18 +2,19 @@ package heckerpowered.matrix.client.render.particle.module.particle_update
 
 import heckerpowered.matrix.client.render.particle.GpuParticleState
 import heckerpowered.matrix.client.render.state.StateIsolation
-import heckerpowered.matrix.client.shader.Shader
+import heckerpowered.matrix.client.shader.Program
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import org.lwjgl.opengl.GL20.glUniform1f
+import org.lwjgl.opengl.GL46
 
 class DragModule : ParticleUpdateModule() {
     companion object {
         var minDrag = 0.8F
         var maxDrag = 1.2F
 
-        private val SHADER = Shader(
-            resourceToString("/assets/matrix/shaders/particle/particle_update/drag.vsh"),
+        private val Program = Program(
+            ResourceShader("/assets/matrix/shaders/particle/particle_update/drag.vsh", GL46.GL_VERTEX_SHADER),
             components = arrayOf(TRANSFORM_FEEDBACK),
             uniforms = arrayOf(
                 DELTA_TIME_PROVIDER,
@@ -24,12 +25,12 @@ class DragModule : ParticleUpdateModule() {
     }
 
     override fun bind(particleStates: GpuParticleState, first: Int, count: Int, stateIsolation: StateIsolation) {
-        SHADER.enableShader()
+        Program.enableShader()
         super.bind(particleStates, first, count, stateIsolation)
     }
 
     override fun unbind(particleStates: GpuParticleState, stateIsolation: StateIsolation) {
         super.unbind(particleStates, stateIsolation)
-        SHADER.disableShader()
+        Program.disableShader()
     }
 }

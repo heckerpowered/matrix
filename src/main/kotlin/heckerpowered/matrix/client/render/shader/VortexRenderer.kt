@@ -1,16 +1,16 @@
 package heckerpowered.matrix.client.render.shader
 
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.DissolveShader
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import org.lwjgl.opengl.GL46.*
 
 object VortexRenderer {
-    val vortexShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/vortex/vortex.fsh"),
-        arrayOf(
+    val vortexShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/vortex/vortex.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("noiseTexture") { pointer ->
                 glActiveTexture(GL_TEXTURE0)
                 glBindTexture(GL_TEXTURE_2D, DissolveShader.perlinNoiseTextureId)
@@ -28,10 +28,10 @@ object VortexRenderer {
         )
     )
 
-    val inverseVortexShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/vortex/inverse_vortex.fsh"),
-        arrayOf(
+    val inverseVortexShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/vortex/inverse_vortex.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("noiseTexture") { pointer ->
                 glActiveTexture(GL_TEXTURE0)
                 glBindTexture(GL_TEXTURE_2D, DissolveShader.perlinNoiseTextureId)

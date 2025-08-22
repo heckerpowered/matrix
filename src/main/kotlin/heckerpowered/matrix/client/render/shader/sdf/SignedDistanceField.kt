@@ -3,12 +3,14 @@ package heckerpowered.matrix.client.render.shader.sdf
 import com.mojang.blaze3d.platform.GlConst
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.render.PostProcessRenderer
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.gl.Framebuffer
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL13
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 import org.lwjgl.opengl.GL46
 
 object SignedDistanceField {
@@ -20,10 +22,10 @@ object SignedDistanceField {
         RenderSystem.assertOnRenderThread()
     }
 
-    val seedGenShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/sdf/seed_gen.fsh"),
-        arrayOf(
+    val seedGenShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/sdf/seed_gen.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("framebuffer") { pointer ->
                 GL13.glActiveTexture(GlConst.GL_TEXTURE0)
                 GL11.glBindTexture(GlConst.GL_TEXTURE_2D, framebufferObject)
@@ -32,10 +34,10 @@ object SignedDistanceField {
         )
     )
 
-    val jumpFloodingShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/sdf/jump_flooding.fsh"),
-        arrayOf(
+    val jumpFloodingShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/sdf/jump_flooding.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("framebuffer") { pointer ->
                 GL13.glActiveTexture(GlConst.GL_TEXTURE0)
                 GL11.glBindTexture(GlConst.GL_TEXTURE_2D, framebufferObject)
@@ -47,10 +49,10 @@ object SignedDistanceField {
         )
     )
 
-    val sdfEvalShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/sdf/sdf_eval.fsh"),
-        arrayOf(
+    val sdfEvalShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/sdf/sdf_eval.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("framebuffer") { pointer ->
                 GL13.glActiveTexture(GlConst.GL_TEXTURE0)
                 GL11.glBindTexture(GlConst.GL_TEXTURE_2D, framebufferObject)

@@ -1,6 +1,7 @@
 package heckerpowered.matrix.client
 
 import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.systems.VertexSorter
 import heckerpowered.matrix.client.core.AimAssist
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistEnabled
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistFov
@@ -13,6 +14,7 @@ import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
 import heckerpowered.matrix.client.render.shader.opacityMask
 import heckerpowered.matrix.client.render.state.*
 import heckerpowered.matrix.client.render.state.capabilities.BlendState
+import heckerpowered.matrix.client.render.state.capabilities.CapabilityState
 import heckerpowered.matrix.client.render.state.capabilities.CullFaceState
 import heckerpowered.matrix.client.render.state.capabilities.DepthTestState
 import heckerpowered.matrix.client.shader.*
@@ -36,8 +38,11 @@ import heckerpowered.matrix.common.network.UseMagicPayload
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.common.persistent.isWizard
 import heckerpowered.matrix.common.persistent.wizardHelmet
-import heckerpowered.matrix.core.*
+import heckerpowered.matrix.core.approximatelyEqual
+import heckerpowered.matrix.core.inverseLerp
+import heckerpowered.matrix.core.lerp
 import heckerpowered.matrix.core.utility.EntitySearch.getEntitiesNearSight
+import heckerpowered.matrix.core.worldToScreen
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
@@ -58,7 +63,6 @@ import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
-import org.joml.Vector2d
 import org.joml.Vector2f
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL15.glDeleteBuffers
@@ -67,6 +71,7 @@ import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import java.time.Duration
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.min
 import kotlin.random.Random
 
@@ -135,6 +140,10 @@ object MatrixHud {
     private var previousDisplayEntityNameHashCode: Int = 0
     private var displayEntityName: Text = Text.empty()
     private var displayEntityNameOpacityAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150), initValue = 1.0)
+    private var previousCandidateEntities: Int = 0
+    private var displayCandidateEntities: Int = 0
+    private var displayCandidateCountOpacityAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150), initValue = 1.0)
+    private var candidateCountPadding = SimpleDoubleAnimation()
 
     private val manaOverclock = DoubleAnimation(
         manaOverclockAnimation, easingFunction
@@ -143,9 +152,7 @@ object MatrixHud {
         magicOverclockAnimation, easingFunction
     )
 
-    private val dissolveShader by lazy {
-        DissolveShader()
-    }
+    private val dissolveShader = DissolveShader()
 
     private val dissolveAnimation = SimpleDoubleAnimation(from = 1.0)
 
@@ -201,10 +208,10 @@ object MatrixHud {
         }
 
     private val theWorldShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/the_world.fsh"),
-            arrayOf(
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/the_world.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(
                 PostProcessRenderer.framebufferProvider,
                 UniformProvider("grayscaleIntensity") { pointer ->
                     glUniform1f(pointer, grayscaleIntensityAnimation.animatedValue.toFloat())
@@ -213,10 +220,10 @@ object MatrixHud {
         )
     }
 
-    private val pointSpriteShader by lazy {
-        Shader(
-            resourceToString("/assets/matrix/shaders/point_sprite/point_sprite.vsh"),
-            resourceToString("/assets/matrix/shaders/point_sprite/point_sprite.fsh"),
+    private val pointSpriteProgram by lazy {
+        Program(
+            ResourceShader("/assets/matrix/shaders/point_sprite/point_sprite.vsh", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/point_sprite/point_sprite.fsh", GL_FRAGMENT_SHADER),
             uniforms = arrayOf(UniformProvider("time") { pointer ->
                 val timeSeconds = System.nanoTime() / 1_000_000_000.0
                 glUniform1f(pointer, timeSeconds.toFloat())
@@ -625,18 +632,14 @@ object MatrixHud {
         drawContext: DrawContext,
         renderer: LegacyMatrixUIRenderer,
     ) {
-        val status = getMagicAvailableStatus(
-            selectedMagic
-        )
+        val status = getMagicAvailableStatus(selectedMagic)
         if (status == AVAILABLE || status == TARGET_MISSING || !shouldRenderHud()) {
             AvailableStatusTooltip.hide()
         } else {
             AvailableStatusTooltip.show()
         }
 
-        AvailableStatusTooltip.render(
-            drawContext, renderer, status
-        )
+        AvailableStatusTooltip.render(drawContext, renderer, status)
     }
 
     private fun updateAimAssist(
@@ -726,33 +729,58 @@ object MatrixHud {
         }
         val tickDelta = tickCounter.getTickDelta(true)
 
-        val transformationMatrix = drawContext.matrices.peek().positionMatrix
         val tessellator = Tessellator.getInstance()
         val buffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR)
 
-        val from = Vector2d(crosshairX.animatedValue + 7.5, crosshairY.animatedValue + 7.5)
+        val modelViewStack = RenderSystem.getModelViewStack()
+        modelViewStack.pushMatrix()
+        modelViewStack.set(viewMatrix)
+        RenderSystem.applyModelViewMatrix()
+        RenderSystem.backupProjectionMatrix()
+        RenderSystem.setProjectionMatrix(projectionMatrix, VertexSorter.BY_DISTANCE)
+
+        var from = player.getLerpedPos(tickDelta).add(.0, player.boundingBox.lengthY / 2, .0)// Vector2d(crosshairX.animatedValue + 7.5, crosshairY.animatedValue + 7.5)
+        val targetedEntity = this.targetedEntity
+        if (targetedEntity != null) {
+            val to = targetedEntity.getLerpedPos(tickDelta).add(.0, targetedEntity.boundingBox.lengthY / 2, .0)
+            val color = ColorHelper.Argb.getArgb(255, 25, 255, 25)
+            buffer.vertex(from.x.toFloat(), from.y.toFloat(), from.z.toFloat())
+                .color(color)
+            buffer.vertex(to.x.toFloat(), to.y.toFloat(), to.z.toFloat())
+                .color(color)
+            from = to
+        }
         for (candidateEntity in candidateAimAssistEntities) {
             val targetPosition = candidateEntity.getLerpedPos(tickDelta).add(.0, candidateEntity.boundingBox.lengthY / 2, .0)
-            val to = worldToScreen(targetPosition) ?: continue
 
-            buffer.vertex(transformationMatrix, from.x.toFloat(), from.y.toFloat(), .0F)
-                .color(255, 25, 25, 255)
-            buffer.vertex(transformationMatrix, to.x.toFloat(), to.y.toFloat(), .0F)
-                .color(255, 25, 25, 255)
+            val color = ColorHelper.Argb.getArgb(255, 255, 25, 25)
+            buffer.vertex(from.x.toFloat(), from.y.toFloat(), from.z.toFloat())
+                .color(color)
+            buffer.vertex(targetPosition.x.toFloat(), targetPosition.y.toFloat(), targetPosition.z.toFloat())
+                .color(color)
+            from = targetPosition
         }
 
         StateIsolation.isolate(
-            LineWidthState(3.0F),
-            BlendState(true),
+            LineWidthState(1.0F),
+            BlendState(false),
             BlendFuncSeparateState(),
             DepthTestState(false),
             CullFaceState(false),
-            MinecraftShaderState(GameRenderer::getPositionColorProgram)
+            ShaderProgramState(GameRenderer::getPositionColorProgram),
+            CapabilityState(GL_MULTISAMPLE, true)
         ) {
+            val mul = 8.0F
+            RenderSystem.setShaderColor(mul, mul, mul, 1.0F)
             buffer.endNullable()?.let {
                 BufferRenderer.drawWithGlobalProgram(it)
             }
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
         }
+
+        RenderSystem.restoreProjectionMatrix()
+        modelViewStack.popMatrix()
+        RenderSystem.applyModelViewMatrix()
     }
 
     private fun renderWitherArmorHud(drawContext: DrawContext, tickCounter: RenderTickCounter) {
@@ -912,11 +940,11 @@ object MatrixHud {
         glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * 4, 0L)
         glEnableVertexAttribArray(0)
 
-        pointSpriteShader.enableShader()
+        pointSpriteProgram.enableShader()
         glBindVertexArray(vertexArray)
         glEnable(GL_PROGRAM_POINT_SIZE)
         glDrawArrays(GL_POINTS, 0, points.size / 2)
-        pointSpriteShader.disableShader()
+        pointSpriteProgram.disableShader()
 
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -1080,9 +1108,7 @@ object MatrixHud {
                 character.toString()
             )
             if (length > width) {
-                return string.substring(
-                    0, index
-                )
+                return string.take(index)
             }
             ++index
         }
@@ -1171,87 +1197,25 @@ object MatrixHud {
         val transformationMatrix = drawContext.matrices.peek().positionMatrix
         val tessellator = Tessellator.getInstance()
 
-        // BlurRenderer.blurTextureRenderShader.enableShader()
-        // if (magicShownOpacityAnimation.animatedValue != .0) {
-        //     BlurRenderer.renderQuad()
-        // }
-        // BlurRenderer.blurTextureRenderShader.disableShader()
-
         val blurBackgroundStartX = xIndent + 50 + magicShownAnimation.animatedValue.toInt()
         val blurBackgroundEndX = xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt()
 
         val builder = Tessellator.getInstance()
-        // var buffer = builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR)
-        // buffer.vertex(blurBackgroundStartX.toFloat(), endY.toFloat(), 0F).color(color).texture(0F, 0F)
-        // buffer.vertex(blurBackgroundEndX.toFloat(), endY.toFloat(), 0F).color(color).texture(1F, 0F)
-        // buffer.vertex(blurBackgroundEndX.toFloat(), startY.toFloat(), 0F).color(color).texture(1F, 1F)
-        // buffer.vertex(blurBackgroundStartX.toFloat(), startY.toFloat(), 0F).color(color).texture(0F, 1F)
-//
-        // RenderSystem.enableBlend()
-        // dissolveShader.dissolveFactor = dissolveAnimation.animatedValue.toFloat()
-        // dissolveShader.enableShader()
-        // BufferRenderer.draw(buffer.end())
-        // dissolveShader.disableShader()
-        // RenderSystem.disableBlend()
-
         var buffer = builder.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR)
-        buffer.vertex(
-            transformationMatrix, blurBackgroundEndX.toFloat(), endY.toFloat(), 0f
-        ).color(
-            color
-        ).texture(
-            1.0F, 1.0F
-        )
-        buffer.vertex(
-            transformationMatrix, blurBackgroundEndX.toFloat(), startY.toFloat(), 0f
-        ).color(
-            color
-        ).texture(
-            1.0F, .0F
-        )
-        buffer.vertex(
-            transformationMatrix, blurBackgroundStartX.toFloat(), startY.toFloat(), 0f
-        ).color(
-            color
-        ).texture(
-            .0F, .0F
-        )
-        buffer.vertex(
-            transformationMatrix, blurBackgroundStartX.toFloat(), endY.toFloat(), 0f
-        ).color(
-            color
-        ).texture(
-            .0F, 1.0F
-        )
+        buffer.vertex(transformationMatrix, blurBackgroundEndX.toFloat(), endY.toFloat(), 0f).color(color).texture(1.0F, 1.0F)
+        buffer.vertex(transformationMatrix, blurBackgroundEndX.toFloat(), startY.toFloat(), 0f).color(color).texture(1.0F, .0F)
+        buffer.vertex(transformationMatrix, blurBackgroundStartX.toFloat(), startY.toFloat(), 0f).color(color).texture(.0F, .0F)
+        buffer.vertex(transformationMatrix, blurBackgroundStartX.toFloat(), endY.toFloat(), 0f).color(color).texture(.0F, 1.0F)
 
-        // drawContext.drawTexture()
-        RenderSystem.enableBlend()
-        // RenderSystem.setShaderTexture(0, Identifier.of("textures/item/diamond_sword"))
-        // RenderSystem.setShaderTexture(0, MinecraftClient.getInstance().framebuffer.colorAttachment)
-        BufferRenderer.draw(
-            buffer.end()
-        )
+        StateIsolation.isolate(
+            BlendState(true),
+            ShaderProgramState(GameRenderer::getPositionColorProgram)
+        ) {
+            BufferRenderer.drawWithGlobalProgram(buffer.end())
+        }
+        // dissolveShader.disableShader()
 
-        // MinecraftClient.getInstance().framebuffer.beginWrite(false)
-        // BlurRenderer.blurFramebuffer.beginRead()
-        // GL30.glBlitFramebuffer(
-        //     blurBackgroundEndX,
-        //     endY,
-        //     blurBackgroundStartX,
-        //     startY,
-        //     blurBackgroundEndX,
-        //     endY,
-        //     blurBackgroundStartX,
-        //     startY,
-        //     GL30.GL_COLOR_BUFFER_BIT,
-        //     GL30.GL_NEAREST
-        // )
-        // BlurRenderer.blurFramebuffer.endRead()
-        //  BlurRenderer.blurFramebuffer.beginWrite(true)
-
-        drawContext.fill(
-            xIndent + 50 + magicShownAnimation.animatedValue.toInt(), startY, xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(), endY, 0, color
-        )
+        // drawContext.fill(xIndent + 50 + magicShownAnimation.animatedValue.toInt(), startY, xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(), endY, 0, color)
 
         val alpha = magicShownOpacityAnimation.animatedValue * 255
         val foregroundColor = ColorHelper.Argb.getArgb(alpha.toInt(), 255, 255, 255)
@@ -1322,12 +1286,8 @@ object MatrixHud {
                 xIndent + 50 + magicShownAnimation.animatedValue.toInt(), startY, xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(), endY
             )
 
-            val halfTransparentColor = Color(
-                0, 255, 0, (magicShownOpacityAnimation.animatedValue * 255 * (1.0 - animationProgress)).toInt()
-            )
-            buffer = tessellator.begin(
-                VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR
-            )
+            val halfTransparentColor = Color(0, 255, 0, (magicShownOpacityAnimation.animatedValue * 255 * (1.0 - animationProgress)).toInt())
+            buffer = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR)
             buffer.vertex(
                 transformationMatrix, startX.toFloat(), endY.toFloat(), 0f
             ).color(
@@ -1570,19 +1530,13 @@ object MatrixHud {
             val health = cachedTargetedEntity.health.toDouble()
             val maxHealth = cachedTargetedEntity.maxHealth.toDouble()
 
-            if (healthAnimation.from.isNaN()) {
-                healthAnimation.from = .0
+            if (health.isFinite()) {
+                healthAnimation.value = health
             }
-            if (maxHealthAnimation.from.isNaN()) {
-                maxHealthAnimation.from = .0
+            if (maxHealth.isFinite()) {
+                maxHealthAnimation.value = maxHealth
             }
-            if (healthPercentageAnimation.from.isNaN()) {
-                healthPercentageAnimation.from = .0
-            }
-
-            healthAnimation.value = health
-            maxHealthAnimation.value = maxHealth
-            healthPercentageAnimation.value = health / maxHealth
+            healthPercentageAnimation.value = (health / maxHealth).coerceIn(.0..1.0)
 
             val percentage = healthPercentageAnimation.animatedValue
             val lerpedColor = ColorHelper.Argb.lerp(percentage.toFloat(), red, green)
@@ -1597,7 +1551,7 @@ object MatrixHud {
             val x1 = drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt() + sizeReduced
             val x2 = drawContext.scaledWindowWidth - progressBarX - magicShownAnimation.animatedValue.toInt() - sizeReduced
 
-            val multiplier = 1.0F
+            val multiplier = lerp(1.0 - percentage, 1.0, 5.0).toFloat()
             RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
             drawContext.fill(
                 x1.coerceAtMost(x2),
@@ -1626,7 +1580,7 @@ object MatrixHud {
 
                 val textWidth = textRenderer.getWidth(healthText)
                 val textCenterX = textX + textWidth / 2.0
-                val textCenterY = textY + textRenderer.fontHeight / 2.0
+                val textCenterY = textY.toDouble() - 15
 
                 drawContext.matrices.push()
 
@@ -1671,6 +1625,38 @@ object MatrixHud {
                 drawContext.matrices.translate(-textCenterX, -textCenterY, 0.0)
 
                 drawContext.drawText(textRenderer, displayEntityName, textX, textY, entityNameForegroundColor, true)
+
+                drawContext.matrices.pop()
+            }
+
+            if (candidateAimAssistEntities.size != previousCandidateEntities) {
+                displayCandidateCountOpacityAnimation.value = .0
+                previousCandidateEntities = candidateAimAssistEntities.size
+            } else if (displayCandidateCountOpacityAnimation.animatedValue == .0) {
+                displayCandidateCountOpacityAnimation.value = 1.0
+                displayCandidateEntities = candidateAimAssistEntities.size
+            }
+
+            val candidateCountAlpha = min(descriptionAlpha, (displayCandidateCountOpacityAnimation.animatedValue * 255).toInt())
+            val candidateCountColor = ColorHelper.Argb.getArgb(candidateCountAlpha, 255, 255, 255)
+            if (candidateCountAlpha > 3) {
+                candidateCountPadding.value = (textRenderer.getWidth(displayEntityName) + textRenderer.getWidth(" ")).toDouble()
+                val padding = candidateCountPadding.animatedValue
+                val textX = drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt() + padding
+                val textY = drawContext.scaledWindowHeight / 2 - 90 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt()
+
+                val text = "+$displayCandidateEntities"
+                val textWidth = textRenderer.getWidth(text)
+                val textCenterX = textX + textWidth / 2.0
+                val textCenterY = textY + textRenderer.fontHeight / 2.0
+
+                drawContext.matrices.push()
+
+                drawContext.matrices.translate(textCenterX, textCenterY, 0.0)
+                drawContext.matrices.scale(fontSizeReduced, fontSizeReduced, fontSizeReduced)
+                drawContext.matrices.translate(-textCenterX, -textCenterY, 0.0)
+
+                drawContext.drawText(textRenderer, text, floor(textX).toInt(), textY, candidateCountColor, true)
 
                 drawContext.matrices.pop()
             }

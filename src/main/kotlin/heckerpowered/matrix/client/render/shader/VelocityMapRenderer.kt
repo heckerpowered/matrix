@@ -2,11 +2,13 @@ package heckerpowered.matrix.client.render.shader
 
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.render.PostProcessRenderer
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import heckerpowered.matrix.core.times
 import org.joml.Matrix4f
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 import org.lwjgl.opengl.GL46
 
 object VelocityMapRenderer {
@@ -18,10 +20,10 @@ object VelocityMapRenderer {
     val velocityMap = PostProcessRenderer.createManagedFramebuffer()
 
     val velocityMapShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/post/velocity_map/velocity_map.vsh"),
-            resourceToString("/assets/matrix/shaders/post/velocity_map/velocity_map.fsh"),
-            arrayOf(
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/post/velocity_map/velocity_map.vsh", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/velocity_map/velocity_map.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(
                 UniformProvider("previousModelViewProjectionMatrix") { pointer ->
                     previousModelViewProjectionMatrix.get(matrixBuffer)
                     GL46.glUniformMatrix4fv(pointer, false, matrixBuffer)

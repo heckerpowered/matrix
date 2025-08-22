@@ -2,17 +2,18 @@ package heckerpowered.matrix.client.shader
 
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.render.Color
-import heckerpowered.matrix.core.resourceToString
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 import org.lwjgl.system.MemoryUtil
 
-object PositionColorShader : Shader(
-    resourceToString("/assets/matrix/shaders/position_color.vsh"),
-    resourceToString("/assets/matrix/shaders/position_color.fsh"),
-    arrayOf(
+object PositionColorProgram : Program(
+    ResourceShader("/assets/matrix/shaders/position_color.vsh", GL_VERTEX_SHADER),
+    ResourceShader("/assets/matrix/shaders/position_color.fsh", GL_FRAGMENT_SHADER),
+    uniforms = arrayOf(
         modelViewMatrixProvider,
         projectionMatrixProvider,
         UniformProvider("colorModulator") { pointer ->
-            RenderSystem.glUniform3(pointer, PositionColorShader.colorBuffer)
+            RenderSystem.glUniform3(pointer, PositionColorProgram.colorBuffer)
         }
     )
 ) {
@@ -24,8 +25,8 @@ object PositionColorShader : Shader(
         }
 
     private fun uploadBuffer() {
-        val color = PositionColorShader.color
-        val colorBuffer = PositionColorShader.colorBuffer
+        val color = color
+        val colorBuffer = colorBuffer
         colorBuffer.clear()
         colorBuffer.put(color.red / 255F)
         colorBuffer.put(color.green / 255F)

@@ -1,9 +1,9 @@
 package heckerpowered.matrix.client.render.shader
 
-import heckerpowered.matrix.client.shader.BlitShader
-import heckerpowered.matrix.client.shader.Shader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.Program
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.gl.Framebuffer
 import org.lwjgl.opengl.GL46.*
 
@@ -23,7 +23,7 @@ import org.lwjgl.opengl.GL46.*
  * During rendering, the appropriate color attachments from each framebuffer are bound to shader uniforms,
  * and a full-screen blit is performed with the mask applied.
  *
- * @see Shader
+ * @see Program
  * @see Framebuffer
  * @see UniformProvider
  */
@@ -47,10 +47,10 @@ object OpacityMaskRenderer {
      *
      * The actual discard logic is implemented in the `opacity_mask.fsh` shader.
      */
-    private val opacityMaskShader = BlitShader(
-        resourceToString("/assets/matrix/shaders/sobel.vert"),
-        resourceToString("/assets/matrix/shaders/post/opacity_mask.fsh"),
-        arrayOf(
+    private val opacityMaskShader = BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/opacity_mask.fsh", GL_FRAGMENT_SHADER),
+        uniforms = arrayOf(
             UniformProvider("colorAttachment") { pointer ->
                 glActiveTexture(GL_TEXTURE1)
                 glBindTexture(GL_TEXTURE_2D, colorAttachment)
@@ -77,7 +77,7 @@ object OpacityMaskRenderer {
         opacityMaskColorAttachment = opacityMaskFramebuffer.colorAttachment
         colorAttachment = colorFramebuffer.colorAttachment
         opacityMaskShader.enableShader()
-        BlitShader.blit()
+        BlitProgram.blit()
         opacityMaskShader.disableShader()
     }
 }

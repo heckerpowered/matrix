@@ -8,9 +8,9 @@ import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.state.FramebufferState
 import heckerpowered.matrix.client.render.state.StateIsolation
 import heckerpowered.matrix.client.render.state.ViewportState
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import heckerpowered.matrix.core.resourceToString
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.gl.SimpleFramebuffer
@@ -21,7 +21,7 @@ val framebufferProvider: UniformProvider
     get() = PostProcessRenderer.framebufferProvider
 
 object PostProcessRenderer {
-    val postProcessShaders = mutableSetOf<BlitShader>()
+    val postProcessShaders = mutableSetOf<BlitProgram>()
 
     /**
      * The source framebuffer to render the post process effects from.
@@ -56,18 +56,18 @@ object PostProcessRenderer {
     }
 
     private val blitShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/blit/blit.fsh"),
-            arrayOf(framebufferProvider, depthAttachmentProvider, levelOfDetailProvider)
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL46.GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/blit/blit.fsh", GL46.GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(framebufferProvider, depthAttachmentProvider, levelOfDetailProvider)
         )
     }
 
     private val blitNoDepthShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/blit/blit_no_depth.fsh"),
-            arrayOf(framebufferProvider, levelOfDetailProvider)
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL46.GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/blit/blit_no_depth.fsh", GL46.GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(framebufferProvider, levelOfDetailProvider)
         )
     }
 
@@ -184,7 +184,7 @@ object PostProcessRenderer {
     }
 
     @JvmStatic
-    fun renderShaderToFramebuffer(shader: BlitShader, framebuffer: Framebuffer, disableBlend: Boolean = true) {
+    fun renderShaderToFramebuffer(shader: BlitProgram, framebuffer: Framebuffer, disableBlend: Boolean = true) {
         val previousFramebuffer = GlStateManager.getBoundFramebuffer()
 
         framebuffer.beginWrite(true)
@@ -192,7 +192,7 @@ object PostProcessRenderer {
             shader.blit()
         } else {
             shader.enableShader()
-            BlitShader.blit()
+            BlitProgram.blit()
             shader.disableShader()
         }
         framebuffer.endWrite()
@@ -201,7 +201,7 @@ object PostProcessRenderer {
     }
 
     @JvmStatic
-    fun renderShaders(shaders: Collection<BlitShader>): Framebuffer {
+    fun renderShaders(shaders: Collection<BlitProgram>): Framebuffer {
         val previousFramebuffer = GlStateManager.getBoundFramebuffer()
 
         resetFramebuffers()
@@ -224,7 +224,7 @@ object PostProcessRenderer {
     }
 
     @JvmStatic
-    fun renderShadersToFramebuffer(shaders: Collection<BlitShader>, framebuffer: Framebuffer) {
+    fun renderShadersToFramebuffer(shaders: Collection<BlitProgram>, framebuffer: Framebuffer) {
         val renderedFramebuffer = renderShaders(shaders)
         copyFramebuffer(renderedFramebuffer, framebuffer)
     }

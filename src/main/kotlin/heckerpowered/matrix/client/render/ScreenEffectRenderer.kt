@@ -23,8 +23,9 @@ import heckerpowered.matrix.client.render.shader.RadialBlurRenderer.samples
 import heckerpowered.matrix.client.render.state.*
 import heckerpowered.matrix.client.render.state.capabilities.BlendState
 import heckerpowered.matrix.client.render.state.capabilities.DepthTestState
-import heckerpowered.matrix.client.shader.BlitShader
+import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.DissolveShader
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
@@ -33,7 +34,6 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFEC
 import heckerpowered.matrix.common.effect.bloodPactActive
 import heckerpowered.matrix.common.magics.SculkCatalystMagic
 import heckerpowered.matrix.core.approximatelyEqual
-import heckerpowered.matrix.core.resourceToString
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.Vec3d
@@ -56,10 +56,10 @@ object ScreenEffectRenderer {
     private val auraAlphaAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
 
     private val auraShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/aura.fsh"),
-            arrayOf(
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/aura.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(
                 UniformProvider("entityDepthAttachment") { pointer ->
                     glActiveTexture(GlConst.GL_TEXTURE0)
                     glBindTexture(GlConst.GL_TEXTURE_2D, sceneFramebuffer.depthAttachment)
@@ -114,10 +114,10 @@ object ScreenEffectRenderer {
     val bloomThresholdAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(1000))
 
     private val colorFilterShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/color_filter.fsh"),
-            arrayOf(
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/color_filter.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(
                 PostProcessRenderer.framebufferProvider,
                 UniformProvider("color") { pointer ->
                     glUniform4f(
@@ -133,10 +133,10 @@ object ScreenEffectRenderer {
     }
 
     private val edgeHighlightShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/edge_highlight.fsh"),
-            arrayOf(
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/edge_highlight.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(
                 PostProcessRenderer.framebufferProvider,
                 UniformProvider("edgeThreshold") { pointer ->
                     glUniform1f(pointer, edgeThresholdAnimation.animatedValue.toFloat())
@@ -149,10 +149,10 @@ object ScreenEffectRenderer {
     }
 
     private val radialBlurShader by lazy {
-        BlitShader(
-            resourceToString("/assets/matrix/shaders/sobel.vert"),
-            resourceToString("/assets/matrix/shaders/post/blur/radial_blur.fsh"),
-            arrayOf(
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/blur/radial_blur.fsh", GL_FRAGMENT_SHADER),
+            uniforms = arrayOf(
                 PostProcessRenderer.framebufferProvider,
                 UniformProvider("strength") { pointer ->
                     glUniform1f(pointer, ghostStrengthAnimation.animatedValue.toFloat())
@@ -185,7 +185,7 @@ object ScreenEffectRenderer {
     }
 
     private fun onPostProcess() {
-        // bloomThresholdAnimation.animatedValue = 1.0
+        bloomThresholdAnimation.animatedValue = 1.0
         if (!shouldRenderBloom()) {
             return
         }
@@ -466,7 +466,7 @@ object ScreenEffectRenderer {
             return
         }
 
-        BloomEffect.brightnessThreshold = .0F
+        BloomEffect.brightnessThreshold = -1F
         BloomEffect.brightnessPassFramebuffer = sceneFramebuffer
         BloomEffect.renderBloom()
 
@@ -483,5 +483,6 @@ object ScreenEffectRenderer {
         ) {
             PostProcessRenderer.copyFramebuffer(sceneFramebuffer, minecraft.framebuffer, false)
         }
+        useBloom = false
     }
 }

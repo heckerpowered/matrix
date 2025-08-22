@@ -1,5 +1,8 @@
 package heckerpowered.matrix.client.render
 
+import heckerpowered.matrix.client.minecraft
+import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL20.glGetActiveUniform
 import org.lwjgl.opengl.GL31.glGetActiveUniformBlockiv
 import org.lwjgl.opengl.GL31.glGetActiveUniformsiv
@@ -168,5 +171,17 @@ object OpenGLExtensions {
         val offsets = IntArray(indices.size)
         glGetActiveUniformsiv(program, indices, GL_UNIFORM_OFFSET, offsets)
         return offsets
+    }
+
+    fun initGLContext(name: String = "") {
+        fun createHiddenWindow(): Long {
+            glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
+            return glfwCreateWindow(1, 1, name, 0, minecraft.window.handle)
+        }
+
+        // glfwCreateWindow must only be called from the main thread.
+        val window = minecraft.submit(::createHiddenWindow).get()
+        glfwMakeContextCurrent(window)
+        GL.createCapabilities()
     }
 }

@@ -4,11 +4,11 @@ import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.gl.ShaderProgram
 import java.util.function.Supplier
 
-class MinecraftShaderState(val program: Supplier<ShaderProgram?>) : RenderPipelineState {
+class ShaderProgramState(val program: Supplier<ShaderProgram?>) : RenderPipelineState {
     companion object {
-        fun captureSnapshot(): MinecraftShaderState {
+        fun captureSnapshot(): ShaderProgramState {
             val shader = RenderSystem.getShader()
-            return MinecraftShaderState { shader }
+            return ShaderProgramState { shader }
         }
     }
 
