@@ -48,12 +48,12 @@ data class GpuParticleState(
             val bufferSize = particleCount * layout.bufferSizeBytes.toLong()
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPing)
-            glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_COPY)
-            defineAttributes(layout)
+            glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_DRAW)
+            // defineAttributes(layout)
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectPong)
-            glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_COPY)
-            defineAttributes(layout)
+            glBufferData(GL_ARRAY_BUFFER, bufferSize, GL_DYNAMIC_DRAW)
+            // defineAttributes(layout)
 
             glBindVertexArray(0)
             glBindBuffer(GL_ARRAY_BUFFER, 0)
