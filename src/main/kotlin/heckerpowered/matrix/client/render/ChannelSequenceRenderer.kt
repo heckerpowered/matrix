@@ -173,7 +173,7 @@ class ChannelSequenceRenderer(
                 return
             }
             val channelAnimation = channelSequenceAnimationMap[entity] ?: return
-            val removed = channelAnimation.removeIf { it -> it.currentChannelTime > it.channelTime && it.opacityAnimation.animatedValue == 0.0 }
+            val removed = channelAnimation.removeIf { it.currentChannelTime > it.channelTime && it.opacityAnimation.animatedValue == 0.0 }
             if (removed) {
                 offsetAnimationMap[entity]?.xOffsetAnimationClock?.apply {
                     from = .0
@@ -181,7 +181,7 @@ class ChannelSequenceRenderer(
                 }
             }
             channelAnimation
-                .firstOrNull { it -> it.currentChannelTime <= it.channelTime }
+                .firstOrNull { it.currentChannelTime <= it.channelTime }
                 ?.tick(entity)
         }
     }
