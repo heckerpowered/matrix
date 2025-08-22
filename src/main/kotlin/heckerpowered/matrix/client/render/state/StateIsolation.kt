@@ -22,7 +22,7 @@ import org.slf4j.MarkerFactory
  * @author heckerpowered
  */
 class StateIsolation(
-    states: MutableList<out RenderPipelineState> = mutableListOf(),
+    states: List<RenderPipelineState> = emptyList(),
 ) : AutoCloseable {
     private val snapshots: MutableList<RenderPipelineSnapshot> = mutableListOf()
 
@@ -53,7 +53,7 @@ class StateIsolation(
     }
 
     init {
-        push(*states.toTypedArray())
+        push(states)
     }
 
     /**
@@ -67,6 +67,21 @@ class StateIsolation(
      *               snapshots will be stored for subsequent restoration.
      */
     fun push(vararg states: RenderPipelineState) {
+        val snapshots = states.map { it.apply() }
+        this.snapshots.addAll(snapshots.toTypedArray())
+    }
+
+    /**
+     * Applies one or more render pipeline states immediately and records their snapshots
+     * so they can be restored later (in reverse order) when this isolation scope is closed.
+     *
+     * Each provided state’s `apply()` method will be invoked, and the resulting
+     * `RenderPipelineSnapshot` will be added to this instance’s snapshot stack.
+     *
+     * @param states one or more [RenderPipelineState] instances to apply; their
+     *               snapshots will be stored for subsequent restoration.
+     */
+    fun push(states: Collection<RenderPipelineState>) {
         val snapshots = states.map { it.apply() }
         this.snapshots.addAll(snapshots.toTypedArray())
     }
