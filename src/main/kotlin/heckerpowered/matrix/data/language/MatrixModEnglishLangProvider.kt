@@ -40,19 +40,19 @@ class MatrixModEnglishLangProvider(
         translationBuilder.addMagic(MatrixLanguage.magicTargetPositioning.key, "Target Positioning")
         translationBuilder.add(
             MatrixLanguage.magicTargetPositioningDescription.key,
-            "Highlights the target and all entities within a §a24§r-meter radius for §a10§r seconds.\n\nUntraceable."
+            "Highlights the target and all entities within §a24§r meters for §a10§r seconds.\n\nUntraceable."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicDecisiveStrike.key, "Decisive Strike")
         translationBuilder.add(
             MatrixLanguage.magicDecisiveStrikeDescription.key,
-            "Deals §a6§r damage to the target, adds extra damage based on the player's base attack damage, and inflicts additional damage equal to §a14§r% of the target's maximum health.\n\nIncreases damage by §a1§r% per magics' cost in the channel queue, up to §a400§r%.\n\nRemoves the target's invincibility frames upon being hit.\n\nTrackable."
+            "Deals §a6§r damage plus extra damage from base attack, and additional damage equal to §a14§r% of the target’s maximum health.\n\nIncreases damage by §a1§r% for each mana consumed by magics in the queue, up to §a400§r%.\n\nRemoves the target's brief invulnerability after being hit.\n\nTrackable."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicManaOverload.key, "Mana Overload")
         translationBuilder.add(
             MatrixLanguage.magicManaOverloadDescription.key,
-            "Overloads the target with mana, disabling their spell abilities.\n\nDeal §a15§r% more damage to affected enemies.\n\n§cSuppresses§r Enderman's §dteleportation§r and §devasion§r abilities.\n§cSuppresses§r Wardens' ability to channel §9sonic boom§r.\n§cSuppresses§r Illagers' §call spells§r.\n§cSuppresses§r Guardians' §9laser attacks§r and Elder Guardians' ability to inflict §7mining fatigue§r on players.\nPrevents Witches from §cthrowing potions§r.\n\n§cSuppression§r immediately interrupts and prevents the use of related abilities for the effect's duration.\n\nRemoves and blocks beneficial effects on the target at §a2§r stacks.\n\nDeals §9continuous spell damage§r at §a3§r stacks.\n\nAt §cmaximum§r stacks, deals spell damage equal to 100% of target's current health and prevents further stacking until the effect ends.\n\nCan be tracked."
+            "Overloads the target with mana, disabling their spell abilities.\n\nAffected enemies take §a15§r% more damage.\n\n§cSuppresses§r Enderman's §dteleportation§r and §devasion§r abilities.\n§cSuppresses§r Wardens' §9sonic boom§r.\n§cSuppresses§r Illagers' §call spells§r.\n§cSuppresses§r Guardians' §9laser attacks§r and Elder Guardians' mining fatigue.\nPrevents Witches from §cthrowing potions§r.\n\n§cSuppression§r immediately interrupts and blocks these abilities as long as the effect lasts.\n\nAt §a2§r stacks: removes and blocks beneficial effects.\n\nAt §a3§r stacks: deals §9continuous spell damage§r.\n\nAt max stacks: deals spell damage equal to 100% of current health and prevents further stacking until the effect ends.\n\nTraceable."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicHealthSteal.key, "Life Steal")
@@ -81,19 +81,19 @@ class MatrixModEnglishLangProvider(
         translationBuilder.addMagic(MatrixLanguage.magicMemoryErase.key, "Memory Erasure")
         translationBuilder.add(
             MatrixLanguage.magicMemoryEraseDescription.key,
-            "Forces the target to forget the currently locked target.\n\nMagics queued after this magic Untraceable. \n\nUntraceable."
+            "Forces the target to forget its locked target.\n\nMagics queued after this magic Untraceable. \n\nUntraceable."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicIgniteMagic.key, "Ignite")
         translationBuilder.add(
             MatrixLanguage.magicIgniteMagicDescription.key,
-            "§cIgnites§r the target for §a10§r seconds, dealing continuous damage.\n\nIf the target is §2poisoned§r, it will§c explode§r.\n\nTrackable when causing an§c explosion§r."
+            "§cIgnites§r the target for §a10§r seconds, dealing continuous damage.\n\nIf the target is §2poisoned§r, §cdetonate§r it.\n\nTraceable when causing an§c explosion§r."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicBreakingBad.key, "Breaking Bad")
         translationBuilder.add(
             MatrixLanguage.magicBreakingBadDescription.key,
-            "Poisons and blinds the target for 10 seconds, dealing continuous damage.\n\nIf the target is ignited, it will explode.\n\nTrackable when causing an explosion."
+            "Poisons and blinds the target for 10 seconds, dealing continuous damage.\n\nIf the target is ignited, §cdetonate§r it.\n\nTraceable when causing an explosion."
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicSpread.key, "Contagion")
@@ -118,9 +118,9 @@ class MatrixModEnglishLangProvider(
         translationBuilder.add(
             MatrixLanguage.magicLightningBoltMagicDescription.key,
             """
-    Summons lightning at the target's location, with different colors having different effects.
+   Summons lightning at the target with effects by color:
     
-    §4Red§r lightning deals §a400§r% damage to hit entities.
+    §4Red§r lightning deals §a400§r% damage.
     
     §cOrange§r lightning removes all armor from hit entities for §a10§r seconds.
     
@@ -128,11 +128,11 @@ class MatrixModEnglishLangProvider(
     
     §aGreen§r lightning heals you for 1 heart upon hitting and poisons the target for §a10§r seconds.
     
-    §9Cyan§r lightning automatically channels "Cripple Movement" on the hit target without extra mana cost. For targets already affected, it also applies the §cExposed§r state for §a10§r seconds.
+    §9Cyan§r lightning channels "Cripple Movement" on the hit target with no mana cost. For targets already affected, applies the §cExposed§r state for §a10§r seconds instead.
     
     §1Blue§r lightning channels this magic on the hit target.
     
-    §dPurple§r lightning increases the area of effect by §a100§r%, causes small explosions on each hit, and applies the "Lightning Strike" status to the target for §a180§r seconds.
+    §dPurple§r lightning doubles AoE, causes small explosions on each hit, and applies the "Lightning Strike" status to the target for §a180§r seconds.
     
     White lightning has no special effect.
     
@@ -141,7 +141,7 @@ class MatrixModEnglishLangProvider(
     The extraction probability for clear lightning is §a0.6§r%, and the probabilities for all other colors are equally distributed.
     Lightning summoned by the player behaves differently from natural lightning, such as not charging Creepers, damage not scaling with difficulty, and not triggering achievements.
     When cast after "Memory Erasure," this magic will render any effects related to you invalid, such as preventing healing.
-    Continuous mana usage reduces mana consumption by §a20§r%, stackable up to §a80§r%.
+    Continuous mana usage reduces mana consumption by §a20§r%, stacking up to §a80§r%.
     
     Untraceable.
     """.trimIndent()
@@ -178,7 +178,7 @@ class MatrixModEnglishLangProvider(
         )
 
         translationBuilder.addMagic(MatrixLanguage.magicLevitation.key, "Levitation")
-        translationBuilder.add(MatrixLanguage.magicLevitationDescription.key, "Levitate the target for 10 seconds.\n\nCan be stacked, with stacking increasing the effect level and resetting the duration, with no limit.\n\nUntraceable. ")
+        translationBuilder.add(MatrixLanguage.magicLevitationDescription.key, "Levitate the target for 10 seconds.\n\nCan be stacked, with stacking increasing the effect level and resetting the duration, with no limit.\n\nUntraceable.")
 
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "Overclock or Underclock Magic")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "Overclock or Underclock Mana")
