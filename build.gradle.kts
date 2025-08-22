@@ -6,17 +6,15 @@
  * See the LICENSE file in the project root for more information.
  */
 
-val minecraftVersion: String by project
-val yarnMappings: String by project
-val loaderVersion: String by project
-val fabricKotlinVersion: String by project
-val kotlinVersion: String by project
-
-val modVersion: String by project
-val mavenGroup: String by project
-val archiveBaseName: String by project
-
-val fabricVersion: String by project
+val minecraftVersion = providers.gradleProperty("minecraftVersion").get()
+val yarnMappings = providers.gradleProperty("yarnMappings").get()
+val loaderVersion = providers.gradleProperty("loaderVersion").get()
+val fabricKotlinVersion = providers.gradleProperty("fabricKotlinVersion").get()
+val kotlinVersionProp = providers.gradleProperty("kotlinVersion").get()
+val modVersion = providers.gradleProperty("modVersion").get()
+val mavenGroup = providers.gradleProperty("mavenGroup").get()
+val archiveBaseName = providers.gradleProperty("archiveBaseName").get()
+val fabricVersion = providers.gradleProperty("fabricVersion").get()
 
 plugins {
     id("fabric-loom") version "1.9.2"
@@ -58,10 +56,11 @@ dependencies {
 }
 
 tasks.processResources {
-    inputs.property("version", project.version)
+    inputs.property("version", modVersion)
 
+    val properties = mapOf("version" to modVersion)
     filesMatching("fabric.mod.json") {
-        expand("version" to project.version)
+        expand(properties)
     }
 }
 
@@ -82,6 +81,6 @@ java {
 
 tasks.jar {
     from("LICENSE") {
-        rename { "${it}_${project.base.archivesName.get()}" }
+        rename { "${it}_${archiveBaseName}" }
     }
 }
