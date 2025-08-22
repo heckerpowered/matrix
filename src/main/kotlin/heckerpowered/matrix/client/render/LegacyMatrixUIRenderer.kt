@@ -1,3 +1,11 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2025 heckerpowered
+ *
+ * This file is released under the MIT License.
+ * See the LICENSE file in the project root for more information.
+ */
+
 package heckerpowered.matrix.client.render
 
 import com.mojang.blaze3d.systems.RenderSystem
@@ -10,6 +18,7 @@ import net.minecraft.text.Text
 import kotlin.math.max
 import kotlin.math.min
 
+@Deprecated("Deprecated")
 class MatrixHUDRenderer(val drawContext: DrawContext, val tickCounter: RenderTickCounter) {
     fun enableScissor(rectangle: Rectangle) {
         drawContext.enableScissor(
@@ -25,13 +34,14 @@ class MatrixHUDRenderer(val drawContext: DrawContext, val tickCounter: RenderTic
     }
 
     fun renderRectangle(rectangle: Rectangle, color: Color) {
-        val transformationMatrix = drawContext.matrices.peek().positionMatrix
+        drawContext.matrices.peek().positionMatrix
         val tessellator = Tessellator.getInstance()
 
-        val buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR)
+        tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR)
     }
 }
 
+@Deprecated("Deprecated")
 class LegacyMatrixUIRenderer(private val vertexConsumers: VertexConsumerProvider.Immediate) {
     private val minecraft = MinecraftClient.getInstance()
     private val matrixStack = MatrixStack()
@@ -59,7 +69,7 @@ class LegacyMatrixUIRenderer(private val vertexConsumers: VertexConsumerProvider
 
         render()
     }
-    
+
     private fun render() {
         RenderSystem.disableDepthTest()
         vertexConsumers.draw()
