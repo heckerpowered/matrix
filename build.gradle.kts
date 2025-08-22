@@ -2,6 +2,7 @@ val minecraftVersion: String by project
 val yarnMappings: String by project
 val loaderVersion: String by project
 val fabricKotlinVersion: String by project
+val kotlinVersion: String by project
 
 val modVersion: String by project
 val mavenGroup: String by project
@@ -11,7 +12,7 @@ val fabricVersion: String by project
 
 plugins {
     id("fabric-loom") version "1.9.2"
-    kotlin("jvm") version "2.1.20"
+    kotlin("jvm") version "2.2.0"
 }
 
 version = modVersion
