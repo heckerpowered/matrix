@@ -6,6 +6,7 @@
 name: build
 on:
   push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -42,14 +43,19 @@ jobs:
           path: build/libs/
 
   release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           path: dist
+
       - name: Rename assets with platform suffix
         shell: bash
         run: |
@@ -76,12 +82,22 @@ jobs:
               mv -- "$f" "$dir/${stem}-${suffix}${ext}"
             done
           done
-      - name: Generate timestamp tag
+
+      - name: Compute release tag
         id: tag
         run: |
-          TS=$(date -u +'%Y%m%d-%H%M')
+          MC_VERSION=$(grep '^minecraftVersion=' gradle.properties | cut -d'=' -f2)
+          YEAR=$(date -u +%y)   # 2025 -> 25
+
+          MAJOR=1
+          MINOR=0
+
           SHORT=${GITHUB_SHA::7}
-          echo "TAG=v${TS}-${SHORT}" >> $GITHUB_OUTPUT
+
+          TAG="mc${MC_VERSION}-v${YEAR}.${MAJOR}.${MINOR}-${SHORT}"
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "Generated tag: $TAG"
+
       - name: Create tag in repo
         uses: actions/github-script@v7
         with:
@@ -97,6 +113,7 @@ jobs:
             } catch (e) {
               if (e.status !== 422) throw e;
             }
+
       - name: Publish drafted release
         uses: release-drafter/release-drafter@v6
         with:
@@ -104,11 +121,12 @@ jobs:
           tag: ${{ steps.tag.outputs.TAG }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/windows/*
+            dist/**/*
           draft: false
           prerelease: false
           tag_name: ${{ steps.tag.outputs.TAG }}
