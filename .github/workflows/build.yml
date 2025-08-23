@@ -50,6 +50,19 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
+      - name: Rename assets with platform suffix
+        run: |
+          shopt -s nullglob
+          for dir in dist/artifacts-*; do
+            base=$(basename "$dir")               # e.g. artifacts-Windows
+            suffix="${base#*-}"                   # Result：Windows
+            for f in "$dir"/*; do
+              [ -e "$f" ] || continue
+              ext="${f##*.}"
+              name="${f%.*}"
+              mv "$f" "$dir/${name}-${suffix}.${ext}"
+            done
+          done
       - name: Generate timestamp tag
         id: tag
         run: |
@@ -76,7 +89,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/**/*
+            dist/windows/*
           draft: false
           prerelease: false
           tag_name: ${{ steps.tag.outputs.TAG }}
