@@ -51,16 +51,29 @@ jobs:
         with:
           path: dist
       - name: Rename assets with platform suffix
+        shell: bash
         run: |
+          set -euo pipefail
           shopt -s nullglob
+
           for dir in dist/artifacts-*; do
-            base=$(basename "$dir")               # e.g. artifacts-Windows
-            suffix="${base#*-}"                   # Result：Windows
+            [ -d "$dir" ] || continue
+
+            base="$(basename "$dir")"        # e.g. artifacts-Windows
+            suffix="${base#*-}"              # → Windows / Linux / macOS
+            suffix="${suffix,,}"
+
             for f in "$dir"/*; do
               [ -e "$f" ] || continue
-              ext="${f##*.}"
-              name="${f%.*}"
-              mv "$f" "$dir/${name}-${suffix}.${ext}"
+              filename="$(basename "$f")"
+              if [[ "$filename" == *.* ]]; then
+                ext=".${filename##*.}"
+                stem="${filename%.*}"
+              else
+                ext=""
+                stem="$filename"
+              fi
+              mv -- "$f" "$dir/${stem}-${suffix}${ext}"
             done
           done
       - name: Generate timestamp tag
