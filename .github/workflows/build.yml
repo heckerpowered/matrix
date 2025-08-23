@@ -117,7 +117,7 @@ jobs:
       - name: Publish drafted release
         uses: release-drafter/release-drafter@v6
         with:
-          publish: false
+          publish: true
           tag: ${{ steps.tag.outputs.TAG }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
