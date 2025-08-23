@@ -1,9 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
  * Copyright (c) 2025 heckerpowered
- *
- * This file is released under the MIT License.
- * See the LICENSE file in the project root for more information.
  */
 
 package heckerpowered.matrix.client
@@ -995,7 +992,7 @@ object MatrixHud {
     @JvmField
     var isPressingLeftMouseButton = false
 
-    private fun shouldSlowTime(): Boolean {
+    fun shouldSlowTime(): Boolean {
         val minecraft = MinecraftClient.getInstance()
         val server = minecraft.server
         return minecraft.isIntegratedServerRunning && (server != null && !server.isRemote)
