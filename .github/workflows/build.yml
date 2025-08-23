@@ -97,7 +97,13 @@ jobs:
             } catch (e) {
               if (e.status !== 422) throw e;
             }
-
+      - name: Publish drafted release
+        uses: release-drafter/release-drafter@v6
+        with:
+          publish: true
+          tag: ${{ steps.tag.outputs.TAG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:
