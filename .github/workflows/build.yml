@@ -50,6 +50,27 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
+      - name: Generate timestamp tag
+        id: tag
+        run: |
+          TS=$(date -u +'%Y%m%d-%H%M')
+          SHORT=${GITHUB_SHA::7}
+          echo "TAG=v${TS}-${SHORT}" >> $GITHUB_OUTPUT
+      - name: Create tag in repo
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = '${{ steps.tag.outputs.TAG }}';
+            try {
+              await github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `refs/tags/${tag}`,
+                sha: context.sha
+              });
+            } catch (e) {
+              if (e.status !== 422) throw e;
+            }
 
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
@@ -58,5 +79,6 @@ jobs:
             dist/**/*
           draft: false
           prerelease: false
+          tag_name: ${{ steps.tag.outputs.TAG }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
