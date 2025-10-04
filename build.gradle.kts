@@ -7,15 +7,16 @@ val minecraftVersion = providers.gradleProperty("minecraftVersion").get()
 val yarnMappings = providers.gradleProperty("yarnMappings").get()
 val loaderVersion = providers.gradleProperty("loaderVersion").get()
 val fabricKotlinVersion = providers.gradleProperty("fabricKotlinVersion").get()
-val kotlinVersionProp = providers.gradleProperty("kotlinVersion").get()
+val kotlinVersion = providers.gradleProperty("kotlinVersion").get()
 val modVersion = providers.gradleProperty("modVersion").get()
 val mavenGroup = providers.gradleProperty("mavenGroup").get()
 val archiveBaseName = providers.gradleProperty("archiveBaseName").get()
 val fabricVersion = providers.gradleProperty("fabricVersion").get()
 
 plugins {
-    id("fabric-loom") version "1.9.2"
-    kotlin("jvm") version "2.2.0"
+    id("fabric-loom")
+    kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 version = modVersion
@@ -42,14 +43,25 @@ fabricApi {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${minecraftVersion}")
-    mappings("net.fabricmc:yarn:${yarnMappings}:v2")
+    minecraft("com.mojang:minecraft:$minecraftVersion")
+    mappings("net.fabricmc:yarn:$yarnMappings:v2")
 
-    modImplementation("net.fabricmc:fabric-loader:${loaderVersion}")
+    modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
 
     // Fabric API
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${fabricVersion}")
-    modImplementation("net.fabricmc:fabric-language-kotlin:${fabricKotlinVersion}")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
+    modImplementation("net.fabricmc:fabric-language-kotlin:$fabricKotlinVersion")
+
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+}
+
+tasks.test {
+    useJUnitPlatform()
+
+    testLogging {
+        showStandardStreams = true
+    }
 }
 
 tasks.processResources {
