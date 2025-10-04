@@ -5,17 +5,18 @@
 
 package heckerpowered.matrix.common.network
 
-import heckerpowered.matrix.common.MagicManager
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.magic.MagicManager
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.entity.LivingEntity
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
+import java.util.*
 
 class ChannelMagicPayload(
-    private val magicId: Int,
+    private val magicUuid: UUID,
     private val entityId: Int,
     private val channelTime: Long,
 ) : CustomPayload {
@@ -24,7 +25,7 @@ class ChannelMagicPayload(
         val codec: PacketCodec<PacketByteBuf, ChannelMagicPayload> =
             PacketCodec.of(ChannelMagicPayload::encode) { buffer ->
                 ChannelMagicPayload(
-                    buffer.readInt(),
+                    buffer.readUuid(),
                     buffer.readInt(),
                     buffer.readLong()
                 )
@@ -32,7 +33,7 @@ class ChannelMagicPayload(
     }
 
     private fun encode(buffer: PacketByteBuf) {
-        buffer.writeInt(magicId)
+        buffer.writeUuid(magicUuid)
         buffer.writeInt(entityId)
         buffer.writeLong(channelTime)
     }
@@ -43,15 +44,15 @@ class ChannelMagicPayload(
 
     fun handle(context: Context) {
         context.client().execute {
-            val magic = MagicManager.getMagicById(magicId) ?: return@execute
+            val magic = MagicManager.getMagicByUuid(magicUuid) ?: return@execute
             val entity = context.player().world.getEntityById(entityId) ?: return@execute
             if (entity !is LivingEntity) {
                 return@execute
             }
-            if (ChannelSequence.channelMagic(magic, context.player(), entity, false)) {
+            if (ChannelQueue.channelMagic(magic, context.player(), entity, false)) {
                 val channelSequence = entity.getChannelSequence(context.player())
                 val channelingMagic = channelSequence?.magics?.last() ?: return@execute
-                ChannelSequence.channelMagicClient(channelingMagic, entity, channelTime)
+                ChannelQueue.channelMagicClient(channelingMagic, entity, channelTime)
             }
         }
     }
