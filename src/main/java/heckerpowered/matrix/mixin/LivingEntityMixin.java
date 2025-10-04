@@ -16,7 +16,7 @@ import heckerpowered.matrix.common.item.RedstoneSuitKt;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
 import heckerpowered.matrix.common.item.WardenSuitKt;
 import heckerpowered.matrix.common.network.SyncManaPayload;
-import heckerpowered.matrix.common.persistent.ChannelSequence;
+import heckerpowered.matrix.common.persistent.ChannelQueue;
 import heckerpowered.matrix.common.persistent.ManaState;
 import heckerpowered.matrix.core.Accumulator;
 import heckerpowered.matrix.core.MatrixLivingEntity;
@@ -60,7 +60,7 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
     private static final TrackedData<Boolean> KILLED = DataTracker.registerData(LivingEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     @Unique
-    private final Map<UUID, ChannelSequence> channelingSequences = new HashMap<>();
+    private final Map<UUID, ChannelQueue> channelingSequences = new HashMap<>();
     @Shadow
     @Final
     private Map<RegistryEntry<StatusEffect>, StatusEffectInstance> activeStatusEffects;
@@ -245,7 +245,7 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
     @SuppressWarnings("all")
     @NotNull
     @Override
-    public Map<UUID, ChannelSequence> getChannelSequence() {
+    public Map<UUID, ChannelQueue> getChannelSequence() {
         return channelingSequences;
     }
 
