@@ -3,13 +3,13 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
-import heckerpowered.matrix.common.isInvulnerableToEffect
-import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.data.language.MatrixLanguage
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.player.PlayerEntity
@@ -17,8 +17,14 @@ import net.minecraft.network.packet.s2c.play.EntityStatusEffectS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 
-object CrippleMovementMagic : Magic(MatrixLanguage.magicCrippleMovement, 6, MatrixLanguage.magicCrippleMovementDescription, 6) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+object CrippleMovementMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("cripple_movement"),
+        6.mana,
+        6.ticks
+    )
+) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         if (target is PlayerEntity) {
             target.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 3, 0))
@@ -39,7 +45,7 @@ object CrippleMovementMagic : Magic(MatrixLanguage.magicCrippleMovement, 6, Matr
     override fun availableStatus(
         player: PlayerEntity,
         target: LivingEntity?,
-        sequence: ChannelSequence?,
+        sequence: ChannelQueue?,
     ): MagicAvailableStatus {
         if (target?.isInvulnerableToEffect(CRIPPLE_MOVEMENT_EFFECT) == true) {
             return MagicAvailableStatus.TARGET_IMMUNE
@@ -48,7 +54,7 @@ object CrippleMovementMagic : Magic(MatrixLanguage.magicCrippleMovement, 6, Matr
         return super.availableStatus(player, target, sequence)
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData): Long {
+    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData): Long {
         if (target is PlayerEntity) {
             return super.getCost(player, target, sequence, data) * 3
         }

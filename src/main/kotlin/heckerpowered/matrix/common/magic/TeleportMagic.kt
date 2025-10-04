@@ -3,20 +3,27 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.core.attack
 import heckerpowered.matrix.core.squaredDistanceTo
 import heckerpowered.matrix.core.toBox
-import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
 
-object TeleportMagic : Magic(MatrixLanguage.magicTeleport, 15, MatrixLanguage.magicTeleportDescription, 5) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+object TeleportMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("teleport"),
+        15.mana,
+        5.ticks
+    )
+) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         if (player == null) {
             return

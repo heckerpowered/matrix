@@ -3,20 +3,27 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.persistent.magicClock
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.World
 import net.minecraft.world.explosion.AdvancedExplosionBehavior
 import java.util.*
 
-object ExplosionMagic : Magic(MatrixLanguage.magicExplosion, 30, MatrixLanguage.magicExplosionDescription, 30) {
+object ExplosionMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("explosion"),
+        30.mana,
+        30.ticks
+    )
+) {
     val explosionBehavior = AdvancedExplosionBehavior(
         false,
         true,
@@ -24,7 +31,7 @@ object ExplosionMagic : Magic(MatrixLanguage.magicExplosion, 30, MatrixLanguage.
         Optional.empty()
     )
 
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
 

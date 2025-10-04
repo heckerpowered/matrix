@@ -3,18 +3,25 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.entity.MagicLightningEntity
-import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.data.language.MatrixLanguage
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-object LightningBoltMagic : Magic(MatrixLanguage.magicLightningBoltMagic, 15, MatrixLanguage.magicLightningBoltMagicDescription, 20) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+object LightningBoltMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("lightning_bolt"),
+        15.mana,
+        20.ticks
+    )
+) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         val lightningTypes = MagicLightningEntity.LightningType.entries
         val lightningType = if ((0..1000).random() < 6) {
@@ -36,7 +43,7 @@ object LightningBoltMagic : Magic(MatrixLanguage.magicLightningBoltMagic, 15, Ma
         })
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData): Long {
+    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData): Long {
         val cost = super.getCost(player, target, sequence, data)
         if (sequence == null) {
             return cost

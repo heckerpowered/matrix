@@ -3,16 +3,23 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.data.language.MatrixLanguage
+import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
-object SpreadMagic : Magic(MatrixLanguage.magicSpread, 9, MatrixLanguage.magicSpreadDescription, 9) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+object SpreadMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("spread"),
+        9.mana,
+        9.ticks
+    )
+) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         if (player == null) {
             return
@@ -27,7 +34,7 @@ object SpreadMagic : Magic(MatrixLanguage.magicSpread, 9, MatrixLanguage.magicSp
                 return@forEach
             }
             for (magic in magics) {
-                ChannelSequence.channelMagic(magic, player, it)
+                ChannelQueue.channelMagic(magic, player, it)
             }
         }
     }

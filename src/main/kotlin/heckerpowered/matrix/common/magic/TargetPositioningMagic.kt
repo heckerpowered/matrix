@@ -3,18 +3,25 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.persistent.ChannelSequence
-import heckerpowered.matrix.data.language.MatrixLanguage
+import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.effect.StatusEffects
 import net.minecraft.server.network.ServerPlayerEntity
 
-object TargetPositioningMagic : Magic(MatrixLanguage.magicTargetPositioning, 4, MatrixLanguage.magicTargetPositioningDescription, 20) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+object TargetPositioningMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("target_positioning"),
+        4.mana,
+        20.ticks
+    )
+) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         target.world.getOtherEntities(player, target.boundingBox.expand(24.0)).forEach {
             if (it is LivingEntity) {

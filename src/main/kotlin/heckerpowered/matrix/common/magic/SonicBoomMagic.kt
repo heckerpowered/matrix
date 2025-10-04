@@ -3,12 +3,13 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.particle.ParticleTypes
@@ -18,8 +19,14 @@ import net.minecraft.sound.SoundEvents
 import net.minecraft.util.math.Box
 import kotlin.math.floor
 
-object SonicBoomMagic : Magic(MatrixLanguage.magicSonicBoom, 40, MatrixLanguage.magicSonicBoomDescription, 34) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+object SonicBoomMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("sonic_boom"),
+        40.mana,
+        34.ticks
+    )
+) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         if (player == null) {
             return

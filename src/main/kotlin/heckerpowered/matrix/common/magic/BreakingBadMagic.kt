@@ -3,16 +3,16 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.isInvulnerableToEffect
-import heckerpowered.matrix.common.magics.ExplosionMagic.explosionBehavior
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.ExplosionMagic.explosionBehavior
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
 import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities
-import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.effect.StatusEffects
@@ -20,8 +20,14 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.World
 
-object BreakingBadMagic : Magic(MatrixLanguage.magicBreakingBad, 9, MatrixLanguage.magicBreakingBadDescription, 40) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+object BreakingBadMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("breaking_bad"),
+        9.mana,
+        40.ticks
+    )
+) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         target.addStatusEffect(StatusEffectInstance(StatusEffects.POISON, 20 * 5, 4))
         target.addStatusEffect(StatusEffectInstance(StatusEffects.BLINDNESS, 20 * 5, 4))
@@ -49,7 +55,7 @@ object BreakingBadMagic : Magic(MatrixLanguage.magicBreakingBad, 9, MatrixLangua
             }
             .map { it as LivingEntity }
             .consumeWhile(4) {
-                ChannelSequence.channelMagic(BreakingBadMagic, player, it, false, data = MagicData(true))
+                ChannelQueue.channelMagic(BreakingBadMagic, player, it, false, data = MagicData(true))
             }
         // var spreadTarget = target
         // repeat(4) {
@@ -69,7 +75,7 @@ object BreakingBadMagic : Magic(MatrixLanguage.magicBreakingBad, 9, MatrixLangua
         // }
     }
 
-    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
+    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): MagicAvailableStatus {
         if (target?.isInvulnerableToEffect(StatusEffects.POISON) == true ||
             target?.isInvulnerableToEffect(StatusEffects.BLINDNESS) == true
         ) {
