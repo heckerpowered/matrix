@@ -5,8 +5,6 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_ACCELERATION_ENCHANTMENT_KEY
@@ -15,6 +13,8 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.event.ItemStackEquippedCallback
 import heckerpowered.matrix.common.item.MatrixComponents.MAX_MANA
+import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.MagicManager
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.component.DataComponentTypes

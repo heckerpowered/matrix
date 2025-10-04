@@ -5,8 +5,8 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.MagicManager
+import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.MagicManager
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.util.Rarity
