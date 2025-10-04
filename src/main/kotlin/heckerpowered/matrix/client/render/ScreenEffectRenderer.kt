@@ -21,6 +21,7 @@ import heckerpowered.matrix.client.render.particle.module.particle_update.DragMo
 import heckerpowered.matrix.client.render.particle.module.particle_update.KillParticleModule
 import heckerpowered.matrix.client.render.particle.module.particle_update.ParticleStateModule
 import heckerpowered.matrix.client.render.particle.module.particle_update.ScaleSpriteSizeBySpeedModule
+import heckerpowered.matrix.client.render.particle.system.ExplosionParticle
 import heckerpowered.matrix.client.render.post.BloomEffect
 import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
 import heckerpowered.matrix.client.render.post.ShockwaveRenderer
@@ -37,7 +38,7 @@ import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
 import heckerpowered.matrix.common.effect.bloodPactActive
-import heckerpowered.matrix.common.magics.SculkCatalystMagic
+import heckerpowered.matrix.common.magic.SculkCatalystMagic
 import heckerpowered.matrix.core.approximatelyEqual
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.MinecraftClient
@@ -205,6 +206,16 @@ object ScreenEffectRenderer {
         ) {
             PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
         }
+
+        // ToneMapping.exposureLinear = 1.0f
+        // ToneMapping.exposureEv = 0.0f
+        // ToneMapping.render(minecraft.framebuffer, toneMapFramebuffer)
+        // StateIsolation.isolate(
+        //     FramebufferState(minecraft.framebuffer),
+        //     ViewportState(minecraft.framebuffer)
+        // ) {
+        //     PostProcessRenderer.copyFramebuffer(toneMapFramebuffer, minecraft.framebuffer, false)
+        // }
     }
 
     val particleSystem by lazy {
@@ -421,7 +432,7 @@ object ScreenEffectRenderer {
     @JvmStatic
     fun beginRenderEntity() {
         if (player.bloodPactActive) {
-            useBloom = true
+            useBloom = false
         } else if (previousAngryState || auraAlphaAnimation.animatedValue != .0) {
             useAuraShader = false // Disabled temporarily
         }
@@ -463,8 +474,10 @@ object ScreenEffectRenderer {
         }
 
         particleSystem.updateParticles()
+        ExplosionParticle.particleSystem.updateParticles()
         StateIsolation.isolate(DepthTestState(true), BlendState(false)) {
             particleSystem.renderParticles()
+            ExplosionParticle.particleSystem.renderParticles()
         }
 
         if (!useBloom) {
