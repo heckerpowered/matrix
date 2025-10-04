@@ -26,7 +26,7 @@ void main() {
     for (int i = 0;i < 9; ++i) {
         vec3 kernel = tentKernel[i];
         vec4 sampledColor = textureLod(framebuffer, fragTexCoord + kernel.xy * texelSize, lod);
-        float l = kernel.z / (1 + luminance(sampledColor.rgb));
+        float l = kernel.z; /// (1 + luminance(sampledColor.rgb));
         color += sampledColor * l;
         weight += l;
     }
