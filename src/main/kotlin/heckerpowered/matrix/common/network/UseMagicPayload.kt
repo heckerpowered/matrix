@@ -5,16 +5,17 @@
 
 package heckerpowered.matrix.common.network
 
-import heckerpowered.matrix.common.MagicManager
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.magic.MagicManager
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.entity.LivingEntity
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
+import java.util.*
 
 data class UseMagicPayload(
-    private val index: Int,
+    private val uuid: UUID,
     private val entityId: Int,
 ) : CustomPayload {
     companion object {
@@ -22,15 +23,14 @@ data class UseMagicPayload(
         val codec: PacketCodec<PacketByteBuf, UseMagicPayload> =
             PacketCodec.of(UseMagicPayload::encode) { buffer ->
                 UseMagicPayload(
-                    // Maybe undefined behavior there, I don't know the evaluation order.
-                    buffer.readInt(),
+                    buffer.readUuid(),
                     buffer.readInt()
                 )
             }
     }
 
     private fun encode(buffer: PacketByteBuf) {
-        buffer.writeInt(index)
+        buffer.writeUuid(uuid)
         buffer.writeInt(entityId)
     }
 
@@ -46,8 +46,8 @@ data class UseMagicPayload(
             return
         }
 
-        val magic = MagicManager.getMagicById(index) ?: return
-        ChannelSequence.channelMagic(magic, player, targetedEntity)
+        val magic = MagicManager.getMagicByUuid(uuid) ?: return
+        ChannelQueue.channelMagic(magic, player, targetedEntity)
         context.responseSender().sendPacket(SyncHealthPayload(player))
     }
 }
