@@ -26,16 +26,16 @@ import heckerpowered.matrix.client.shader.*
 import heckerpowered.matrix.client.shader.component.TransformFeedback
 import heckerpowered.matrix.client.ui.element.*
 import heckerpowered.matrix.client.ui.foundation.animation.*
-import heckerpowered.matrix.common.Magic
 import heckerpowered.matrix.common.effect.bloodPactActive
 import heckerpowered.matrix.common.item.LightningChestplate1
 import heckerpowered.matrix.common.item.LightningChestplate1.isBorrowedTime
 import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
 import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magics.MagicAvailableStatus
-import heckerpowered.matrix.common.magics.MagicAvailableStatus.AVAILABLE
-import heckerpowered.matrix.common.magics.MagicAvailableStatus.TARGET_MISSING
-import heckerpowered.matrix.common.magics.description
+import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.MagicAvailableStatus.AVAILABLE
+import heckerpowered.matrix.common.magic.MagicAvailableStatus.TARGET_MISSING
+import heckerpowered.matrix.common.magic.description
 import heckerpowered.matrix.common.network.ActiveBloodPactPayload
 import heckerpowered.matrix.common.network.BorrowedTimePayload
 import heckerpowered.matrix.common.network.OverclockPayload
@@ -511,7 +511,7 @@ object MatrixHud {
     }
 
     private fun channelMagic(magic: Magic, target: LivingEntity) {
-        ClientPlayNetworking.send(UseMagicPayload(magic.id, target.id))
+        ClientPlayNetworking.send(UseMagicPayload(magic.definition.uuid, target.id))
     }
 
     private fun checkVisibilityChanges() {
@@ -1188,7 +1188,7 @@ object MatrixHud {
         val textRenderer = MinecraftClient.getInstance().textRenderer
         displayData.costWidthAnimation.value = textRenderer.getWidth(costString).toDouble()
 
-        val magicNameWidth = textRenderer.getWidth(magic.name)
+        val magicNameWidth = textRenderer.getWidth(magic.definition.name)
         val costStringWidth = displayData.costWidthAnimation.animatedValue
         val statusStringWidth = textRenderer.getWidth(status.description)
         val extraWidth = magicNameWidth + costStringWidth + statusStringWidth + 30 /* padding */
@@ -1225,7 +1225,7 @@ object MatrixHud {
         val alpha = magicShownOpacityAnimation.animatedValue * 255
         val foregroundColor = ColorHelper.Argb.getArgb(alpha.toInt(), 255, 255, 255)
         if (alpha > 4) {
-            drawContext.drawText(textRenderer, magic.name, xIndent + 55 + magicShownAnimation.animatedValue.toInt(), startY + 5, foregroundColor, false)
+            drawContext.drawText(textRenderer, magic.definition.name, xIndent + 55 + magicShownAnimation.animatedValue.toInt(), startY + 5, foregroundColor, false)
         }
 
         val costAlpha = min(alpha, displayData.costChangedAnimation.animatedValue * 255)
@@ -1679,8 +1679,8 @@ object MatrixHud {
         )
         val currentMagic = MatrixClient.getPlayerMagics()[selectedIndex - 1]
 
-        if (currentMagic.description != currentDescription) {
-            currentDescription = currentMagic.description
+        if (currentMagic.definition.description != currentDescription) {
+            currentDescription = currentMagic.definition.description
             magicDescriptionChangedAnimation.value = .0
         }
         if (magicDescriptionChangedAnimation.animatedValue == .0) {

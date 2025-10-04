@@ -5,7 +5,6 @@
 
 package heckerpowered.matrix.data.enchantment
 
-import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
@@ -25,6 +24,7 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_E
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
 import heckerpowered.matrix.common.item.MatrixItemTags
+import heckerpowered.matrix.common.magic.MagicManager
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition

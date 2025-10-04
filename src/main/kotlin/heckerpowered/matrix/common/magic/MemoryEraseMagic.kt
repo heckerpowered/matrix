@@ -3,12 +3,13 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.mob.Angerable
@@ -20,8 +21,14 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-object MemoryEraseMagic : Magic(MatrixLanguage.magicMemoryErase, 10, MatrixLanguage.magicMemoryEraseDescription, 30) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+object MemoryEraseMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("memory_erase"),
+        10.mana,
+        30.ticks
+    )
+) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         target.brain.clear()
         if (target is MobEntity) {
@@ -49,7 +56,7 @@ object MemoryEraseMagic : Magic(MatrixLanguage.magicMemoryErase, 10, MatrixLangu
     }
 
     @OptIn(ExperimentalContracts::class)
-    fun getDamageSource(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, supplier: () -> DamageSource?): DamageSource {
+    fun getDamageSource(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, supplier: () -> DamageSource?): DamageSource {
         contract {
             callsInPlace(supplier, InvocationKind.AT_MOST_ONCE)
         }

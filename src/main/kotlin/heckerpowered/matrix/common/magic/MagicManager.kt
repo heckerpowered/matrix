@@ -3,12 +3,11 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.item.WizardHelmet
-import heckerpowered.matrix.common.magics.*
 import heckerpowered.matrix.common.network.SyncManaPayload
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.mana
@@ -18,31 +17,24 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.player.PlayerEntity
+import java.util.*
 
 object MagicManager {
-    private val magics = mutableMapOf<Int, Magic>()
+    private val magics = mutableMapOf<UUID, Magic>()
+    private var registeredMagics = mutableListOf<Magic>()
+    private var snapshot = Collections.unmodifiableList(registeredMagics)
 
-    init {
-        registerMagics()
-    }
+    fun getRegisteredMagics(): List<Magic> = snapshot
 
-    fun getRegisteredMagics(): List<Magic> {
-        return magics.values.toList()
-    }
-
-    fun getMagicByName(name: String): Magic? {
-        return magics[name.hashCode()]
-    }
-
-    fun getMagicById(id: Int): Magic? {
-        return magics[id]
-    }
+    fun getMagicByUuid(id: UUID): Magic? = magics[id]
 
     fun registerMagic(magic: Magic) {
-        magics[magic.name.hashCode()] = magic
+        val uuid = magic.definition.uuid
+        require(magics.putIfAbsent(uuid, magic) == null) { "Duplicate Magic: $uuid" }
+        registeredMagics.add(magic)
     }
 
-    private fun registerMagics() {
+    private fun registerBuiltinMagics() {
         registerMagic(TargetPositioningMagic)
         registerMagic(DecisiveStrikeMagic)
         registerMagic(HealthStealMagic)
@@ -76,6 +68,8 @@ object MagicManager {
     }
 
     fun onInitialize() {
+        registerBuiltinMagics()
+
         ServerTickEvents.END_SERVER_TICK.register { it ->
             it.playerManager.playerList.forEach {
                 if (it.isInfiniteMana) {
@@ -96,7 +90,7 @@ object MagicManager {
                 }
 
                 var manaRegen = 1.0
-                val manaRegenerationLevel = wizardHelmet.getEnchantmentLevel(MANA_REGENERATION_ENCHANTMENT_KEY)
+                val manaRegenerationLevel = wizardHelmet.getEnchantmentLevel(MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY)
                 if (manaRegenerationLevel > 0) {
                     manaRegen += manaRegen * (manaRegenerationLevel * 0.3)
                 }

@@ -5,7 +5,6 @@
 
 package heckerpowered.matrix
 
-import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.MatrixCommonProxy
 import heckerpowered.matrix.common.MatrixServerPlayNetworking
 import heckerpowered.matrix.common.command.MatrixCommands
@@ -17,7 +16,8 @@ import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.MatrixItemGroups
 import heckerpowered.matrix.common.item.MatrixItems
 import heckerpowered.matrix.common.item.MatrixPotions
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.magic.MagicManager
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.recipe.MatrixRecipeSerializer
 import net.fabricmc.api.ModInitializer
 import net.minecraft.util.Identifier
@@ -44,7 +44,7 @@ object Matrix : ModInitializer {
         MatrixRecipeSerializer.onInitialize()
         MatrixPotions.onInitialize()
         MatrixEntityType.onInitialize()
-        ChannelSequence.onInitialize()
+        ChannelQueue.onInitialize()
         MatrixEntityAttributes.onInitialize()
     }
 

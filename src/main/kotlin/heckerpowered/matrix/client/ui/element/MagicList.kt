@@ -12,9 +12,9 @@ import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.shader.BlurRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.magics.MagicAvailableStatus
-import heckerpowered.matrix.common.magics.description
+import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.description
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.*
@@ -159,7 +159,7 @@ object MagicList {
         val costString = magic.getCost(player, targetedEntity, channelSequence).toString()
         val statusString = magic.availableStatus(player, targetedEntity, channelSequence).description.toString()
 
-        val magicNameWidth = textRenderer.getWidth(magic.name)
+        val magicNameWidth = textRenderer.getWidth(magic.definition.name)
         val costWidth = textRenderer.getWidth(costString)
         val statusWidth = textRenderer.getWidth(statusString)
 
@@ -179,7 +179,7 @@ object MagicList {
         val statusString = magic.availableStatus(player, targetedEntity, channelSequence).description.toString()
 
         val textRenderer = minecraft.textRenderer
-        val magicNameWidth = textRenderer.getWidth(magic.name)
+        val magicNameWidth = textRenderer.getWidth(magic.definition.name)
         val costWidth = textRenderer.getWidth(costString)
         val statusWidth = textRenderer.getWidth(statusString)
 
@@ -222,7 +222,7 @@ object MagicList {
         RenderSystem.disableBlend()
 
         val foregroundColor = ColorHelper.Argb.getArgb((opacity.animatedValue * 255).toInt(), 255, 255, 255)
-        drawContext.drawText(textRenderer, magic.name, startX.toInt() + 5, startY.toInt() + 5, foregroundColor, false)
+        drawContext.drawText(textRenderer, magic.definition.name, startX.toInt() + 5, startY.toInt() + 5, foregroundColor, false)
         drawContext.drawText(textRenderer, Text.literal(costString), startX.toInt() + magicNameWidth + 15, startY.toInt() + 5, foregroundColor, false)
         drawContext.drawText(textRenderer, statusString, startX.toInt() + magicNameWidth + costWidth + 25, startY.toInt() + 5, foregroundColor, false)
 

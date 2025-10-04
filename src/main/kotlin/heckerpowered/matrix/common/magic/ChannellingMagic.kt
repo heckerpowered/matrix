@@ -3,11 +3,9 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
-
-data class ChannelingMagic(
+data class ChannellingMagic(
     val magic: Magic,
     var currentChannelTime: Long,
     val channelTime: Long,

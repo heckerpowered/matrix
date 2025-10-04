@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.Magic
+import heckerpowered.matrix.common.magic.Magic
 import heckerpowered.matrix.data.language.key
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
@@ -80,7 +80,7 @@ object MatrixEnchantments {
 
     val Magic.enchantmentKey: RegistryKey<Enchantment>
         get() {
-            return of((this.name as MutableText).key.substringAfterLast('.'))
+            return of((this.definition.name as MutableText).key.substringAfterLast('.'))
         }
 
     fun onInitialize() {

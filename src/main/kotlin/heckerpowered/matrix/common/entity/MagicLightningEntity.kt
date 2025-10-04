@@ -10,10 +10,10 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.entity.MagicLightningEntity.LightningType.*
-import heckerpowered.matrix.common.magics.CrippleMovementMagic
-import heckerpowered.matrix.common.magics.ExplosionMagic.explosionBehavior
-import heckerpowered.matrix.common.magics.LightningBoltMagic
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.magic.CrippleMovementMagic
+import heckerpowered.matrix.common.magic.ExplosionMagic.explosionBehavior
+import heckerpowered.matrix.common.magic.LightningBoltMagic
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.block.AbstractFireBlock
 import net.minecraft.block.Blocks
@@ -51,15 +51,26 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
     var seed = 0L
     var lightningType = NORMAL
 
+    /**
+     * Represents different lightning colors used in bloom effects.
+     *
+     * All colors (except [BLACK]) have been adjusted so that their
+     * perceived brightness (NIST relative luminance) is approximately
+     * equal to [NORMAL]. This ensures that during bloom rendering,
+     * each color contributes with a consistent brightness level while
+     * still preserving its hue and saturation.
+     *
+     * [BLACK] remains absolute dark with zero luminance.
+     */
     enum class LightningType(val color: Color) {
-        NORMAL(Color(114, 114, 127, 255)),
-        RED(Color(255, 25, 25, 255)),
-        ORANGE(Color(255, 25, 25, 255)),
-        YELLOW(Color(255, 255, 25, 255)),
-        GREEN(Color(128, 255, 25, 255)),
-        CYAN(Color(25, 255, 255, 255)),
-        BLUE(Color(25, 25, 255, 255)),
-        PURPLE(Color(128, 25, 128, 255)),
+        NORMAL(Color(114, 114, 128, 255)),
+        RED(Color(228, 24, 24, 255)),
+        ORANGE(Color(181, 90, 24, 255)),
+        YELLOW(Color(119, 119, 24, 255)),
+        GREEN(Color(24, 133, 24, 255)),
+        CYAN(Color(24, 128, 128, 255)),
+        BLUE(Color(92, 92, 255, 255)),
+        PURPLE(Color(200, 24, 200, 255)),
         BLACK(Color(0, 0, 0, 255))
     }
 
@@ -258,7 +269,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                     if (channeler == null) {
                         entity.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 4))
                     } else {
-                        ChannelSequence.channelMagic(CrippleMovementMagic, channeler, entity, false)
+                        ChannelQueue.channelMagic(CrippleMovementMagic, channeler, entity, false)
                     }
                 }
             }
@@ -274,7 +285,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                         continue
                     }
 
-                    ChannelSequence.channelMagic(LightningBoltMagic, channeler, target)
+                    ChannelQueue.channelMagic(LightningBoltMagic, channeler, target)
                 }
             }
 

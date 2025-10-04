@@ -15,10 +15,10 @@ import heckerpowered.matrix.client.render.entity.MagicLightningEntityRenderer
 import heckerpowered.matrix.client.render.item.VortexItemRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.entity.MatrixEntityType
 import heckerpowered.matrix.common.item.MagicTalismanItem
+import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.MagicManager
 import heckerpowered.matrix.core.math.Vector3fExtensions.unaryMinus
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry
@@ -43,6 +43,7 @@ val player
 
 val projectionMatrix: Matrix4f
     get() {
+        // Basic projection calculation:
         val gameRenderer = minecraft.gameRenderer
         val tickDelta = minecraft.renderTickCounter.getTickDelta(true)
         val projectionMatrix = gameRenderer.getBasicProjectionMatrix(gameRenderer.getFov(gameRenderer.camera, tickDelta, true))

@@ -13,8 +13,8 @@ import heckerpowered.matrix.client.render.Rectangle
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.magics.MagicAvailableStatus
-import heckerpowered.matrix.common.magics.description
+import heckerpowered.matrix.common.magic.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.description
 import net.minecraft.client.gui.DrawContext
 import java.time.Duration
 import kotlin.math.min

@@ -9,7 +9,7 @@ import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
-import heckerpowered.matrix.common.Magic
+import heckerpowered.matrix.common.magic.Magic
 import net.minecraft.entity.LivingEntity
 import java.time.Duration
 

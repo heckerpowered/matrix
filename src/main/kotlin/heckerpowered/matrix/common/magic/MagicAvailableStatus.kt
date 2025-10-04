@@ -3,7 +3,7 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.text.Text

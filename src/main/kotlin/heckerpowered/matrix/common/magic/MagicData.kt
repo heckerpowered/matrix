@@ -3,7 +3,7 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
 import net.minecraft.nbt.NbtCompound
 

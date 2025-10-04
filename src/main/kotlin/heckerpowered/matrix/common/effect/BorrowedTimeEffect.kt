@@ -9,7 +9,7 @@ import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
-import heckerpowered.matrix.common.magics.MemoryEraseMagic.clearTargetingEntity
+import heckerpowered.matrix.common.magic.MemoryEraseMagic.clearTargetingEntity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectCategory

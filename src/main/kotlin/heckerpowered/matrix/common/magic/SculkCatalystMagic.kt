@@ -3,19 +3,20 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common.magics
+package heckerpowered.matrix.common.magic
 
-import heckerpowered.matrix.common.Magic
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.bloodPactActive
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
+import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.network.ExplosionPayload
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.core.getNearestEntities
 import heckerpowered.matrix.core.killed
-import heckerpowered.matrix.data.language.MatrixLanguage
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.boss.WitherEntity
@@ -32,7 +33,13 @@ import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 
-object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixLanguage.sculkCatalystMagicDescription, 9 * 20) {
+object SculkCatalystMagic : Magic(
+    MagicDefinition(
+        Matrix.identifier("sculk_catalyst"),
+        12.mana,
+        (9 * 20).ticks
+    )
+) {
     private class SculkCatalystMagicData(
         var bounces: Long = 0,
         tag: NbtCompound = NbtCompound(),
@@ -101,7 +108,7 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
     private val sculkCatalystTracker = mutableMapOf<PlayerEntity, MutableList<LivingEntity>>()
     private val lock = Any()
 
-    override fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+    override fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.channel(player, target, sequence, data)
         synchronized(lock) {
             sculkCatalystTracker.computeIfAbsent(player) {
@@ -110,7 +117,7 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
         }
     }
 
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         val sculkCatalystData = data as? SculkCatalystMagicData ?: SculkCatalystMagicData(tag = data.tag)
         val bounces = ++sculkCatalystData.bounces
@@ -152,22 +159,22 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
                     && it != player
                     && it.isAlive
         } as? LivingEntity ?: return
-        ChannelSequence.channelMagic(SculkCatalystMagic, player, nearestEntity, true, data = sculkCatalystData)
+        ChannelQueue.channelMagic(SculkCatalystMagic, player, nearestEntity, true, data = sculkCatalystData)
     }
 
-    override fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData): Long {
+    override fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData): Long {
         val bounces = (data as? SculkCatalystMagicData)?.bounces ?: 0
         return getNormalCost() + bounces.coerceAtMost(5) * 6
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData): Long {
+    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData): Long {
         if (player.bloodPactActive) {
             return (super.getCost(player, target, sequence, data) * 0.5).toLong()
         }
         return super.getCost(player, target, sequence, data)
     }
 
-    override fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?, data: MagicData): Long {
+    override fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: MagicData): Long {
         val bounces = (data as? SculkCatalystMagicData)?.bounces ?: 0
         return when (bounces) {
             0L -> 9 * 20
@@ -180,7 +187,7 @@ object SculkCatalystMagic : Magic(MatrixLanguage.sculkCatalystMagic, 12, MatrixL
         }
     }
 
-    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
+    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): MagicAvailableStatus {
         sculkCatalystTracker[player]?.removeIf {
             val sequence = player.getChannelSequence(it) ?: return@removeIf true
             return@removeIf !it.isAlive || sequence.channelingMagicCount() == 0

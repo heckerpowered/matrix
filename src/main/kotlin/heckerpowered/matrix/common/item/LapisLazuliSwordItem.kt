@@ -5,8 +5,8 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.magics.DecisiveStrikeMagic
-import heckerpowered.matrix.common.persistent.ChannelSequence
+import heckerpowered.matrix.common.magic.DecisiveStrikeMagic
+import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.item.SwordItem
@@ -24,9 +24,9 @@ object LapisLazuliSwordItem : SwordItem(
         }
 
         if (attacker is ServerPlayerEntity) {
-            ChannelSequence.channelMagic(DecisiveStrikeMagic, attacker, target, false)
+            ChannelQueue.channelMagic(DecisiveStrikeMagic, attacker, target, false)
         } else {
-            DecisiveStrikeMagic.cast(null, target, ChannelSequence(target))
+            DecisiveStrikeMagic.cast(null, target, ChannelQueue(target))
         }
     }
 }

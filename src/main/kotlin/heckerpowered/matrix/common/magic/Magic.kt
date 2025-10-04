@@ -3,7 +3,7 @@
  * Copyright (c) 2025 heckerpowered
  */
 
-package heckerpowered.matrix.common
+package heckerpowered.matrix.common.magic
 
 import heckerpowered.matrix.common.effect.WitherArmorChargedEffect
 import heckerpowered.matrix.common.effect.bloodPactActive
@@ -17,8 +17,6 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantment
 import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes.adjustedManaResistance
 import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magics.MagicAvailableStatus
-import heckerpowered.matrix.common.magics.MagicData
 import heckerpowered.matrix.common.persistent.*
 import heckerpowered.matrix.core.getNearestEntities
 import heckerpowered.matrix.core.inverseLerp
@@ -34,7 +32,6 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
 import kotlin.math.floor
 
 /**
@@ -45,21 +42,9 @@ import kotlin.math.floor
  * The phase between the player uses the magic and when it takes effect is called "channeling", when a
  * magic takes effect, it is called "casting".
  *
- * @see ChannelSequence
+ * @see ChannelQueue
  */
-abstract class Magic(
-    /** The display name of the magic. */
-    val name: Text,
-
-    /** The base mana cost of the magic. */
-    private val cost: Long,
-
-    /** The description of the magic, shown in tooltips or GUIs. */
-    val description: Text,
-
-    /** The base time (in ticks) it takes to channel the magic. */
-    private val channelTime: Long = 10,
-) {
+abstract class Magic(val definition: MagicDefinition) {
     /**
      * Called when the magic is actually cast.
      *
@@ -67,7 +52,7 @@ abstract class Magic(
      * @param target The living entity being targeted.
      * @param sequence The channel sequence involved.
      */
-    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelSequence, data: MagicData = MagicData()) {
+    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData = MagicData()) {
         if (player != null &&
             player.bloodPactActive &&
             player.wizardHelmet.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY) >= 5 &&
@@ -80,7 +65,7 @@ abstract class Magic(
                         && it != player
                         && it.isAlive
             } as? LivingEntity)?.let {
-                ChannelSequence.channelMagic(this, player, it, false, data = MagicData(isSpread = true))
+                ChannelQueue.channelMagic(this, player, it, false, data = MagicData(isSpread = true))
             }
         }
     }
@@ -93,7 +78,7 @@ abstract class Magic(
      * @param target The target of the magic.
      * @param sequence The channel sequence being updated.
      */
-    open fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence, data: MagicData = MagicData()) {
+    open fun channel(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue, data: MagicData = MagicData()) {
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
         if (player.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) > 0 &&
@@ -113,12 +98,12 @@ abstract class Magic(
     /**
      * Triggers Peak Overdrive effects such as increasing load on wizard helmet.
      */
-    protected open fun channelPeakOverdrive(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence) {
+    protected open fun channelPeakOverdrive(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue) {
         val currentLoad = player.wizardHelmet.getOrDefault(MatrixComponents.LOAD, .0)
         player.wizardHelmet.set(MatrixComponents.LOAD, currentLoad + 1)
     }
 
-    open fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): MagicAvailableStatus {
+    open fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): MagicAvailableStatus {
         if (!checkMana(player, target, sequence)) {
             return MagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
         }
@@ -138,14 +123,14 @@ abstract class Magic(
     /**
      * @return true if the sequence is locked.
      */
-    protected open fun checkChannelSequenceIsLocked(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Boolean {
+    protected open fun checkChannelSequenceIsLocked(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): Boolean {
         return sequence?.locked ?: false
     }
 
     /**
      * @return true if the player's channel sequence is full.
      */
-    protected open fun checkChannelSequenceIsFull(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Boolean {
+    protected open fun checkChannelSequenceIsFull(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): Boolean {
         return (sequence?.channelingMagicCount() ?: 0) >= player.queueSize
     }
 
@@ -158,7 +143,7 @@ abstract class Magic(
      * Determines if the player has enough mana (or health via Blood Pact) to channel the magic.
      * @return true if channeling is affordable.
      */
-    protected open fun checkMana(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?): Boolean {
+    protected open fun checkMana(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): Boolean {
         if (player is ServerPlayerEntity && player.isInfiniteMana) {
             return true
         }
@@ -177,18 +162,16 @@ abstract class Magic(
      * Gets the base mana cost of this magic; this value is not necessarily the value needed to channel the magic,
      * but can be used to compare whether the mana required has increased or decreased.
      */
-    fun getNormalCost(): Long {
-        return cost
-    }
+    fun getNormalCost(): Long = definition.baseCost.amount
 
-    open fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData = MagicData()): Long {
+    open fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData = MagicData()): Long {
         return getNormalCost()
     }
 
     /**
      * Gets the mana needed to channel this magic.
      */
-    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData = MagicData()): Long {
+    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData = MagicData()): Long {
         val cost = getBaseCost(player, target, sequence, data).toDouble()
         var costMultiplier = 1.0
         costMultiplier += target?.adjustedManaResistance ?: .0
@@ -219,9 +202,9 @@ abstract class Magic(
      * Gets the time it takes for the magic to channel, in ticks; this value is not necessarily the value needed to
      * channel the magic, but can be used to compare whether the channel time has increased or decreased.
      */
-    fun getNormalChannelTime(): Long = channelTime
+    fun getNormalChannelTime(): Long = definition.baseChannelTime.ticks
 
-    open fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?, data: MagicData = MagicData()): Long {
+    open fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: MagicData = MagicData()): Long {
         return getNormalChannelTime()
     }
 
@@ -229,7 +212,7 @@ abstract class Magic(
      * Calculates actual channel time based on player enchantments, helmet effects, and active states.
      * @return Time in ticks required to channel the magic.
      */
-    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelSequence?, data: MagicData = MagicData()): Long {
+    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: MagicData = MagicData()): Long {
         var effectiveTime = getBaseChannelTime(player, target, sequence, data).toDouble()
         var channelSpeedBonus = 1.0
 
@@ -264,7 +247,7 @@ abstract class Magic(
     /**
      * @return Ratio used when converting health to mana during Blood Pact.
      */
-    open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, sequence: ChannelSequence?, data: MagicData = MagicData()): Double {
+    open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData = MagicData()): Double {
         var ratio = 2.0
 
         // Peak Overdrive: + 100% health to mana conversion efficiency.
@@ -274,12 +257,6 @@ abstract class Magic(
 
         return ratio
     }
-
-    /**
-     * Unique ID of the magic, derived from its name.
-     */
-    val id: Int
-        get() = name.hashCode()
 }
 
 fun LivingEntity.isInvulnerableToEffect(effect: RegistryEntry<StatusEffect>): Boolean {

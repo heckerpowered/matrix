@@ -23,7 +23,8 @@ import org.joml.Matrix4f
 @Environment(EnvType.CLIENT)
 class MagicLightningEntityRenderer(context: EntityRendererFactory.Context) : EntityRenderer<MagicLightningEntity>(context) {
     override fun render(lightningEntity: MagicLightningEntity, f: Float, g: Float, matrixStack: MatrixStack, vertexConsumerProvider: VertexConsumerProvider, i: Int) {
-        RenderSystem.setShaderColor(1000.0F, 1000.0F, 1000.0F, 1.0F)
+        val multiplier = 5.825f
+        RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
         val fs = FloatArray(8)
         val gs = FloatArray(8)
         var h = 0.0f
@@ -90,7 +91,7 @@ class MagicLightningEntityRenderer(context: EntityRendererFactory.Context) : Ent
                 }
             }
         }
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
+        // RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
     }
 
     private fun drawBranch(
