@@ -14,6 +14,8 @@ layout (location = 8) in vec4 InOrientation;
 layout (location = 9) in vec3 InAngularVelocity;
 
 uniform float time;
+uniform vec2 speedRange = vec2(1.0);
+uniform vec3 multiplier = vec3(1.0);
 
 layout (location = 0) out vec3 OutPosition;
 layout (location = 1) out vec3 OutVelocity;
@@ -54,9 +56,15 @@ vec3 randomDirection(float seed) {
     return vec3(x, y, z);
 }
 
+float randomScalarInRange(float seed, float minValue, float maxValue) {
+    float unitRandom = hash(seed);
+    return mix(minValue, maxValue, unitRandom);
+}
+
 void main() {
     InitParticleStates();
 
     vec3 Velocity = randomDirection(gl_VertexID + time);
-    OutVelocity += Velocity;
+    float randomSpeed = randomScalarInRange(gl_VertexID + 114.514, speedRange.x, speedRange.y);
+    OutVelocity += Velocity * randomSpeed * multiplier;
 }

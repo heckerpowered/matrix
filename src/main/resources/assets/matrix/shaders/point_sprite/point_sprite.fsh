@@ -1,5 +1,7 @@
 #version 410 core
 
+layout (location = 7) in vec4 InColor;
+
 out vec4 fragColor;
 
 void main()
@@ -10,6 +12,5 @@ void main()
         discard;
     }
 
-    vec4 baseColor = vec4(0.2, 0.5, 1.0, 1.0);
-    fragColor = baseColor;
+    fragColor = InColor;
 }

@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.network
 
+import heckerpowered.matrix.client.render.particle.system.ExplosionParticle
 import heckerpowered.matrix.client.render.post.CameraShake
 import heckerpowered.matrix.client.render.post.ShockwaveRenderer
 import net.fabricmc.api.EnvType
@@ -13,6 +14,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
+import org.joml.Vector2f
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -56,5 +58,8 @@ class ExplosionPayload(
         ShockwaveRenderer.waveSize.start()
 
         CameraShake.shake(strength = 0.5F, duration = 25.milliseconds)
+
+        ExplosionParticle.randomVelocityModule.speedRange = Vector2f(0.0F, 20.0F)
+        ExplosionParticle.spawnParticleAt(entity.pos)
     }
 }
