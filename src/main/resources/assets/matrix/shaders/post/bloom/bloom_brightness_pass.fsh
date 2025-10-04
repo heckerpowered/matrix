@@ -44,8 +44,7 @@ void main() {
     // If brightness is above threshold (factor = 1.0), keep the original color.
     // If brightness is below threshold (factor = 0.0), output black.
     if (brightness < threshold) {
-        fragColor = vec4(0.0, 0.0, 0.0, 0);
-        discard;
+        fragColor = vec4(0.0, 0.0, 0.0, .0);
     } else {
         fragColor = vec4(extractBloomSoft(color.rgb, threshold, 1.0), color.a);
     }
