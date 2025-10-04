@@ -8,14 +8,14 @@ package heckerpowered.matrix.common.persistent
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.ChannelAnimation
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
-import heckerpowered.matrix.common.Magic
-import heckerpowered.matrix.common.MagicManager
 import heckerpowered.matrix.common.effect.bloodPactActive
 import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
-import heckerpowered.matrix.common.magics.ChannelingMagic
-import heckerpowered.matrix.common.magics.MagicData
+import heckerpowered.matrix.common.magic.ChannelingMagic
+import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.MagicData
+import heckerpowered.matrix.common.magic.MagicManager
 import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import heckerpowered.matrix.core.MatrixLivingEntity
@@ -37,7 +37,7 @@ import java.util.*
  *
  * @see Magic
  */
-class ChannelSequence(
+class ChannelQueue(
     /**
      * The player who casted the channeling sequence.
      */
@@ -75,26 +75,26 @@ class ChannelSequence(
             if (target !is MatrixLivingEntity) return false
 
             val sequences = target.getChannelSequence()
-            val channelSequence = sequences.computeIfAbsent(player.uuid) {
-                ChannelSequence(player, player.uuid, target, mutableListOf())
+            val channelQueue = sequences.computeIfAbsent(player.uuid) {
+                ChannelQueue(player, player.uuid, target, mutableListOf())
             }.apply {
                 this.player = player
                 this.playerUUID = player.uuid
             }
 
-            if (channelSequence.locked && !bypassLock) {
+            if (channelQueue.locked && !bypassLock) {
                 return false
             }
 
-            val channelTime = magic.getChannelTime(player, target, channelSequence, data)
-            val cost = magic.getCost(player, target, channelSequence, data)
-            val convertRatio = magic.getBloodPactConvertRatio(player, target, channelSequence, data)
+            val channelTime = magic.getChannelTime(player, target, channelQueue, data)
+            val cost = magic.getCost(player, target, channelQueue, data)
+            val convertRatio = magic.getBloodPactConvertRatio(player, target, channelQueue, data)
 
             fun performChannel() {
-                channelSequence.magics.add(ChannelingMagic(magic, 0, channelTime, cost, data))
-                magic.channel(player, target, channelSequence, data)
+                channelQueue.magics.add(ChannelingMagic(magic, 0, channelTime, cost, data))
+                magic.channel(player, target, channelQueue, data)
                 if (player is ServerPlayerEntity) {
-                    ServerPlayNetworking.send(player, ChannelMagicPayload(magic.id, target.id, channelTime))
+                    ServerPlayNetworking.send(player, ChannelMagicPayload(magic.definition.uuid, target.id, channelTime))
                 }
             }
 
@@ -126,7 +126,7 @@ class ChannelSequence(
             return true
         }
 
-        fun getChannelSequence(player: PlayerEntity, target: LivingEntity?): ChannelSequence? {
+        fun getChannelSequence(player: PlayerEntity, target: LivingEntity?): ChannelQueue? {
             if (target !is MatrixLivingEntity) {
                 return null
             }
@@ -167,10 +167,10 @@ class ChannelSequence(
                     sequencesCompound.getList("ChannelingSequence", NbtElement.COMPOUND_TYPE.toInt())
                 val magics = channelingSequence
                     .map { it as NbtCompound }
-                    .filter { MagicManager.getMagicById(it.getInt("MagicId")) != null }
+                    .filter { MagicManager.getMagicByUuid(it.getUuid("MagicId")) != null }
                     .map {
                         ChannelingMagic(
-                            MagicManager.getMagicById(it.getInt("MagicId"))!!,
+                            MagicManager.getMagicByUuid(it.getUuid("MagicId"))!!,
                             it.getLong("CurrentChannelTime"),
                             it.getLong("ChannelTime"),
                             it.getLong("Cost"),
@@ -179,7 +179,7 @@ class ChannelSequence(
                     }
                     .toMutableList()
                 entity.getChannelSequence().compute(playerUUID) { _, _ ->
-                    ChannelSequence(
+                    ChannelQueue(
                         entity.world.getPlayerByUuid(nbt.getUuid("UUID")),
                         nbt.getUuid("UUID"),
                         entity,
@@ -202,7 +202,7 @@ class ChannelSequence(
                 val channelingSequenceList = NbtList()
                 for (magic in channelingSequence.value.magics) {
                     val magicCompound = NbtCompound()
-                    magicCompound.putInt("MagicId", magic.magic.name.hashCode())
+                    magicCompound.putUuid("MagicId", magic.magic.definition.uuid)
                     magicCompound.putLong("CurrentChannelTime", magic.currentChannelTime)
                     magicCompound.putLong("ChannelTime", magic.channelTime)
                     magic.data.tag = magicCompound
@@ -303,17 +303,17 @@ class ChannelSequence(
     }
 }
 
-fun PlayerEntity.getChannelSequence(target: LivingEntity?): ChannelSequence? {
-    return ChannelSequence.getChannelSequence(this, target)
+fun PlayerEntity.getChannelSequence(target: LivingEntity?): ChannelQueue? {
+    return ChannelQueue.getChannelSequence(this, target)
 }
 
-fun LivingEntity.getChannelSequence(player: PlayerEntity): ChannelSequence? {
-    return ChannelSequence.getChannelSequence(player, this)
+fun LivingEntity.getChannelSequence(player: PlayerEntity): ChannelQueue? {
+    return ChannelQueue.getChannelSequence(player, this)
 }
 
-fun LivingEntity.getOrCreateChannelSequence(player: PlayerEntity): ChannelSequence {
+fun LivingEntity.getOrCreateChannelSequence(player: PlayerEntity): ChannelQueue {
     val channelSequence = (this as MatrixLivingEntity).getChannelSequence()
-    return channelSequence.computeIfAbsent(player.uuid) { ChannelSequence(player, player.uuid, this, mutableListOf()) }
+    return channelSequence.computeIfAbsent(player.uuid) { ChannelQueue(player, player.uuid, this, mutableListOf()) }
 }
 
 val LivingEntity.allChannelSequences
