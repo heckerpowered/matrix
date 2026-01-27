@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.mixin;
@@ -15,11 +15,12 @@ import heckerpowered.matrix.common.event.*;
 import heckerpowered.matrix.common.item.RedstoneSuitKt;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
 import heckerpowered.matrix.common.item.WardenSuitKt;
+import heckerpowered.matrix.common.magic.ChannelQueue;
 import heckerpowered.matrix.common.network.SyncManaPayload;
-import heckerpowered.matrix.common.persistent.ChannelQueue;
 import heckerpowered.matrix.common.persistent.ManaState;
 import heckerpowered.matrix.core.Accumulator;
 import heckerpowered.matrix.core.MatrixLivingEntity;
+import heckerpowered.matrix.core.extensions.LivingEntityExtensions;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -60,7 +62,7 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
     private static final TrackedData<Boolean> KILLED = DataTracker.registerData(LivingEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     @Unique
-    private final Map<UUID, ChannelQueue> channelingSequences = new HashMap<>();
+    private final Map<UUID, ChannelQueue> channelQueues = new HashMap<>();
     @Shadow
     @Final
     private Map<RegistryEntry<StatusEffect>, StatusEffectInstance> activeStatusEffects;
@@ -134,7 +136,7 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
         GetArmorCallback.EVENT.invoker().getArmor(self(), accumulator);
 
         final var result = accumulator.accumulate();
-        cir.setReturnValue((int) Math.floor(result));
+        cir.setReturnValue((int) Math.round(result));
     }
 
     @Inject(method = "getAttributeValue", at = @At("TAIL"), cancellable = true)
@@ -245,8 +247,8 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
     @SuppressWarnings("all")
     @NotNull
     @Override
-    public Map<UUID, ChannelQueue> getChannelSequence() {
-        return channelingSequences;
+    public Map<UUID, ChannelQueue> getChannelQueues() {
+        return channelQueues;
     }
 
     @Inject(method = "heal", at = @At("HEAD"), cancellable = true)
@@ -347,6 +349,11 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
         if (protection == EntityProtection.PROTECTED_COMPLETE) {
             cir.setReturnValue(true);
         }
+    }
+
+    @ModifyVariable(method = "heal", at = @At("HEAD"), argsOnly = true)
+    private float modifyHealAmount(float amount) {
+        return (float) (amount * LivingEntityExtensions.getHealingMultiplier((LivingEntity) (Object) this));
     }
 
     @Unique
