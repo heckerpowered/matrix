@@ -1,11 +1,13 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.client.MatrixHud
+import heckerpowered.matrix.common.item.WizardHelmet
+import heckerpowered.matrix.common.persistent.wizardHelmet
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.network.codec.PacketCodec
@@ -40,6 +42,7 @@ class SyncManaPayload(
             return
         }
         context.client().execute {
+            val previousMana = MatrixHud.mana
             MatrixHud.maxMana = maxMana
             if (mana.isInfinite()) {
                 MatrixHud.mana = mana
@@ -53,6 +56,9 @@ class SyncManaPayload(
                 MatrixHud.mana += mana - currentMana
             }
             MatrixHud.onRemoteManaUpdate()
+
+            val player = context.player()
+            (player.wizardHelmet.item as? WizardHelmet)?.onManaChanged(player, previousMana, mana)
         }
     }
 }
