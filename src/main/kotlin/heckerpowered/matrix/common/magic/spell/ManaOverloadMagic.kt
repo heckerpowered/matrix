@@ -7,9 +7,13 @@ package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
-import heckerpowered.matrix.common.magic.*
+import heckerpowered.matrix.common.magic.ChannelQueue
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.core.MagicDefinition
+import heckerpowered.matrix.common.magic.core.isInvulnerableToEffect
 import heckerpowered.matrix.common.network.ExplosionPayload
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.core.extensions.EntityExtensions.damage
@@ -28,7 +32,7 @@ object ManaOverloadMagic : Magic(
         6.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: heckerpowered.matrix.common.magic.core.ExecutionPayload) {
         super.cast(player, target, sequence, data)
         val manaOverloadInstance = target.getStatusEffect(MANA_OVERLOAD_EFFECT)
 

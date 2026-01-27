@@ -3,7 +3,7 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.core
 
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer

@@ -3,7 +3,7 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.core
 
 import heckerpowered.matrix.core.common.balance.CalculationPlan
 import heckerpowered.matrix.core.common.balance.NumericCalculator
@@ -32,8 +32,8 @@ import java.util.*
  */
 open class MagicDefinition(
     val identifier: Identifier,
-    val baseCost: Mana,
-    val baseChannelTime: GameTick,
+    val baseCost: heckerpowered.matrix.common.magic.Mana,
+    val baseChannelTime: heckerpowered.matrix.common.magic.GameTick,
 ) {
     open val name: MutableText = Text.translatable("matrix.magic.${identifier.path}.name")
     open val description: MutableText = Text.translatable("matrix.magic.${identifier.path}.description")

@@ -12,7 +12,7 @@ import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
 import heckerpowered.matrix.common.magic.ChannelQueue
 import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.ExecutionPayload
+import heckerpowered.matrix.common.magic.core.ExecutionPayload
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.core.Accumulator

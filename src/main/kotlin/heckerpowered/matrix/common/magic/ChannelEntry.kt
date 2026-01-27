@@ -5,6 +5,8 @@
 
 package heckerpowered.matrix.common.magic
 
+import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.core.Magic
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable

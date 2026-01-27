@@ -10,6 +10,10 @@ import heckerpowered.matrix.common.magic.*
 import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.core.MagicDefinition
+import heckerpowered.matrix.common.magic.core.isInvulnerableToEffect
 import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
 import heckerpowered.matrix.core.extensions.SequenceExtensions.drain
 import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities
@@ -27,7 +31,7 @@ object BreakingBadMagic : Magic(
         40.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: heckerpowered.matrix.common.magic.core.ExecutionPayload) {
         super.cast(player, target, sequence, data)
         target.addStatusEffect(StatusEffectInstance(StatusEffects.POISON, 20 * 5, 4))
         target.addStatusEffect(StatusEffectInstance(StatusEffects.BLINDNESS, 20 * 5, 4))
@@ -51,7 +55,7 @@ object BreakingBadMagic : Magic(
             .filter { it != target && it != player && it.isAlive }
             .filter { it.getChannelQueue(player)?.isEmpty ?: true }
             .consumeWhile(4) {
-                ChannelExecutor.channel(BreakingBadMagic, player, it, ChannelRequest(costMana = false, data = ExecutionPayload(isSpread = true))) == MagicAvailableStatus.AVAILABLE
+                ChannelExecutor.channel(BreakingBadMagic, player, it, ChannelRequest(costMana = false, data = _root_ide_package_.heckerpowered.matrix.common.magic.core.ExecutionPayload(isSpread = true))) == MagicAvailableStatus.AVAILABLE
             }
             .drain()
     }

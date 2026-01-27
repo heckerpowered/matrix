@@ -8,6 +8,8 @@ package heckerpowered.matrix.common.magic
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.Mana.Companion.minus
+import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.mana
