@@ -1,13 +1,15 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.network
 
+import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.magic.ChannelExecutor
+import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
+import heckerpowered.matrix.common.magic.ChannelingMagic
 import heckerpowered.matrix.common.magic.MagicManager
-import heckerpowered.matrix.common.persistent.ChannelQueue
-import heckerpowered.matrix.common.persistent.getChannelSequence
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.entity.LivingEntity
 import net.minecraft.network.PacketByteBuf
@@ -19,6 +21,7 @@ class ChannelMagicPayload(
     private val magicUuid: UUID,
     private val entityId: Int,
     private val channelTime: Long,
+    private val currentChannelTime: Long = 0L,
 ) : CustomPayload {
     companion object {
         val id: CustomPayload.Id<ChannelMagicPayload> = CustomPayload.id("channel_magic")
@@ -27,6 +30,7 @@ class ChannelMagicPayload(
                 ChannelMagicPayload(
                     buffer.readUuid(),
                     buffer.readInt(),
+                    buffer.readLong(),
                     buffer.readLong()
                 )
             }
@@ -36,6 +40,7 @@ class ChannelMagicPayload(
         buffer.writeUuid(magicUuid)
         buffer.writeInt(entityId)
         buffer.writeLong(channelTime)
+        buffer.writeLong(currentChannelTime)
     }
 
     override fun getId(): CustomPayload.Id<out CustomPayload> {
@@ -49,11 +54,11 @@ class ChannelMagicPayload(
             if (entity !is LivingEntity) {
                 return@execute
             }
-            if (ChannelQueue.channelMagic(magic, context.player(), entity, false)) {
-                val channelSequence = entity.getChannelSequence(context.player())
-                val channelingMagic = channelSequence?.magics?.last() ?: return@execute
-                ChannelQueue.channelMagicClient(channelingMagic, entity, channelTime)
-            }
+
+            val cost = magic.getCost(player, entity, player.getChannelQueue(entity))
+            val channelingMagic = ChannelingMagic(magic, cost, channelTime, currentChannelTime)
+            ChannelExecutor.channel(channelingMagic, player, entity)
+            ChannelExecutor.performChannelAnimation(channelingMagic, entity, channelTime, currentChannelTime)
         }
     }
 }
