@@ -1,15 +1,17 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.mixin;
 
+import heckerpowered.matrix.client.MatrixClient;
 import heckerpowered.matrix.client.MatrixHud;
 import heckerpowered.matrix.client.TimeController;
 import heckerpowered.matrix.client.core.FramebufferSpoof;
 import heckerpowered.matrix.client.event.FinishRenderCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.RunArgs;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.render.RenderTickCounter;
 import org.spongepowered.asm.mixin.Mixin;
@@ -63,5 +65,10 @@ abstract class MinecraftClientMixin {
     private void setTickFrozen(RenderTickCounter.Dynamic instance, boolean frozen) {
         instance.setTickFrozen(frozen);
         TimeController.standaloneRenderTickCounter.setTickFrozen(frozen);
+    }
+
+    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/WindowProvider;createWindow(Lnet/minecraft/client/WindowSettings;Ljava/lang/String;Ljava/lang/String;)Lnet/minecraft/client/util/Window;", shift = At.Shift.AFTER))
+    private void createWindow(RunArgs args, CallbackInfo ci) {
+        MatrixClient.onWindowInitialization();
     }
 }
