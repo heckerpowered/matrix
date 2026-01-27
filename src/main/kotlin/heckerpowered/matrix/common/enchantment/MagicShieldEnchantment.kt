@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.enchantment
@@ -53,8 +53,8 @@ object MagicShieldEnchantment {
             return
         }
 
-        val mana = entity.mana
-        val maxMana = entity.maxMana
+        val mana = entity.mana.amount
+        val maxMana = entity.maxMana.amount
         val percentage = mana.inverseLerp((maxMana * 0.5)..maxMana).coerceIn(.0..1.0)
         if (percentage.isNaN() || percentage.isInfinite()) {
             return
