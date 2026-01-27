@@ -1,12 +1,14 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.network
 
+import heckerpowered.matrix.common.item.WizardHelmet
+import heckerpowered.matrix.common.magic.ChannelExecutor
 import heckerpowered.matrix.common.magic.MagicManager
-import heckerpowered.matrix.common.persistent.ChannelQueue
+import heckerpowered.matrix.common.persistent.wizardHelmet
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.entity.LivingEntity
 import net.minecraft.network.PacketByteBuf
@@ -47,7 +49,11 @@ data class UseMagicPayload(
         }
 
         val magic = MagicManager.getMagicByUuid(uuid) ?: return
-        ChannelQueue.channelMagic(magic, player, targetedEntity)
+        val wizardHelmet = player.wizardHelmet
+        if ((wizardHelmet.item as? WizardHelmet)?.hasMagic(wizardHelmet, magic) != true) {
+            return
+        }
+        ChannelExecutor.channel(magic, player, targetedEntity)
         context.responseSender().sendPacket(SyncHealthPayload(player))
     }
 }
