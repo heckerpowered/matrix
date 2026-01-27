@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.magic
 
+import heckerpowered.matrix.common.magic.channel.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 

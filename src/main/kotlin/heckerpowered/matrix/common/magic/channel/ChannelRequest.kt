@@ -3,9 +3,10 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.channel
 
 import heckerpowered.matrix.common.effect.isBloodPactActive
+import heckerpowered.matrix.common.magic.Mana
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.Mana.Companion.minus
 import heckerpowered.matrix.common.magic.core.ExecutionPayload

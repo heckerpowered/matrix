@@ -7,7 +7,7 @@ package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
-import heckerpowered.matrix.common.magic.ChannelQueue.Companion.allChannelQueues
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.allChannelQueues
 import net.minecraft.util.ActionResult
 
 object QueueMasteryEnchantment {

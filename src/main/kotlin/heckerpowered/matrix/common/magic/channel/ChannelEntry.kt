@@ -3,7 +3,7 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.channel
 
 import heckerpowered.matrix.common.magic.core.ExecutionPayload
 import heckerpowered.matrix.common.magic.core.Magic

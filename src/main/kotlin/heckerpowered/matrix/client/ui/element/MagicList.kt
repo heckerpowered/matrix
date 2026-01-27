@@ -12,9 +12,9 @@ import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.shader.BlurRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.Magic
 import heckerpowered.matrix.common.magic.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.description
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.*

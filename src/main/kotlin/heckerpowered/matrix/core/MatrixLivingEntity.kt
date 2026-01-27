@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.core
 
-import heckerpowered.matrix.common.magic.ChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import java.util.*
 

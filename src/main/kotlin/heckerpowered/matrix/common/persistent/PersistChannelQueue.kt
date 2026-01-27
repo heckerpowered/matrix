@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.persistent
 
-import heckerpowered.matrix.common.magic.ChannelEntry
+import heckerpowered.matrix.common.magic.channel.ChannelEntry
 import heckerpowered.matrix.common.persistent.serialization.seralizer.UUIDSerializer
 import kotlinx.serialization.Serializable
 import java.util.*

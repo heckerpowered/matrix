@@ -10,9 +10,12 @@ import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
 import heckerpowered.matrix.common.magic.*
-import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.channel.ChannelExecutor
+import heckerpowered.matrix.common.magic.channel.ChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelRequest
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.MagicDataSpecification

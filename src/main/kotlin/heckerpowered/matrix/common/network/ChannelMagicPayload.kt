@@ -6,10 +6,10 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.client.player
-import heckerpowered.matrix.common.magic.ChannelEntry
-import heckerpowered.matrix.common.magic.ChannelExecutor
-import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.MagicManager
+import heckerpowered.matrix.common.magic.channel.ChannelEntry
+import heckerpowered.matrix.common.magic.channel.ChannelExecutor
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.entity.LivingEntity
 import net.minecraft.network.PacketByteBuf

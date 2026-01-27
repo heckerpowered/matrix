@@ -31,11 +31,11 @@ import heckerpowered.matrix.common.item.LightningChestplate1
 import heckerpowered.matrix.common.item.LightningChestplate1.isBorrowedTime
 import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
 import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.Magic
 import heckerpowered.matrix.common.magic.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.MagicAvailableStatus.AVAILABLE
 import heckerpowered.matrix.common.magic.MagicAvailableStatus.TARGET_MISSING
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.description
 import heckerpowered.matrix.common.network.ActiveBloodPactPayload
 import heckerpowered.matrix.common.network.BorrowedTimePayload
@@ -75,6 +75,7 @@ import org.lwjgl.opengl.GL30.glDeleteVertexArrays
 import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import java.time.Duration
+import kotlin.collections.forEachIndexed
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.round

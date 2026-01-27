@@ -18,10 +18,12 @@ import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes.adjus
 import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.Mana.Companion.plus
-import heckerpowered.matrix.common.magic.spell.MemoryWipeMagic
+import heckerpowered.matrix.common.magic.channel.ChannelExecutor
+import heckerpowered.matrix.common.magic.channel.ChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelRequest
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.queueSize
 import heckerpowered.matrix.common.persistent.wizardHelmet
@@ -50,7 +52,7 @@ import kotlin.math.round
  * The phase between the player uses the magic and when it takes effect is called "channeling", when a
  * magic takes effect, it is called "casting".
  *
- * @see heckerpowered.matrix.common.magic.ChannelQueue
+ * @see heckerpowered.matrix.common.magic.channel.ChannelQueue
  */
 abstract class Magic(val definition: MagicDefinition) {
     companion object {
@@ -101,7 +103,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * @param target The living entity being targeted.
      * @param sequence The channel sequence involved.
      */
-    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: heckerpowered.matrix.common.magic.ChannelQueue, data: ExecutionPayload = ExecutionPayload()) {
+    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload = ExecutionPayload()) {
         if (player != null &&
             player.isBloodPactActive &&
             player.wizardHelmet.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY) >= 5 &&
@@ -113,7 +115,7 @@ abstract class Magic(val definition: MagicDefinition) {
                 .filter { it != player && it.isAlive }
                 .firstOrNull { player.getChannelQueue(it)?.isEmpty ?: true }
             if (nearestEntity != null) {
-                heckerpowered.matrix.common.magic.ChannelExecutor.channel(this, player, nearestEntity, _root_ide_package_.heckerpowered.matrix.common.magic.ChannelRequest(data = ExecutionPayload(isSpread = true)))
+                ChannelExecutor.channel(this, player, nearestEntity, ChannelRequest(data = ExecutionPayload(isSpread = true)))
             }
         }
     }
@@ -122,7 +124,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * Called immediately after the player uses this magic to begin channeling.
      *
      * At this point the magic is either already being channeled or has just
-     * been added to the player's current [heckerpowered.matrix.common.magic.ChannelQueue]. This hook can be used
+     * been added to the player's current [ChannelQueue]. This hook can be used
      * to apply real-time effects such as enchantment bonuses, state updates,
      * or incremental charge mechanics.
      *
@@ -134,7 +136,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * @param queue the channel queue this magic belongs to
      * @param data contextual magic data associated with this channel
      */
-    open fun channel(player: PlayerEntity, target: LivingEntity, queue: heckerpowered.matrix.common.magic.ChannelQueue, data: ExecutionPayload = ExecutionPayload()) {
+    open fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: ExecutionPayload = ExecutionPayload()) {
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
         if (player.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) > 0 &&
@@ -158,12 +160,12 @@ abstract class Magic(val definition: MagicDefinition) {
     /**
      * Triggers Peak Overdrive effects such as increasing load on wizard helmet.
      */
-    protected open fun channelPeakOverdrive(player: PlayerEntity, target: LivingEntity, sequence: heckerpowered.matrix.common.magic.ChannelQueue) {
+    protected open fun channelPeakOverdrive(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue) {
         val currentLoad = player.wizardHelmet.getOrDefault(MatrixComponents.LOAD, .0)
         player.wizardHelmet.set(MatrixComponents.LOAD, currentLoad + 1)
     }
 
-    open fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: heckerpowered.matrix.common.magic.ChannelQueue?): MagicAvailableStatus {
+    open fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): MagicAvailableStatus {
         if (!checkMana(player, target, sequence)) {
             return MagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
         }
@@ -183,14 +185,14 @@ abstract class Magic(val definition: MagicDefinition) {
     /**
      * @return true if the sequence is locked.
      */
-    protected open fun checkChannelQueueIsLocked(player: PlayerEntity, target: LivingEntity?, queue: heckerpowered.matrix.common.magic.ChannelQueue?): Boolean {
+    protected open fun checkChannelQueueIsLocked(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?): Boolean {
         return queue?.isLocked ?: false
     }
 
     /**
      * @return true if the player's channel sequence is full.
      */
-    protected open fun checkChannelQueueIsFull(player: PlayerEntity, target: LivingEntity?, queue: heckerpowered.matrix.common.magic.ChannelQueue?): Boolean {
+    protected open fun checkChannelQueueIsFull(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?): Boolean {
         return queue != null &&
                 queue.isChanneling &&
                 queue.queue.size >= player.queueSize.toInt()
@@ -205,7 +207,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * Determines if the player has enough mana (or health via Blood Pact) to channel the magic.
      * @return true if channeling is affordable.
      */
-    protected open fun checkMana(player: PlayerEntity, target: LivingEntity?, sequence: heckerpowered.matrix.common.magic.ChannelQueue?): Boolean {
+    protected open fun checkMana(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): Boolean {
         if (player is ServerPlayerEntity && player.isInfiniteMana) {
             return true
         }
@@ -226,11 +228,11 @@ abstract class Magic(val definition: MagicDefinition) {
      */
     fun getNormalCost(): Long = definition.baseCost.amount.toLong()
 
-    open fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: heckerpowered.matrix.common.magic.ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Long {
+    open fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Long {
         return getNormalCost()
     }
 
-    open fun getMagicResistance(player: PlayerEntity, target: LivingEntity?, sequence: heckerpowered.matrix.common.magic.ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
+    open fun getMagicResistance(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
         if (target?.name?.string == "hecker") {
             return 4.0
         }
@@ -240,7 +242,7 @@ abstract class Magic(val definition: MagicDefinition) {
     /**
      * Gets the mana needed to channel this magic.
      */
-    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: heckerpowered.matrix.common.magic.ChannelQueue?, data: ExecutionPayload = ExecutionPayload(), accumulator: Accumulator = Accumulator()): Long {
+    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload(), accumulator: Accumulator = Accumulator()): Long {
         val cost = getBaseCost(player, target, sequence, data).toDouble()
         var costReduction = 0.0
 
@@ -275,7 +277,7 @@ abstract class Magic(val definition: MagicDefinition) {
      */
     fun getNormalChannelTime(): Long = definition.baseChannelTime.ticks
 
-    open fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: heckerpowered.matrix.common.magic.ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Long {
+    open fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Long {
         return getNormalChannelTime()
     }
 
@@ -283,7 +285,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * Calculates actual channel time based on player enchantments, helmet effects, and active states.
      * @return Time in ticks required to channel the magic.
      */
-    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: heckerpowered.matrix.common.magic.ChannelQueue?, data: ExecutionPayload = ExecutionPayload(), accumulator: Accumulator = Accumulator()): Long {
+    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload(), accumulator: Accumulator = Accumulator()): Long {
         val effectiveTime = getBaseChannelTime(player, target, sequence, data).toDouble()
         var channelSpeedBonus = 0.0
 
@@ -319,7 +321,7 @@ abstract class Magic(val definition: MagicDefinition) {
     /**
      * @return Ratio used when converting health to mana during Blood Pact.
      */
-    open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, queue: heckerpowered.matrix.common.magic.ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
+    open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
         return (player.wizardHelmet.item as? WizardHelmet)?.getBloodPactConversionEfficiency(player, target, queue, data) ?: 2.0
     }
 }

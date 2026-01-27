@@ -3,8 +3,9 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.channel
 
+import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.persistent.PersistChannelQueue
 import heckerpowered.matrix.core.MatrixLivingEntity
 import net.minecraft.entity.LivingEntity

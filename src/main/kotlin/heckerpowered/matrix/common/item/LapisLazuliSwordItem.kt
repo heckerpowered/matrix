@@ -6,9 +6,9 @@
 package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.client.player
-import heckerpowered.matrix.common.magic.ChannelExecutor
-import heckerpowered.matrix.common.magic.ChannelQueue
-import heckerpowered.matrix.common.magic.ChannelRequest
+import heckerpowered.matrix.common.magic.channel.ChannelExecutor
+import heckerpowered.matrix.common.magic.channel.ChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelRequest
 import heckerpowered.matrix.common.magic.spell.DecisiveStrikeMagic
 import net.minecraft.entity.LivingEntity
 import net.minecraft.item.ItemStack

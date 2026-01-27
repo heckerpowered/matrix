@@ -15,7 +15,7 @@ import heckerpowered.matrix.common.event.*;
 import heckerpowered.matrix.common.item.RedstoneSuitKt;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
 import heckerpowered.matrix.common.item.WardenSuitKt;
-import heckerpowered.matrix.common.magic.ChannelQueue;
+import heckerpowered.matrix.common.magic.channel.ChannelQueue;
 import heckerpowered.matrix.common.network.SyncManaPayload;
 import heckerpowered.matrix.common.persistent.ManaState;
 import heckerpowered.matrix.core.Accumulator;

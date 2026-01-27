@@ -13,7 +13,7 @@ import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
