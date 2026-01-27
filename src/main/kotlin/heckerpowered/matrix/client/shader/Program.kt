@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.shader
@@ -29,9 +29,14 @@ open class Program(
             }
         }
 
-        private fun compileShader(source: String, type: Int): Int {
+        private fun compileShader(shader: Shader): Int {
+            if (shader is ResourceShader) {
+                ShaderStageStore.Default.compiledStage[shader.path]?.let {
+                    return it
+                }
+            }
             ensureGLContext()
-            return ShaderCompiler.compileShader(source, type)
+            return ShaderCompilerV1.compileShader(shader.source, shader.type)
         }
     }
 
@@ -40,12 +45,12 @@ open class Program(
 
     init {
         val creationStack = Throwable().stackTraceToString()
-        CoroutineScope(ShaderCompiler.Dispatcher).launch {
+        CoroutineScope(ShaderCompilerV1.Dispatcher).launch {
             try {
                 val shaderSourceDeferreds = shaders.map { async(Dispatchers.IO) { it.source; it } }
                 val shaderSources = shaderSourceDeferreds.awaitAll()
 
-                val shaderObjects = shaderSources.map { compileShader(it.source, it.type) }
+                val shaderObjects = shaderSources.map { compileShader(it) }
 
                 program = glCreateProgram()
 
