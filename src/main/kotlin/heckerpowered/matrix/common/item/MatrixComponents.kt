@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.item
@@ -22,6 +22,11 @@ object MatrixComponents {
 
     val LOAD = register("load") { codec(Codec.DOUBLE) }
     val MAX_LOAD = register("max_load") { codec(Codec.DOUBLE) }
+
+    /**
+     * @see WizardHelmet13
+     */
+    val ACCUMULATED_MANA_DELTA = register("mana_consumed") { codec(Codec.DOUBLE) }
 
     val BORROWED_TIME_CHARGE = register("borrowed_time_charge") { codec(Codec.LONG) }
     val BORROWED_TIME_MAX_CHARGE = register("borrowed_time_max_charge") { codec(Codec.LONG) }
