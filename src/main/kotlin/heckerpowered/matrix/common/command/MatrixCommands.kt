@@ -1,12 +1,13 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.command
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.DoubleArgumentType
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.mana
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
@@ -26,11 +27,11 @@ object MatrixCommands {
                             literal("set")
                                 .then(argument("amount", DoubleArgumentType.doubleArg(0.0)).executes {
                                     val player = (it.source as ServerCommandSource).playerOrThrow
-                                    player.mana = DoubleArgumentType.getDouble(it, "amount")
+                                    player.mana = DoubleArgumentType.getDouble(it, "amount").mana
                                     return@executes Command.SINGLE_SUCCESS
                                 }.then(argument("target", EntityArgumentType.players()).executes {
                                     val players = EntityArgumentType.getPlayers(it, "target")
-                                    players.forEach { player -> player.mana = DoubleArgumentType.getDouble(it, "amount") }
+                                    players.forEach { player -> player.mana = DoubleArgumentType.getDouble(it, "amount").mana }
                                     return@executes Command.SINGLE_SUCCESS
                                 }))
                         ).then(
