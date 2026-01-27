@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
@@ -8,7 +8,6 @@ package heckerpowered.matrix.common.magic
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
@@ -22,7 +21,7 @@ object KillMagic : Magic(
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
         target.health = .0f
-        val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { player?.damageSources?.playerAttack(player) }
+        val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { player?.damageSources?.playerAttack(player) }
         target.onDeath(damageSource)
     }
 }
