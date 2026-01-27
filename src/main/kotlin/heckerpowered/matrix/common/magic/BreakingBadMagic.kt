@@ -1,17 +1,17 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
 
 import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.persistent.ChannelQueue
-import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
+import heckerpowered.matrix.core.extensions.SequenceExtensions.drain
 import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
@@ -33,7 +33,7 @@ object BreakingBadMagic : Magic(
         target.addStatusEffect(StatusEffectInstance(StatusEffects.BLINDNESS, 20 * 5, 4))
 
         if (target.isOnFire) {
-            val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { player?.damageSources?.explosion(target, player) }
+            val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { player?.damageSources?.explosion(target, player) }
             target.world.createExplosion(player, damageSource, explosionBehavior, target.x, target.y, target.z, 4.0F, false, World.ExplosionSourceType.MOB)
             // if (target.world is ServerWorld) {
             //     target.world.server?.playerManager?.playerList?.forEach {
@@ -47,32 +47,13 @@ object BreakingBadMagic : Magic(
         }
 
         target.getAdjacentEntities(8.0)
-            .filter {
-                it is LivingEntity
-                        && (it.getChannelSequence(player)?.channelingMagicCount() ?: 0) == 0
-                        && it != player
-                        && it.isAlive
-            }
-            .map { it as LivingEntity }
+            .filterIsInstance<LivingEntity>()
+            .filter { it != target && it != player && it.isAlive }
+            .filter { it.getChannelQueue(player)?.isEmpty ?: true }
             .consumeWhile(4) {
-                ChannelQueue.channelMagic(BreakingBadMagic, player, it, false, data = MagicData(true))
+                ChannelExecutor.channel(BreakingBadMagic, player, it, ChannelPlan(costMana = false, data = MagicData(isSpread = true))) == MagicAvailableStatus.AVAILABLE
             }
-        // var spreadTarget = target
-        // repeat(4) {
-        //     val nearestEntity = spreadTarget.getNearestEntities(8.0) {
-        //         it is LivingEntity
-        //                 && (it.getChannelSequence(player)?.channelingMagicCount() ?: 0) == 0
-        //                 && it != player
-        //                 && it.isAlive
-        //     }
-        //     if (nearestEntity == null || nearestEntity !is LivingEntity) {
-        //         return
-        //     }
-//
-        //     ChannelSequence.channelMagic(BreakingBadMagic, player, nearestEntity, false, data = MagicData(true))
-//
-        //     spreadTarget = nearestEntity
-        // }
+            .drain()
     }
 
     override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): MagicAvailableStatus {
