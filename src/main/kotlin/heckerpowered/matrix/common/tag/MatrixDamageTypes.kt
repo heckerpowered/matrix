@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.tag
@@ -14,6 +14,7 @@ import net.minecraft.world.World
 
 object MatrixDamageTypes {
     val magic = of("magic")
+    val recursiveMagic = of("recursive_magic")
 
     private fun of(name: String): RegistryKey<DamageType> {
         return RegistryKey.of(RegistryKeys.DAMAGE_TYPE, Matrix.identifier(name))
