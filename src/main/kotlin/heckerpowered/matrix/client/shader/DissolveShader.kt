@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.shader
@@ -8,33 +8,57 @@ package heckerpowered.matrix.client.shader
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.minecraft
 import net.minecraft.client.texture.ResourceTexture
+import org.joml.Vector4f
 import org.lwjgl.opengl.GL46.*
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.DurationUnit
 
 class DissolveShader : AutoCloseable {
+    val noiseTexture by lazy { perlinNoiseTextureId }
+    var dissolveFactor: Float = 1.0f
+
+    var resolutionX: Float = 1.0F
+    var resolutionY: Float = 1.0F
+    var emissiveStrength: Float = 15.0F
+    var emissiveColor: Vector4f = Vector4f(0.1F, 0.5F, 1.0F, 1.0F)
+
+    private val dissolveProgramUniforms = arrayOf(
+        modelViewMatrixProvider,
+        projectionMatrixProvider,
+        UniformProvider("noiseTexture") { pointer ->
+            glActiveTexture(GL_TEXTURE0)
+            glBindTexture(GL_TEXTURE_2D, noiseTexture)
+            glUniform1i(pointer, 0)
+        },
+        UniformProvider("dissolveFactor") { pointer ->
+            glUniform1f(pointer, dissolveFactor)
+        },
+        UniformProvider("resolution") { pointer ->
+            glUniform2f(pointer, resolutionX, resolutionY)
+        },
+        UniformProvider("time") { pointer ->
+            glUniform1f(pointer, System.nanoTime().nanoseconds.toDouble(DurationUnit.SECONDS).toFloat() % 10)
+        },
+        UniformProvider("emissiveStrength") { pointer ->
+            glUniform1f(pointer, emissiveStrength)
+        },
+        UniformProvider("emissiveColor") { pointer ->
+            glUniform4f(pointer, emissiveColor.x, emissiveColor.y, emissiveColor.z, emissiveColor.w)
+        })
+
     private val program by lazy {
         Program(
             ResourceShader("/assets/matrix/shaders/position_texture_color.vsh", GL_VERTEX_SHADER),
             ResourceShader("/assets/matrix/shaders/noise_mask.fsh", GL_FRAGMENT_SHADER),
-            uniforms = arrayOf(
-                modelViewMatrixProvider,
-                projectionMatrixProvider,
-                UniformProvider("noiseTexture") { pointer ->
-                    glActiveTexture(GL_TEXTURE0)
-                    glBindTexture(GL_TEXTURE_2D, noiseTexture)
-                    glUniform1i(pointer, 0)
-                },
-                UniformProvider("dissolveFactor") { pointer ->
-                    glUniform1f(pointer, dissolveFactor)
-                },
-                UniformProvider("resolution") { pointer ->
-                    glUniform2f(pointer, resolutionX, resolutionY)
-                },
-                UniformProvider("time") { pointer ->
-                    glUniform1f(pointer, System.nanoTime().nanoseconds.toDouble(DurationUnit.SECONDS).toFloat() % 10)
-                }
-            )
+            uniforms = dissolveProgramUniforms
+        )
+    }
+
+    val plainDissolveProgram by lazy {
+        Program(
+            ResourceShader("/assets/matrix/shaders/position_texture_color.vsh", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/dissolve/dissolve.fsh", GL_FRAGMENT_SHADER),
+            uniforms = dissolveProgramUniforms
         )
     }
 
@@ -52,13 +76,6 @@ class DissolveShader : AutoCloseable {
             return perlinNoiseTexture.glId
         }
     }
-
-    val noiseTexture by lazy { perlinNoiseTextureId }
-    var dissolveFactor: Float = 1.0f
-    val normalTexture: Int = 0
-
-    var resolutionX: Float = 1.0F
-    var resolutionY: Float = 1.0F
 
     fun enableShader() {
         program.enableShader()
