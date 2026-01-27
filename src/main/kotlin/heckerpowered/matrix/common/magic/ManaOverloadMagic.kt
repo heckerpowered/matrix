@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
@@ -10,8 +10,8 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFE
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.network.ExplosionPayload
-import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
+import heckerpowered.matrix.core.extensions.EntityExtensions.damage
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
@@ -49,7 +49,7 @@ object ManaOverloadMagic : Magic(
             }
 
             7 -> {
-                target.damage(target.damageSources.create(MatrixDamageTypes.magic), target.health)
+                target.damage(target.health, target.damageSources.create(MatrixDamageTypes.magic))
                 if (target.world is ServerWorld) {
                     target.world.server?.playerManager?.playerList?.forEach {
                         ServerPlayNetworking.send(it, ExplosionPayload(target.id))
