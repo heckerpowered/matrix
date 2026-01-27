@@ -1,12 +1,15 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.magic.ChannelExecutor
+import heckerpowered.matrix.common.magic.ChannelPlan
+import heckerpowered.matrix.common.magic.ChannelQueue
 import heckerpowered.matrix.common.magic.DecisiveStrikeMagic
-import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.item.SwordItem
@@ -24,9 +27,9 @@ object LapisLazuliSwordItem : SwordItem(
         }
 
         if (attacker is ServerPlayerEntity) {
-            ChannelQueue.channelMagic(DecisiveStrikeMagic, attacker, target, false)
+            ChannelExecutor.channel(DecisiveStrikeMagic, attacker, target, ChannelPlan(costMana = false))
         } else {
-            DecisiveStrikeMagic.cast(null, target, ChannelQueue(target))
+            DecisiveStrikeMagic.cast(null, target, ChannelQueue(player, player.uuid, target))
         }
     }
 }
