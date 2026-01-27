@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.effect
@@ -9,7 +9,7 @@ import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
-import heckerpowered.matrix.common.magic.MemoryEraseMagic.clearTargetingEntity
+import heckerpowered.matrix.common.magic.MemoryWipeMagic.clearTargetingEntity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectCategory
