@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.entity
@@ -10,10 +10,11 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.entity.MagicLightningEntity.LightningType.*
+import heckerpowered.matrix.common.magic.ChannelExecutor
+import heckerpowered.matrix.common.magic.ChannelPlan
 import heckerpowered.matrix.common.magic.CrippleMovementMagic
 import heckerpowered.matrix.common.magic.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.magic.LightningBoltMagic
-import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.block.AbstractFireBlock
 import net.minecraft.block.Blocks
@@ -269,7 +270,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                     if (channeler == null) {
                         entity.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 4))
                     } else {
-                        ChannelQueue.channelMagic(CrippleMovementMagic, channeler, entity, false)
+                        ChannelExecutor.channel(CrippleMovementMagic, channeler, entity, ChannelPlan(costMana = false))
                     }
                 }
             }
@@ -285,7 +286,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                         continue
                     }
 
-                    ChannelQueue.channelMagic(LightningBoltMagic, channeler, target)
+                    ChannelExecutor.channel(LightningBoltMagic, channeler, target)
                 }
             }
 
