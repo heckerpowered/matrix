@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.data.language
@@ -123,4 +123,7 @@ object MatrixLanguage {
 
     val borrowedTimeChargeDescription: MutableText = Text.translatable("matrix.borrowed_time_charge.description")
     val wizardHelmetLoadDescription: MutableText = Text.translatable("matrix.wizard_helmet.load.description")
+
+    val wizardHelmetBloodPactConversionEfficiency: MutableText = Text.translatable("matrix.wizard_helmet.blood_pact_conversion_efficiency")
+    val wizardHelmetManaDeltaDescription: MutableText = Text.translatable("matrix.wizard_helmet.accumulated_mana_delta")
 }
