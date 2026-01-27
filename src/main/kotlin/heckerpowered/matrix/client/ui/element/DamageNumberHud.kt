@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.ui.element
@@ -16,7 +16,7 @@ import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.Vec3d
 import org.joml.Vector3f
 import java.time.Duration
-import kotlin.math.floor
+import kotlin.math.round
 
 object DamageNumberHud {
     private data class DamageNumber(val damage: Float, val rgbColor: Vector3f, val position: Vec3d, val size: SimpleDoubleAnimation, var opacity: SimpleDoubleAnimation, val uid: Long)
@@ -43,7 +43,7 @@ object DamageNumberHud {
         val damageNumber = DamageNumber(damage, color, position, SimpleDoubleAnimation(), SimpleDoubleAnimation(), counter++)
 
         damageNumber.size.from = 20.0
-        damageNumber.size.to = 2.0
+        damageNumber.size.to = 4.0
         damageNumber.size.duration = Duration.ofMillis(300)
         damageNumber.size.start()
 
@@ -71,7 +71,7 @@ object DamageNumberHud {
         val damageText = if (damageNumber.damage.isInfinite()) {
             "9999"
         } else if (damageNumber.damage >= 1) {
-            "${floor(damageNumber.damage).toULong()}"
+            "${round(damageNumber.damage).toULong()}"
         } else {
             "${(damageNumber.damage * 10.0).toULong().toDouble() / 10.0}"
         }
