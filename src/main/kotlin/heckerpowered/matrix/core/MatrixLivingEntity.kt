@@ -1,11 +1,11 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.core
 
-import heckerpowered.matrix.common.persistent.ChannelQueue
+import heckerpowered.matrix.common.magic.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import java.util.*
 
@@ -13,7 +13,7 @@ interface MatrixLivingEntity {
     @SuppressWarnings("all")
     var `matrix$killed`: Boolean
 
-    fun getChannelSequence(): MutableMap<UUID, ChannelQueue>
+    fun getChannelQueues(): MutableMap<UUID, ChannelQueue>
 }
 
 var LivingEntity.killed: Boolean
