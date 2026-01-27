@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
@@ -9,7 +9,7 @@ import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.entity.MagicLightningEntity
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.persistent.ChannelQueue
+import heckerpowered.matrix.core.common.balance.Accumulator
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
@@ -37,22 +37,19 @@ object LightningBoltMagic : Magic(
         target.world.spawnEntity(MagicLightningEntity(target.world).also {
             it.setPosition(target.pos)
             it.lightningType = lightningType
-            if (!sequence.sequencedAfter<MemoryEraseMagic>()) {
+            if (!data.isSpoofed) {
                 it.channeler = player
             }
         })
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData): Long {
-        val cost = super.getCost(player, target, sequence, data)
-        if (sequence == null) {
-            return cost
+    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData, accumulator: Accumulator): Long {
+        if (sequence != null) {
+            val count = sequence.channelingMagics().count { channelingMagic -> channelingMagic.magic is LightningBoltMagic }
+            val costReduction = (count * 0.2).coerceAtMost(0.8)
+            accumulator.pushCostReduction(costReduction)
         }
 
-        val count = sequence.magics.filterIndexed { index, channelingMagic ->
-            channelingMagic.magic is LightningBoltMagic
-        }.count()
-        val discount = 1 - (count * 0.2).coerceAtMost(0.8)
-        return (cost.toDouble() * discount).toLong()
+        return super.getCost(player, target, sequence, data, accumulator)
     }
 }
