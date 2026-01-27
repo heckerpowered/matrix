@@ -1,21 +1,27 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_ACCELERATION_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.event.ItemStackEquippedCallback
 import heckerpowered.matrix.common.item.MatrixComponents.MAX_MANA
+import heckerpowered.matrix.common.magic.ChannelQueue
 import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.MagicData
 import heckerpowered.matrix.common.magic.MagicManager
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.persistent.maxMana
+import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
@@ -60,9 +66,9 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
             }
 
             if (item is WizardHelmet) {
-                entity.maxMana = item.getMaxMana(entity, currentItemStack)
+                entity.maxMana = item.getMaxMana(entity, currentItemStack).mana
             } else {
-                entity.maxMana = .0
+                entity.maxMana = .0.mana
             }
         }
     }
@@ -82,6 +88,32 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
             .toList()
     }
 
+    open fun hasMagic(itemStack: ItemStack, magic: Magic): Boolean {
+        return itemStack.enchantments.enchantments
+            .asSequence()
+            .map { it.key }
+            .filter { it.isPresent }
+            .map { it.get() }
+            .any { it == magic.enchantmentKey }
+    }
+
+    open fun getBloodPactConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: MagicData = MagicData()): Double {
+        var ratio = 2.0
+
+        // Peak Overdrive: + 100% health to mana conversion efficiency.
+        if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) > 0 && player.isBloodPactActive) {
+            ratio += 1.0
+        }
+
+        return ratio
+    }
+
+    open fun onManaChanged(player: PlayerEntity, previousMana: Double, currentMana: Double) {
+    }
+
+    open fun onBloodPactActive(player: ServerPlayerEntity, itemStack: ItemStack) {
+    }
+
     open fun getMaxMana(player: PlayerEntity, itemStack: ItemStack): Double {
         var basicMaxMana = itemStack.getOrDefault(MAX_MANA, .0)
         if (itemStack.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0) {
@@ -98,7 +130,7 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
     }
 
     open fun getQueueSize(player: PlayerEntity, itemStack: ItemStack): Long {
-        var basicQueueSize = 1L
+        var basicQueueSize = 0L
         if (itemStack.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0) {
             basicQueueSize += 1
         }
