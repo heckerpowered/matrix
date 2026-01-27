@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
@@ -8,7 +8,6 @@ package heckerpowered.matrix.common.magic
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.damage.DamageSource
@@ -21,9 +20,9 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-object MemoryEraseMagic : Magic(
+object MemoryWipeMagic : Magic(
     MagicDefinition(
-        Matrix.identifier("memory_erase"),
+        Matrix.identifier("memory_wipe"),
         10.mana,
         30.ticks
     )
@@ -56,13 +55,13 @@ object MemoryEraseMagic : Magic(
     }
 
     @OptIn(ExperimentalContracts::class)
-    fun getDamageSource(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, supplier: () -> DamageSource?): DamageSource {
+    fun getDamageSource(player: ServerPlayerEntity?, target: LivingEntity, data: MagicData, supplier: () -> DamageSource?): DamageSource {
         contract {
             callsInPlace(supplier, InvocationKind.AT_MOST_ONCE)
         }
 
-        val erasedSource = target.world.damageSources.create(MatrixDamageTypes.magic, player)
-        if (player == null || sequence.sequencedAfter<MemoryEraseMagic>()) {
+        val erasedSource = target.world.damageSources.create(MatrixDamageTypes.magic)
+        if (player == null || data.isSpoofed) {
             return erasedSource
         }
 
