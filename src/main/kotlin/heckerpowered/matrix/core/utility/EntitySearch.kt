@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.core.utility
@@ -85,5 +85,20 @@ object EntitySearch {
             .getOtherEntities(this, pos.toBox().expand(maxDistance))
             .asSequence()
             .sortedBy { squaredDistanceTo(it) }
+    }
+
+    /**
+     * Returns a lazily evaluated [Sequence] of entities within a given maximum distance.
+     *
+     * The returned entities are located within a spherical bounding region defined by [maxDistance].
+     * This entity (`this`) is excluded from the result.
+     *
+     * @param maxDistance The maximum distance
+     * @return A sequence of entities, unordered, lazily evaluated.
+     */
+    fun Entity.getOtherEntities(maxDistance: Double): Sequence<Entity> {
+        return world
+            .getOtherEntities(this, pos.toBox().expand(maxDistance))
+            .asSequence()
     }
 }
