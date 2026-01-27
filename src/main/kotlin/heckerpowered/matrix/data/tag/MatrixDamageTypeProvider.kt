@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.data.tag
@@ -22,8 +22,10 @@ class MatrixDamageTypeProvider(
     override fun configure(registries: RegistryWrapper.WrapperLookup) {
         getOrCreateTagBuilder(DamageTypeTags.BYPASSES_SHIELD)
             .add(MatrixDamageTypes.magic)
+            .add(MatrixDamageTypes.recursiveMagic)
 
         getOrCreateTagBuilder(MatrixDamageTypeTags.magic)
             .add(MatrixDamageTypes.magic)
+            .add(MatrixDamageTypes.recursiveMagic)
     }
 }
