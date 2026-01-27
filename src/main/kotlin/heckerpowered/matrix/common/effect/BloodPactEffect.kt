@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.effect
@@ -14,7 +14,7 @@ import net.minecraft.entity.effect.StatusEffectCategory
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.util.ActionResult
 
-val PlayerEntity.bloodPactActive: Boolean
+val PlayerEntity.isBloodPactActive: Boolean
     get() = hasStatusEffect(BLOOD_PACT_EFFECT)
 
 object BloodPactEffect : StatusEffect(
