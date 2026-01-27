@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.network
@@ -8,6 +8,7 @@ package heckerpowered.matrix.common.network
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
+import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.entity.effect.StatusEffectInstance
@@ -48,5 +49,7 @@ class ActiveBloodPactPayload : CustomPayload {
         player.addStatusEffect(StatusEffectInstance(BLOOD_PACT_EFFECT, 20 * 30, 0, false, true))
         player.serverWorld.playSound(null, player.x, player.y, player.z, SoundEvents.ENTITY_WITHER_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.0F)
         player.itemCooldownManager.set(player.wizardHelmet.item, 20 * (30 + 14)) // 30 = duration, 14 = cooldown
+
+        (player.wizardHelmet.item as WizardHelmet).onBloodPactActive(player, player.wizardHelmet)
     }
 }
