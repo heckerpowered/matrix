@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
@@ -10,7 +10,6 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.IGNITE_EFFECT
 import heckerpowered.matrix.common.magic.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.persistent.ChannelQueue
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.effect.StatusEffects
@@ -32,10 +31,10 @@ object IgniteMagic : Magic(
         } else {
             8F
         }
-        target.setOnFireFor(duration * 20)
+        target.setOnFireFor(duration)
         target.addStatusEffect(StatusEffectInstance(IGNITE_EFFECT, 5 * 20, 0, false, true))
         if (target.hasStatusEffect(StatusEffects.POISON)) {
-            val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { player?.damageSources?.explosion(target, player) }
+            val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { player?.damageSources?.explosion(target, player) }
             target.world.createExplosion(player, damageSource, explosionBehavior, target.x, target.y, target.z, 4.0F, false, World.ExplosionSourceType.MOB)
             // if (target.world is ServerWorld) {
             //     target.world.server?.playerManager?.playerList?.forEach {
