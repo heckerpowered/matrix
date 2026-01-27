@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.network
@@ -8,7 +8,8 @@ package heckerpowered.matrix.common.network
 import heckerpowered.matrix.client.ui.element.DamageNumberHud
 import heckerpowered.matrix.common.event.LivingDamageCallback
 import heckerpowered.matrix.common.event.LivingDamageEvent
-import heckerpowered.matrix.common.tag.MatrixDamageTypes
+import heckerpowered.matrix.common.tag.MatrixDamageTypeTags
+import heckerpowered.matrix.core.extensions.BoxExtensions.random
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
@@ -56,7 +57,7 @@ class DamageNumberPayload(
             if (event.entity.world !is ServerWorld) {
                 return ActionResult.PASS
             }
-            val position = event.entity.boundingBox.center
+            val position = event.entity.boundingBox.random()
             val color = getColorForDamageSource(event.damageSource)
             val payload = DamageNumberPayload(event.amount, position, color)
             event.entity.world.server?.playerManager?.playerList?.forEach { player ->
@@ -68,7 +69,7 @@ class DamageNumberPayload(
         fun getColorForDamageSource(damage: DamageSource): Vector3f {
             return when {
                 damage.isOf(DamageTypes.MAGIC) -> Vector3f(25.0F, 25.0F, 128.0F)
-                damage.isOf(MatrixDamageTypes.magic) -> Vector3f(25.0F, 128.0F, 255.0F)
+                damage.isIn(MatrixDamageTypeTags.magic) -> Vector3f(25.0F, 128.0F, 255.0F)
                 damage.isIn(DamageTypeTags.IS_FIRE) -> Vector3f(255.0F, 100.0F, 25.0F)
                 // damage.isOf(DamageTypes.) -> Vector3f(25.0F, 25.0F, 128.0F)
                 else -> Vector3f(255.0F, 255.0F, 255.0F)
