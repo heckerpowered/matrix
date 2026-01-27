@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client
@@ -26,11 +26,12 @@ import heckerpowered.matrix.client.shader.*
 import heckerpowered.matrix.client.shader.component.TransformFeedback
 import heckerpowered.matrix.client.ui.element.*
 import heckerpowered.matrix.client.ui.foundation.animation.*
-import heckerpowered.matrix.common.effect.bloodPactActive
+import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.item.LightningChestplate1
 import heckerpowered.matrix.common.item.LightningChestplate1.isBorrowedTime
 import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
 import heckerpowered.matrix.common.item.WizardHelmet5
+import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.Magic
 import heckerpowered.matrix.common.magic.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.MagicAvailableStatus.AVAILABLE
@@ -40,7 +41,6 @@ import heckerpowered.matrix.common.network.ActiveBloodPactPayload
 import heckerpowered.matrix.common.network.BorrowedTimePayload
 import heckerpowered.matrix.common.network.OverclockPayload
 import heckerpowered.matrix.common.network.UseMagicPayload
-import heckerpowered.matrix.common.persistent.getChannelSequence
 import heckerpowered.matrix.common.persistent.isWizard
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.core.approximatelyEqual
@@ -76,8 +76,8 @@ import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import java.time.Duration
 import kotlin.math.abs
-import kotlin.math.floor
 import kotlin.math.min
+import kotlin.math.round
 import kotlin.random.Random
 
 object MatrixHud {
@@ -463,7 +463,7 @@ object MatrixHud {
         }
         val magic = selectedMagic
         val target = this.targetedEntity
-        val channelSequence = player.getChannelSequence(target)
+        val channelSequence = player.getChannelQueue(target)
         manaBar.manaCost.value = magic.getCost(player, target, channelSequence).toDouble()
     }
 
@@ -489,7 +489,7 @@ object MatrixHud {
     private fun useMagicIndexed(index: Int) {
         val magic = MatrixClient.getPlayerMagics()[index]
         val target = this.targetedEntity ?: return
-        if (magic.availableStatus(player, target, player.getChannelSequence(target)) != AVAILABLE) {
+        if (magic.availableStatus(player, target, player.getChannelQueue(target)) != AVAILABLE) {
             return
         }
 
@@ -498,9 +498,9 @@ object MatrixHud {
         // Reset use magic animation
         usingMagicList[index + 1] = 0.0
 
-        val cost = magic.getCost(player, target, player.getChannelSequence(target))
+        val cost = magic.getCost(player, target, player.getChannelQueue(target))
         val mana = mana - manaUsage
-        if (player.bloodPactActive && mana < cost) {
+        if (player.isBloodPactActive && mana < cost) {
             minecraft.world!!.playSound(player, player.x, player.y, player.z, SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, 1.0f, 1f)
             minecraft.world!!.playSound(player, player.x, player.y, player.z, SoundEvents.ENTITY_WARDEN_HEARTBEAT, SoundCategory.PLAYERS, 1.0f, 1f)
         } else {
@@ -625,7 +625,7 @@ object MatrixHud {
     private fun getMagicAvailableStatus(
         magic: Magic,
     ): MagicAvailableStatus {
-        val channelSequence = player.getChannelSequence(
+        val channelSequence = player.getChannelQueue(
             targetedEntity
         )
         return magic.availableStatus(
@@ -709,7 +709,7 @@ object MatrixHud {
                     !magicShownOpacityAnimation.animatedValue.approximatelyEqual(.0)
         }
 
-        val bloodPact = player.bloodPactActive
+        val bloodPact = player.isBloodPactActive
         hudBloomThreshold.value = if (bloodPact) {
             .0
         } else {
@@ -1035,6 +1035,7 @@ object MatrixHud {
     }
 
     private fun onHudShown() {
+        // println(glGenProgramPipelines())
         if (shouldSlowTime()) {
             magicTimeScale.value = 0.01
         }
@@ -1071,9 +1072,7 @@ object MatrixHud {
         drawContext: DrawContext,
         tickCounter: RenderTickCounter,
     ) {
-        val channelSequence = player.getChannelSequence(
-            targetedEntity
-        )
+        val channelSequence = player.getChannelQueue(targetedEntity)
         val magicCost = selectedMagic.getCost(player, targetedEntity, channelSequence).toDouble()
         manaBar.manaCost.value = magicCost
 
@@ -1154,7 +1153,7 @@ object MatrixHud {
             }
         }
 
-        val channelSequence = player.getChannelSequence(
+        val channelSequence = player.getChannelQueue(
             targetedEntity
         )
         val normalCost = magic.getNormalCost()
@@ -1661,7 +1660,7 @@ object MatrixHud {
                 drawContext.matrices.scale(fontSizeReduced, fontSizeReduced, fontSizeReduced)
                 drawContext.matrices.translate(-textCenterX, -textCenterY, 0.0)
 
-                drawContext.drawText(textRenderer, text, floor(textX).toInt(), textY, candidateCountColor, true)
+                drawContext.drawText(textRenderer, text, round(textX).toInt(), textY, candidateCountColor, true)
 
                 drawContext.matrices.pop()
             }
@@ -1735,7 +1734,7 @@ object MatrixHud {
             .filter { it is LivingEntity && !it.isSpectator && it.isAlive }
             .map { it as LivingEntity }
             .filter {
-                val channelSequence = player.getChannelSequence(it)
+                val channelSequence = player.getChannelQueue(it)
                 selectedMagic.availableStatus(player, it, channelSequence) == AVAILABLE
             }
     }
