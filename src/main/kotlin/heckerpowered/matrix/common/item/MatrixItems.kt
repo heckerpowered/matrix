@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.item
@@ -71,6 +71,7 @@ object MatrixItems {
         WizardHelmet3,
         WizardHelmet4,
         WizardHelmet5,
+        WizardHelmet13,
 
         LightningChestplate1,
         MagicTalismanItem,
@@ -143,6 +144,7 @@ object MatrixItems {
         register(WizardHelmet3, "wizard_helmet_3")
         register(WizardHelmet4, "wizard_helmet_4")
         register(WizardHelmet5, "wizard_helmet_5")
+        register(WizardHelmet13, "wizard_helmet_13")
 
         register(LightningChestplate1, "lightning_chestplate_borrowed_time")
         register(MagicTalismanItem, "magic_talisman")
