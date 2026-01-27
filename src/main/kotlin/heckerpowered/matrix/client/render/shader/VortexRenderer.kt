@@ -1,18 +1,15 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.render.shader
 
-import heckerpowered.matrix.client.shader.BlitProgram
-import heckerpowered.matrix.client.shader.DissolveShader
-import heckerpowered.matrix.client.shader.ResourceShader
-import heckerpowered.matrix.client.shader.UniformProvider
+import heckerpowered.matrix.client.shader.*
 import org.lwjgl.opengl.GL46.*
 
 object VortexRenderer {
-    val vortexShader = BlitProgram(
+    val vortexShader = Program(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/vortex/vortex.fsh", GL_FRAGMENT_SHADER),
         uniforms = arrayOf(
@@ -56,4 +53,8 @@ object VortexRenderer {
             }
         )
     )
+
+    fun render() {
+
+    }
 }
