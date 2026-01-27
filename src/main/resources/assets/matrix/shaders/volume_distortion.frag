@@ -9,6 +9,8 @@ uniform mat4 viewProjectionMatrix;
 uniform mat4 inverseViewMatrix;
 uniform mat4 inverseProjectionMatrix;
 
+uniform float emissiveStrength = 4.0;
+
 uniform vec3 volumePosition;
 uniform float volumeRadius;
 
@@ -73,6 +75,74 @@ vec3 computeGrayscaleColor(vec3 colorRgb)
     return vec3(grayscale);
 }
 
+vec2 projectWorldToScreen(vec3 worldPosition) {
+    vec4 clipSpacePosition = viewProjectionMatrix * vec4(worldPosition, 1.0);
+    float inverseW = 1.0 / clipSpacePosition.w;
+    vec2 normalizedDeviceCoordinates = clipSpacePosition.xy * inverseW;
+    return normalizedDeviceCoordinates * 0.5 + 0.5;
+}
+
+vec3 amplifyLuminance(
+    vec3 colorRgb,
+    float glowFactor,
+    float glowIntensity
+)
+{
+    return
+    colorRgb
+    * (1.0 + glowFactor * glowIntensity);
+}
+
+float computeSphereEdgeGlowFactorFromSilhouette(
+    float silhouetteSignedDistanceWorldUnits,
+    float edgeWidthWorldUnits
+)
+{
+    return 1.0 - smoothstep(0.0, edgeWidthWorldUnits, -silhouetteSignedDistanceWorldUnits);
+}
+
+float computeSphereSilhouetteSignedDistanceWorldUnits(
+    vec3 cameraWorldPosition,
+    vec3 viewRayDirectionWorld,
+    vec3 sphereCenterWorldPosition,
+    float sphereRadiusWorldUnits
+)
+{
+    vec3 cameraToSphereCenter =
+    sphereCenterWorldPosition - cameraWorldPosition;
+
+    float cameraToCenterDistance =
+    length(cameraToSphereCenter);
+
+    vec3 cameraToCenterDirection =
+    cameraToSphereCenter / cameraToCenterDistance;
+
+    float perpendicularDistanceToRay =
+    length(cross(viewRayDirectionWorld, cameraToCenterDirection))
+    * cameraToCenterDistance;
+
+    return
+    perpendicularDistanceToRay - sphereRadiusWorldUnits;
+}
+
+vec3 remapColorToFixedBrightness(
+    vec3 colorRgb,
+    float targetBrightness
+)
+{
+    float currentBrightness =
+    dot(colorRgb, vec3(0.2126, 0.7152, 0.0722));
+
+    float safeBrightness =
+    max(currentBrightness, 1e-4);
+
+    float brightnessScale =
+    targetBrightness / safeBrightness;
+
+    return
+    colorRgb * brightnessScale;
+}
+
 void main()
 {
     vec3 cameraPosition = computeCameraWorldPosition();
@@ -98,11 +168,34 @@ void main()
     float volumeDensity = (1.0 - exp(-travelDistanceWorldUnits * 0.6)) * visibleMask;
 
     vec4 originalColor = texture(sceneColorTexture, fragTexCoord);
+
+    float silhouetteSignedDistanceWorldUnits =
+    computeSphereSilhouetteSignedDistanceWorldUnits(
+        cameraPosition,
+        viewRayDirection,
+        volumePosition,
+        volumeRadius
+    );
+
+    float edgeGlowFactor =
+    computeSphereEdgeGlowFactorFromSilhouette(
+        silhouetteSignedDistanceWorldUnits,
+        volumeRadius * 0.01
+    ) * visibleMask;
+    vec3 edgeEnhancedColor = remapColorToFixedBrightness(originalColor.rgb, edgeGlowFactor * emissiveStrength);
+
     vec3 grayscaleColor = computeGrayscaleColor(originalColor.rgb);
-    vec3 finalColorRgb = mix(
+
+    vec3 colorWithInnerGrayscale = mix(
         originalColor.rgb,
         grayscaleColor,
         volumeDensity * grayscaleIntensity
+    );
+
+    vec3 finalColorRgb = mix(
+        colorWithInnerGrayscale,
+        edgeEnhancedColor,
+        edgeGlowFactor
     );
 
     fragColor = vec4(finalColorRgb, originalColor.a);
