@@ -1,12 +1,15 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.persistent
 
 import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.client.player
 import heckerpowered.matrix.common.item.WizardHelmet
+import heckerpowered.matrix.common.magic.Mana
+import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.network.SyncManaPayload
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.EquipmentSlot
@@ -20,7 +23,6 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.PersistentState
 import net.minecraft.world.World
 import java.util.*
-
 
 class ManaState : PersistentState() {
     val manaData = mutableMapOf<UUID, ManaData>()
@@ -81,20 +83,22 @@ class ManaState : PersistentState() {
     }
 }
 
-var ServerPlayerEntity.mana: Double
-    get() = ManaState.getPlayerState(this).mana
+var ServerPlayerEntity.mana: Mana
+    get() = ManaState.getPlayerState(this).mana.mana
     set(value) {
         val manaData = ManaState.getPlayerState(this)
-        manaData.mana = value.coerceIn(.0, manaData.maxMana.coerceAtLeast(.0))
+        val previousMana = manaData.mana
+        manaData.mana = value.amount.coerceIn(.0, manaData.maxMana.coerceAtLeast(.0))
 
+        (player.wizardHelmet.item as? WizardHelmet)?.onManaChanged(this, previousMana, value.amount)
         ServerPlayNetworking.send(this, SyncManaPayload(manaData.mana, manaData.maxMana))
     }
 
-var ServerPlayerEntity.maxMana: Double
-    get() = ManaState.getPlayerState(this).maxMana
+var ServerPlayerEntity.maxMana: Mana
+    get() = ManaState.getPlayerState(this).maxMana.mana
     set(value) {
         val manaData = ManaState.getPlayerState(this)
-        manaData.maxMana = value.coerceAtLeast(.0)
+        manaData.maxMana = value.amount.coerceAtLeast(.0)
 
         ServerPlayNetworking.send(this, SyncManaPayload(manaData.mana, manaData.maxMana))
     }
@@ -117,7 +121,7 @@ val PlayerEntity.queueSize: Long
         val wizardHelmet = this.wizardHelmet
         val item = wizardHelmet.item
         if (item !is WizardHelmet) {
-            return 1
+            return 0
         }
         return item.getQueueSize(this, wizardHelmet)
     }
