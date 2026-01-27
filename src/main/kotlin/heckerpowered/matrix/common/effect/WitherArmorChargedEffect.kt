@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.effect
@@ -39,7 +39,7 @@ object WitherArmorChargedEffect : StatusEffect(
 
     private fun onLivingDeath(entity: LivingEntity, damageSource: DamageSource): ActionResult {
         val attacker = damageSource.attacker
-        if (attacker !is ServerPlayerEntity || !attacker.bloodPactActive) {
+        if (attacker !is ServerPlayerEntity || !attacker.isBloodPactActive) {
             return ActionResult.PASS
         }
         val witherArmorEnchantment = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
