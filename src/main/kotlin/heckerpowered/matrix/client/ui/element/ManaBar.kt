@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.ui.element
@@ -10,6 +10,7 @@ import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.render.Rectangle
+import heckerpowered.matrix.client.shader.DissolveShader
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
@@ -48,6 +49,15 @@ class ManaBar {
         return mana.animatedValue / maxMana.animatedValue
     }
 
+    private val actualManaPercentage: Double
+        get() = if (mana.value.isInfinite()) {
+            1.0
+        } else {
+            (mana.animatedValue - manaUsage.animatedValue) / maxMana.animatedValue
+        }
+
+    private val dissolveShader = DissolveShader()
+
     private fun renderManaBar(drawContext: DrawContext, renderer: LegacyMatrixUIRenderer) {
         if (!manaUsage.isAnimating) {
             mana.value -= manaUsage.value
@@ -62,6 +72,45 @@ class ManaBar {
             25.0 + shownAnimation.animatedValue
         )
 
+        /**
+        val width = maxPoint.x - minPoint.x
+        val height = maxPoint.y - minPoint.y
+        dissolveShader.dissolveFactor = 1.0F - actualManaPercentage.toFloat() / 2.0F
+        dissolveShader.resolutionX = width.toFloat() / 10.0F
+        dissolveShader.resolutionY = height.toFloat() / 10.0F
+        dissolveShader.emissiveColor = Vector4f(0.1F, 0.5F, 1F, 1.0F)
+        dissolveShader.plainDissolveProgram.enableShader()
+
+        val backgroundColor = ColorHelper.Argb.getArgb(255, 0, 0, 0)
+        val builder = Tessellator.getInstance()
+        val buffer = builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR)
+
+        buffer.vertex(minPoint.x.toFloat(), maxPoint.y.toFloat(), 0F).texture(1F, 1F).color(backgroundColor)
+        buffer.vertex((renderer.scaledWindowWidth - 50.0).toFloat(), maxPoint.y.toFloat(), 0F).texture(0F, 1F).color(backgroundColor)
+        buffer.vertex((renderer.scaledWindowWidth - 50.0).toFloat(), minPoint.y.toFloat(), 0F).texture(0F, 0F).color(backgroundColor)
+        buffer.vertex(minPoint.x.toFloat(), minPoint.y.toFloat(), 0F).texture(1F, 0F).color(backgroundColor)
+
+        val window = MinecraftClient.getInstance().window
+        val scaleFactor = window.scaleFactor
+        val maxX = MathHelper.lerp(actualManaPercentage, 50.0, renderer.scaledWindowWidth - 50.0)
+        RenderSystem.enableScissor(
+        (minPoint.x * scaleFactor).toInt(),
+        (window.framebufferHeight - maxPoint.y * scaleFactor).toInt(),
+        ((maxX - minPoint.x) * scaleFactor).toInt(),
+        ((maxPoint.y - minPoint.y) * scaleFactor).toInt(),
+        )
+        isolate(
+        BlendState(true),
+        BlendFuncSeparateState()
+        ) {
+        BufferRenderer.draw(buffer.end())
+        }
+        RenderSystem.disableScissor()
+
+        dissolveShader.disableShader()
+        dissolveShader.resolutionX = 1.0F
+        dissolveShader.resolutionY = 1.0F
+         */
         val multiplier = 1F
         RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
         renderer.renderRectangle(Rectangle(minPoint, maxPoint), manaBarColor)
