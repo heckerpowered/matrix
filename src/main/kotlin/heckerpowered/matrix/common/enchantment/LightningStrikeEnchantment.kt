@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.enchantment
@@ -8,6 +8,8 @@ package heckerpowered.matrix.common.enchantment
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRIKE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
+import heckerpowered.matrix.common.tag.MatrixDamageTypes
+import heckerpowered.matrix.core.extensions.EntityExtensions.damage
 import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
 import heckerpowered.matrix.core.minus
 import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities
@@ -29,7 +31,9 @@ object LightningStrikeEnchantment {
     }
 
     fun onHurt(event: DamageAccumulator): ActionResult {
-        if (event.damageSource.isOf(DamageTypes.LIGHTNING_BOLT)) {
+        if (event.damageSource.isOf(DamageTypes.LIGHTNING_BOLT) ||
+            event.damageSource.isOf(MatrixDamageTypes.recursiveMagic)
+        ) {
             return ActionResult.PASS
         }
         val attacker = event.attacker ?: return ActionResult.PASS
@@ -49,7 +53,7 @@ object LightningStrikeEnchantment {
             .filterIsInstance<LivingEntity>()
             .filter { it != attacker && it != event.target }
             .consumeWhile(5) {
-                val result = it.damage(damageSource, event.baseDamage.toFloat() * 0.2F)
+                val result = it.damage(event.baseDamage.toFloat() * 0.2F, damageSource)
                 return@consumeWhile result
             }
             .forEach { entity ->
