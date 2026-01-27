@@ -15,11 +15,11 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.event.ItemStackEquippedCallback
 import heckerpowered.matrix.common.item.MatrixComponents.MAX_MANA
-import heckerpowered.matrix.common.magic.Magic
-import heckerpowered.matrix.common.magic.MagicManager
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.channel.ChannelQueue
 import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.system.MagicManager
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.data.language.MatrixLanguage

@@ -6,7 +6,7 @@
 package heckerpowered.matrix.core
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.Mana
+import heckerpowered.matrix.common.magic.resource.Mana
 import net.minecraft.entity.player.PlayerEntity
 
 val PlayerEntity.mana: Mana

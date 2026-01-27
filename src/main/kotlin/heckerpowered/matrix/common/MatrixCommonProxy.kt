@@ -5,8 +5,8 @@
 
 package heckerpowered.matrix.common
 
-import heckerpowered.matrix.common.magic.Mana
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.resource.Mana
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.mana
 import heckerpowered.matrix.common.persistent.maxMana

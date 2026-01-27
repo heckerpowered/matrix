@@ -3,7 +3,7 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.system
 
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
@@ -11,13 +11,13 @@ import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
 import heckerpowered.matrix.common.item.WizardHelmet
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.magic.Mana.Companion.plus
 import heckerpowered.matrix.common.magic.channel.ChannelQueue
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.allChannelQueues
 import heckerpowered.matrix.common.magic.core.ExecutionPayload
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDataSpecification
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.plus
 import heckerpowered.matrix.common.magic.spell.*
 import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.common.network.SyncManaPayload

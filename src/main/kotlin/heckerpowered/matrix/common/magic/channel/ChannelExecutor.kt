@@ -9,9 +9,9 @@ import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.render.ChannelAnimation
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.network.ChannelMagicPayload
 import heckerpowered.matrix.core.MatrixLivingEntity
 import net.fabricmc.api.EnvType

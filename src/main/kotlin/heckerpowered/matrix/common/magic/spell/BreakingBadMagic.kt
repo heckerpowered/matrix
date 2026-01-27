@@ -6,13 +6,13 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ChannelQueue
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.channel.ChannelRequest
 import heckerpowered.matrix.common.magic.core.*
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
 import heckerpowered.matrix.core.extensions.SequenceExtensions.drain
 import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities

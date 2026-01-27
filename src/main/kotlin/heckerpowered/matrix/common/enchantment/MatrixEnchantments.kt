@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.core.Magic
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.LivingEntity

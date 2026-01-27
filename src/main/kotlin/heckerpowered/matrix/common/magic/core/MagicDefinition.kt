@@ -5,6 +5,8 @@
 
 package heckerpowered.matrix.common.magic.core
 
+import heckerpowered.matrix.common.magic.resource.Mana
+import heckerpowered.matrix.common.magic.system.GameTick
 import heckerpowered.matrix.core.common.balance.CalculationPlan
 import heckerpowered.matrix.core.common.balance.NumericCalculator
 import net.minecraft.text.MutableText
@@ -32,8 +34,8 @@ import java.util.*
  */
 open class MagicDefinition(
     val identifier: Identifier,
-    val baseCost: heckerpowered.matrix.common.magic.Mana,
-    val baseChannelTime: heckerpowered.matrix.common.magic.GameTick,
+    val baseCost: Mana,
+    val baseChannelTime: GameTick,
 ) {
     open val name: MutableText = Text.translatable("matrix.magic.${identifier.path}.name")
     open val description: MutableText = Text.translatable("matrix.magic.${identifier.path}.description")

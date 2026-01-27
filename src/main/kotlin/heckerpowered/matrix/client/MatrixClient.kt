@@ -19,8 +19,8 @@ import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.entity.MatrixEntityType
 import heckerpowered.matrix.common.item.MagicTalismanItem
-import heckerpowered.matrix.common.magic.Magic
-import heckerpowered.matrix.common.magic.MagicManager
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.system.MagicManager
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry

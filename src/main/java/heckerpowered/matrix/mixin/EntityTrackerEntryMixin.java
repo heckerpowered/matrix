@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.mixin;
 
-import heckerpowered.matrix.common.magic.MagicManager;
+import heckerpowered.matrix.common.magic.system.MagicManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;

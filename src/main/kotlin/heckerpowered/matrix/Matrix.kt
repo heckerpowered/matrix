@@ -16,7 +16,7 @@ import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.MatrixItemGroups
 import heckerpowered.matrix.common.item.MatrixItems
 import heckerpowered.matrix.common.item.MatrixPotions
-import heckerpowered.matrix.common.magic.MagicManager
+import heckerpowered.matrix.common.magic.system.MagicManager
 import heckerpowered.matrix.common.recipe.MatrixRecipeSerializer
 import net.fabricmc.api.ModInitializer
 import net.minecraft.util.Identifier

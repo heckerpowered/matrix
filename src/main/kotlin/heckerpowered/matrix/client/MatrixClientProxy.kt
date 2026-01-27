@@ -6,8 +6,8 @@
 package heckerpowered.matrix.client
 
 import heckerpowered.matrix.common.MatrixCommonProxy
-import heckerpowered.matrix.common.magic.Mana
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.resource.Mana
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import net.minecraft.entity.player.PlayerEntity
 
 class MatrixClientProxy : MatrixCommonProxy() {

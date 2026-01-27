@@ -5,8 +5,8 @@
 
 package heckerpowered.matrix.common.persistent.serialization.seralizer
 
-import heckerpowered.matrix.common.magic.Magic
-import heckerpowered.matrix.common.magic.MagicManager
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.system.MagicManager
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind

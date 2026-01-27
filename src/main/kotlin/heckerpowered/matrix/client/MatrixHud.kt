@@ -31,12 +31,10 @@ import heckerpowered.matrix.common.item.LightningChestplate1
 import heckerpowered.matrix.common.item.LightningChestplate1.isBorrowedTime
 import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
 import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magic.Magic
-import heckerpowered.matrix.common.magic.MagicAvailableStatus
-import heckerpowered.matrix.common.magic.MagicAvailableStatus.AVAILABLE
-import heckerpowered.matrix.common.magic.MagicAvailableStatus.TARGET_MISSING
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.description
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.core.description
 import heckerpowered.matrix.common.network.ActiveBloodPactPayload
 import heckerpowered.matrix.common.network.BorrowedTimePayload
 import heckerpowered.matrix.common.network.OverclockPayload
@@ -75,7 +73,6 @@ import org.lwjgl.opengl.GL30.glDeleteVertexArrays
 import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import java.time.Duration
-import kotlin.collections.forEachIndexed
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.round
@@ -195,8 +192,8 @@ object MatrixHud {
 
         var displayCost = 0L
         var previousCost = 0L
-        var displayStatus = AVAILABLE
-        var previousStatus = AVAILABLE
+        var displayStatus = MagicAvailableStatus.AVAILABLE
+        var previousStatus = MagicAvailableStatus.AVAILABLE
     }
 
     private var cachedMagicDisplayData = mutableListOf<MagicDisplayData>()
@@ -490,7 +487,7 @@ object MatrixHud {
     private fun useMagicIndexed(index: Int) {
         val magic = MatrixClient.getPlayerMagics()[index]
         val target = this.targetedEntity ?: return
-        if (magic.availableStatus(player, target, player.getChannelQueue(target)) != AVAILABLE) {
+        if (magic.availableStatus(player, target, player.getChannelQueue(target)) != MagicAvailableStatus.AVAILABLE) {
             return
         }
 
@@ -570,11 +567,11 @@ object MatrixHud {
                 magic
             )
             when (status) {
-                TARGET_MISSING -> magicColorAnimations[index].setColor(
+                MagicAvailableStatus.TARGET_MISSING -> magicColorAnimations[index].setColor(
                     .0, .0, .0
                 )
 
-                AVAILABLE -> magicColorAnimations[index].setColor(
+                MagicAvailableStatus.AVAILABLE -> magicColorAnimations[index].setColor(
                     .0, .0, .0
                 )
 
@@ -639,7 +636,7 @@ object MatrixHud {
         renderer: LegacyMatrixUIRenderer,
     ) {
         val status = getMagicAvailableStatus(selectedMagic)
-        if (status == AVAILABLE || status == TARGET_MISSING || !shouldRenderHud()) {
+        if (status == MagicAvailableStatus.AVAILABLE || status == MagicAvailableStatus.TARGET_MISSING || !shouldRenderHud()) {
             AvailableStatusTooltip.hide()
         } else {
             AvailableStatusTooltip.show()
@@ -1147,8 +1144,8 @@ object MatrixHud {
         val status = getMagicAvailableStatus(
             magic
         ).let {
-            if (it == TARGET_MISSING) {
-                AVAILABLE
+            if (it == MagicAvailableStatus.TARGET_MISSING) {
+                MagicAvailableStatus.AVAILABLE
             } else {
                 it
             }
@@ -1736,7 +1733,7 @@ object MatrixHud {
             .map { it as LivingEntity }
             .filter {
                 val channelSequence = player.getChannelQueue(it)
-                selectedMagic.availableStatus(player, it, channelSequence) == AVAILABLE
+                selectedMagic.availableStatus(player, it, channelSequence) == MagicAvailableStatus.AVAILABLE
             }
     }
 

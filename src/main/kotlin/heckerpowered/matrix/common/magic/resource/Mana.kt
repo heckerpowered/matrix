@@ -3,7 +3,7 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.resource
 
 @JvmInline
 value class Mana(val amount: Double) {

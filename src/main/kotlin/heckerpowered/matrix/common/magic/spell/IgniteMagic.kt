@@ -7,12 +7,12 @@ package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.IGNITE_EFFECT
-import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.channel.ChannelQueue
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.MagicDefinition
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.effect.StatusEffects

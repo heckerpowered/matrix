@@ -6,8 +6,8 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.common.item.WizardHelmet
-import heckerpowered.matrix.common.magic.MagicManager
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
+import heckerpowered.matrix.common.magic.system.MagicManager
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.entity.LivingEntity

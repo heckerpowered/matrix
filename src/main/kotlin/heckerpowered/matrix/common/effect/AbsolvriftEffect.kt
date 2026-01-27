@@ -10,8 +10,8 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.HEALTH_SHRINK_EFFE
 import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.LivingDamageCallback
 import heckerpowered.matrix.common.event.LivingDamageEvent
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.magic.Mana.Companion.plus
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.plus
 import heckerpowered.matrix.common.persistent.mana
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.tag.MatrixDamageTypes

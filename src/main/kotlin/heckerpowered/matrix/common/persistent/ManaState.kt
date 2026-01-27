@@ -8,8 +8,8 @@ package heckerpowered.matrix.common.persistent
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.common.item.WizardHelmet
-import heckerpowered.matrix.common.magic.Mana
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.resource.Mana
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.network.SyncManaPayload
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.EquipmentSlot

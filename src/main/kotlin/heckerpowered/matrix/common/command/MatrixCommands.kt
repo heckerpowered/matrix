@@ -7,7 +7,7 @@ package heckerpowered.matrix.common.command
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.DoubleArgumentType
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.mana
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback

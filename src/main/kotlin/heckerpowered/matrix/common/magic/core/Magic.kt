@@ -18,12 +18,13 @@ import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes.adjus
 import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.magic.Mana.Companion.plus
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ChannelQueue
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.channel.ChannelRequest
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.plus
+import heckerpowered.matrix.common.magic.spell.MemoryWipeMagic
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.queueSize
 import heckerpowered.matrix.common.persistent.wizardHelmet
@@ -152,7 +153,7 @@ abstract class Magic(val definition: MagicDefinition) {
             }
         }
 
-        if (queue.contains<heckerpowered.matrix.common.magic.spell.MemoryWipeMagic>()) {
+        if (queue.contains<MemoryWipeMagic>()) {
             data.isSpoofed = true
         }
     }
