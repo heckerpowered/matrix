@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.item
@@ -19,5 +19,9 @@ object WizardHelmetHacker : WizardHelmet(
 ) {
     override fun getMagics(player: PlayerEntity, itemStack: ItemStack): List<Magic> {
         return MagicManager.getRegisteredMagics()
+    }
+
+    override fun hasMagic(itemStack: ItemStack, magic: Magic): Boolean {
+        return true
     }
 }
