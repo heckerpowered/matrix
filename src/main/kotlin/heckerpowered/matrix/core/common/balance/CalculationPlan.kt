@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.core.common.balance
@@ -32,4 +32,6 @@ package heckerpowered.matrix.core.common.balance
 data class CalculationPlan(
     val lanes: List<Lane>,
     val postProcess: (Double) -> Double = { it },
-)
+) {
+    constructor(vararg lanes: Lane, postProcess: (Double) -> Double = { it }) : this(lanes.toList(), postProcess)
+}
