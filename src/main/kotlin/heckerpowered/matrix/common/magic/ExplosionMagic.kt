@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
@@ -8,7 +8,6 @@ package heckerpowered.matrix.common.magic
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.persistent.magicClock
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.entity.LivingEntity
@@ -33,7 +32,7 @@ object ExplosionMagic : Magic(
 
     override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
         super.cast(player, target, sequence, data)
-        val damageSource = MemoryEraseMagic.getDamageSource(player, target, sequence) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
+        val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
 
         target.world.createExplosion(player, damageSource, explosionBehavior, target.x, target.y, target.z, ((player?.magicClock ?: 1.0) * 4.0).toFloat(), false, World.ExplosionSourceType.MOB)
         // if (target.world is ServerWorld) {
