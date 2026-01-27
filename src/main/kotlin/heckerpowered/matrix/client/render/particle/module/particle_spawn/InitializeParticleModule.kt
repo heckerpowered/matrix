@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.render.particle.module.particle_spawn
@@ -16,7 +16,7 @@ import org.lwjgl.opengl.GL46
 import org.lwjgl.system.MemoryUtil
 import java.lang.AutoCloseable
 
-class InitializeParticleModule() : ParticleSpawnModule(), AutoCloseable {
+class InitializeParticleModule : ParticleSpawnModule(), AutoCloseable {
     companion object {
         private var particleState: ParticleState? = null
         private val program = Program(

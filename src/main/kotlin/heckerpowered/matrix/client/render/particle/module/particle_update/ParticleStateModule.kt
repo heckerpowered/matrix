@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.render.particle.module.particle_update
@@ -11,7 +11,7 @@ import heckerpowered.matrix.client.shader.Program
 import heckerpowered.matrix.client.shader.ResourceShader
 import org.lwjgl.opengl.GL46
 
-class ParticleStateModule() : ParticleUpdateModule() {
+class ParticleStateModule : ParticleUpdateModule() {
     companion object {
         private val Program = Program(
             ResourceShader("/assets/matrix/shaders/particle/particle_update/particle_state.vsh", GL46.GL_VERTEX_SHADER),
