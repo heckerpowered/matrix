@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.shader
@@ -25,7 +25,7 @@ import heckerpowered.matrix.core.resourceToString
  *   The OpenGL shader type constant (such as `GL20.GL_VERTEX_SHADER` or `GL20.GL_FRAGMENT_SHADER`).
  */
 class ResourceShader(
-    private val path: String,
+    val path: String,
     type: Int,
 ) : Shader(type) {
     override val source: String by lazy { resourceToString(path) }
