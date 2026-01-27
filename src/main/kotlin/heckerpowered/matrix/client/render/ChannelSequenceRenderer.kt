@@ -1,11 +1,12 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.render
 
 import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.render.effect.SculkCatalystEffectRenderer
 import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
@@ -295,6 +296,7 @@ class ChannelSequenceRenderer(
             if (channelAnimations[index].magic == SculkCatalystMagic &&
                 channelAnimations[index].currentChannelTime < channelAnimations[index].channelTime
             ) {
+                SculkCatalystEffectRenderer.entity = entity
                 CollapseEffectRenderer.dissolveFactor.value = channelProgress / 4.0
             }
         }
