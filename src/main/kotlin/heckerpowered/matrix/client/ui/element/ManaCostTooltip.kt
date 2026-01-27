@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.ui.element
@@ -13,7 +13,7 @@ import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.Point
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.persistent.getChannelSequence
+import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
@@ -59,8 +59,8 @@ object ManaCostTooltip {
     fun render(drawContext: DrawContext, tickCounter: RenderTickCounter) {
         val currentMagic = MatrixHud.selectedMagic
         val target = MatrixHud.targetedEntity
-        val channelSequence = player.getChannelSequence(target)
-        val cost = currentMagic.getCost(player, target, channelSequence)
+        val channelQueue = player.getChannelQueue(target)
+        val cost = currentMagic.getCost(player, target, channelQueue)
         val normalCost = currentMagic.getNormalCost()
         if (cost == normalCost) {
             hide()
