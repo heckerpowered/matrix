@@ -1,16 +1,19 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.core
 
 import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.Mana
 import net.minecraft.entity.player.PlayerEntity
 
-val PlayerEntity.mana: Double
+val PlayerEntity.mana: Mana
     get() = Matrix.proxy.getPlayerMana(this)
 
-val PlayerEntity.maxMana: Double
+val PlayerEntity.maxMana: Mana
     get() = Matrix.proxy.getPlayerMaxMana(this)
 
+val PlayerEntity.isInfiniteMana: Boolean
+    get() = Matrix.proxy.isInfiniteMana(this)
