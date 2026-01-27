@@ -1,11 +1,11 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.effect.bloodPactActive
+import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
@@ -22,7 +22,7 @@ object PeakOverdriveEnchantment {
 
     private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
         val attacker = accumulator.attacker!!
-        if (attacker !is PlayerEntity || !attacker.bloodPactActive) {
+        if (attacker !is PlayerEntity || !attacker.isBloodPactActive) {
             return ActionResult.PASS
         }
 
