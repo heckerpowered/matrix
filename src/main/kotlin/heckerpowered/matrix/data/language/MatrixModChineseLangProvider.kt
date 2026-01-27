@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.data.language
@@ -24,6 +24,7 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.SECOND_WIND_EN
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.item.*
+import heckerpowered.matrix.common.magic.*
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider
 import net.minecraft.registry.RegistryWrapper
@@ -40,145 +41,158 @@ class MatrixModChineseLangProvider(
     ) {
         translationBuilder.add(MatrixLanguage.mana.key, "法力值")
 
-        translationBuilder.addMagic(MatrixLanguage.magicTargetPositioning.key, "目标定位")
+        translationBuilder.add(TargetPositioningMagic.definition.name.key, "目标定位")
         translationBuilder.add(
-            MatrixLanguage.magicTargetPositioningDescription.key,
+            TargetPositioningMagic.definition.description.key,
             "高亮目标及其周围§a24§r米内的生物，持续§a10§r秒。\n\n无法追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicDecisiveStrike.key, "毁灭打击")
+        translationBuilder.add(DecisiveStrikeMagic.definition.name.key, "毁灭打击")
         translationBuilder.add(
-            MatrixLanguage.magicDecisiveStrikeDescription.key,
+            DecisiveStrikeMagic.definition.description.key,
             "对目标造成§a6§r点伤害，基于玩家基础攻击力造成额外伤害，附带目标最大生命值§a14§r%的伤害。\n\n引导队列中所有法术的每点占用增加§a1§r%伤害，最多至§a400§r%。血之契约激活时，\n\n伤害增加100%。\n\n移除目标的受击无敌时间。\n\n可被追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicManaOverload.key, "法力过载")
+        translationBuilder.add(ManaOverloadMagic.definition.name.key, "法力过载")
         translationBuilder.add(
-            MatrixLanguage.magicManaOverloadDescription.key,
+            ManaOverloadMagic.definition.description.key,
             "使用法力过载目标，使目标的法术能力失效。\n\n对受到影响的敌人造成的伤害+§a15§r%。\n\n§c压制§r末影人的§d传送§r及§d闪避§r能力。\n§c压制§r坚守者引导§9音波尖啸§r的能力。\n§c压制§r灾厄村民的§c所有法术§r。\n§c压制§r守卫者的§9激光攻击§r及远古守卫者赋予玩家§7挖掘疲劳§r效果的能力。\n使女巫§c无法丢出药水§r。\n\n§c压制§r会立即中断并在效果持续时间内阻止其使用相关能力。\n\n叠加§a2§r层时移除并屏蔽目标身上的有益效果。\n\n叠加§a3§r层时造成§9持续性法术伤害§r。\n\n叠加到§c最大§r时，对目标造成其§a100§r%当前生命值的§9法术伤害§r，效果结束前无法再叠加。\n\n可被追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicHealthSteal.key, "生命偷取")
+        translationBuilder.add(HealthStealMagic.definition.name.key, "生命偷取")
         translationBuilder.add(
-            MatrixLanguage.magicHealthStealDescription.key,
+            HealthStealMagic.definition.description.key,
             "将目标§c最大生命值§r的§a50§r%转为自身的§6额外生命值§r。\n\n转换值的§a50§r%用于恢复§c生命值§r、§e饥饿值§r和§e饱和度§r。\n\n通过此种方式获得的§6额外生命值§r不能超过你的§c最大生命值§r。\n\n无法追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicExplosion.key, "原地爆炸")
+        translationBuilder.add(ExplosionMagic.definition.name.key, "原地爆炸")
         translationBuilder.add(
-            MatrixLanguage.magicExplosionDescription.key,
+            ExplosionMagic.definition.description.key,
             "在选定目标的位置产生一次§c爆炸§r。\n\n§c爆炸§r的威力为§a4§r。\n\n§c爆炸§r造成的伤害视为§9法术伤害§r。\n\n§c爆炸§r不会破坏方块，也不会生成§c火焰§r。\n\n可被追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.killMagic.key, "彻底抹除")
+        translationBuilder.add(KillMagic.definition.name.key, "彻底抹除")
         translationBuilder.add(
-            MatrixLanguage.killMagicDescription.key, "立即击杀目标。\n\n可被追踪。"
+            KillMagic.definition.description.key,
+            "立即击杀目标。\n\n可被追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.sculkCatalystMagic.key, "幽匿催发")
+        translationBuilder.add(SculkCatalystMagic.definition.name.key, "幽匿催发")
         translationBuilder.add(
-            MatrixLanguage.sculkCatalystMagicDescription.key,
+            SculkCatalystMagic.definition.description.key,
             "对目标造成致命伤害，在成功击杀目标时会散布到§a25§r米内的§a5§r名敌人上。每次散布时自动消耗法力，每次散布的引导时间会越来越短，消耗的法力越来越多，但只要你愿意付出血的代价，消耗也可以减半⋯\n\n可被追踪。\n\n§7§o“和我的代码说去吧”§r"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicMemoryErase.key, "记忆擦除")
+        translationBuilder.add(MemoryWipeMagic.definition.name.key, "记忆擦除")
         translationBuilder.add(
-            MatrixLanguage.magicMemoryEraseDescription.key,
+            MemoryWipeMagic.definition.description.key,
             "强迫目标解除正在锁定的目标。\n\n排在此法术后面的法术将无法被追踪。\n\n排在记忆擦除后的法术造成的伤害不认为是你造成的，无法触发只对你有效的相关效果。\n\n无法追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicIgniteMagic.key, "点燃")
+        translationBuilder.add(IgniteMagic.definition.name.key, "点燃")
         translationBuilder.add(
-            MatrixLanguage.magicIgniteMagicDescription.key,
+            IgniteMagic.definition.description.key,
             "§c点燃§r目标§a5§r秒，造成持续伤害。\n\n对已经受到§c点燃§r影响的敌人引导§c点燃§r会延长效果的持续时间至§a8§r秒。\n\n§c融化§r敌人的护甲，减少目标§a40§r%的护甲和韧性。\n\n如果目标处于§2中毒§r状态则§c引爆§r敌人。\n\n§c爆炸§r的威力为§a4§r。\n\n§c爆炸§r造成的伤害视为§9法术伤害§r。\n\n§c爆炸§r不会破坏方块，也不会生成§c火焰§r。\n\n可被追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicBreakingBad.key, "绝命毒师")
+        translationBuilder.add(BreakingBadMagic.definition.name.key, "绝命毒师")
         translationBuilder.add(
-            MatrixLanguage.magicBreakingBadDescription.key,
+            BreakingBadMagic.definition.description.key,
             "使目标§2中毒§r、失明，持续§a5§r秒。\n\n可以散布到§a8§r米内的§a4§r名敌人身上。\n\n如果敌人处于§c点燃§r状态，则会§c引爆§r敌人。\n\n§c爆炸§r的威力为§a4§r。\n\n§c爆炸§r造成的伤害视为§9法术伤害§r。\n\n§c爆炸§r不会破坏方块，也不会生成§c火焰§r。\n\n可被追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicSpread.key, "连带传染")
+        translationBuilder.add(SpreadMagic.definition.name.key, "连带传染")
         translationBuilder.add(
-            MatrixLanguage.magicSpreadDescription.key,
+            SpreadMagic.definition.description.key,
             "排在此技能后的所有技能会传播给§a24§r米内的生物。\n\n传播时自动消耗法力。\n\n此技能本身无法被传播。\n\n无法追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicCrippleMovement.key, "阻碍移动")
+        translationBuilder.add(CrippleMovementMagic.definition.name.key, "阻碍移动")
         translationBuilder.add(
-            MatrixLanguage.magicCrippleMovementDescription.key,
+            CrippleMovementMagic.definition.description.key,
             "禁用目标的§d传送能力§r、阻碍目标移动，持续§a10§r秒。\n\n对抗玩家时，此技能的法力消耗会提升，效果也会更弱。\n\n无法追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicSystemCrash.key, "系统崩溃")
+        translationBuilder.add(SystemCrashMagic.definition.name.key, "系统崩溃")
         translationBuilder.add(
-            MatrixLanguage.magicSystemCrashDescription.key,
+            SystemCrashMagic.definition.description.key,
             "仅对玩家有效，使目标玩家系统崩溃。\n\n无法追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicAttract.key, "无形的大手")
+        translationBuilder.add(AttractMagic.definition.name.key, "无形的大手")
         translationBuilder.add(
-            MatrixLanguage.magicAttractDescription.key,
+            AttractMagic.definition.description.key,
             "在目标位置创建一只§c无形的大手§r，持续§a6§r秒。\n\n持续牵引附近§a6§r米内的实体到其位置。\n\n此法术不会牵引施法者。\n\n无法追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicLightningBoltMagic.key, "闪电旋风劈")
+        translationBuilder.add(LightningBoltMagic.definition.name.key, "闪电旋风劈")
         translationBuilder.add(
-            MatrixLanguage.magicLightningBoltMagicDescription.key,
+            LightningBoltMagic.definition.description.key,
             """
-                在目标位置召唤闪电，闪电可能具有不同颜色，不同颜色的闪电具有不同的效果。
-                
-                §4红色闪电§r对命中实体造成§a400§r%伤害。
-                
-                §c橙色闪电§r将移除命中实体所有护甲，持续§a10§r秒。
-                
-                §e黄色闪电§r将高亮命中的实体。无论距离目标多远，立即蓄力手持物品，并攻击目标一次。
-                
-                §a绿色闪电§r在命中时治疗你1颗心，并使命中目标§2中毒§r，持续§a10§r秒。
-                
-                §9青色闪电§r将为命中目标自动引导§9阻碍移动§r，不消耗额外法力。对于已处在此状态的目标，同时使其进入§c危险§r状态，持续§a10§r秒。
-                
-                §1蓝色闪电§r在命中时引导此魔法。
-                
-                §a紫色闪电§r的影响范围变大§a100§r%，在每次命中时造成小范围爆炸，并使目标进入“引雷”状态，持续§a180§r秒。
-                
-                白色闪电无特殊效果。
-                
-                无色闪电将立即击杀所有命中实体。
-                
-                无色闪电的抽取概率为§a0.6§r%，其他所有颜色抽取概率均分。
-                由玩家引导的闪电与自然闪电有不同的行为，例如不会充能苦力怕，伤害不随难度变化，也不会触发成就。
-                此魔法排在记忆擦除后会导致有关你的效果无效，例如无法治疗你。
-                连续释放法力消耗-§a20§r%，可叠加，至多至§a80§r%。
-                
-                不可追踪。
-            """.trimIndent()
+        在目标位置召唤闪电，闪电可能具有不同颜色，不同颜色的闪电具有不同的效果。
+        
+        §4红色闪电§r对命中实体造成§a400§r%伤害。
+        
+        §c橙色闪电§r将移除命中实体所有护甲，持续§a10§r秒。
+        
+        §e黄色闪电§r将高亮命中的实体。无论距离目标多远，立即蓄力手持物品，并攻击目标一次。
+        
+        §a绿色闪电§r在命中时治疗你1颗心，并使命中目标§2中毒§r，持续§a10§r秒。
+        
+        §9青色闪电§r将为命中目标自动引导§9阻碍移动§r，不消耗额外法力。对于已处在此状态的目标，同时使其进入§c危险§r状态，持续§a10§r秒。
+        
+        §1蓝色闪电§r在命中时引导此魔法。
+        
+        §a紫色闪电§r的影响范围变大§a100§r%，在每次命中时造成小范围爆炸，并使目标进入“引雷”状态，持续§a180§r秒。
+        
+        白色闪电无特殊效果。
+        
+        无色闪电将立即击杀所有命中实体。
+        
+        无色闪电的抽取概率为§a0.6§r%，其他所有颜色抽取概率均分。
+        由玩家引导的闪电与自然闪电有不同的行为，例如不会充能苦力怕，伤害不随难度变化，也不会触发成就。
+        此魔法排在记忆擦除后会导致有关你的效果无效，例如无法治疗你。
+        连续释放法力消耗-§a20§r%，可叠加，至多至§a80§r%。
+        
+        不可追踪。
+    """.trimIndent()
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicArmorPenetrationMagic.key, "护甲穿透")
+        translationBuilder.add(ArmorPenetrationMagic.definition.name.key, "护甲穿透")
         translationBuilder.add(
-            MatrixLanguage.magicArmorPenetrationMagicDescription.key,
+            ArmorPenetrationMagic.definition.description.key,
             "移除目标§a40§r%护甲和韧性，持续10秒。\n\n相关的效果可被牛奶清除。\n\n无法追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicTeleport.key, "传送")
+        translationBuilder.add(TeleportMagic.definition.name.key, "传送")
         translationBuilder.add(
-            MatrixLanguage.magicTeleportDescription.key,
+            TeleportMagic.definition.description.key,
             "传送到目标位置，并自动攻击附近3米内的生物。\n\n可被追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicSonicBoom.key, "音波尖啸")
+        translationBuilder.add(SonicBoomMagic.definition.name.key, "音波尖啸")
         translationBuilder.add(
-            MatrixLanguage.magicSonicBoomDescription.key,
+            SonicBoomMagic.definition.description.key,
             "引导一次音波尖啸，对目标造成10点伤害。\n\n音波尖啸无视护甲值、任何可减伤的魔咒（如保护）和盾牌的阻挡，不能触发荆棘魔咒，且对女巫造成的伤害降低85%。\n\n凋零护甲可减免音波尖啸造成的伤害。\n\n可被追踪。"
         )
 
-        translationBuilder.addMagic(MatrixLanguage.magicBruteForce.key, "力大砖飞")
-        translationBuilder.add(MatrixLanguage.magicBruteForceDescription.key, "使目标进入§c危险§r状态，持续§a10§r秒。\n\n危险状态将使目标受到的伤害增加100%，每一效果等级进一步增加100%\n\n相关效果可被牛奶清除。\n\n无法追踪。")
+        translationBuilder.add(BruteForceMagic.definition.name.key, "力大砖飞")
+        translationBuilder.add(
+            BruteForceMagic.definition.description.key,
+            "使目标进入§c危险§r状态，持续§a10§r秒。\n\n危险状态将使目标受到的伤害增加100%，每一效果等级进一步增加100%\n\n相关效果可被牛奶清除。\n\n无法追踪。"
+        )
 
-        translationBuilder.addMagic(MatrixLanguage.magicLevitation.key, "装逼让你飞起来")
-        translationBuilder.add(MatrixLanguage.magicLevitationDescription.key, "使目标进入漂浮状态，持续§a10§r秒。\n\n可叠加，叠加将提升效果等级并重置效果持续时间，没有上限。\n\n无法追踪。")
+        translationBuilder.add(LevitationMagic.definition.name.key, "装逼让你飞起来")
+        translationBuilder.add(
+            LevitationMagic.definition.description.key,
+            "使目标进入漂浮状态，持续§a10§r秒。\n\n可叠加，叠加将提升效果等级并重置效果持续时间，没有上限。\n\n无法追踪。"
+        )
+
+        translationBuilder.add(AbsolvriftMagic.definition.name.key, "无赦界裂")
+        translationBuilder.add(
+            AbsolvriftMagic.definition.description.key,
+            "对目标及其§a6m§r范围内的目标造成一次伤害，相当于你§a100%§r的攻击力。\n\n在接下来20秒内，自动攻击§a8§r米内至多§a5§r个目标，按距离排序，伤害相当于你§a100%§r的攻击力，每秒一次。\n\n自动攻击会使目标在接下来§a8§r秒内的生命上限减少§a2.5%§r，可叠加，至多至§a50%§r。\n\n造成伤害时自动追加一次攻击，伤害相当于你75%攻击力，视为自动攻击。\n\n可被追踪。"
+        )
 
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "超频或降频魔法")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "超频或降频法力")
@@ -312,6 +326,7 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(WizardHelmet3, "巫师3型“血铸湮灭”")
         translationBuilder.add(WizardHelmet4, "巫师4型“力气和手段”")
         translationBuilder.add(WizardHelmet5, "巫师5型“灭律构式”")
+        translationBuilder.add(WizardHelmet13, "巫师13型“红溢盈契”")
 
         translationBuilder.add(LightningChestplate1, "闪电1型“实境扭曲”")
 
@@ -334,5 +349,7 @@ class MatrixModChineseLangProvider(
 
         translationBuilder.add(MatrixLanguage.borrowedTimeChargeDescription.key, "实境扭曲充能: ")
         translationBuilder.add(MatrixLanguage.wizardHelmetLoadDescription.key, "当前负载: ")
+        translationBuilder.add(MatrixLanguage.wizardHelmetBloodPactConversionEfficiency.key, "血之契约兑换效率: ")
+        translationBuilder.add(MatrixLanguage.wizardHelmetManaDeltaDescription.key, "已使用/回复的法力: ")
     }
 }
