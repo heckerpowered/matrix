@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.effect
@@ -52,6 +52,14 @@ object MatrixStatusEffects {
     @get:JvmName("getIgniteEffect")
     val IGNITE_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(IgniteEffect) }
 
+    @JvmStatic
+    @get:JvmName("getAbsolvriftEffect")
+    val ABSOLVRIFT_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(AbsolvriftEffect) }
+
+    @JvmStatic
+    @get:JvmName("getHealthShrinkEffect")
+    val HEALTH_SHRINK_EFFECT: RegistryEntry<StatusEffect> by lazy { Registries.STATUS_EFFECT.getEntry(HealthShrinkEffect) }
+
     fun onInitialize() {
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("mana_overload"), ManaOverloadEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("armor_penetration"), ArmorPenetrationEffect)
@@ -63,5 +71,7 @@ object MatrixStatusEffects {
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("blood_pact"), BloodPactEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("borrowed_time"), BorrowedTimeEffect)
         Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("ignite"), IgniteEffect)
+        Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("absolvrift"), AbsolvriftEffect)
+        Registry.register(Registries.STATUS_EFFECT, Matrix.identifier("health_shrink"), HealthShrinkEffect)
     }
 }
