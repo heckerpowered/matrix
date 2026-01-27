@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.ui.foundation
@@ -27,7 +27,7 @@ data class Thickness(
     /**
      * The thickness of the bottom side of the element.
      */
-    var top: Double
+    var top: Double,
 ) {
     /**
      * Creates a new [Thickness] with the same length on all sides.

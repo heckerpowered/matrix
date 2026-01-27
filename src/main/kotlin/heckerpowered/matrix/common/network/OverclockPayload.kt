@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.network
@@ -15,7 +15,7 @@ import net.minecraft.network.packet.CustomPayload
 
 class OverclockPayload(
     private val manaOverclock: Double,
-    private val magicOverclock: Double
+    private val magicOverclock: Double,
 ) : CustomPayload {
     companion object {
         val id: CustomPayload.Id<OverclockPayload> = CustomPayload.id("overclock")
