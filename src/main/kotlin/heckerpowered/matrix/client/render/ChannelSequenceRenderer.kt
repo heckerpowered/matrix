@@ -13,7 +13,7 @@ import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.event.EntityTickCallback
-import heckerpowered.matrix.common.magic.SculkCatalystMagic
+import heckerpowered.matrix.common.magic.spell.SculkCatalystMagic
 import heckerpowered.matrix.core.MatrixLivingEntity
 import heckerpowered.matrix.core.worldToScreen
 import net.minecraft.client.MinecraftClient

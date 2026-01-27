@@ -12,9 +12,9 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.entity.MagicLightningEntity.LightningType.*
 import heckerpowered.matrix.common.magic.ChannelExecutor
 import heckerpowered.matrix.common.magic.ChannelRequest
-import heckerpowered.matrix.common.magic.CrippleMovementMagic
-import heckerpowered.matrix.common.magic.ExplosionMagic.explosionBehavior
-import heckerpowered.matrix.common.magic.LightningBoltMagic
+import heckerpowered.matrix.common.magic.spell.CrippleMovementMagic
+import heckerpowered.matrix.common.magic.spell.ExplosionMagic.explosionBehavior
+import heckerpowered.matrix.common.magic.spell.LightningBoltMagic
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.block.AbstractFireBlock
 import net.minecraft.block.Blocks

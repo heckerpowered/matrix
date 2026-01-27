@@ -3,11 +3,11 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.common.magic.*
 import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
@@ -34,7 +34,7 @@ object BreakingBadMagic : Magic(
 
         if (target.isOnFire) {
             val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { player?.damageSources?.explosion(target, player) }
-            target.world.createExplosion(player, damageSource, explosionBehavior, target.x, target.y, target.z, 4.0F, false, World.ExplosionSourceType.MOB)
+            target.world.createExplosion(player, damageSource, ExplosionMagic.explosionBehavior, target.x, target.y, target.z, 4.0F, false, World.ExplosionSourceType.MOB)
             // if (target.world is ServerWorld) {
             //     target.world.server?.playerManager?.playerList?.forEach {
             //         ServerPlayNetworking.send(it, ExplosionPayload(target.id))

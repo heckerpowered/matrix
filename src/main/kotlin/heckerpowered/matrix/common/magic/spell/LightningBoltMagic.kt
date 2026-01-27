@@ -3,11 +3,15 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.common.magic
+package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.entity.MagicLightningEntity
+import heckerpowered.matrix.common.magic.ChannelQueue
+import heckerpowered.matrix.common.magic.ExecutionPayload
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
+import heckerpowered.matrix.common.magic.Magic
+import heckerpowered.matrix.common.magic.MagicDefinition
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.core.common.balance.Accumulator
 import net.minecraft.entity.LivingEntity

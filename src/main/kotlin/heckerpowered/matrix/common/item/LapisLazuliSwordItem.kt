@@ -9,7 +9,7 @@ import heckerpowered.matrix.client.player
 import heckerpowered.matrix.common.magic.ChannelExecutor
 import heckerpowered.matrix.common.magic.ChannelQueue
 import heckerpowered.matrix.common.magic.ChannelRequest
-import heckerpowered.matrix.common.magic.DecisiveStrikeMagic
+import heckerpowered.matrix.common.magic.spell.DecisiveStrikeMagic
 import net.minecraft.entity.LivingEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.item.SwordItem

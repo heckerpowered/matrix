@@ -40,7 +40,7 @@ import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
 import heckerpowered.matrix.common.effect.isBloodPactActive
-import heckerpowered.matrix.common.magic.SculkCatalystMagic
+import heckerpowered.matrix.common.magic.spell.SculkCatalystMagic
 import heckerpowered.matrix.core.approximatelyEqual
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.MinecraftClient

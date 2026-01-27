@@ -21,6 +21,7 @@ import heckerpowered.matrix.common.item.WizardHelmet5
 import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.Mana.Companion.plus
+import heckerpowered.matrix.common.magic.spell.MemoryWipeMagic
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.queueSize
 import heckerpowered.matrix.common.persistent.wizardHelmet
