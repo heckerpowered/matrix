@@ -1,20 +1,18 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.magic.Magic
-import heckerpowered.matrix.data.language.key
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.LivingEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
-import net.minecraft.text.MutableText
 
 object MatrixEnchantments {
     @JvmField
@@ -80,7 +78,7 @@ object MatrixEnchantments {
 
     val Magic.enchantmentKey: RegistryKey<Enchantment>
         get() {
-            return of((this.definition.name as MutableText).key.substringAfterLast('.'))
+            return of(definition.identifier.path)
         }
 
     fun onInitialize() {
