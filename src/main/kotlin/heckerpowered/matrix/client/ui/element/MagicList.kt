@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.ui.element
@@ -12,10 +12,10 @@ import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.shader.BlurRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
+import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.Magic
 import heckerpowered.matrix.common.magic.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.description
-import heckerpowered.matrix.common.persistent.getChannelSequence
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.*
 import net.minecraft.text.Text
@@ -148,14 +148,14 @@ object MagicList {
     }
 
     private fun getMagicAvailableStatus(magic: Magic): MagicAvailableStatus {
-        val channelSequence = player.getChannelSequence(targetedEntity)
+        val channelSequence = player.getChannelQueue(targetedEntity)
         return magic.availableStatus(player, targetedEntity, channelSequence)
     }
 
     private fun calculateMagicWidth(magic: Magic): Double {
         val textRenderer = minecraft.textRenderer
 
-        val channelSequence = player.getChannelSequence(targetedEntity)
+        val channelSequence = player.getChannelQueue(targetedEntity)
         val costString = magic.getCost(player, targetedEntity, channelSequence).toString()
         val statusString = magic.availableStatus(player, targetedEntity, channelSequence).description.toString()
 
@@ -174,9 +174,9 @@ object MagicList {
         val magic = magics[index]
         val indent = indentList[index]
 
-        val channelSequence = player.getChannelSequence(targetedEntity)
-        val costString = magic.getCost(player, targetedEntity, channelSequence).toString()
-        val statusString = magic.availableStatus(player, targetedEntity, channelSequence).description.toString()
+        val channelQueue = player.getChannelQueue(targetedEntity)
+        val costString = magic.getCost(player, targetedEntity, channelQueue).toString()
+        val statusString = magic.availableStatus(player, targetedEntity, channelQueue).description.toString()
 
         val textRenderer = minecraft.textRenderer
         val magicNameWidth = textRenderer.getWidth(magic.definition.name)
