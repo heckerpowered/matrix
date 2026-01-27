@@ -112,7 +112,7 @@ abstract class Magic(val definition: MagicDefinition) {
                 .filter { it != player && it.isAlive }
                 .firstOrNull { player.getChannelQueue(it)?.isEmpty ?: true }
             if (nearestEntity != null) {
-                ChannelExecutor.channel(this, player, nearestEntity, ChannelPlan(data = ExecutionPayload(isSpread = true)))
+                ChannelExecutor.channel(this, player, nearestEntity, ChannelRequest(data = ExecutionPayload(isSpread = true)))
             }
         }
     }

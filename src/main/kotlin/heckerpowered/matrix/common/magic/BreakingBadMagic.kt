@@ -51,7 +51,7 @@ object BreakingBadMagic : Magic(
             .filter { it != target && it != player && it.isAlive }
             .filter { it.getChannelQueue(player)?.isEmpty ?: true }
             .consumeWhile(4) {
-                ChannelExecutor.channel(BreakingBadMagic, player, it, ChannelPlan(costMana = false, data = ExecutionPayload(isSpread = true))) == MagicAvailableStatus.AVAILABLE
+                ChannelExecutor.channel(BreakingBadMagic, player, it, ChannelRequest(costMana = false, data = ExecutionPayload(isSpread = true))) == MagicAvailableStatus.AVAILABLE
             }
             .drain()
     }

@@ -10,7 +10,7 @@ import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ChannelingMagic(
+data class ChannelEntry(
     @Contextual val magic: Magic,
     val cost: Long,
     val channelTime: Long,

@@ -25,7 +25,7 @@ import net.minecraft.server.network.ServerPlayerEntity
  * @property costMana whether channeling should consume mana.
  * @property data additional contextual magic data.
  */
-open class ChannelPlan(
+open class ChannelRequest(
     val bypassLock: Boolean = false,
     val costMana: Boolean = true,
     val data: ExecutionPayload = ExecutionPayload(),

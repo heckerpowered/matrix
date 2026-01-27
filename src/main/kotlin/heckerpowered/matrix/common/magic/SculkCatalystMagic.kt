@@ -46,11 +46,11 @@ object SculkCatalystMagic : Magic(
         var bounces: Long = 0,
     ) : ExecutionPayload()
 
-    private class SculkCatalystChannelPlan(
+    private class SculkCatalystChannelRequest(
         bypassLock: Boolean = false,
         costMana: Boolean = true,
         data: ExecutionPayload = ExecutionPayload(),
-    ) : ChannelPlan(bypassLock, costMana, data) {
+    ) : ChannelRequest(bypassLock, costMana, data) {
         override fun isMagicAvailable(availableStatus: MagicAvailableStatus): Boolean {
             if (availableStatus == MagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE) {
                 return true
@@ -160,7 +160,7 @@ object SculkCatalystMagic : Magic(
             .firstOrNull { it.getChannelQueue(player)?.isEmpty ?: true }
         if (nearestEntity != null) {
             ChannelExecutor.channel(
-                SculkCatalystMagic, player, nearestEntity, SculkCatalystChannelPlan(
+                SculkCatalystMagic, player, nearestEntity, SculkCatalystChannelRequest(
                     data = sculkCatalystData
                 )
             )

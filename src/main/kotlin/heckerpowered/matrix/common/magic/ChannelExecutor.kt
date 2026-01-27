@@ -19,7 +19,7 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object ChannelExecutor {
-    fun channel(magic: Magic, channeler: ServerPlayerEntity, target: LivingEntity, channelPlan: ChannelPlan = ChannelPlan()): MagicAvailableStatus {
+    fun channel(magic: Magic, channeler: ServerPlayerEntity, target: LivingEntity, channelRequest: ChannelRequest = ChannelRequest()): MagicAvailableStatus {
         check(target is MatrixLivingEntity)
 
         val queues = target.getChannelQueues()
@@ -27,27 +27,27 @@ object ChannelExecutor {
             ChannelQueue(channeler, channeler.uuid, target)
         }
 
-        val data = channelPlan.data
+        val data = channelRequest.data
         val channelTime = magic.getChannelTime(channeler, target, queue, data)
         val cost = magic.getCost(channeler, target, queue, data)
         val convertRatio = magic.getBloodPactConvertRatio(channeler, target, queue, data)
 
         val available = magic.availableStatus(channeler, target, queue)
-        if (!channelPlan.isMagicAvailable(available)) {
+        if (!channelRequest.isMagicAvailable(available)) {
             return available
         }
 
-        if (!channelPlan.payCost(channeler, cost.mana, convertRatio)) {
+        if (!channelRequest.payCost(channeler, cost.mana, convertRatio)) {
             return MagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
         }
 
-        val channelingMagic = ChannelingMagic(magic, cost, channelTime, data = channelPlan.data)
-        channel(channelingMagic, channeler, target)
+        val channelEntry = ChannelEntry(magic, cost, channelTime, data = channelRequest.data)
+        channel(channelEntry, channeler, target)
         ServerPlayNetworking.send(channeler, ChannelMagicPayload(magic.definition.uuid, target.id, channelTime))
         return MagicAvailableStatus.AVAILABLE
     }
 
-    fun channel(magic: ChannelingMagic, channeler: Channeler, target: LivingEntity) {
+    fun channel(magic: ChannelEntry, channeler: Channeler, target: LivingEntity) {
         check(target is MatrixLivingEntity)
 
         val queues = target.getChannelQueues()
@@ -60,7 +60,7 @@ object ChannelExecutor {
     }
 
     @Environment(EnvType.CLIENT)
-    fun performChannelAnimation(magic: ChannelingMagic, target: LivingEntity, channelTime: Long = magic.channelTime, currentChannelTime: Long = 0L) {
+    fun performChannelAnimation(magic: ChannelEntry, target: LivingEntity, channelTime: Long = magic.channelTime, currentChannelTime: Long = 0L) {
         ChannelSequenceRenderer
             .channelSequenceAnimationMap
             .computeIfAbsent(target) { mutableListOf() }

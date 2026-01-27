@@ -11,7 +11,7 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_E
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.entity.MagicLightningEntity.LightningType.*
 import heckerpowered.matrix.common.magic.ChannelExecutor
-import heckerpowered.matrix.common.magic.ChannelPlan
+import heckerpowered.matrix.common.magic.ChannelRequest
 import heckerpowered.matrix.common.magic.CrippleMovementMagic
 import heckerpowered.matrix.common.magic.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.magic.LightningBoltMagic
@@ -270,7 +270,7 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                     if (channeler == null) {
                         entity.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 4))
                     } else {
-                        ChannelExecutor.channel(CrippleMovementMagic, channeler, entity, ChannelPlan(costMana = false))
+                        ChannelExecutor.channel(CrippleMovementMagic, channeler, entity, ChannelRequest(costMana = false))
                     }
                 }
             }

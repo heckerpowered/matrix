@@ -52,8 +52,8 @@ class ChannelQueue(
 
     var isLocked: Boolean = false
 
-    var active: ChannelingMagic? = null
-    val queue: ArrayDeque<ChannelingMagic> = ArrayDeque()
+    var active: ChannelEntry? = null
+    val queue: ArrayDeque<ChannelEntry> = ArrayDeque()
 
     val isEmpty: Boolean
         get() = active == null && queue.isEmpty()
@@ -67,7 +67,7 @@ class ChannelQueue(
         queue.clear()
     }
 
-    fun enqueue(pending: ChannelingMagic) {
+    fun enqueue(pending: ChannelEntry) {
         if (active == null) {
             active = pending
             return
@@ -75,7 +75,7 @@ class ChannelQueue(
         queue.addLast(pending)
     }
 
-    fun channelingMagics(): List<ChannelingMagic> = buildList {
+    fun channelingMagics(): List<ChannelEntry> = buildList {
         active?.let(::add)
         addAll(queue)
     }
@@ -92,10 +92,10 @@ class ChannelQueue(
      * If the active channeling has finished, removes it from active, promotes the next
      * pending entry from the queue (if any), and returns the finished channeling.
      *
-     * @return the finished [ChannelingMagic] when one just completed in this tick,
+     * @return the finished [ChannelEntry] when one just completed in this tick,
      *         or null if none completed.
      */
-    fun tick(): ChannelingMagic? {
+    fun tick(): ChannelEntry? {
         if (isEmpty) {
             isLocked = false
         }

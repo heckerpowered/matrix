@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.persistent
 
-import heckerpowered.matrix.common.magic.ChannelingMagic
+import heckerpowered.matrix.common.magic.ChannelEntry
 import heckerpowered.matrix.common.persistent.serialization.seralizer.UUIDSerializer
 import kotlinx.serialization.Serializable
 import java.util.*
@@ -15,6 +15,6 @@ data class PersistChannelQueue(
     @Serializable(with = UUIDSerializer::class)
     var channelerUuid: UUID,
     var isLocked: Boolean = false,
-    var active: ChannelingMagic? = null,
-    val queue: List<ChannelingMagic>,
+    var active: ChannelEntry? = null,
+    val queue: List<ChannelEntry>,
 )

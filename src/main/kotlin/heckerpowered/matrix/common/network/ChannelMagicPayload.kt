@@ -6,9 +6,9 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.magic.ChannelEntry
 import heckerpowered.matrix.common.magic.ChannelExecutor
 import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.ChannelingMagic
 import heckerpowered.matrix.common.magic.MagicManager
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.entity.LivingEntity
@@ -56,9 +56,9 @@ class ChannelMagicPayload(
             }
 
             val cost = magic.getCost(player, entity, player.getChannelQueue(entity))
-            val channelingMagic = ChannelingMagic(magic, cost, channelTime, currentChannelTime)
-            ChannelExecutor.channel(channelingMagic, player, entity)
-            ChannelExecutor.performChannelAnimation(channelingMagic, entity, channelTime, currentChannelTime)
+            val channelEntry = ChannelEntry(magic, cost, channelTime, currentChannelTime)
+            ChannelExecutor.channel(channelEntry, player, entity)
+            ChannelExecutor.performChannelAnimation(channelEntry, entity, channelTime, currentChannelTime)
         }
     }
 }
