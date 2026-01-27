@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.network
@@ -57,7 +57,7 @@ class ExplosionPayload(
         ShockwaveRenderer.waveSize.duration = Duration.ofMillis(1000)
         ShockwaveRenderer.waveSize.start()
 
-        CameraShake.shake(strength = 0.5F, duration = 25.milliseconds)
+        CameraShake.shake(strength = 1F, duration = 100.milliseconds)
 
         ExplosionParticle.randomVelocityModule.speedRange = Vector2f(0.0F, 20.0F)
         ExplosionParticle.spawnParticleAt(entity.pos)
