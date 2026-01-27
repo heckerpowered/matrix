@@ -1,12 +1,13 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
 
 import heckerpowered.matrix.core.common.balance.CalculationPlan
 import heckerpowered.matrix.core.common.balance.NumericCalculator
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import java.util.*
@@ -34,8 +35,8 @@ open class MagicDefinition(
     val baseCost: Mana,
     val baseChannelTime: GameTick,
 ) {
-    open val name: Text = Text.translatable("matrix.magic.${identifier.path}.name")
-    open val description: Text = Text.translatable("matrix.magic.${identifier.path}.description")
+    open val name: MutableText = Text.translatable("matrix.magic.${identifier.path}.name")
+    open val description: MutableText = Text.translatable("matrix.magic.${identifier.path}.description")
 
     open val uuid: UUID = UUID.nameUUIDFromBytes(identifier.toString().toByteArray())
 }
