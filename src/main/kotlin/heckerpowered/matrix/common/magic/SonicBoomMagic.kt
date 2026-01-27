@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
@@ -8,15 +8,18 @@ package heckerpowered.matrix.common.magic
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.magic.GameTick.Companion.ticks
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
-import heckerpowered.matrix.common.persistent.ChannelQueue
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
+import heckerpowered.matrix.core.extensions.EntityExtensions.damage
+import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.particle.ParticleTypes
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 import net.minecraft.util.math.Box
+import net.minecraft.util.math.Vec3d
 import kotlin.math.floor
 
 object SonicBoomMagic : Magic(
@@ -31,31 +34,44 @@ object SonicBoomMagic : Magic(
         if (player == null) {
             return
         }
-        val startPosition = player.eyePos
+
+        val world = player.serverWorld
+        castSonicBoom(world, player, target)
+        target.getNearestEntities(20.0)
+            .filterIsInstance<LivingEntity>()
+            .filter { it != player }
+            .take(5)
+            .forEach {
+                castSonicBoom(world, player, it, target.pos) { dist -> dist.coerceAtLeast(20) }
+            }
+    }
+
+    private fun castSonicBoom(world: ServerWorld, attacker: LivingEntity, target: LivingEntity, startPosition: Vec3d = attacker.eyePos, distanceModifier: (Int) -> Int = { it }) {
+        val startPosition = startPosition
         val endPosition = target.eyePos
         val direction = endPosition.subtract(startPosition)
         val normalizedDirection = direction.normalize()
 
-        val step = floor(direction.length()).toInt() + 7
+        val step = distanceModifier(floor(direction.length()).toInt() + 7)
         for (i in 1..step) {
             val currentPosition = startPosition.add(normalizedDirection.multiply(i.toDouble()))
-            player.serverWorld.spawnParticles(ParticleTypes.SONIC_BOOM, currentPosition.x, currentPosition.y, currentPosition.z, 1, 0.0, 0.0, 0.0, 0.0)
+            world.spawnParticles(ParticleTypes.SONIC_BOOM, currentPosition.x, currentPosition.y, currentPosition.z, 1, 0.0, 0.0, 0.0, 0.0)
 
             val boundingBox = Box(currentPosition, currentPosition).expand(3.0)
-            for (entity in player.serverWorld.getOtherEntities(player, boundingBox)) {
-                if (entity.damage(player.serverWorld.damageSources.create(MatrixDamageTypes.magic, player), 10.0f)) {
-                    val horizontalKnockback = 0.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
-                    val verticalKnockback = 2.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
-                    entity.addVelocity(normalizedDirection.x * verticalKnockback, normalizedDirection.y * horizontalKnockback, normalizedDirection.z * verticalKnockback)
+            for (entity in world.getOtherEntities(attacker, boundingBox)) {
+                if (entity.damage(world.damageSources.create(MatrixDamageTypes.magic, attacker), 10.0f)) {
+                    0.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
+                    2.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
+                    // entity.addVelocity(normalizedDirection.x * verticalKnockback, normalizedDirection.y * horizontalKnockback, normalizedDirection.z * verticalKnockback)
                 }
             }
         }
 
-        player.serverWorld.playSound(null, player.x, player.y, player.z, SoundEvents.ENTITY_WARDEN_SONIC_BOOM, SoundCategory.PLAYERS, 3.0F, 1.0F)
-        if (target.damage(player.serverWorld.damageSources.sonicBoom(player), 10.0f)) {
-            val horizontalKnockback = 0.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
-            val verticalKnockback = 2.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
-            target.addVelocity(normalizedDirection.x * verticalKnockback, normalizedDirection.y * horizontalKnockback, normalizedDirection.z * verticalKnockback)
+        world.playSound(null, attacker.x, attacker.y, attacker.z, SoundEvents.ENTITY_WARDEN_SONIC_BOOM, SoundCategory.PLAYERS, 3.0F, 1.0F)
+        if (target.damage(10.0f, world.damageSources.sonicBoom(attacker))) {
+            0.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
+            2.5 * (1.0 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE))
+            // target.addVelocity(normalizedDirection.x * verticalKnockback, normalizedDirection.y * horizontalKnockback, normalizedDirection.z * verticalKnockback)
         }
     }
 }
