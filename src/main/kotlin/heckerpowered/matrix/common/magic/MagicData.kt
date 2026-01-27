@@ -1,29 +1,33 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.common.magic
 
-import net.minecraft.nbt.NbtCompound
+import heckerpowered.matrix.common.persistent.serialization.seralizer.MagicReferenceSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 
+@Serializable
+@SerialName("MagicData")
 open class MagicData(
     var isSpread: Boolean = false,
-    var magicLevel: Int = 1,
-    var tag: NbtCompound = NbtCompound(),
+    var isSpoofed: Boolean = false,
 ) {
     companion object {
-        const val IS_SPREAD_TAG = "IsSpread"
-        const val MAGIC_LEVEL_KEY = "MagicLevel"
+        var serializationModule = SerializersModule {
+            contextual(Magic::class, MagicReferenceSerializer)
+            polymorphic(MagicData::class) {
+                subclass(MagicData::class, serializer())
+            }
+        }
     }
 
-    open fun readFromTag() {
-        isSpread = tag.getBoolean(IS_SPREAD_TAG)
-        magicLevel = tag.getInt(MAGIC_LEVEL_KEY)
-    }
-
-    open fun writeToTag() {
-        tag.putBoolean(IS_SPREAD_TAG, isSpread)
-        tag.putInt(MAGIC_LEVEL_KEY, magicLevel)
+    fun copyFrom(source: MagicData) {
+        this.isSpread = source.isSpread
+        this.isSpoofed = source.isSpoofed
     }
 }
