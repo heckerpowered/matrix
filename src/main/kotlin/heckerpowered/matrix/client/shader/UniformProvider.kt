@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.shader
@@ -10,7 +10,7 @@ import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.projectionMatrix
-import heckerpowered.matrix.client.viewMatrix
+import heckerpowered.matrix.client.render.MatrixRenderSystem
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
@@ -54,13 +54,19 @@ val inverseModelViewMatrixProvider = UniformProvider("inverseModelViewMatrix") {
 
 val inverseViewMatrixProvider = UniformProvider("inverseViewMatrix") { pointer ->
     buffer.position(0)
-    viewMatrix.invert().get(buffer)
+    MatrixRenderSystem.inverseViewMatrix.get(buffer)
     glUniformMatrix4fv(pointer, false, buffer)
 }
 
 val viewMatrixProvider = UniformProvider("inverseViewMatrix") { pointer ->
     buffer.position(0)
-    viewMatrix.get(buffer)
+    MatrixRenderSystem.viewMatrix.get(buffer)
+    glUniformMatrix4fv(pointer, false, buffer)
+}
+
+val viewProjectionMatrixProvider = UniformProvider("viewProjectionMatrix") { pointer ->
+    buffer.position(0)
+    MatrixRenderSystem.viewProjectionMatrix.get(buffer)
     glUniformMatrix4fv(pointer, false, buffer)
 }
 
