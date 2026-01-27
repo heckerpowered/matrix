@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: MIT
- * Copyright (c) 2025 heckerpowered
+ * Copyright (c) 2026 heckerpowered
  */
 
 package heckerpowered.matrix.client.render
@@ -11,6 +11,7 @@ import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.event.PostProcessCallback
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
+import heckerpowered.matrix.client.render.effect.SculkCatalystEffectRenderer
 import heckerpowered.matrix.client.render.particle.ParticleSystem
 import heckerpowered.matrix.client.render.particle.memory.MemoryLayout
 import heckerpowered.matrix.client.render.particle.module.particle_render.ParticleSpriteRendererModule
@@ -26,6 +27,7 @@ import heckerpowered.matrix.client.render.post.BloomEffect
 import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
 import heckerpowered.matrix.client.render.post.ShockwaveRenderer
 import heckerpowered.matrix.client.render.shader.RadialBlurRenderer.samples
+import heckerpowered.matrix.client.render.shader.VortexRenderer
 import heckerpowered.matrix.client.render.state.*
 import heckerpowered.matrix.client.render.state.capabilities.BlendState
 import heckerpowered.matrix.client.render.state.capabilities.DepthTestState
@@ -37,7 +39,7 @@ import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
-import heckerpowered.matrix.common.effect.bloodPactActive
+import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.magic.SculkCatalystMagic
 import heckerpowered.matrix.core.approximatelyEqual
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
@@ -191,12 +193,18 @@ object ScreenEffectRenderer {
     }
 
     private fun onPostProcess() {
+        StateIsolation.isolate(
+            FramebufferState(minecraft.framebuffer), ViewportState(minecraft.framebuffer),
+            BlendState(true), BlendFuncSeparateState(GL_ONE, GL_ONE)
+        ) {
+            VortexRenderer.render()
+        }
         bloomThresholdAnimation.animatedValue = 1.0
         if (!shouldRenderBloom()) {
             return
         }
 
-        BloomEffect.brightnessThreshold = bloomThresholdAnimation.animatedValue.toFloat()
+        BloomEffect.brightnessThreshold = bloomThresholdAnimation.animatedValue.toFloat() + 0.1F
         BloomEffect.brightnessPassFramebuffer = minecraft.framebuffer
         BloomEffect.renderBloom()
 
@@ -431,7 +439,7 @@ object ScreenEffectRenderer {
 
     @JvmStatic
     fun beginRenderEntity() {
-        if (player.bloodPactActive) {
+        if (player.isBloodPactActive) {
             useBloom = false
         } else if (previousAngryState || auraAlphaAnimation.animatedValue != .0) {
             useAuraShader = false // Disabled temporarily
@@ -479,6 +487,8 @@ object ScreenEffectRenderer {
             particleSystem.renderParticles()
             ExplosionParticle.particleSystem.renderParticles()
         }
+
+        SculkCatalystEffectRenderer.render()
 
         if (!useBloom) {
             return
