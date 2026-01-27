@@ -24,7 +24,7 @@ object CrippleMovementMagic : Magic(
         6.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         if (target is PlayerEntity) {
             target.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 3, 0))
@@ -54,7 +54,7 @@ object CrippleMovementMagic : Magic(
         return super.availableStatus(player, target, sequence)
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData, accumulator: Accumulator): Long {
+    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload, accumulator: Accumulator): Long {
         if (target is PlayerEntity) {
             return super.getCost(player, target, sequence, data, accumulator) * 3
         }

@@ -21,7 +21,7 @@ object LightningBoltMagic : Magic(
         20.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         val lightningTypes = MagicLightningEntity.LightningType.entries
         val lightningType = if ((0..1000).random() < 6) {
@@ -43,7 +43,7 @@ object LightningBoltMagic : Magic(
         })
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData, accumulator: Accumulator): Long {
+    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload, accumulator: Accumulator): Long {
         if (sequence != null) {
             val count = sequence.channelingMagics().count { channelingMagic -> channelingMagic.magic is LightningBoltMagic }
             val costReduction = (count * 0.2).coerceAtMost(0.8)

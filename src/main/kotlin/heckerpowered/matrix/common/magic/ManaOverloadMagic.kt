@@ -27,7 +27,7 @@ object ManaOverloadMagic : Magic(
         6.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         val manaOverloadInstance = target.getStatusEffect(MANA_OVERLOAD_EFFECT)
 

@@ -22,7 +22,7 @@ object TeleportMagic : Magic(
         5.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         if (player == null) {
             return

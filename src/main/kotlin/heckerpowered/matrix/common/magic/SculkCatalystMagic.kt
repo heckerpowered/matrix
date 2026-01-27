@@ -42,14 +42,14 @@ object SculkCatalystMagic : Magic(
 ), MagicDataSpecification {
 
     @Serializable
-    private class SculkCatalystMagicData(
+    private class SculkCatalystExecutionPayload(
         var bounces: Long = 0,
-    ) : MagicData()
+    ) : ExecutionPayload()
 
     private class SculkCatalystChannelPlan(
         bypassLock: Boolean = false,
         costMana: Boolean = true,
-        data: MagicData = MagicData(),
+        data: ExecutionPayload = ExecutionPayload(),
     ) : ChannelPlan(bypassLock, costMana, data) {
         override fun isMagicAvailable(availableStatus: MagicAvailableStatus): Boolean {
             if (availableStatus == MagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE) {
@@ -108,7 +108,7 @@ object SculkCatalystMagic : Magic(
     private val sculkCatalystTracker = mutableMapOf<PlayerEntity, MutableList<LivingEntity>>()
     private val lock = Any()
 
-    override fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: MagicData) {
+    override fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: ExecutionPayload) {
         super.channel(player, target, queue, data)
         synchronized(lock) {
             sculkCatalystTracker.computeIfAbsent(player) {
@@ -117,9 +117,9 @@ object SculkCatalystMagic : Magic(
         }
     }
 
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
-        val sculkCatalystData = data as? SculkCatalystMagicData ?: SculkCatalystMagicData()
+        val sculkCatalystData = data as? SculkCatalystExecutionPayload ?: SculkCatalystExecutionPayload()
         sculkCatalystData.copyFrom(data)
         val bounces = ++sculkCatalystData.bounces
 
@@ -167,32 +167,32 @@ object SculkCatalystMagic : Magic(
         }
     }
 
-    override fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData): Long {
+    override fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload): Long {
         val normalCost = when (target) {
             is EnderDragonEntity, is WitherEntity -> 110
             is PlayerEntity, is WardenEntity -> 180
             else -> getNormalCost()
         }
-        val bounces = (data as? SculkCatalystMagicData)?.bounces ?: 0
+        val bounces = (data as? SculkCatalystExecutionPayload)?.bounces ?: 0
         return normalCost + bounces.coerceAtMost(5) * 6
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData, accumulator: Accumulator): Long {
+    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload, accumulator: Accumulator): Long {
         if (player.isBloodPactActive) {
             accumulator.pushCostReduction(0.5)
         }
         return super.getCost(player, target, sequence, data, accumulator)
     }
 
-    override fun getMagicResistance(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData): Double {
+    override fun getMagicResistance(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload): Double {
         if (target is EnderDragonEntity || target is WitherEntity || target is WardenEntity) {
             return .0
         }
         return super.getMagicResistance(player, target, sequence, data)
     }
 
-    override fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: MagicData): Long {
-        val bounces = (data as? SculkCatalystMagicData)?.bounces ?: 0
+    override fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: ExecutionPayload): Long {
+        val bounces = (data as? SculkCatalystExecutionPayload)?.bounces ?: 0
         val additionChannelTime = when (target) {
             is EnderDragonEntity, is WitherEntity -> 8 * 20L
             is WardenEntity -> 8 * 20L
@@ -231,5 +231,5 @@ object SculkCatalystMagic : Magic(
     }
 
     override fun serializerModule(): SerializersModule =
-        MagicDataSpecification<SculkCatalystMagicData>().serializerModule()
+        MagicDataSpecification<SculkCatalystExecutionPayload>().serializerModule()
 }

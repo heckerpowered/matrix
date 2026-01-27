@@ -20,7 +20,7 @@ object LevitationMagic : Magic(
         40.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         val statusEffectInstance = target.getStatusEffect(StatusEffects.LEVITATION)
         val amplifier = statusEffectInstance?.amplifier ?: -1

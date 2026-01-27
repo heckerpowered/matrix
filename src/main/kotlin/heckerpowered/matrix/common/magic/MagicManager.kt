@@ -48,7 +48,7 @@ object MagicManager {
         registeredMagics.add(magic)
 
         if (magic is MagicDataSpecification) {
-            MagicData.serializationModule += magic.serializerModule()
+            ExecutionPayload.serializationModule += magic.serializerModule()
         }
     }
 
@@ -105,7 +105,7 @@ object MagicManager {
             .mapValues { it.value.toPersist() }
         val encodedQueues = NbtCodec.encode(
             channelQueues,
-            NbtCodec(MagicData.serializationModule),
+            NbtCodec(ExecutionPayload.serializationModule),
             serializer = MapSerializer(UUIDSerializer, PersistChannelQueue.serializer())
         )
         matrixCompound.put("ChannelQueues", encodedQueues)
@@ -121,7 +121,7 @@ object MagicManager {
         val encodedQueues = matrixCompound.getCompound("ChannelQueues")
         val decodedQueues = NbtCodec.decode<Map<UUID, PersistChannelQueue>>(
             encodedQueues,
-            NbtCodec(MagicData.serializationModule),
+            NbtCodec(ExecutionPayload.serializationModule),
             deserializer = MapSerializer(UUIDSerializer, PersistChannelQueue.serializer())
         )
         decodedQueues.forEach { (uuid, persistQueue) ->

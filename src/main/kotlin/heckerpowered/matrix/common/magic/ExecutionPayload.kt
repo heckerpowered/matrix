@@ -13,20 +13,20 @@ import kotlinx.serialization.modules.polymorphic
 
 @Serializable
 @SerialName("MagicData")
-open class MagicData(
+open class ExecutionPayload(
     var isSpread: Boolean = false,
     var isSpoofed: Boolean = false,
 ) {
     companion object {
         var serializationModule = SerializersModule {
             contextual(Magic::class, MagicReferenceSerializer)
-            polymorphic(MagicData::class) {
-                subclass(MagicData::class, serializer())
+            polymorphic(ExecutionPayload::class) {
+                subclass(ExecutionPayload::class, serializer())
             }
         }
     }
 
-    fun copyFrom(source: MagicData) {
+    fun copyFrom(source: ExecutionPayload) {
         this.isSpread = source.isSpread
         this.isSpoofed = source.isSpoofed
     }

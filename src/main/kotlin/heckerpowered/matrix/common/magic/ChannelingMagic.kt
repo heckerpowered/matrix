@@ -15,5 +15,5 @@ data class ChannelingMagic(
     val cost: Long,
     val channelTime: Long,
     var currentChannelTime: Long = 0,
-    @Polymorphic val data: MagicData = MagicData(),
+    @Polymorphic val data: ExecutionPayload = ExecutionPayload(),
 )

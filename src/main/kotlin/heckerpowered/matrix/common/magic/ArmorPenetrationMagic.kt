@@ -21,7 +21,7 @@ object ArmorPenetrationMagic : Magic(
         60.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         target.addStatusEffect(StatusEffectInstance(ARMOR_PENETRATION_EFFECT, 200, 0, false, false))
     }

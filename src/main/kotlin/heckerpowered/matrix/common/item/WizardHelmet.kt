@@ -16,8 +16,8 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantment
 import heckerpowered.matrix.common.event.ItemStackEquippedCallback
 import heckerpowered.matrix.common.item.MatrixComponents.MAX_MANA
 import heckerpowered.matrix.common.magic.ChannelQueue
+import heckerpowered.matrix.common.magic.ExecutionPayload
 import heckerpowered.matrix.common.magic.Magic
-import heckerpowered.matrix.common.magic.MagicData
 import heckerpowered.matrix.common.magic.MagicManager
 import heckerpowered.matrix.common.magic.Mana.Companion.mana
 import heckerpowered.matrix.common.persistent.maxMana
@@ -97,7 +97,7 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
             .any { it == magic.enchantmentKey }
     }
 
-    open fun getBloodPactConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: MagicData = MagicData()): Double {
+    open fun getBloodPactConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
         var ratio = 2.0
 
         // Peak Overdrive: + 100% health to mana conversion efficiency.

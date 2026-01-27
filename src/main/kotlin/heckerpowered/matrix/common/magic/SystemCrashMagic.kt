@@ -22,7 +22,7 @@ object SystemCrashMagic : Magic(
     )
 ) {
 
-    override fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: MagicData) {
+    override fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: ExecutionPayload) {
         if (target is ServerPlayerEntity) {
             ServerPlayNetworking.send(target, SystemCrashPayload())
         }

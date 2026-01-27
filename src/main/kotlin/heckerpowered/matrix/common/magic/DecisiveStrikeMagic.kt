@@ -27,7 +27,7 @@ object DecisiveStrikeMagic : Magic(
         60.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
         target.timeUntilRegen = 0

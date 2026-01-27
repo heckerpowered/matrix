@@ -10,5 +10,5 @@ data class ChannellingMagic(
     var currentChannelTime: Long,
     val channelTime: Long,
     val cost: Long,
-    val data: MagicData,
+    val data: ExecutionPayload,
 )

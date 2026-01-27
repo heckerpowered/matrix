@@ -17,13 +17,13 @@ interface MagicDataSpecification {
 }
 
 @OptIn(InternalSerializationApi::class)
-inline fun <reified T : MagicData> MagicDataSpecification(
+inline fun <reified T : ExecutionPayload> MagicDataSpecification(
     noinline serializer: () -> KSerializer<T> = { T::class.serializer() },
 ): MagicDataSpecification = object : MagicDataSpecification {
     override fun serializerModule(): SerializersModule = SerializersModule {
-        polymorphic(MagicData::class) {
+        polymorphic(ExecutionPayload::class) {
             @Suppress("UNCHECKED_CAST")
-            subclass(T::class as KClass<MagicData>, serializer() as KSerializer<MagicData>)
+            subclass(T::class as KClass<ExecutionPayload>, serializer() as KSerializer<ExecutionPayload>)
         }
     }
 }

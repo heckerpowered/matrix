@@ -12,7 +12,7 @@ import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
 import heckerpowered.matrix.common.magic.ChannelQueue
 import heckerpowered.matrix.common.magic.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.MagicData
+import heckerpowered.matrix.common.magic.ExecutionPayload
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.core.Accumulator
@@ -89,7 +89,7 @@ object WizardHelmet13 : WizardHelmet(
         }
     }
 
-    override fun getBloodPactConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: MagicData): Double {
+    override fun getBloodPactConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: ExecutionPayload): Double {
         val conversionEfficiency = super.getBloodPactConversionEfficiency(player, target, queue, data)
         if (player.isBloodPactActive) {
             return conversionEfficiency + 1.0 +
@@ -114,7 +114,7 @@ object WizardHelmet13 : WizardHelmet(
         player.healOverflow(player.maxMana.amount.toFloat())
     }
 
-    fun getExcessConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: MagicData = MagicData()): Double {
+    fun getExcessConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
         val conversionEfficiency = getBloodPactConversionEfficiency(player, target, queue, data)
         return conversionEfficiency - 2.0
     }

@@ -27,7 +27,7 @@ object MemoryWipeMagic : Magic(
         30.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         target.brain.clear()
         if (target is MobEntity) {
@@ -55,7 +55,7 @@ object MemoryWipeMagic : Magic(
     }
 
     @OptIn(ExperimentalContracts::class)
-    fun getDamageSource(player: ServerPlayerEntity?, target: LivingEntity, data: MagicData, supplier: () -> DamageSource?): DamageSource {
+    fun getDamageSource(player: ServerPlayerEntity?, target: LivingEntity, data: ExecutionPayload, supplier: () -> DamageSource?): DamageSource {
         contract {
             callsInPlace(supplier, InvocationKind.AT_MOST_ONCE)
         }

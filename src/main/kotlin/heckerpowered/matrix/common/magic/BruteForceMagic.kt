@@ -21,7 +21,7 @@ object BruteForceMagic : Magic(
         40.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         target.addStatusEffect(StatusEffectInstance(EXPOSED_EFFECT, 200, 0, false, true))
     }

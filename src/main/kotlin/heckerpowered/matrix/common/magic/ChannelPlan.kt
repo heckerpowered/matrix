@@ -28,7 +28,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 open class ChannelPlan(
     val bypassLock: Boolean = false,
     val costMana: Boolean = true,
-    val data: MagicData = MagicData(),
+    val data: ExecutionPayload = ExecutionPayload(),
 ) {
     /**
      * Checks whether the given channel queue is locked for this plan.

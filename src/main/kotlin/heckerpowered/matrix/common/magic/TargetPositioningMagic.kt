@@ -20,7 +20,7 @@ object TargetPositioningMagic : Magic(
         20.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         target.world.getOtherEntities(player, target.boundingBox.expand(24.0)).forEach {
             if (it is LivingEntity) {

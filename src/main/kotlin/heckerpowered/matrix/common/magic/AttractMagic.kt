@@ -19,7 +19,7 @@ object AttractMagic : Magic(
         20.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         target.world.spawnEntity(AttractorEntity(target.world).also {
             it.setPosition(target.pos)

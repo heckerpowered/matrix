@@ -18,7 +18,7 @@ object KillMagic : Magic(
         (20 * 10).ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         target.health = .0f
         val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { player?.damageSources?.playerAttack(player) }

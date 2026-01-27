@@ -100,7 +100,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * @param target The living entity being targeted.
      * @param sequence The channel sequence involved.
      */
-    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData = MagicData()) {
+    open fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload = ExecutionPayload()) {
         if (player != null &&
             player.isBloodPactActive &&
             player.wizardHelmet.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY) >= 5 &&
@@ -112,7 +112,7 @@ abstract class Magic(val definition: MagicDefinition) {
                 .filter { it != player && it.isAlive }
                 .firstOrNull { player.getChannelQueue(it)?.isEmpty ?: true }
             if (nearestEntity != null) {
-                ChannelExecutor.channel(this, player, nearestEntity, ChannelPlan(data = MagicData(isSpread = true)))
+                ChannelExecutor.channel(this, player, nearestEntity, ChannelPlan(data = ExecutionPayload(isSpread = true)))
             }
         }
     }
@@ -133,7 +133,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * @param queue the channel queue this magic belongs to
      * @param data contextual magic data associated with this channel
      */
-    open fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: MagicData = MagicData()) {
+    open fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: ExecutionPayload = ExecutionPayload()) {
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
         if (player.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) > 0 &&
@@ -225,11 +225,11 @@ abstract class Magic(val definition: MagicDefinition) {
      */
     fun getNormalCost(): Long = definition.baseCost.amount.toLong()
 
-    open fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData = MagicData()): Long {
+    open fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Long {
         return getNormalCost()
     }
 
-    open fun getMagicResistance(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData = MagicData()): Double {
+    open fun getMagicResistance(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
         if (target?.name?.string == "hecker") {
             return 4.0
         }
@@ -239,7 +239,7 @@ abstract class Magic(val definition: MagicDefinition) {
     /**
      * Gets the mana needed to channel this magic.
      */
-    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: MagicData = MagicData(), accumulator: Accumulator = Accumulator()): Long {
+    open fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload(), accumulator: Accumulator = Accumulator()): Long {
         val cost = getBaseCost(player, target, sequence, data).toDouble()
         var costReduction = 0.0
 
@@ -274,7 +274,7 @@ abstract class Magic(val definition: MagicDefinition) {
      */
     fun getNormalChannelTime(): Long = definition.baseChannelTime.ticks
 
-    open fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: MagicData = MagicData()): Long {
+    open fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Long {
         return getNormalChannelTime()
     }
 
@@ -282,7 +282,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * Calculates actual channel time based on player enchantments, helmet effects, and active states.
      * @return Time in ticks required to channel the magic.
      */
-    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: MagicData = MagicData(), accumulator: Accumulator = Accumulator()): Long {
+    open fun getChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: ExecutionPayload = ExecutionPayload(), accumulator: Accumulator = Accumulator()): Long {
         val effectiveTime = getBaseChannelTime(player, target, sequence, data).toDouble()
         var channelSpeedBonus = 0.0
 
@@ -318,7 +318,7 @@ abstract class Magic(val definition: MagicDefinition) {
     /**
      * @return Ratio used when converting health to mana during Blood Pact.
      */
-    open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: MagicData = MagicData()): Double {
+    open fun getBloodPactConvertRatio(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
         return (player.wizardHelmet.item as? WizardHelmet)?.getBloodPactConversionEfficiency(player, target, queue, data) ?: 2.0
     }
 }

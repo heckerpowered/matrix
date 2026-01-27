@@ -27,7 +27,7 @@ object BreakingBadMagic : Magic(
         40.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         target.addStatusEffect(StatusEffectInstance(StatusEffects.POISON, 20 * 5, 4))
         target.addStatusEffect(StatusEffectInstance(StatusEffects.BLINDNESS, 20 * 5, 4))
@@ -51,7 +51,7 @@ object BreakingBadMagic : Magic(
             .filter { it != target && it != player && it.isAlive }
             .filter { it.getChannelQueue(player)?.isEmpty ?: true }
             .consumeWhile(4) {
-                ChannelExecutor.channel(BreakingBadMagic, player, it, ChannelPlan(costMana = false, data = MagicData(isSpread = true))) == MagicAvailableStatus.AVAILABLE
+                ChannelExecutor.channel(BreakingBadMagic, player, it, ChannelPlan(costMana = false, data = ExecutionPayload(isSpread = true))) == MagicAvailableStatus.AVAILABLE
             }
             .drain()
     }

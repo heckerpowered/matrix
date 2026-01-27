@@ -24,7 +24,7 @@ object IgniteMagic : Magic(
         40.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: MagicData) {
+    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
         super.cast(player, target, sequence, data)
         val duration = if (target.hasStatusEffect(IGNITE_EFFECT)) {
             5F
