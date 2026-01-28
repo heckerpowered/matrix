@@ -7,19 +7,13 @@ package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.Magic
-import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
-import heckerpowered.matrix.common.magic.core.MagicDefinition
-import heckerpowered.matrix.common.magic.core.isInvulnerableToEffect
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import heckerpowered.matrix.core.common.balance.Accumulator
-import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.packet.s2c.play.EntityStatusEffectS2CPacket
-import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 
 object CrippleMovementMagic : Magic(
@@ -29,13 +23,14 @@ object CrippleMovementMagic : Magic(
         6.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: heckerpowered.matrix.common.magic.core.ExecutionPayload) {
-        super.cast(player, target, sequence, data)
-        if (target is PlayerEntity) {
-            target.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 3, 0))
-            return
-        }
-        target.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 0))
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
+
+        val target = invocation.target
+        val duration = if (target is PlayerEntity) 20 * 3 else 20 * 10
+        val effect = StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, duration, 0)
+        target.addStatusEffect(effect)
+
         if (target.world !is ServerWorld) {
             return
         }
@@ -47,23 +42,21 @@ object CrippleMovementMagic : Magic(
         }
     }
 
-    override fun availableStatus(
-        player: PlayerEntity,
-        target: LivingEntity?,
-        sequence: ChannelQueue?,
-    ): MagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailableStatus {
+        val target = context.target
         if (target?.isInvulnerableToEffect(CRIPPLE_MOVEMENT_EFFECT) == true) {
             return MagicAvailableStatus.TARGET_IMMUNE
         }
 
-        return super.availableStatus(player, target, sequence)
+        return super.availableStatus(context)
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: heckerpowered.matrix.common.magic.core.ExecutionPayload, accumulator: Accumulator): Long {
+    override fun getCost(context: MagicCalculationContext): Long {
+        val target = context.target
         if (target is PlayerEntity) {
-            return super.getCost(player, target, sequence, data, accumulator) * 3
+            return super.getCost(context) * 3
         }
 
-        return super.getCost(player, target, sequence, data, accumulator)
+        return super.getCost(context)
     }
 }

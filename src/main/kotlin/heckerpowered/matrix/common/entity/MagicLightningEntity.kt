@@ -10,8 +10,9 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.entity.MagicLightningEntity.LightningType.*
+import heckerpowered.matrix.common.magic.channel.ChannelAttempt
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
-import heckerpowered.matrix.common.magic.channel.ChannelRequest
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.spell.CrippleMovementMagic
 import heckerpowered.matrix.common.magic.spell.ExplosionMagic.explosionBehavior
 import heckerpowered.matrix.common.magic.spell.LightningBoltMagic
@@ -270,7 +271,9 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                     if (channeler == null) {
                         entity.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 4))
                     } else {
-                        ChannelExecutor.channel(CrippleMovementMagic, channeler, entity, ChannelRequest(costMana = false))
+                        val invocation = MagicInvocation.fromEntity(channeler, entity)
+                        val attempt = ChannelAttempt(costMana = false)
+                        ChannelExecutor.channel(CrippleMovementMagic, invocation, attempt)
                     }
                 }
             }
@@ -286,7 +289,8 @@ class MagicLightningEntity(entityType: EntityType<MagicLightningEntity>, world: 
                         continue
                     }
 
-                    ChannelExecutor.channel(LightningBoltMagic, channeler, target)
+                    val invocation = MagicInvocation.fromEntity(channeler, target)
+                    ChannelExecutor.channel(LightningBoltMagic, invocation)
                 }
             }
 

@@ -6,14 +6,12 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.channel.defaultMagicDamageSource
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import net.minecraft.entity.LivingEntity
-import net.minecraft.server.network.ServerPlayerEntity
 
 object KillMagic : Magic(
     MagicDefinition(
@@ -22,10 +20,13 @@ object KillMagic : Magic(
         (20 * 10).ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
-        super.cast(player, target, sequence, data)
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
+
+        val target = invocation.target
+
         target.health = .0f
-        val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { player?.damageSources?.playerAttack(player) }
+        val damageSource = invocation.defaultMagicDamageSource()
         target.onDeath(damageSource)
     }
 }

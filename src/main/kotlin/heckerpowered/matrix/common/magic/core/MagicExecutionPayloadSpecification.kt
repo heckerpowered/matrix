@@ -12,14 +12,14 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 
-interface MagicDataSpecification {
+interface MagicExecutionPayloadSpecification {
     fun serializerModule(): SerializersModule
 }
 
 @OptIn(InternalSerializationApi::class)
-inline fun <reified T : ExecutionPayload> MagicDataSpecification(
+inline fun <reified T : ExecutionPayload> MagicExecutionPayloadSpecification(
     noinline serializer: () -> KSerializer<T> = { T::class.serializer() },
-): MagicDataSpecification = object : MagicDataSpecification {
+): MagicExecutionPayloadSpecification = object : MagicExecutionPayloadSpecification {
     override fun serializerModule(): SerializersModule = SerializersModule {
         polymorphic(ExecutionPayload::class) {
             @Suppress("UNCHECKED_CAST")

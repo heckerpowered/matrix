@@ -10,9 +10,7 @@ import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.event.AccumulateAttributeValueCallback
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.core.Accumulator
@@ -59,7 +57,8 @@ object WizardHelmet13 : WizardHelmet(
             return ActionResult.PASS
         }
 
-        val excessConversionEfficiency = item.getExcessConversionEfficiency(attacker, event.target, attacker.getChannelQueue(event.target))
+        val calculationContext = MagicCalculationContext.fromEntity(player, event.target)
+        val excessConversionEfficiency = item.getExcessConversionEfficiency(calculationContext)
         event.damageMultiplier += excessConversionEfficiency * 0.25
         return ActionResult.PASS
     }
@@ -81,7 +80,8 @@ object WizardHelmet13 : WizardHelmet(
             return
         }
 
-        val excessConversionEfficiency = item.getExcessConversionEfficiency(entity, null, null)
+        val calculationContext = MagicCalculationContext.fromEntity(entity, null)
+        val excessConversionEfficiency = item.getExcessConversionEfficiency(calculationContext)
         if (attribute == EntityAttributes.GENERIC_ATTACK_DAMAGE) {
             accumulator.baseBonus += excessConversionEfficiency * 3
         } else {
@@ -89,11 +89,12 @@ object WizardHelmet13 : WizardHelmet(
         }
     }
 
-    override fun getBloodPactConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: ExecutionPayload): Double {
-        val conversionEfficiency = super.getBloodPactConversionEfficiency(player, target, queue, data)
-        if (player.isBloodPactActive) {
-            return conversionEfficiency + 1.0 +
-                    (player.wizardHelmet.getOrDefault(MatrixComponents.ACCUMULATED_MANA_DELTA, .0) * 0.01).coerceAtMost(1.0)
+    override fun getBloodPactConversionEfficiency(context: MagicCalculationContext): Double {
+        val conversionEfficiency = super.getBloodPactConversionEfficiency(context)
+
+        val player = context.playerOrNull()
+        if (player?.isBloodPactActive == true) {
+            return conversionEfficiency + 1.0 + (player.wizardHelmet.getOrDefault(MatrixComponents.ACCUMULATED_MANA_DELTA, .0) * 0.01).coerceAtMost(1.0)
         }
         return conversionEfficiency
     }
@@ -114,15 +115,16 @@ object WizardHelmet13 : WizardHelmet(
         player.healOverflow(player.maxMana.amount.toFloat())
     }
 
-    fun getExcessConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
-        val conversionEfficiency = getBloodPactConversionEfficiency(player, target, queue, data)
+    fun getExcessConversionEfficiency(context: MagicCalculationContext): Double {
+        val conversionEfficiency = getBloodPactConversionEfficiency(context)
         return conversionEfficiency - 2.0
     }
 
     override fun appendTooltip(stack: ItemStack, context: TooltipContext, tooltip: MutableList<Text>, type: TooltipType) {
         super.appendTooltip(stack, context, tooltip, type)
 
-        val conversionEfficiency = getBloodPactConversionEfficiency(player, null, null)
+        val calculationContext = MagicCalculationContext.fromEntity(player, null)
+        val conversionEfficiency = getBloodPactConversionEfficiency(calculationContext)
         val accumulatedManaDelta = stack.getOrDefault(MatrixComponents.ACCUMULATED_MANA_DELTA, .0)
         tooltip.add(MatrixLanguage.wizardHelmetBloodPactConversionEfficiency.copy().append("${conversionEfficiency * 100}%"))
         tooltip.add(MatrixLanguage.wizardHelmetManaDeltaDescription.copy().append("${floor(accumulatedManaDelta).toLong()}"))

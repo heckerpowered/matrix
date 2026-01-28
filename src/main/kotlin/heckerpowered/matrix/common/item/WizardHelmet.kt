@@ -15,9 +15,8 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.event.ItemStackEquippedCallback
 import heckerpowered.matrix.common.item.MatrixComponents.MAX_MANA
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
 import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.MagicManager
 import heckerpowered.matrix.common.persistent.maxMana
@@ -97,8 +96,9 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
             .any { it == magic.enchantmentKey }
     }
 
-    open fun getBloodPactConversionEfficiency(player: PlayerEntity, target: LivingEntity?, queue: ChannelQueue?, data: ExecutionPayload = ExecutionPayload()): Double {
-        var ratio = 2.0
+    open fun getBloodPactConversionEfficiency(context: MagicCalculationContext): Double {
+        var ratio = Magic.DEFAULT_BLOOD_PACT_CONVERT_RATIO
+        val player = context.playerOrNull() ?: return ratio
 
         // Peak Overdrive: + 100% health to mana conversion efficiency.
         if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) > 0 && player.isBloodPactActive) {

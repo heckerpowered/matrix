@@ -9,19 +9,12 @@ import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
-import heckerpowered.matrix.common.magic.*
-import heckerpowered.matrix.common.magic.channel.ChannelExecutor
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
+import heckerpowered.matrix.common.magic.channel.*
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.channel.ChannelRequest
-import heckerpowered.matrix.common.magic.core.Magic
-import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
-import heckerpowered.matrix.common.magic.core.MagicDataSpecification
-import heckerpowered.matrix.common.magic.core.MagicDefinition
+import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.network.ExplosionPayload
-import heckerpowered.matrix.core.common.balance.Accumulator
 import heckerpowered.matrix.core.extensions.EntityExtensions.damage
 import heckerpowered.matrix.core.killed
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
@@ -38,7 +31,6 @@ import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
 import net.minecraft.nbt.NbtInt
 import net.minecraft.nbt.NbtList
-import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 
 object SculkCatalystMagic : Magic(
@@ -47,18 +39,18 @@ object SculkCatalystMagic : Magic(
         12.mana,
         (9 * 20).ticks
     )
-), MagicDataSpecification {
+), MagicExecutionPayloadSpecification {
 
     @Serializable
     private class SculkCatalystExecutionPayload(
         var bounces: Long = 0,
-    ) : heckerpowered.matrix.common.magic.core.ExecutionPayload()
+    ) : ExecutionPayload()
 
-    private class SculkCatalystChannelRequest(
+    private class SculkCatalystChannelAttempt(
         bypassLock: Boolean = false,
         costMana: Boolean = true,
-        data: heckerpowered.matrix.common.magic.core.ExecutionPayload = _root_ide_package_.heckerpowered.matrix.common.magic.core.ExecutionPayload(),
-    ) : ChannelRequest(bypassLock, costMana, data) {
+        payload: ExecutionPayload = ExecutionPayload(),
+    ) : ChannelAttempt(bypassLock, costMana, payload) {
         override fun isMagicAvailable(availableStatus: MagicAvailableStatus): Boolean {
             if (availableStatus == MagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE) {
                 return true
@@ -116,91 +108,94 @@ object SculkCatalystMagic : Magic(
     private val sculkCatalystTracker = mutableMapOf<PlayerEntity, MutableList<LivingEntity>>()
     private val lock = Any()
 
-    override fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: heckerpowered.matrix.common.magic.core.ExecutionPayload) {
-        super.channel(player, target, queue, data)
+    override fun channel(invocation: MagicInvocation) {
+        super.channel(invocation)
+        val caster = invocation.caster.asPlayerOrNull() ?: return
+        val target = invocation.target
         synchronized(lock) {
-            sculkCatalystTracker.computeIfAbsent(player) {
+            sculkCatalystTracker.computeIfAbsent(caster) {
                 mutableListOf()
             }.add(target)
         }
     }
 
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: heckerpowered.matrix.common.magic.core.ExecutionPayload) {
-        super.cast(player, target, sequence, data)
-        val sculkCatalystData = data as? SculkCatalystExecutionPayload ?: SculkCatalystExecutionPayload()
-        sculkCatalystData.copyFrom(data)
-        val bounces = ++sculkCatalystData.bounces
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
 
-        val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { player?.damageSources?.create(DamageTypes.OUT_OF_WORLD, player) }
+        val caster = invocation.caster.asPlayerOrNull()
+        val target = invocation.target
+        val payload = invocation.payload
+
+        val spreadPayload = payload as? SculkCatalystExecutionPayload ?: SculkCatalystExecutionPayload()
+        spreadPayload.inheritFrom(payload)
+        val bounces = ++spreadPayload.bounces
+
+        val damageSource = invocation.removeSourceIfSpoofed { caster?.damageSources?.create(DamageTypes.OUT_OF_WORLD, caster) }
         if (target !is WitherEntity && target !is EnderDragonEntity && target !is WardenEntity) {
             target.health = .0F
             target.killed = true
-            target.damage(target.damageSources.create(DamageTypes.OUT_OF_WORLD, player), Float.POSITIVE_INFINITY)
+            target.damage(target.damageSources.create(DamageTypes.OUT_OF_WORLD, caster), Float.POSITIVE_INFINITY)
             target.onDeath(damageSource)
         } else {
             target.damage(target.maxHealth * 4.0F, damageSource)
         }
         if (!target.isAlive) {
             (target.world as? ServerWorld)?.apply {
-                // repeat(10) {
-                //     spawnParticles(ParticleTypes.SCULK_SOUL, target.x, target.y, target.z, 20, 0.1, .1, 0.1, 0.25)
-                // }
-                // repeat(128) {
-                //     spawnParticles(ParticleTypes.SONIC_BOOM, target.x, target.y + it, target.z, 1, 0.0, 0.0, 0.0, 0.0)
-                // }
-//
-                // playSound(null, target.x, target.y, target.z, SoundEvents.BLOCK_SCULK_SENSOR_CLICKING, SoundCategory.PLAYERS, 1.0F, 1.0F, random.nextLong())
-                // playSound(null, target.x, target.y, target.z, SoundEvents.BLOCK_SCULK_SHRIEKER_SHRIEK, SoundCategory.PLAYERS, 1.0F, 1.0F, random.nextLong())
-
                 target.world.server?.playerManager?.playerList?.forEach {
                     ServerPlayNetworking.send(it, ExplosionPayload(target.id))
                 }
             }
         }
 
-        if (bounces > 5 || data.isSpread || player == null || target.isAlive) {
+        if (bounces > 5 || payload.isSpread || caster == null || target.isAlive) {
             return
         }
 
         val nearestEntity = target.getNearestEntities(20.0)
             .filterIsInstance<LivingEntity>()
-            .filter { it != player && it.isAlive }
-            .firstOrNull { it.getChannelQueue(player)?.isEmpty ?: true }
+            .filter { it != caster && it.isAlive }
+            .firstOrNull { it.getChannelQueue(caster)?.isEmpty ?: true }
         if (nearestEntity != null) {
-            ChannelExecutor.channel(
-                SculkCatalystMagic, player, nearestEntity, SculkCatalystChannelRequest(
-                    data = sculkCatalystData
-                )
-            )
+            val spreadInvocation = MagicInvocation.fromEntity(caster, nearestEntity, payload = spreadPayload)
+            val spreadAttempt = SculkCatalystChannelAttempt(payload = spreadPayload)
+            ChannelExecutor.channel(SculkCatalystMagic, spreadInvocation, spreadAttempt)
         }
     }
 
-    override fun getBaseCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: heckerpowered.matrix.common.magic.core.ExecutionPayload): Long {
+    override fun getBaseCost(context: MagicCalculationContext): Long {
+        val target = context.target
+        val payload = context.payload
         val normalCost = when (target) {
             is EnderDragonEntity, is WitherEntity -> 110
             is PlayerEntity, is WardenEntity -> 180
             else -> getNormalCost()
         }
-        val bounces = (data as? SculkCatalystExecutionPayload)?.bounces ?: 0
+        val bounces = (payload as? SculkCatalystExecutionPayload)?.bounces ?: 0
         return normalCost + bounces.coerceAtMost(5) * 6
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: heckerpowered.matrix.common.magic.core.ExecutionPayload, accumulator: Accumulator): Long {
-        if (player.isBloodPactActive) {
+    override fun getCost(context: MagicCalculationContext): Long {
+        val caster = context.caster?.asPlayerOrNull()
+        val accumulator = context.accumulator
+        if (caster?.isBloodPactActive == true) {
             accumulator.pushCostReduction(0.5)
         }
-        return super.getCost(player, target, sequence, data, accumulator)
+        return super.getCost(context)
     }
 
-    override fun getMagicResistance(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: heckerpowered.matrix.common.magic.core.ExecutionPayload): Double {
+    override fun getMagicResistance(context: MagicCalculationContext): Double {
+        val target = context.target
         if (target is EnderDragonEntity || target is WitherEntity || target is WardenEntity) {
             return .0
         }
-        return super.getMagicResistance(player, target, sequence, data)
+        return super.getMagicResistance(context)
     }
 
-    override fun getBaseChannelTime(player: PlayerEntity, target: LivingEntity, sequence: ChannelQueue?, data: heckerpowered.matrix.common.magic.core.ExecutionPayload): Long {
-        val bounces = (data as? SculkCatalystExecutionPayload)?.bounces ?: 0
+    override fun getBaseChannelTime(context: MagicCalculationContext): Long {
+        val target = context.target
+        val payload = context.payload
+
+        val bounces = (payload as? SculkCatalystExecutionPayload)?.bounces ?: 0
         val additionChannelTime = when (target) {
             is EnderDragonEntity, is WitherEntity -> 8 * 20L
             is WardenEntity -> 8 * 20L
@@ -217,17 +212,18 @@ object SculkCatalystMagic : Magic(
         } + additionChannelTime
     }
 
-    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): MagicAvailableStatus {
-        sculkCatalystTracker[player]?.removeIf {
-            val sequence = player.getChannelQueue(it) ?: return@removeIf true
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailableStatus {
+        val caster = context.caster?.asPlayerOrNull() ?: return super.availableStatus(context)
+        sculkCatalystTracker[caster]?.removeIf {
+            val sequence = caster.getChannelQueue(it) ?: return@removeIf true
             return@removeIf !it.isAlive || sequence.isEmpty
         }
 
-        val sculkCatalystIsAlreadyActive = isSculkCatalystActive(player)
+        val sculkCatalystIsAlreadyActive = isSculkCatalystActive(caster)
         if (sculkCatalystIsAlreadyActive) {
             return MagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE
         }
-        return super.availableStatus(player, target, sequence)
+        return super.availableStatus(context)
     }
 
     fun isSculkCatalystActive(player: PlayerEntity): Boolean {
@@ -239,5 +235,5 @@ object SculkCatalystMagic : Magic(
     }
 
     override fun serializerModule(): SerializersModule =
-        MagicDataSpecification<SculkCatalystExecutionPayload>().serializerModule()
+        MagicExecutionPayloadSpecification<SculkCatalystExecutionPayload>().serializerModule()
 }

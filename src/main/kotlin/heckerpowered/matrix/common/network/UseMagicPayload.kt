@@ -7,6 +7,7 @@ package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.system.MagicManager
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
@@ -53,7 +54,9 @@ data class UseMagicPayload(
         if ((wizardHelmet.item as? WizardHelmet)?.hasMagic(wizardHelmet, magic) != true) {
             return
         }
-        ChannelExecutor.channel(magic, player, targetedEntity)
+
+        val invocation = MagicInvocation.fromEntity(player, targetedEntity)
+        ChannelExecutor.channel(magic, invocation)
         context.responseSender().sendPacket(SyncHealthPayload(player))
     }
 }

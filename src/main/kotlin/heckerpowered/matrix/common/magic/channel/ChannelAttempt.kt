@@ -18,20 +18,31 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.server.network.ServerPlayerEntity
 
 /**
- * Describes a plan for channeling a magic, including optional bypass flags
- * and contextual data.
+ * Represents a single attempt to channel a magic.
  *
- * A plan does not perform channeling itself, but evaluates whether
- * conditions are met (e.g. queue state, mana affordability).
+ * A ChannelAttempt describes how this specific channeling attempt should
+ * be evaluated and executed, including which constraints may be relaxed
+ * (e.g. queue lock, mana cost) and how resource payment is handled.
  *
- * @property bypassLock whether to ignore a locked channel queue.
- * @property costMana whether channeling should consume mana.
- * @property data additional contextual magic data.
+ * An attempt:
+ * - may fail without side effects,
+ * - interprets certain rejection reasons as acceptable,
+ * - and only mutates state (mana / health) when it succeeds.
+ *
+ * ChannelAttempt does not define magic rules and does not perform channeling
+ * itself; it is evaluated by the channeling pipeline to decide whether the
+ * attempt may proceed and to apply its cost.
+ *
+ * Instances are short-lived and must not be reused across multiple attempts.
+ *
+ * @property bypassLock whether this attempt ignores a locked channel queue
+ * @property costMana whether this attempt should consume mana
+ * @property payload execution-scoped data carried with this attempt
  */
-open class ChannelRequest(
+open class ChannelAttempt(
     val bypassLock: Boolean = false,
     val costMana: Boolean = true,
-    val data: ExecutionPayload = ExecutionPayload(),
+    val payload: ExecutionPayload = ExecutionPayload(),
 ) {
     /**
      * Checks whether the given channel queue is locked for this plan.

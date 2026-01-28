@@ -5,10 +5,9 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.magic.channel.ChannelAttempt
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.channel.ChannelRequest
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.spell.DecisiveStrikeMagic
 import net.minecraft.entity.LivingEntity
 import net.minecraft.item.ItemStack
@@ -27,9 +26,12 @@ object LapisLazuliSwordItem : SwordItem(
         }
 
         if (attacker is ServerPlayerEntity) {
-            ChannelExecutor.channel(DecisiveStrikeMagic, attacker, target, ChannelRequest(costMana = false))
+            val attempt = ChannelAttempt(costMana = false)
+            val invocation = MagicInvocation.fromEntity(attacker, target)
+            ChannelExecutor.channel(DecisiveStrikeMagic, invocation, attempt)
         } else {
-            DecisiveStrikeMagic.cast(null, target, ChannelQueue(player, player.uuid, target))
+            // TODO: Support living casters
+            // DecisiveStrikeMagic.cast()
         }
     }
 }

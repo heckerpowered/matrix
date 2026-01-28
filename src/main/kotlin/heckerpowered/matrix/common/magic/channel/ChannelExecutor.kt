@@ -6,14 +6,13 @@
 package heckerpowered.matrix.common.magic.channel
 
 import heckerpowered.matrix.client.minecraft
-import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.render.ChannelAnimation
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.network.ChannelMagicPayload
-import heckerpowered.matrix.core.MatrixLivingEntity
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
@@ -21,44 +20,44 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object ChannelExecutor {
-    fun channel(magic: Magic, channeler: ServerPlayerEntity, target: LivingEntity, channelRequest: ChannelRequest = ChannelRequest()): MagicAvailableStatus {
-        check(target is MatrixLivingEntity)
+    fun channel(magic: Magic, invocation: MagicInvocation, attempt: ChannelAttempt = ChannelAttempt(payload = invocation.payload)): MagicAvailableStatus {
+        val caster = invocation.caster
+        val target = invocation.target
+        val queue = invocation.queue
+        val payload = invocation.payload
 
-        val queues = target.getChannelQueues()
-        val queue = queues.computeIfAbsent(channeler.uuid) {
-            ChannelQueue(channeler, channeler.uuid, target)
+        val channelerEntity = caster.entityOrNull() ?: return MagicAvailableStatus.UNAVAILABLE
+        val player = channelerEntity as? ServerPlayerEntity ?: return MagicAvailableStatus.UNAVAILABLE
+
+        val calculationContext = MagicCalculationContext.fromInvocation(invocation)
+
+        val available = magic.availableStatus(calculationContext)
+        if (!attempt.isMagicAvailable(available)) {
+            val rejectedStatus = if (available == MagicAvailableStatus.AVAILABLE)
+                MagicAvailableStatus.UNAVAILABLE else available
+            return rejectedStatus
         }
 
-        val data = channelRequest.data
-        val channelTime = magic.getChannelTime(channeler, target, queue, data)
-        val cost = magic.getCost(channeler, target, queue, data)
-        val convertRatio = magic.getBloodPactConvertRatio(channeler, target, queue, data)
-
-        val available = magic.availableStatus(channeler, target, queue)
-        if (!channelRequest.isMagicAvailable(available)) {
-            return available
-        }
-
-        if (!channelRequest.payCost(channeler, cost.mana, convertRatio)) {
+        val cost = magic.getCost(calculationContext)
+        val convertRatio = magic.getBloodPactConvertRatio(calculationContext)
+        if (!attempt.payCost(player, cost.mana, convertRatio)) {
             return MagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
         }
 
-        val channelEntry = ChannelEntry(magic, cost, channelTime, data = channelRequest.data)
-        channel(channelEntry, channeler, target)
-        ServerPlayNetworking.send(channeler, ChannelMagicPayload(magic.definition.uuid, target.id, channelTime))
+        val channelTime = magic.getChannelTime(calculationContext)
+        val entry = ChannelEntry(
+            magic = magic,
+            cost = cost,
+            channelTime = channelTime,
+            payload = payload
+        )
+
+        queue.enqueue(entry)
+        entry.magic.channel(invocation)
+
+        val channelPayload = ChannelMagicPayload(magic.definition.uuid, target.id, channelTime)
+        ServerPlayNetworking.send(player, channelPayload)
         return MagicAvailableStatus.AVAILABLE
-    }
-
-    fun channel(magic: ChannelEntry, channeler: Channeler, target: LivingEntity) {
-        check(target is MatrixLivingEntity)
-
-        val queues = target.getChannelQueues()
-        val queue = queues.computeIfAbsent(channeler.uuid) {
-            ChannelQueue(channeler, channeler.uuid, target)
-        }
-
-        queue.enqueue(magic)
-        magic.magic.channel(player, target, queue, magic.data)
     }
 
     @Environment(EnvType.CLIENT)

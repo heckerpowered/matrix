@@ -11,11 +11,11 @@ import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.ReadDataCallback
 import heckerpowered.matrix.common.event.WriteDataCallback
 import heckerpowered.matrix.common.item.WizardHelmet
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
+import heckerpowered.matrix.common.magic.channel.*
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.allChannelQueues
 import heckerpowered.matrix.common.magic.core.ExecutionPayload
 import heckerpowered.matrix.common.magic.core.Magic
-import heckerpowered.matrix.common.magic.core.MagicDataSpecification
+import heckerpowered.matrix.common.magic.core.MagicExecutionPayloadSpecification
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.plus
 import heckerpowered.matrix.common.magic.spell.*
@@ -36,6 +36,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 import java.util.*
 
 object MagicManager {
@@ -52,7 +53,7 @@ object MagicManager {
         require(magics.putIfAbsent(uuid, magic) == null) { "Duplicate Magic: $uuid" }
         registeredMagics.add(magic)
 
-        if (magic is MagicDataSpecification) {
+        if (magic is MagicExecutionPayloadSpecification) {
             ExecutionPayload.serializationModule += magic.serializerModule()
         }
     }
@@ -130,20 +131,8 @@ object MagicManager {
             deserializer = MapSerializer(UUIDSerializer, PersistChannelQueue.serializer())
         )
         decodedQueues.forEach { (uuid, persistQueue) ->
-            val channelQueue = ChannelQueue.fromPersist(entity, persistQueue)
+            val channelQueue = ChannelQueue.fromPersist(entity.server, entity, persistQueue)
             entity.allChannelQueues[uuid] = channelQueue
-
-            // val channeler = channelQueue.channeler as? ServerPlayerEntity ?: return@forEach
-            // channelQueue.channelingMagics().forEach { channelingMagic ->
-            //     ServerPlayNetworking.send(
-            //         channeler, ChannelMagicPayload(
-            //             channelingMagic.magic.definition.uuid,
-            //             entity.id,
-            //             channelingMagic.channelTime,
-            //             channelingMagic.currentChannelTime
-            //         )
-            //     )
-            // }
         }
     }
 
@@ -177,20 +166,27 @@ object MagicManager {
     }
 
     private fun onEntityTick(entity: Entity) {
-        if (entity !is MatrixLivingEntity) {
-            return
-        }
+        if (entity !is MatrixLivingEntity) return
 
         for (queue in entity.getChannelQueues().values) {
-            val magic = queue.tick() ?: continue
-            var channeler = queue.channeler
+            val entry = queue.tick() ?: continue
             val target = queue.target
-            if (channeler == null) {
-                channeler = target.world.getPlayerByUuid(queue.channelerUuid)
+            if (entity.world !is ServerWorld) {
+                // queue.tick() may be called from client, but magic.cast must be called from server
+                continue
             }
-            if (channeler is ServerPlayerEntity?) {
-                magic.magic.cast(channeler, target, queue, magic.data)
+            val caster = when (val channeler = queue.channeler) {
+                is ServerPlayerEntity -> PlayerCaster(channeler)
+                is LivingEntity -> EntityCaster(channeler)
+                else -> DetachedCaster(target.world as ServerWorld, queue.channelerUuid)
             }
+            val invocation = MagicInvocation(
+                caster = caster.tryResolve(),
+                target = target,
+                queue = queue,
+                payload = entry.payload
+            )
+            entry.magic.cast(invocation)
         }
     }
 

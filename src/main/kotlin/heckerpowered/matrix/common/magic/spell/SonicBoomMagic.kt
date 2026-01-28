@@ -6,8 +6,8 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
@@ -18,7 +18,6 @@ import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.particle.ParticleTypes
-import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
@@ -33,20 +32,20 @@ object SonicBoomMagic : Magic(
         34.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
-        super.cast(player, target, sequence, data)
-        if (player == null) {
-            return
-        }
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
 
-        val world = player.serverWorld
-        castSonicBoom(world, player, target)
+        val caster = invocation.caster.entityOrNull() ?: return
+        val target = invocation.target
+        val world = invocation.caster.world as ServerWorld
+
+        castSonicBoom(world, caster, target)
         target.getNearestEntities(20.0)
             .filterIsInstance<LivingEntity>()
-            .filter { it != player }
+            .filter { it != caster }
             .take(5)
             .forEach {
-                castSonicBoom(world, player, it, target.pos) { dist -> dist.coerceAtLeast(20) }
+                castSonicBoom(world, caster, it, target.pos) { dist -> dist.coerceAtLeast(20) }
             }
     }
 

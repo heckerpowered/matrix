@@ -31,9 +31,9 @@ import heckerpowered.matrix.common.item.LightningChestplate1
 import heckerpowered.matrix.common.item.LightningChestplate1.isBorrowedTime
 import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
 import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.core.description
 import heckerpowered.matrix.common.network.ActiveBloodPactPayload
 import heckerpowered.matrix.common.network.BorrowedTimePayload
@@ -459,10 +459,10 @@ object MatrixHud {
         if (selectedIndex - 1 !in MatrixClient.getPlayerMagics().indices) {
             return
         }
+
         val magic = selectedMagic
-        val target = this.targetedEntity
-        val channelSequence = player.getChannelQueue(target)
-        manaBar.manaCost.value = magic.getCost(player, target, channelSequence).toDouble()
+        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
+        manaBar.manaCost.value = magic.getCost(calculationContext).toDouble()
     }
 
     val selectedMagic: Magic
@@ -487,7 +487,8 @@ object MatrixHud {
     private fun useMagicIndexed(index: Int) {
         val magic = MatrixClient.getPlayerMagics()[index]
         val target = this.targetedEntity ?: return
-        if (magic.availableStatus(player, target, player.getChannelQueue(target)) != MagicAvailableStatus.AVAILABLE) {
+        val calculationContext = MagicCalculationContext.fromEntity(player, target)
+        if (magic.availableStatus(calculationContext) != MagicAvailableStatus.AVAILABLE) {
             return
         }
 
@@ -496,7 +497,7 @@ object MatrixHud {
         // Reset use magic animation
         usingMagicList[index + 1] = 0.0
 
-        val cost = magic.getCost(player, target, player.getChannelQueue(target))
+        val cost = magic.getCost(calculationContext)
         val mana = mana - manaUsage
         if (player.isBloodPactActive && mana < cost) {
             minecraft.world!!.playSound(player, player.x, player.y, player.z, SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, 1.0f, 1f)
@@ -620,15 +621,9 @@ object MatrixHud {
         }
     }
 
-    private fun getMagicAvailableStatus(
-        magic: Magic,
-    ): MagicAvailableStatus {
-        val channelSequence = player.getChannelQueue(
-            targetedEntity
-        )
-        return magic.availableStatus(
-            player, targetedEntity, channelSequence
-        )
+    private fun getMagicAvailableStatus(magic: Magic): MagicAvailableStatus {
+        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
+        return magic.availableStatus(calculationContext)
     }
 
     private fun renderMagicAvailableStatus(
@@ -1070,16 +1065,12 @@ object MatrixHud {
         drawContext: DrawContext,
         tickCounter: RenderTickCounter,
     ) {
-        val channelSequence = player.getChannelQueue(targetedEntity)
-        val magicCost = selectedMagic.getCost(player, targetedEntity, channelSequence).toDouble()
+        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
+        val magicCost = selectedMagic.getCost(calculationContext).toDouble()
         manaBar.manaCost.value = magicCost
 
-        val renderer = LegacyMatrixUIRenderer(
-            drawContext.vertexConsumers
-        )
-        manaBar.render(
-            drawContext, renderer
-        )
+        val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
+        manaBar.render(drawContext, renderer)
     }
 
     private fun renderLeftPart(
@@ -1151,11 +1142,9 @@ object MatrixHud {
             }
         }
 
-        val channelSequence = player.getChannelQueue(
-            targetedEntity
-        )
+        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
         val normalCost = magic.getNormalCost()
-        val cost = magic.getCost(player, targetedEntity, channelSequence)
+        val cost = magic.getCost(calculationContext)
         if (displayData.previousCost != cost) {
             displayData.costChangedAnimation.value = .0
             displayData.previousCost = cost
@@ -1732,8 +1721,8 @@ object MatrixHud {
             .filter { it is LivingEntity && !it.isSpectator && it.isAlive }
             .map { it as LivingEntity }
             .filter {
-                val channelSequence = player.getChannelQueue(it)
-                selectedMagic.availableStatus(player, it, channelSequence) == MagicAvailableStatus.AVAILABLE
+                val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
+                selectedMagic.availableStatus(calculationContext) == MagicAvailableStatus.AVAILABLE
             }
     }
 

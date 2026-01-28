@@ -18,7 +18,7 @@ import java.util.*
 
 object MagicReferenceSerializer : KSerializer<Magic> {
     override val descriptor: SerialDescriptor
-        get() = PrimitiveSerialDescriptor("matrix.magic_reference", PrimitiveKind.STRING)
+        get() = PrimitiveSerialDescriptor("matrix.MagicReference", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Magic) {
         encoder.encodeString(value.definition.uuid.toString())

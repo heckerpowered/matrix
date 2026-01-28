@@ -6,10 +6,9 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.channel.ChannelExecutor
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
+import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.magic.channel.*
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.channel.ChannelRequest
 import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
@@ -20,7 +19,6 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.effect.StatusEffects
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.World
 
 object BreakingBadMagic : Magic(
@@ -30,42 +28,46 @@ object BreakingBadMagic : Magic(
         40.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
-        super.cast(player, target, sequence, data)
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
+
+        val target = invocation.target
+        val caster = invocation.caster.entityOrNull()
+        val payload = invocation.payload
+
         target.addStatusEffect(StatusEffectInstance(StatusEffects.POISON, 20 * 5, 4))
         target.addStatusEffect(StatusEffectInstance(StatusEffects.BLINDNESS, 20 * 5, 4))
 
         if (target.isOnFire) {
-            val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { player?.damageSources?.explosion(target, player) }
-            target.world.createExplosion(player, damageSource, ExplosionMagic.explosionBehavior, target.x, target.y, target.z, 4.0F, false, World.ExplosionSourceType.MOB)
-            // if (target.world is ServerWorld) {
-            //     target.world.server?.playerManager?.playerList?.forEach {
-            //         ServerPlayNetworking.send(it, ExplosionPayload(target.id))
-            //     }
-            // }
+            val damageSource = invocation.removeSourceIfSpoofed { caster?.damageSources?.explosion(target, caster) }
+            target.world.createExplosion(caster, damageSource, ExplosionMagic.explosionBehavior, target.x, target.y, target.z, 4.0F, false, World.ExplosionSourceType.MOB)
         }
 
-        if (player == null || data.isSpread) {
+        if (caster !is PlayerEntity || payload.isSpread) {
             return
         }
 
         target.getAdjacentEntities(8.0)
             .filterIsInstance<LivingEntity>()
-            .filter { it != target && it != player && it.isAlive }
-            .filter { it.getChannelQueue(player)?.isEmpty ?: true }
+            .filter { it != target && it != caster && it.isAlive }
+            .filter { it.getChannelQueue(caster)?.isEmpty ?: true }
             .consumeWhile(4) {
-                ChannelExecutor.channel(BreakingBadMagic, player, it, ChannelRequest(costMana = false, data = ExecutionPayload(isSpread = true))) == MagicAvailableStatus.AVAILABLE
+                val spreadInvocation = MagicInvocation.fromEntity(player, it)
+                val spreadPayload = ExecutionPayload(isSpread = true)
+                val spreadAttempt = ChannelAttempt(costMana = false, payload = spreadPayload)
+                ChannelExecutor.channel(BreakingBadMagic, spreadInvocation, spreadAttempt) == MagicAvailableStatus.AVAILABLE
             }
             .drain()
     }
 
-    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): MagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailableStatus {
+        val target = context.target
         if (target?.isInvulnerableToEffect(StatusEffects.POISON) == true ||
             target?.isInvulnerableToEffect(StatusEffects.BLINDNESS) == true
         ) {
             return MagicAvailableStatus.TARGET_IMMUNE
         }
 
-        return super.availableStatus(player, target, sequence)
+        return super.availableStatus(context)
     }
 }

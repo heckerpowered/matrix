@@ -7,19 +7,18 @@ package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.ABSOLVRIFT_EFFECT
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.channel.defaultMagicDamageSource
+import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.core.extensions.EntityExtensions.damage
 import heckerpowered.matrix.core.extensions.LivingEntityExtensions.attackDamage
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
-import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.entity.player.PlayerEntity
 
 object AbsolvriftMagic : Magic(
     MagicDefinition(
@@ -28,25 +27,33 @@ object AbsolvriftMagic : Magic(
         36.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
-        super.cast(player, target, sequence, data)
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
 
-        val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
-        val amount = player?.attackDamage?.toFloat() ?: 2.0F
+        val caster = invocation.caster.entityOrNull()
+        val target = invocation.target
+        val damageSource = invocation.defaultMagicDamageSource()
+        val amount = caster?.attackDamage?.toFloat() ?: 2.0F
+
+        fun addParticles() {
+            if (caster is PlayerEntity) {
+                caster.addCritParticles(target)
+                caster.addEnchantedHitParticles(target)
+            }
+        }
 
         if (target.damage(amount, damageSource)) {
-            player?.addCritParticles(target)
-            player?.addEnchantedHitParticles(target)
+            addParticles()
         }
 
         target.getNearestEntities(6.0)
-            .filter { it.isAttackable && it != player }
+            .filter { it.isAttackable && it != caster }
             .forEach {
                 if (it.damage(amount, damageSource)) {
-                    player?.addCritParticles(it)
-                    player?.addEnchantedHitParticles(it)
+                    addParticles()
                 }
             }
-        player?.addStatusEffect(StatusEffectInstance(ABSOLVRIFT_EFFECT, 20 * 25, 0, false, false, true))
+
+        caster?.addStatusEffect(StatusEffectInstance(ABSOLVRIFT_EFFECT, 20 * 25, 0, false, false, true))
     }
 }

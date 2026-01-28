@@ -6,16 +6,13 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.network.SystemCrashPayload
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object SystemCrashMagic : Magic(
@@ -26,9 +23,8 @@ object SystemCrashMagic : Magic(
     )
 ) {
 
-    override fun channel(player: PlayerEntity, target: LivingEntity, queue: ChannelQueue, data: ExecutionPayload) {
-        if (target is ServerPlayerEntity) {
-            ServerPlayNetworking.send(target, SystemCrashPayload())
-        }
+    override fun channel(invocation: MagicInvocation) {
+        val target = invocation.target as? ServerPlayerEntity ?: return
+        ServerPlayNetworking.send(target, SystemCrashPayload())
     }
 }

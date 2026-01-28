@@ -6,9 +6,12 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.magic.channel.CasterContext
 import heckerpowered.matrix.common.magic.channel.ChannelEntry
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
-import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.system.MagicManager
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.entity.LivingEntity
@@ -55,10 +58,17 @@ class ChannelMagicPayload(
                 return@execute
             }
 
-            val cost = magic.getCost(player, entity, player.getChannelQueue(entity))
-            val channelEntry = ChannelEntry(magic, cost, channelTime, currentChannelTime)
-            ChannelExecutor.channel(channelEntry, player, entity)
-            ChannelExecutor.performChannelAnimation(channelEntry, entity, channelTime, currentChannelTime)
+            val calculationContext = MagicCalculationContext(
+                caster = CasterContext.fromEntity(player),
+                target = entity,
+                queue = entity.getOrCreateChannelQueue(player)
+            )
+            val cost = magic.getCost(calculationContext)
+            val entry = ChannelEntry(magic, cost, channelTime, currentChannelTime)
+
+            calculationContext.queue!!.enqueue(entry)
+            magic.channel(MagicInvocation.fromEntity(player, entity))
+            ChannelExecutor.performChannelAnimation(entry, entity, channelTime, currentChannelTime)
         }
     }
 }

@@ -88,9 +88,7 @@ vec3 amplifyLuminance(
     float glowIntensity
 )
 {
-    return
-    colorRgb
-    * (1.0 + glowFactor * glowIntensity);
+    return colorRgb * (1.0 + glowFactor * glowIntensity);
 }
 
 float computeSphereEdgeGlowFactorFromSilhouette(
@@ -108,21 +106,12 @@ float computeSphereSilhouetteSignedDistanceWorldUnits(
     float sphereRadiusWorldUnits
 )
 {
-    vec3 cameraToSphereCenter =
-    sphereCenterWorldPosition - cameraWorldPosition;
+    vec3 cameraToSphereCenter = sphereCenterWorldPosition - cameraWorldPosition;
+    float cameraToCenterDistance = length(cameraToSphereCenter);
+    vec3 cameraToCenterDirection = cameraToSphereCenter / cameraToCenterDistance;
 
-    float cameraToCenterDistance =
-    length(cameraToSphereCenter);
-
-    vec3 cameraToCenterDirection =
-    cameraToSphereCenter / cameraToCenterDistance;
-
-    float perpendicularDistanceToRay =
-    length(cross(viewRayDirectionWorld, cameraToCenterDirection))
-    * cameraToCenterDistance;
-
-    return
-    perpendicularDistanceToRay - sphereRadiusWorldUnits;
+    float perpendicularDistanceToRay = length(cross(viewRayDirectionWorld, cameraToCenterDirection)) * cameraToCenterDistance;
+    return perpendicularDistanceToRay - sphereRadiusWorldUnits;
 }
 
 vec3 remapColorToFixedBrightness(

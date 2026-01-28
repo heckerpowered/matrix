@@ -7,17 +7,11 @@ package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_EFFECT
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.Magic
-import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
-import heckerpowered.matrix.common.magic.core.MagicDefinition
-import heckerpowered.matrix.common.magic.core.isInvulnerableToEffect
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.server.network.ServerPlayerEntity
 
 object ArmorPenetrationMagic : Magic(
     MagicDefinition(
@@ -26,16 +20,20 @@ object ArmorPenetrationMagic : Magic(
         60.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: heckerpowered.matrix.common.magic.core.ExecutionPayload) {
-        super.cast(player, target, sequence, data)
-        target.addStatusEffect(StatusEffectInstance(ARMOR_PENETRATION_EFFECT, 200, 0, false, false))
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
+
+        val target = invocation.target
+        val effect = StatusEffectInstance(ARMOR_PENETRATION_EFFECT, 200, 0, false, false)
+        target.addStatusEffect(effect)
     }
 
-    override fun availableStatus(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?): MagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailableStatus {
+        val target = context.target
         if (target?.isInvulnerableToEffect(ARMOR_PENETRATION_EFFECT) == true) {
             return MagicAvailableStatus.TARGET_IMMUNE
         }
 
-        return super.availableStatus(player, target, sequence)
+        return super.availableStatus(context)
     }
 }

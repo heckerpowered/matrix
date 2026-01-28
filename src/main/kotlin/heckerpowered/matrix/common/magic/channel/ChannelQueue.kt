@@ -10,6 +10,7 @@ import heckerpowered.matrix.common.persistent.PersistChannelQueue
 import heckerpowered.matrix.core.MatrixLivingEntity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.server.MinecraftServer
 import java.util.*
 
 typealias Channeler = PlayerEntity
@@ -20,9 +21,10 @@ class ChannelQueue(
     val target: LivingEntity,
 ) {
     companion object {
-        fun fromPersist(target: LivingEntity, persist: PersistChannelQueue): ChannelQueue {
+        fun fromPersist(minecraftServer: MinecraftServer?, target: LivingEntity, persist: PersistChannelQueue): ChannelQueue {
+            val world = minecraftServer?.getWorld(persist.world) ?: target.world
             val channelQueue = ChannelQueue(
-                channeler = target.server?.playerManager?.getPlayer(persist.channelerUuid),
+                channeler = world.entityLookup.get(persist.channelerUuid) as? PlayerEntity,
                 channelerUuid = persist.channelerUuid,
                 target = target,
             )
@@ -62,6 +64,8 @@ class ChannelQueue(
         get() = active != null
     val channelingMagicCount: Int
         get() = queue.size + if (active != null) 1 else 0
+    val queuedMagicCount: Long
+        get() = queue.size.toLong()
 
     fun clear() {
         active = null
@@ -114,7 +118,8 @@ class ChannelQueue(
             channelerUuid = channelerUuid,
             isLocked = isLocked,
             active = active,
-            queue = queue.toList()
+            queue = queue.toList(),
+            world = (channeler ?: target).world.registryKey
         )
     }
 }

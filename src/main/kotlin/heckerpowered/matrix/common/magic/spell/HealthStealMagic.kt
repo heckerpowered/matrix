@@ -6,14 +6,13 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import net.minecraft.entity.LivingEntity
-import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.entity.player.PlayerEntity
 
 object HealthStealMagic : Magic(
     MagicDefinition(
@@ -22,22 +21,22 @@ object HealthStealMagic : Magic(
         20.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
-        super.cast(player, target, sequence, data)
-        if (player == null) {
-            return
-        }
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
+
+        val caster = invocation.caster.entityOrNull() ?: return
+        val target = invocation.target
 
         val amount = target.maxHealth * 0.5F
         val healAmount = amount * 0.5F
-        player.heal(healAmount)
-        player.hungerManager.add(healAmount.toInt(), healAmount)
+        caster.heal(healAmount)
+        (caster as? PlayerEntity)?.hungerManager?.add(healAmount.toInt(), healAmount)
 
-        if (player.absorptionAmount >= player.maxHealth) {
+        if (caster.absorptionAmount >= caster.maxHealth) {
             return
         }
 
-        val absorptionAmount = (player.absorptionAmount + amount).coerceAtMost(player.maxHealth)
-        player.setAbsorptionAmountUnclamped(absorptionAmount)
+        val absorptionAmount = (caster.absorptionAmount + amount).coerceAtMost(caster.maxHealth)
+        caster.setAbsorptionAmountUnclamped(absorptionAmount)
     }
 }

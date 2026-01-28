@@ -17,5 +17,5 @@ data class ChannelEntry(
     val cost: Long,
     val channelTime: Long,
     var currentChannelTime: Long = 0,
-    @Polymorphic val data: ExecutionPayload = ExecutionPayload(),
+    @Polymorphic val payload: ExecutionPayload = ExecutionPayload(),
 )

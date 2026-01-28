@@ -6,16 +6,15 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import heckerpowered.matrix.core.attack
 import heckerpowered.matrix.core.squaredDistanceTo
 import heckerpowered.matrix.core.toBox
-import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket
 import net.minecraft.server.network.ServerPlayerEntity
 
@@ -26,28 +25,32 @@ object TeleportMagic : Magic(
         5.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
-        super.cast(player, target, sequence, data)
-        if (player == null) {
-            return
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
+
+        val caster = invocation.caster.entityOrNull() ?: return
+        val target = invocation.target
+
+        val velocity = caster.velocity
+        caster.teleport(target.x, target.y, target.z, true)
+        caster.velocity = velocity
+        caster.velocityDirty = true
+        caster.velocityModified = true
+        if (caster is ServerPlayerEntity) {
+            caster.networkHandler.sendPacket(EntityVelocityUpdateS2CPacket(caster))
         }
 
-        val velocity = player.velocity
-        player.teleport(target.x, target.y, target.z, true)
-        player.networkHandler.sendPacket(EntityVelocityUpdateS2CPacket(player))
-        player.velocity = velocity
-        player.velocityDirty = true
-        player.velocityModified = true
-
-        target.world.getOtherEntities(player, target.pos.toBox().expand(3.0))
-            .filter { it squaredDistanceTo player <= 6 * 6 }
+        target.world.getOtherEntities(caster, target.pos.toBox().expand(3.0))
+            .filter { it squaredDistanceTo caster <= 6 * 6 }
             .forEach {
                 it.timeUntilRegen = 0
-                player.lastAttackedTicks = Int.MAX_VALUE
-                player attack it
-                player.addCritParticles(it)
-                player.addEnchantedHitParticles(it)
-                player.swingHand(player.activeHand, true)
+                caster.lastAttackedTicks = Int.MAX_VALUE
+                if (caster is PlayerEntity) {
+                    caster.attack(it)
+                    caster.addCritParticles(it)
+                    caster.addEnchantedHitParticles(it)
+                }
+                caster.swingHand(caster.activeHand, true)
             }
     }
 }

@@ -6,16 +6,13 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.channel.defaultMagicDamageSource
+import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import heckerpowered.matrix.common.persistent.magicClock
-import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import net.minecraft.entity.LivingEntity
-import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.World
 import net.minecraft.world.explosion.AdvancedExplosionBehavior
 import java.util.*
@@ -34,15 +31,13 @@ object ExplosionMagic : Magic(
         Optional.empty()
     )
 
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
-        super.cast(player, target, sequence, data)
-        val damageSource = MemoryWipeMagic.getDamageSource(player, target, data) { target.world.damageSources.create(MatrixDamageTypes.magic, player) }
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
 
-        target.world.createExplosion(player, damageSource, explosionBehavior, target.x, target.y, target.z, ((player?.magicClock ?: 1.0) * 4.0).toFloat(), false, World.ExplosionSourceType.MOB)
-        // if (target.world is ServerWorld) {
-        //     target.world.server?.playerManager?.playerList?.forEach {
-        //         ServerPlayNetworking.send(it, ExplosionPayload(target.id))
-        //     }
-        // }
+        val caster = invocation.caster.entityOrNull()
+        val target = invocation.target
+        val damageSource = invocation.defaultMagicDamageSource()
+
+        target.world.createExplosion(caster, damageSource, explosionBehavior, target.x, target.y, target.z, 4.0F, false, World.ExplosionSourceType.MOB)
     }
 }

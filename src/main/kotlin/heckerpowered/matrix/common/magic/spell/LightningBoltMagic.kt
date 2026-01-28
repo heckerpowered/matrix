@@ -7,16 +7,13 @@ package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.entity.MagicLightningEntity
-import heckerpowered.matrix.common.magic.channel.ChannelQueue
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.channel.asPlayerOrNull
 import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import heckerpowered.matrix.core.common.balance.Accumulator
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.server.network.ServerPlayerEntity
 
 object LightningBoltMagic : Magic(
     MagicDefinition(
@@ -25,8 +22,13 @@ object LightningBoltMagic : Magic(
         20.ticks
     )
 ) {
-    override fun cast(player: ServerPlayerEntity?, target: LivingEntity, sequence: ChannelQueue, data: ExecutionPayload) {
-        super.cast(player, target, sequence, data)
+    override fun cast(invocation: MagicInvocation) {
+        super.cast(invocation)
+
+        val caster = invocation.caster.asPlayerOrNull()
+        val target = invocation.target
+        val payload = invocation.payload
+
         val lightningTypes = MagicLightningEntity.LightningType.entries
         val lightningType = if ((0..1000).random() < 6) {
             MagicLightningEntity.LightningType.BLACK
@@ -41,19 +43,21 @@ object LightningBoltMagic : Magic(
         target.world.spawnEntity(MagicLightningEntity(target.world).also {
             it.setPosition(target.pos)
             it.lightningType = lightningType
-            if (!data.isSpoofed) {
-                it.channeler = player
+            if (!payload.isSpoofed) {
+                it.channeler = caster
             }
         })
     }
 
-    override fun getCost(player: PlayerEntity, target: LivingEntity?, sequence: ChannelQueue?, data: ExecutionPayload, accumulator: Accumulator): Long {
-        if (sequence != null) {
-            val count = sequence.channelingMagics().count { channelingMagic -> channelingMagic.magic is LightningBoltMagic }
+    override fun getCost(context: MagicCalculationContext): Long {
+        val queue = context.queue
+        val accumulator = context.accumulator
+        if (queue != null) {
+            val count = queue.channelingMagics().count { channelingMagic -> channelingMagic.magic is LightningBoltMagic }
             val costReduction = (count * 0.2).coerceAtMost(0.8)
             accumulator.pushCostReduction(costReduction)
         }
 
-        return super.getCost(player, target, sequence, data, accumulator)
+        return super.getCost(context)
     }
 }
