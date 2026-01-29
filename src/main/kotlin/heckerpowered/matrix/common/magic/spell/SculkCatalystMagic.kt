@@ -110,7 +110,7 @@ object SculkCatalystMagic : Magic(
 
     override fun channel(invocation: MagicInvocation) {
         super.channel(invocation)
-        val caster = invocation.caster.asPlayerOrNull() ?: return
+        val caster = invocation.caster.entityOrNull() as? PlayerEntity ?: return
         val target = invocation.target
         synchronized(lock) {
             sculkCatalystTracker.computeIfAbsent(caster) {

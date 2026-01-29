@@ -1712,7 +1712,7 @@ object MatrixHud {
             aimAssistMaxDistance,
             aimAssistFov,
             tickDelta
-        )
+        ) // TODO: Sort by distance
         if (entities == null) {
             return emptyList()
         }
@@ -1721,7 +1721,7 @@ object MatrixHud {
             .filter { it is LivingEntity && !it.isSpectator && it.isAlive }
             .map { it as LivingEntity }
             .filter {
-                val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
+                val calculationContext = MagicCalculationContext.fromEntity(player, it)
                 selectedMagic.availableStatus(calculationContext) == MagicAvailableStatus.AVAILABLE
             }
     }
