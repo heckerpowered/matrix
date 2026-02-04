@@ -93,6 +93,10 @@ object MatrixEnchantments {
         MagicShieldEnchantment.onInitialize()
         PeakOverdriveEnchantment.onInitialize()
         LightningStrikeEnchantment.onInitialize()
+        ProximatePropagationEnchantment.onInitialize()
+        MagicQueueEnchantment.onInitialize()
+        QueueAccelerationEnchantment.onInitialize()
+        ManaOverflowEnchantment.onInitialize()
     }
 
     fun ItemStack.getEnchantmentLevel(registryKey: RegistryKey<Enchantment>): Int {

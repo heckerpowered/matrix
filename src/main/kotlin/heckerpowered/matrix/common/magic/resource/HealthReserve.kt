@@ -6,13 +6,11 @@
 package heckerpowered.matrix.common.magic.resource
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.item.WizardHelmet
+import heckerpowered.matrix.common.effect.BloodPactEffect
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.asPlayerOrNull
-import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
-import heckerpowered.matrix.common.persistent.wizardHelmet
 
 class HealthReserve(override val priority: Int = 50) : CastingResource {
     companion object;
@@ -39,8 +37,7 @@ class HealthReserve(override val priority: Int = 50) : CastingResource {
      */
     override fun availableAmount(context: MagicCalculationContext): Mana {
         val player = context.playerOrNull() ?: return 0.mana
-        val helmet = player.wizardHelmet.item as? WizardHelmet ?: return 0.mana
-        val convertRatio = helmet.getBloodPactConversionEfficiency(context)
+        val convertRatio = BloodPactEffect.getBloodPactConversionRatio(context)
         return (player.health * convertRatio).mana
     }
 
@@ -55,9 +52,8 @@ class HealthReserve(override val priority: Int = 50) : CastingResource {
      */
     override fun consume(invocation: MagicInvocation, amount: Mana) {
         val player = invocation.caster.asPlayerOrNull() ?: return
-        val helmet = player.wizardHelmet.item as? WizardHelmet
         val context = MagicCalculationContext.fromInvocation(invocation)
-        val convertRatio = helmet?.getBloodPactConversionEfficiency(context) ?: Magic.DEFAULT_BLOOD_PACT_CONVERT_RATIO
+        val convertRatio = BloodPactEffect.getBloodPactConversionRatio(context)
         val healthConsumed = (amount.amount / convertRatio).toFloat()
 
         val playerHealth = player.health

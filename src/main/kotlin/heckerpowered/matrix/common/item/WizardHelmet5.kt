@@ -7,6 +7,12 @@ package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
+import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
+import heckerpowered.matrix.common.magic.rule.calculation.sink.ChannelTimeCalculationSink
+import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
+import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.server.network.ServerPlayerEntity
@@ -22,9 +28,10 @@ object WizardHelmet5 : WizardHelmet(
         .fireproof()
         .rarity(Rarity.EPIC)
         .component(MatrixComponents.MAX_LOAD, 20.0)
-) {
+), MagicCalculationContributor {
     init {
         LivingAttackCallback.EVENT.register(::onLivingAttack)
+        MagicRuleRegistry.register(this)
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {
@@ -42,5 +49,11 @@ object WizardHelmet5 : WizardHelmet(
         return ActionResult.PASS
     }
 
-
+    override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {
+        if (sink !is ChannelTimeCalculationSink) return
+        val player = context.playerOrNull() ?: return
+        if (player.wizardHelmet.item is WizardHelmet5) {
+            sink.channelSpeedBonus += 1.0
+        }
+    }
 }

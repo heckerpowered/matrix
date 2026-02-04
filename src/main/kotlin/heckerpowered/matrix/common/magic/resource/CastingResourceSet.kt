@@ -7,6 +7,7 @@ package heckerpowered.matrix.common.magic.resource
 
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
+import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import kotlin.math.nextDown
 
 /**
@@ -24,7 +25,7 @@ import kotlin.math.nextDown
  * - Mutate game state by itself.
  * - Perform context-dependent branching.
  *
- * Resource discovery is handled by [CastingResourceRegistry], while
+ * Resource discovery is handled by [MagicRuleRegistry], while
  * consumption is performed explicitly via [consume].
  */
 class CastingResourceSet internal constructor(private val resources: List<CastingResource>) {

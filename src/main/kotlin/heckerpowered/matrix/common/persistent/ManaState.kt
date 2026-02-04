@@ -8,8 +8,12 @@ package heckerpowered.matrix.common.persistent
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.common.item.WizardHelmet
+import heckerpowered.matrix.common.magic.channel.CasterContext
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.rule.calculation.pipeline.CalculationPipeline
+import heckerpowered.matrix.common.magic.rule.calculation.sink.ChannelQueueSizeCalculationSink
 import heckerpowered.matrix.common.network.SyncManaPayload
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.EquipmentSlot
@@ -118,10 +122,8 @@ val PlayerEntity.wizardHelmet: ItemStack
 
 val PlayerEntity.queueSize: Long
     get() {
-        val wizardHelmet = this.wizardHelmet
-        val item = wizardHelmet.item
-        if (item !is WizardHelmet) {
-            return 0
-        }
-        return item.getQueueSize(this, wizardHelmet)
+        val sink = ChannelQueueSizeCalculationSink()
+        val context = MagicCalculationContext(CasterContext.fromEntity(this))
+        CalculationPipeline.apply(context, sink)
+        return sink.queueSize
     }

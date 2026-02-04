@@ -13,8 +13,11 @@ import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
+import heckerpowered.matrix.common.magic.rule.calculation.sink.CostCalculationSink
+import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
+import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import heckerpowered.matrix.core.common.balance.Accumulator
 
 object LightningBoltMagic : Magic(
     MagicDefinition(
@@ -22,7 +25,11 @@ object LightningBoltMagic : Magic(
         15.mana,
         20.ticks
     )
-) {
+), MagicCalculationContributor {
+    init {
+        MagicRuleRegistry.register(this)
+    }
+
     override fun cast(invocation: MagicInvocation) {
         super.cast(invocation)
 
@@ -50,15 +57,13 @@ object LightningBoltMagic : Magic(
         })
     }
 
-    override fun getCost(context: MagicCalculationContext): Long {
-        val queue = context.queue
-        val accumulator = Accumulator()
-        if (queue != null) {
-            val count = queue.channelingMagics().count { channelingMagic -> channelingMagic.magic is LightningBoltMagic }
-            val costReduction = (count * 0.2).coerceAtMost(0.8)
-            accumulator.pushCostReduction(costReduction)
-        }
+    override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {
+        if (sink !is CostCalculationSink) return
+        if (magic !is LightningBoltMagic) return
+        val queue = context.queue ?: return
 
-        return super.getCost(context)
+        val count = queue.channelingMagics().count { it.magic is LightningBoltMagic }
+        val costReduction = (count * 0.2).coerceAtMost(0.8)
+        sink.costReduction += costReduction
     }
 }

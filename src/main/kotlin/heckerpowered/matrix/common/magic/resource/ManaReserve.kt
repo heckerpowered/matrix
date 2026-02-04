@@ -9,6 +9,7 @@ import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.asPlayerOrNull
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.minus
 import heckerpowered.matrix.common.persistent.mana
 import heckerpowered.matrix.core.mana
 
@@ -42,6 +43,6 @@ class ManaReserve(override val priority: Int = 100) : CastingResource {
      */
     override fun consume(invocation: MagicInvocation, amount: Mana) {
         val player = invocation.caster.asPlayerOrNull() ?: return
-        player.mana = amount
+        player.mana -= amount
     }
 }

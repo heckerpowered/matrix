@@ -11,6 +11,8 @@ import heckerpowered.matrix.common.magic.channel.asPlayerOrNull
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.rule.effect.ChannelEffect
+import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.Angerable
@@ -24,7 +26,11 @@ object MemoryWipeMagic : Magic(
         10.mana,
         30.ticks
     )
-) {
+), ChannelEffect {
+    init {
+        MagicRuleRegistry.register(this)
+    }
+
     override fun cast(invocation: MagicInvocation) {
         super.cast(invocation)
 
@@ -71,4 +77,11 @@ object MemoryWipeMagic : Magic(
         attacker = null
     }
 
+    override fun onChannel(magic: Magic, invocation: MagicInvocation) {
+        val queue = invocation.queue
+        val payload = invocation.payload
+        if (queue.contains<MemoryWipeMagic>()) {
+            payload.isSpoofed = true
+        }
+    }
 }

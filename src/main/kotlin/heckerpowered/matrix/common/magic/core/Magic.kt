@@ -5,38 +5,23 @@
 
 package heckerpowered.matrix.common.magic.core
 
-import heckerpowered.matrix.common.effect.WitherArmorChargedEffect
-import heckerpowered.matrix.common.effect.isBloodPactActive
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PROXIMATE_PROPAGATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_ACCELERATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes.adjustedManaResistance
-import heckerpowered.matrix.common.item.MatrixComponents
-import heckerpowered.matrix.common.item.WizardHelmet
-import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magic.channel.*
-import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
-import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelQueue
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.resource.CastingResource
-import heckerpowered.matrix.common.magic.resource.CastingResourceRegistry
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
-import heckerpowered.matrix.common.magic.spell.MemoryWipeMagic
+import heckerpowered.matrix.common.magic.rule.calculation.pipeline.MagicCalculationPipeline
+import heckerpowered.matrix.common.magic.rule.calculation.sink.ChannelTimeCalculationSink
+import heckerpowered.matrix.common.magic.rule.calculation.sink.CostCalculationSink
+import heckerpowered.matrix.common.magic.rule.effect.MagicCastPipeline
+import heckerpowered.matrix.common.magic.rule.effect.MagicChannelPipeline
+import heckerpowered.matrix.common.magic.rule.resource.CastingResourcePipeline
 import heckerpowered.matrix.common.persistent.queueSize
-import heckerpowered.matrix.common.persistent.wizardHelmet
-import heckerpowered.matrix.core.common.balance.*
-import heckerpowered.matrix.core.inverseLerp
-import heckerpowered.matrix.core.lerp
-import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.boss.WitherEntity
 import net.minecraft.entity.boss.dragon.EnderDragonEntity
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.registry.entry.RegistryEntry
 import kotlin.math.round
 
@@ -75,9 +60,9 @@ import kotlin.math.round
  *
  * For any queue-related calculation:
  *
- * - If the channel queue is {@code null}, it is treated as an empty queue that
+ * - If the channel queue is `null`, it is treated as an empty queue that
  *   has not yet been created.
- * - A {@code null} queue never implies a locked or full state.
+ * - A `null` queue never implies a locked or full state.
  *
  * ### State Expectations
  *
@@ -90,75 +75,8 @@ import kotlin.math.round
  * @see MagicCalculationContext
  */
 abstract class Magic(val definition: MagicDefinition) {
-    companion object {
-        const val DEFAULT_BLOOD_PACT_CONVERT_RATIO = 2.0
-
-        private const val CHANNEL_SPEED_LANE_NAME = "channel_speed"
-        private const val MAGIC_RESISTANCE_LANE_NAME = "magic_resistance"
-        private const val COST_REDUCTION_LANE_NAME = "cost_reduction"
-
-        /**
-         * ChannelTime = EffectiveTime / (1.0 + ChannelSpeed) * (1.0 + MagicResistance)
-         */
-        private val ChannelTimeCalculationPlan = CalculationPlan(
-            Lane(
-                CHANNEL_SPEED_LANE_NAME,
-                SumOperator,
-            ) { currentValue, laneValue -> currentValue / (1.0 + laneValue) },
-            Lane(
-                MAGIC_RESISTANCE_LANE_NAME,
-                SumOperator
-            ) { currentValue, laneValue -> currentValue * (1.0 + laneValue) }
-        ) { it.coerceAtLeast(.0) }
-
-        /**
-         * Cost = BaseCost * (1.0 - CostReduction) * (1.0 + MagicResistance)
-         */
-        private val CostCalculationPlan = CalculationPlan(
-            Lane(
-                COST_REDUCTION_LANE_NAME,
-                SumOperator,
-            ) { currentValue, laneValue -> currentValue * (1.0 - laneValue) },
-            Lane(
-                MAGIC_RESISTANCE_LANE_NAME,
-                SumOperator
-            ) { currentValue, laneValue -> currentValue * (1.0 + laneValue) }
-        ) { it.coerceAtLeast(.0) }
-
-        val ChannelTimeCalculator = NumericCalculator(ChannelTimeCalculationPlan)
-        val CostCalculator = NumericCalculator(CostCalculationPlan)
-
-        fun Accumulator.pushChannelSpeed(value: Double) = push(CHANNEL_SPEED_LANE_NAME, value)
-        fun Accumulator.pushMagicResistance(value: Double) = push(MAGIC_RESISTANCE_LANE_NAME, value)
-        fun Accumulator.pushCostReduction(value: Double) = push(COST_REDUCTION_LANE_NAME, value)
-    }
-
     open fun cast(invocation: MagicInvocation) {
-        val caster = invocation.caster
-        val target = invocation.target
-        val payload = invocation.payload
-
-        val player = caster.asPlayerOrNull() ?: return
-
-        if (!player.isBloodPactActive) return
-        if (player.wizardHelmet.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY) < 5) return
-        if (payload.isSpread) return
-        if ((0..100).random() > 50) return
-
-        val nearestEntity = target.getNearestEntities(20.0)
-            .filterIsInstance<LivingEntity>()
-            .filter { it != player && it.isAlive }
-            .firstOrNull { player.getChannelQueue(it)?.isEmpty ?: true }
-            ?: return
-
-        val spreadInvocation = MagicInvocation(
-            caster = invocation.caster,
-            target = nearestEntity,
-            queue = nearestEntity.getOrCreateChannelQueue(player),
-            payload = ExecutionPayload(isSpread = true)
-        )
-
-        ChannelExecutor.channel(this, spreadInvocation)
+        MagicCastPipeline.onCast(this, invocation)
     }
 
     /**
@@ -184,39 +102,7 @@ abstract class Magic(val definition: MagicDefinition) {
      *                               player-backed caster.
      */
     open fun channel(invocation: MagicInvocation) {
-        val player = invocation.caster.entityOrNull() as PlayerEntity
-        val queue = invocation.queue
-        val payload = invocation.payload
-
-        // Queue Mastery: The last magic to fill a queue has -50% mana cost and
-        // locks the queue until all magics have channeled.
-        val queueMasteryLevel = player.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY)
-        val queuedMagicCount = queue.queuedMagicCount
-        val queueSizeFull = player.queueSize
-        if (queueMasteryLevel > 0 && queuedMagicCount == queueSizeFull) {
-            queue.isLocked = true
-        }
-
-        if (player.isBloodPactActive) {
-            WitherArmorChargedEffect.onEntityTick(player)
-            val peakOverDriveLevel = player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY)
-            if (peakOverDriveLevel > 0) {
-                channelPeakOverdrive(invocation)
-            }
-        }
-
-        if (queue.contains<MemoryWipeMagic>()) {
-            payload.isSpoofed = true
-        }
-    }
-
-    /**
-     * Triggers Peak Overdrive effects such as increasing load on wizard helmet.
-     */
-    protected open fun channelPeakOverdrive(invocation: MagicInvocation) {
-        val player = invocation.caster.asPlayerOrNull()!!
-        val currentLoad = player.wizardHelmet.getOrDefault(MatrixComponents.LOAD, .0)
-        player.wizardHelmet.set(MatrixComponents.LOAD, currentLoad + 1)
+        MagicChannelPipeline.onChannel(this, invocation)
     }
 
     /**
@@ -227,7 +113,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * any game state. It is intended for prediction, validation, and UI feedback.
      *
      * Queue-related rules follow these semantics:
-     * - If the channel queue is {@code null}, it is treated as empty and unlocked.
+     * - If the channel queue is `null`, it is treated as empty and unlocked.
      *
      * @param context calculation context describing the potential caster, target,
      *                queue state, and execution payload.
@@ -264,7 +150,8 @@ abstract class Magic(val definition: MagicDefinition) {
     protected open fun checkChannelQueueIsFull(context: MagicCalculationContext): Boolean {
         val player = context.playerOrNull() ?: return false
         val queue = context.queue ?: return false
-        return queue.isChanneling && queue.queuedMagicCount >= player.queueSize
+        if (!queue.isChanneling) return false
+        return queue.queuedMagicCount >= player.queueSize
     }
 
     /**
@@ -290,7 +177,7 @@ abstract class Magic(val definition: MagicDefinition) {
      */
     protected open fun checkMana(context: MagicCalculationContext): Boolean {
         val requiredCost = getCost(context).mana
-        val resourceSet = CastingResourceRegistry.collect(context)
+        val resourceSet = CastingResourcePipeline.collect(this, context)
         return resourceSet.canAfford(context, requiredCost)
     }
 
@@ -328,38 +215,16 @@ abstract class Magic(val definition: MagicDefinition) {
      * @return the final mana cost required to channel this magic.
      */
     open fun getCost(context: MagicCalculationContext): Long {
-        val player = context.playerOrNull() ?: return getBaseCost(context)
+        val sink = CostCalculationSink()
+        sink.magicResistance = getMagicResistance(context)
 
-        val target = context.target
-        val queue = context.queue
-        val accumulator = Accumulator()
+        MagicCalculationPipeline.apply(this, context, sink)
 
+        // Cost = BaseCost * (1.0 - CostReduction) * (1.0 + MagicResistance)
         val baseCost = getBaseCost(context).toDouble()
-
-        var costReduction = 0.0
-
-        val proximatePropagationLevel = player.wizardHelmet.getEnchantmentLevel(PROXIMATE_PROPAGATION_ENCHANTMENT_KEY)
-        if (target != null && proximatePropagationLevel > 0) {
-            val squaredDistance = player.squaredDistanceTo(target)
-            val maxDistanceSquare = 12.0 * 12.0
-            val minDistanceSquare = 4.0 * 4.0
-            val lerpFactor = 1 - squaredDistance.inverseLerp(minDistanceSquare..maxDistanceSquare).coerceIn(0.0, 1.0)
-            costReduction += lerpFactor.lerp(0.0..0.35)
-        }
-
-        // Queue Mastery: The last magic to fill a queue has -50% mana cost and
-        // locks the queue until all magics have channeled.
-        val queueMasteryLevel = player.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY)
-        val queuedMagicCount = queue?.queuedMagicCount
-        val queueSizeOneOffFull = player.queueSize - 1
-        if (queueMasteryLevel > 0 && queuedMagicCount == queueSizeOneOffFull) {
-            costReduction += 0.5
-        }
-
-        accumulator.pushCostReduction(costReduction)
-        accumulator.pushMagicResistance(getMagicResistance(context))
-
-        return round(CostCalculator.compute(baseCost, accumulator)).toLong()
+        val costReduction = sink.costReduction
+        val magicResistance = sink.magicResistance
+        return round(baseCost * (1.0 - costReduction) * (1.0 + magicResistance)).toLong()
     }
 
     /**
@@ -384,49 +249,16 @@ abstract class Magic(val definition: MagicDefinition) {
      * @return the final channeling time in ticks.
      */
     open fun getChannelTime(context: MagicCalculationContext): Long {
-        val player = context.playerOrNull() ?: return getBaseChannelTime(context)
-        val queue = context.queue
-        val accumulator = Accumulator()
+        val sink = ChannelTimeCalculationSink()
+        sink.magicResistance = getMagicResistance(context)
 
-        val effectiveTime = getBaseChannelTime(context).toDouble()
-        var channelSpeedBonus = 0.0
+        MagicCalculationPipeline.apply(this, context, sink)
 
-        // Magic Queue: +30% channel speed for the second magic in a queue.
-        // Queue Acceleration: +60% channel speed for magics third or later in the queue.
-        // Wrap Dancer: +100% channel speed.
-        // Peak Overdrive: + 50% channel speed when blood pact is activated.
-        if (player.wizardHelmet.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0 &&
-            queue?.channelingMagicCount == 1
-        ) {
-            channelSpeedBonus += 0.3
-        }
-        if (player.wizardHelmet.getEnchantmentLevel(QUEUE_ACCELERATION_ENCHANTMENT_KEY) > 0 &&
-            (queue?.channelingMagicCount?.toLong() ?: 0L) >= 2
-        ) {
-            channelSpeedBonus += 0.6
-        }
-        if (player.wizardHelmet.item is WizardHelmet5) {
-            channelSpeedBonus += 1.0
-        }
-        if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) > 0 &&
-            player.isBloodPactActive
-        ) {
-            channelSpeedBonus += 0.5
-        }
-
-        accumulator.pushChannelSpeed(channelSpeedBonus)
-        accumulator.pushMagicResistance(getMagicResistance(context))
-
-        return round(ChannelTimeCalculator.compute(effectiveTime, accumulator)).toLong()
-    }
-
-    /**
-     * @return Ratio used when converting health to mana during Blood Pact.
-     */
-    open fun getBloodPactConvertRatio(context: MagicCalculationContext): Double {
-        val player = context.playerOrNull() ?: return DEFAULT_BLOOD_PACT_CONVERT_RATIO
-        val helmet = player.wizardHelmet.item as? WizardHelmet ?: return DEFAULT_BLOOD_PACT_CONVERT_RATIO
-        return helmet.getBloodPactConversionEfficiency(context)
+        val baseTime = getBaseChannelTime(context).toDouble()
+        val channelSpeedBonus = sink.channelSpeedBonus
+        val magicResistance = sink.magicResistance
+        // ChannelTime = BaseTime / (1 + ChannelSpeed) * (1 + MagicResistance)
+        return round(baseTime / (1.0 + channelSpeedBonus) * (1.0 + magicResistance)).toLong()
     }
 }
 

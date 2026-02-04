@@ -9,11 +9,14 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.magic.channel.entityOrNull
+import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.CastingResource
 import heckerpowered.matrix.common.magic.resource.CastingResourceContributor
-import heckerpowered.matrix.common.magic.resource.CastingResourceRegistry
 import heckerpowered.matrix.common.magic.resource.HealthReserve
+import heckerpowered.matrix.common.magic.rule.calculation.pipeline.CalculationPipeline
+import heckerpowered.matrix.common.magic.rule.calculation.sink.BloodPactCalculationSink
+import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectCategory
@@ -27,9 +30,11 @@ object BloodPactEffect : StatusEffect(
     StatusEffectCategory.BENEFICIAL,
     0xFF0000
 ), CastingResourceContributor {
+    const val DEFAULT_BLOOD_PACT_CONVERT_RATIO = 2.0
+
     init {
         LivingAttackCallback.EVENT.register(::onLivingAttack)
-        CastingResourceRegistry.register(this)
+        MagicRuleRegistry.register(this)
     }
 
     private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
@@ -48,9 +53,15 @@ object BloodPactEffect : StatusEffect(
      *
      * The returned list may be empty.
      */
-    override fun contribute(context: MagicCalculationContext, sink: MutableCollection<CastingResource>) {
+    override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MutableCollection<CastingResource>) {
         val caster = context.caster?.entityOrNull() as? PlayerEntity ?: return
         if (!caster.isBloodPactActive) return
         sink += HealthReserve()
+    }
+
+    fun getBloodPactConversionRatio(context: MagicCalculationContext): Double {
+        val sink = BloodPactCalculationSink()
+        CalculationPipeline.apply(context, sink)
+        return sink.conversionRatio
     }
 }

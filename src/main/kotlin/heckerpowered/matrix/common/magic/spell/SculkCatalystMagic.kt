@@ -13,9 +13,12 @@ import heckerpowered.matrix.common.magic.channel.*
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
+import heckerpowered.matrix.common.magic.rule.calculation.sink.CostCalculationSink
+import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
+import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.network.ExplosionPayload
-import heckerpowered.matrix.core.common.balance.Accumulator
 import heckerpowered.matrix.core.extensions.EntityExtensions.damage
 import heckerpowered.matrix.core.killed
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
@@ -40,7 +43,7 @@ object SculkCatalystMagic : Magic(
         12.mana,
         (9 * 20).ticks
     )
-), MagicExecutionPayloadSpecification {
+), MagicExecutionPayloadSpecification, MagicCalculationContributor {
 
     @Serializable
     private class SculkCatalystExecutionPayload(
@@ -63,6 +66,7 @@ object SculkCatalystMagic : Magic(
     init {
         WriteDataCallback.EVENT.register(::onWriteData)
         ReadDataCallback.EVENT.register(::onReadData)
+        MagicRuleRegistry.register(this)
     }
 
     private fun onWriteData(entity: LivingEntity, nbt: NbtCompound) {
@@ -175,15 +179,6 @@ object SculkCatalystMagic : Magic(
         return normalCost + bounces.coerceAtMost(5) * 6
     }
 
-    override fun getCost(context: MagicCalculationContext): Long {
-        val caster = context.caster?.asPlayerOrNull()
-        val accumulator = Accumulator()
-        if (caster?.isBloodPactActive == true) {
-            accumulator.pushCostReduction(0.5)
-        }
-        return super.getCost(context)
-    }
-
     override fun getMagicResistance(context: MagicCalculationContext): Double {
         val target = context.target
         if (target is EnderDragonEntity || target is WitherEntity || target is WardenEntity) {
@@ -214,7 +209,7 @@ object SculkCatalystMagic : Magic(
     }
 
     override fun availableStatus(context: MagicCalculationContext): MagicAvailableStatus {
-        val caster = context.caster?.asPlayerOrNull() ?: return super.availableStatus(context)
+        val caster = context.playerOrNull() ?: return super.availableStatus(context)
         sculkCatalystTracker[caster]?.removeIf {
             val sequence = caster.getChannelQueue(it) ?: return@removeIf true
             return@removeIf !it.isAlive || sequence.isEmpty
@@ -237,4 +232,13 @@ object SculkCatalystMagic : Magic(
 
     override fun serializerModule(): SerializersModule =
         MagicExecutionPayloadSpecification<SculkCatalystExecutionPayload>().serializerModule()
+
+    override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {
+        if (sink !is CostCalculationSink) return
+        if (magic !is SculkCatalystMagic) return
+        val caster = context.playerOrNull() ?: return
+        if (!caster.isBloodPactActive) return
+
+        sink.costReduction += 0.5
+    }
 }

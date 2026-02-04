@@ -6,10 +6,12 @@
 package heckerpowered.matrix.common.magic.channel
 
 import heckerpowered.matrix.common.magic.core.ExecutionPayload
+import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
-import heckerpowered.matrix.common.magic.resource.CastingResourceRegistry
+import heckerpowered.matrix.common.magic.resource.CastingResource
 import heckerpowered.matrix.common.magic.resource.Mana
+import heckerpowered.matrix.common.magic.rule.resource.CastingResourcePipeline
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import heckerpowered.matrix.common.persistent.isInfiniteMana
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
@@ -94,19 +96,21 @@ open class ChannelAttempt(
      * This method mutates authoritative server-side state and must only be invoked
      * on the server.
      *
+     * @param magic the magic whose casting cost is being paid; used to resolve
+     *              magic-specific casting resources and consumption rules.
      * @param cost the effective mana cost required to channel the magic.
      * @param invocation the committed invocation describing the caster, target,
      *                   channel queue, and execution payload.
      * @return `true` if the cost was successfully paid; `false` otherwise.
      */
-    open fun payCost(cost: Mana, invocation: MagicInvocation): Boolean {
+    open fun payCost(magic: Magic, cost: Mana, invocation: MagicInvocation): Boolean {
         val caster = invocation.caster.asPlayerOrNull() ?: return false
         if (!costMana || caster.isInfiniteMana) {
             return true
         }
 
         val context = MagicCalculationContext.fromInvocation(invocation)
-        val resourceSet = CastingResourceRegistry.collect(context)
+        val resourceSet = CastingResourcePipeline.collect(magic, context)
         val result = resourceSet.consume(invocation, cost)
         ServerPlayNetworking.send(caster, SyncHealthPayload(caster))
         return result

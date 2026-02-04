@@ -461,7 +461,7 @@ object ScreenEffectRenderer {
             BlendState.captureSnapshot(), BlendFuncSeparateState.captureSnapshot()
         ) {
             val sculkCatalystIsAlreadyActive = SculkCatalystMagic.isSculkCatalystActive(player)
-            if (!sculkCatalystIsAlreadyActive) {
+            if (!sculkCatalystIsAlreadyActive && CollapseEffectRenderer.dissolveFactor.to != .0) {
                 CollapseEffectRenderer.dissolveFactor.value = .0
                 CollapseEffectRenderer.dissolveFactor.duration = Duration.ofMillis(300)
             }

@@ -10,6 +10,11 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARG
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.event.*
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.channel.entityOrNull
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.rule.effect.ChannelEffect
+import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.enchantment.EnchantmentHelper
@@ -19,6 +24,7 @@ import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectCategory
 import net.minecraft.entity.effect.StatusEffectInstance
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.sound.SoundCategory
@@ -28,13 +34,14 @@ import net.minecraft.util.ActionResult
 object WitherArmorChargedEffect : StatusEffect(
     StatusEffectCategory.BENEFICIAL,
     0x32C8A8
-) {
+), ChannelEffect {
     init {
         fadeTicks(0)
         StatusEffectRemovedCallback.EVENT.register(::onStatusEffectRemoved)
         LivingDamageCallback.EVENT.register(::onLivingDamage)
         EntityTickCallback.EVENT.register(::onEntityTick)
         LivingDeathCallback.EVENT.register(::onLivingDeath)
+        MagicRuleRegistry.register(this)
     }
 
     private fun onLivingDeath(entity: LivingEntity, damageSource: DamageSource): ActionResult {
@@ -205,5 +212,11 @@ object WitherArmorChargedEffect : StatusEffect(
             // ServerPlayNetworking.send(entity, WitherArmorTriggerPayload())
         }
         return ActionResult.PASS
+    }
+
+    override fun onChannel(magic: Magic, invocation: MagicInvocation) {
+        val caster = invocation.caster.entityOrNull() as PlayerEntity
+        if (!caster.isBloodPactActive) return
+        onEntityTick(caster)
     }
 }

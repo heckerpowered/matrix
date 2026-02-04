@@ -37,7 +37,7 @@ object ChannelExecutor {
         }
 
         val cost = magic.getCost(calculationContext)
-        if (!attempt.payCost(cost.mana, invocation)) {
+        if (!attempt.payCost(magic, cost.mana, invocation)) {
             return MagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
         }
 

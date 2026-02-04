@@ -6,11 +6,16 @@
 package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.effect.BloodPactEffect
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.event.AccumulateAttributeValueCallback
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
+import heckerpowered.matrix.common.magic.rule.calculation.contributor.CalculationContributor
+import heckerpowered.matrix.common.magic.rule.calculation.sink.BloodPactCalculationSink
+import heckerpowered.matrix.common.magic.rule.calculation.sink.CalculationSink
+import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.core.Accumulator
@@ -40,10 +45,11 @@ object WizardHelmet13 : WizardHelmet(
         .rarity(Rarity.EPIC)
         .component(MatrixComponents.MAX_LOAD, 20.0)
         .component(MatrixComponents.ACCUMULATED_MANA_DELTA, 0.0)
-) {
+), CalculationContributor {
     init {
         LivingHurtCallback.EVENT.register(this::onLivingHurt)
         AccumulateAttributeValueCallback.EVENT.register(this::getAttributeValue)
+        MagicRuleRegistry.register(this)
     }
 
     private fun onLivingHurt(event: DamageAccumulator): ActionResult {
@@ -89,19 +95,12 @@ object WizardHelmet13 : WizardHelmet(
         }
     }
 
-    override fun getBloodPactConversionEfficiency(context: MagicCalculationContext): Double {
-        val conversionEfficiency = super.getBloodPactConversionEfficiency(context)
-
-        val player = context.playerOrNull()
-        if (player?.isBloodPactActive == true) {
-            return conversionEfficiency + 1.0 + (player.wizardHelmet.getOrDefault(MatrixComponents.ACCUMULATED_MANA_DELTA, .0) * 0.01).coerceAtMost(1.0)
-        }
-        return conversionEfficiency
-    }
-
     override fun onManaChanged(player: PlayerEntity, previousMana: Double, currentMana: Double) {
         super.onManaChanged(player, previousMana, currentMana)
 
+        if (player.world.isClient) {
+            return
+        }
         val wizardHelmet = player.wizardHelmet
         if (wizardHelmet.item is WizardHelmet13) {
             val accumulatedManaDelta = wizardHelmet.getOrDefault(MatrixComponents.ACCUMULATED_MANA_DELTA, .0)
@@ -116,7 +115,7 @@ object WizardHelmet13 : WizardHelmet(
     }
 
     fun getExcessConversionEfficiency(context: MagicCalculationContext): Double {
-        val conversionEfficiency = getBloodPactConversionEfficiency(context)
+        val conversionEfficiency = BloodPactEffect.getBloodPactConversionRatio(context)
         return conversionEfficiency - 2.0
     }
 
@@ -124,9 +123,20 @@ object WizardHelmet13 : WizardHelmet(
         super.appendTooltip(stack, context, tooltip, type)
 
         val calculationContext = MagicCalculationContext.fromEntity(player, null)
-        val conversionEfficiency = getBloodPactConversionEfficiency(calculationContext)
+        val conversionEfficiency = BloodPactEffect.getBloodPactConversionRatio(calculationContext)
         val accumulatedManaDelta = stack.getOrDefault(MatrixComponents.ACCUMULATED_MANA_DELTA, .0)
         tooltip.add(MatrixLanguage.wizardHelmetBloodPactConversionEfficiency.copy().append("${conversionEfficiency * 100}%"))
         tooltip.add(MatrixLanguage.wizardHelmetManaDeltaDescription.copy().append("${floor(accumulatedManaDelta).toLong()}"))
+    }
+
+    override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
+        if (sink !is BloodPactCalculationSink) return
+        val caster = context.playerOrNull() ?: return
+        if (caster.wizardHelmet.item !is WizardHelmet13) return
+        if (!caster.isBloodPactActive) return
+
+        val accumulatedManaDelta = caster.wizardHelmet.getOrDefault(MatrixComponents.ACCUMULATED_MANA_DELTA, .0)
+        val bonusConversionRatio = 1.0 + (accumulatedManaDelta * 0.01).coerceAtMost(1.0)
+        sink.conversionRatio += bonusConversionRatio
     }
 }

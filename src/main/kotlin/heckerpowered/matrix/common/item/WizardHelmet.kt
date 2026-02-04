@@ -5,22 +5,17 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.effect.isBloodPactActive
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_ACCELERATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.event.ItemStackEquippedCallback
 import heckerpowered.matrix.common.item.MatrixComponents.MAX_MANA
+import heckerpowered.matrix.common.magic.channel.CasterContext
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.magic.rule.calculation.pipeline.CalculationPipeline
+import heckerpowered.matrix.common.magic.rule.calculation.sink.MaxManaCalculationSink
 import heckerpowered.matrix.common.magic.system.MagicManager
 import heckerpowered.matrix.common.persistent.maxMana
-import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
@@ -81,9 +76,7 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
             .asSequence()
             .map { it.key }
             .filter { it.isPresent }
-            .map { it.get() }
-            .map { allMagicsByEnchantment[it] }
-            .filterNotNull()
+            .map { it.get() }.mapNotNull { allMagicsByEnchantment[it] }
             .toList()
     }
 
@@ -96,18 +89,6 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
             .any { it == magic.enchantmentKey }
     }
 
-    open fun getBloodPactConversionEfficiency(context: MagicCalculationContext): Double {
-        var ratio = Magic.DEFAULT_BLOOD_PACT_CONVERT_RATIO
-        val player = context.playerOrNull() ?: return ratio
-
-        // Peak Overdrive: + 100% health to mana conversion efficiency.
-        if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) > 0 && player.isBloodPactActive) {
-            ratio += 1.0
-        }
-
-        return ratio
-    }
-
     open fun onManaChanged(player: PlayerEntity, previousMana: Double, currentMana: Double) {
     }
 
@@ -115,32 +96,15 @@ open class WizardHelmet(maxMana: Double, settings: Settings) : ArmorItem(
     }
 
     open fun getMaxMana(player: PlayerEntity, itemStack: ItemStack): Double {
-        var basicMaxMana = itemStack.getOrDefault(MAX_MANA, .0)
-        if (itemStack.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0) {
-            basicMaxMana += 1
-        }
-        if (itemStack.getEnchantmentLevel(QUEUE_ACCELERATION_ENCHANTMENT_KEY) > 0) {
-            basicMaxMana += 1
-        }
-        val manaOverflowLevel = itemStack.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY)
-        if (manaOverflowLevel > 0) {
-            basicMaxMana += basicMaxMana * (manaOverflowLevel * 0.2)
-        }
-        return basicMaxMana
-    }
+        val defaultMaxMana = itemStack.getOrDefault(MAX_MANA, .0)
 
-    open fun getQueueSize(player: PlayerEntity, itemStack: ItemStack): Long {
-        var basicQueueSize = 0L
-        if (itemStack.getEnchantmentLevel(MAGIC_QUEUE_ENCHANTMENT_KEY) > 0) {
-            basicQueueSize += 1
-        }
-        if (itemStack.getEnchantmentLevel(QUEUE_ACCELERATION_ENCHANTMENT_KEY) > 0) {
-            basicQueueSize += 1
-        }
-        if (itemStack.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) > 0) {
-            basicQueueSize += 1
-        }
-        return basicQueueSize
+        val context = MagicCalculationContext(CasterContext.fromEntity(player))
+        val sink = MaxManaCalculationSink(maxMana = defaultMaxMana)
+        CalculationPipeline.apply(context, sink)
+
+        val maxMana = sink.maxMana
+        val multiplier = sink.multiplier
+        return maxMana * multiplier
     }
 
     override fun inventoryTick(stack: ItemStack, world: World, entity: Entity, slot: Int, selected: Boolean) {
