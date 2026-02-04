@@ -5,17 +5,14 @@
 
 package heckerpowered.matrix.common.magic.channel
 
-import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.magic.core.ExecutionPayload
 import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
+import heckerpowered.matrix.common.magic.resource.CastingResourceRegistry
 import heckerpowered.matrix.common.magic.resource.Mana
-import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
-import heckerpowered.matrix.common.magic.resource.Mana.Companion.minus
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import heckerpowered.matrix.common.persistent.isInfiniteMana
-import heckerpowered.matrix.common.persistent.mana
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.server.network.ServerPlayerEntity
 
 /**
  * Represents a single attempt to channel a magic.
@@ -78,40 +75,40 @@ open class ChannelAttempt(
     }
 
     /**
-     * Pays the channeling cost on the server according to this plan.
+     * Attempts to pay the specified casting cost using all available casting
+     * resources resolved from the given invocation.
+     *
+     * This method performs the **commit phase** of resource consumption:
+     * - All applicable [CastingResource] instances are collected from the current
+     *   invocation context.
+     * - Affordability and consumption rules are evaluated and applied atomically.
+     * - On success, the corresponding resources are consumed in priority order.
      *
      * Semantics:
-     * - If [costMana] is false or the player has infinite mana → succeed without changes.
-     * - If mana >= cost → deduct mana and succeed.
-     * - Else if Blood Pact is active → convert the mana deficit from health;
-     *   require final health strictly > 0 to succeed; otherwise fail with no side effects.
-     * - Only successful payments mutate state (mana/health) and send sync.
+     * - If the invocation does not resolve to a player-backed caster, the payment fails.
+     * - If [costMana] is disabled or the caster has infinite mana, the payment succeeds
+     *   without consuming any resources.
+     * - Convertible resources (e.g. health via Blood Pact) are handled according to
+     *   their individual exhaustion rules.
      *
-     * @param channeler server-side player who pays.
-     * @param cost required mana cost.
-     * @param convertRatio health-to-mana conversion ratio for Blood Pact.
-     * @return true if paid; false if not enough resources (no side effects on failure).
+     * This method mutates authoritative server-side state and must only be invoked
+     * on the server.
+     *
+     * @param cost the effective mana cost required to channel the magic.
+     * @param invocation the committed invocation describing the caster, target,
+     *                   channel queue, and execution payload.
+     * @return `true` if the cost was successfully paid; `false` otherwise.
      */
-    open fun payCost(channeler: ServerPlayerEntity, cost: Mana, convertRatio: Double): Boolean {
-        if (!costMana || channeler.isInfiniteMana) {
+    open fun payCost(cost: Mana, invocation: MagicInvocation): Boolean {
+        val caster = invocation.caster.asPlayerOrNull() ?: return false
+        if (!costMana || caster.isInfiniteMana) {
             return true
         }
 
-        if (channeler.mana.amount >= cost.amount) {
-            channeler.mana -= cost
-            return true
-        }
-
-        if (channeler.isBloodPactActive &&
-            channeler.mana.amount + channeler.health * convertRatio - cost.amount > 0
-        ) {
-            val usedHealth = (cost - channeler.mana).amount / convertRatio
-            channeler.health = maxOf(channeler.health - usedHealth.toFloat(), 1f)
-            channeler.mana = 0.0.mana
-            ServerPlayNetworking.send(channeler, SyncHealthPayload(channeler))
-            return true
-        }
-
-        return false
+        val context = MagicCalculationContext.fromInvocation(invocation)
+        val resourceSet = CastingResourceRegistry.collect(context)
+        val result = resourceSet.consume(invocation, cost)
+        ServerPlayNetworking.send(caster, SyncHealthPayload(caster))
+        return result
     }
 }

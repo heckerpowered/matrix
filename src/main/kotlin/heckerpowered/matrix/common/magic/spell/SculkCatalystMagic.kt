@@ -15,6 +15,7 @@ import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.network.ExplosionPayload
+import heckerpowered.matrix.core.common.balance.Accumulator
 import heckerpowered.matrix.core.extensions.EntityExtensions.damage
 import heckerpowered.matrix.core.killed
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
@@ -176,7 +177,7 @@ object SculkCatalystMagic : Magic(
 
     override fun getCost(context: MagicCalculationContext): Long {
         val caster = context.caster?.asPlayerOrNull()
-        val accumulator = context.accumulator
+        val accumulator = Accumulator()
         if (caster?.isBloodPactActive == true) {
             accumulator.pushCostReduction(0.5)
         }

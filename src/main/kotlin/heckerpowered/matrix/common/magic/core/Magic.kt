@@ -21,16 +21,15 @@ import heckerpowered.matrix.common.item.WizardHelmet5
 import heckerpowered.matrix.common.magic.channel.*
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
+import heckerpowered.matrix.common.magic.resource.CastingResource
+import heckerpowered.matrix.common.magic.resource.CastingResourceRegistry
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
-import heckerpowered.matrix.common.magic.resource.Mana.Companion.plus
 import heckerpowered.matrix.common.magic.spell.MemoryWipeMagic
 import heckerpowered.matrix.common.persistent.queueSize
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.core.common.balance.*
 import heckerpowered.matrix.core.inverseLerp
-import heckerpowered.matrix.core.isInfiniteMana
 import heckerpowered.matrix.core.lerp
-import heckerpowered.matrix.core.mana
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.boss.WitherEntity
@@ -274,31 +273,25 @@ abstract class Magic(val definition: MagicDefinition) {
     protected open fun mayChannelWithoutTarget(context: MagicCalculationContext): Boolean = false
 
     /**
-     * Checks whether the caster has sufficient equivalent resources to afford
-     * channeling this magic under the given context.
+     * Determines whether the required casting cost can be satisfied under the
+     * given calculation context.
      *
-     * This check is purely evaluative and does not perform any resource mutation.
-     * All convertible resources (e.g. health via Blood Pact) are considered according
-     * to the current rules.
+     * This check is purely evaluative and does not mutate any game state.
+     * Affordability is determined by collecting all applicable [CastingResource]s
+     * for the context and evaluating whether their combined available amounts
+     * admit a valid consumption plan for the required cost.
      *
-     * If the context does not resolve to a valid player-backed caster, this method
-     * returns {@code false}.
+     * If the context does not provide any applicable casting resources, their
+     * combined available amount is treated as zero. In such cases, the magic
+     * is still considered affordable if and only if the required cost is zero.
      *
      * @param context calculation context used to evaluate affordability.
-     * @return {@code true} if the magic can be afforded; {@code false} otherwise.
+     * @return true if the required cost can be satisfied; false otherwise.
      */
     protected open fun checkMana(context: MagicCalculationContext): Boolean {
-        val player = context.caster?.entityOrNull() as? PlayerEntity ?: return false
-        if (player.isInfiniteMana) return true
-
-        var mana = player.mana
-        val cost = getCost(context)
-        if (player.isBloodPactActive) {
-            val convertRatio = getBloodPactConvertRatio(context)
-            mana += (player.health * convertRatio).mana
-        }
-
-        return cost <= mana.amount
+        val requiredCost = getCost(context).mana
+        val resourceSet = CastingResourceRegistry.collect(context)
+        return resourceSet.canAfford(context, requiredCost)
     }
 
     /**
@@ -339,7 +332,7 @@ abstract class Magic(val definition: MagicDefinition) {
 
         val target = context.target
         val queue = context.queue
-        val accumulator = context.accumulator
+        val accumulator = Accumulator()
 
         val baseCost = getBaseCost(context).toDouble()
 
@@ -393,7 +386,7 @@ abstract class Magic(val definition: MagicDefinition) {
     open fun getChannelTime(context: MagicCalculationContext): Long {
         val player = context.playerOrNull() ?: return getBaseChannelTime(context)
         val queue = context.queue
-        val accumulator = context.accumulator
+        val accumulator = Accumulator()
 
         val effectiveTime = getBaseChannelTime(context).toDouble()
         var channelSpeedBonus = 0.0

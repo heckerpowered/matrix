@@ -1045,6 +1045,7 @@ object MatrixHud {
 
         dissolveAnimation.value = .0
         dissolveAnimation.duration = Duration.ofMillis(1000)
+        dissolveAnimation.startTime = Duration.ofMillis(0)
         dissolveAnimation.start()
 
         magicShownAnimationClock.start()
@@ -1211,14 +1212,20 @@ object MatrixHud {
         val alpha = magicShownOpacityAnimation.animatedValue * 255
         val foregroundColor = ColorHelper.Argb.getArgb(alpha.toInt(), 255, 255, 255)
         if (alpha > 4) {
+            val multiplier = 1.0F
+            RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
             drawContext.drawText(textRenderer, magic.definition.name, xIndent + 55 + magicShownAnimation.animatedValue.toInt(), startY + 5, foregroundColor, false)
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
         }
 
         val costAlpha = min(alpha, displayData.costChangedAnimation.animatedValue * 255)
         // println((displayData.costChangedAnimation.animatedValue * 255).toInt())
         if (costAlpha > 4) {
+            val multiplier = 1.0F
             val costForegroundColor = ColorHelper.Argb.getArgb(costAlpha.toInt(), 255, 255, 255)
+            RenderSystem.setShaderColor(1.0F, multiplier, 1.0F, 1.0F)
             drawContext.drawText(textRenderer, Text.literal(costString), xIndent + 65 + magicNameWidth + magicShownAnimation.animatedValue.toInt(), startY + 5, costForegroundColor, false)
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
         }
 
         val statusAlpha = min(alpha, displayData.statusChangedAnimation.animatedValue * 255)

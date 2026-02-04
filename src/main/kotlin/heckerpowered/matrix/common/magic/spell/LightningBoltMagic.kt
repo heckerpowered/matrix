@@ -14,6 +14,7 @@ import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
+import heckerpowered.matrix.core.common.balance.Accumulator
 
 object LightningBoltMagic : Magic(
     MagicDefinition(
@@ -51,7 +52,7 @@ object LightningBoltMagic : Magic(
 
     override fun getCost(context: MagicCalculationContext): Long {
         val queue = context.queue
-        val accumulator = context.accumulator
+        val accumulator = Accumulator()
         if (queue != null) {
             val count = queue.channelingMagics().count { channelingMagic -> channelingMagic.magic is LightningBoltMagic }
             val costReduction = (count * 0.2).coerceAtMost(0.8)

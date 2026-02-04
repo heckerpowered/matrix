@@ -24,11 +24,9 @@ object ChannelExecutor {
         val caster = invocation.caster
         val target = invocation.target
         val queue = invocation.queue
-        val payload = invocation.payload
 
         val channelerEntity = caster.entityOrNull() ?: return MagicAvailableStatus.UNAVAILABLE
         val player = channelerEntity as? ServerPlayerEntity ?: return MagicAvailableStatus.UNAVAILABLE
-
         val calculationContext = MagicCalculationContext.fromInvocation(invocation)
 
         val available = magic.availableStatus(calculationContext)
@@ -39,12 +37,12 @@ object ChannelExecutor {
         }
 
         val cost = magic.getCost(calculationContext)
-        val convertRatio = magic.getBloodPactConvertRatio(calculationContext)
-        if (!attempt.payCost(player, cost.mana, convertRatio)) {
+        if (!attempt.payCost(cost.mana, invocation)) {
             return MagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
         }
 
         val channelTime = magic.getChannelTime(calculationContext)
+        val payload = invocation.payload
         val entry = ChannelEntry(
             magic = magic,
             cost = cost,

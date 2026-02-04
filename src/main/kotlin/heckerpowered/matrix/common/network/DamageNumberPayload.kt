@@ -9,7 +9,7 @@ import heckerpowered.matrix.client.ui.element.DamageNumberHud
 import heckerpowered.matrix.common.event.LivingDamageCallback
 import heckerpowered.matrix.common.event.LivingDamageEvent
 import heckerpowered.matrix.common.tag.MatrixDamageTypeTags
-import heckerpowered.matrix.core.extensions.BoxExtensions.random
+import heckerpowered.matrix.core.extensions.BoxExtensions.sample
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
@@ -57,7 +57,7 @@ class DamageNumberPayload(
             if (event.entity.world !is ServerWorld) {
                 return ActionResult.PASS
             }
-            val position = event.entity.boundingBox.random()
+            val position = event.entity.boundingBox.sample(event.amount.toDouble(), 0.1)
             val color = getColorForDamageSource(event.damageSource)
             val payload = DamageNumberPayload(event.amount, position, color)
             event.entity.world.server?.playerManager?.playerList?.forEach { player ->

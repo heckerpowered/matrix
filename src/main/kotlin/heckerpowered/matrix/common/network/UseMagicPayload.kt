@@ -5,9 +5,11 @@
 
 package heckerpowered.matrix.common.network
 
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
+import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.system.MagicManager
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
@@ -56,7 +58,11 @@ data class UseMagicPayload(
         }
 
         val invocation = MagicInvocation.fromEntity(player, targetedEntity)
-        ChannelExecutor.channel(magic, invocation)
+        val result = ChannelExecutor.channel(magic, invocation)
+        if (result != MagicAvailableStatus.AVAILABLE) {
+            @Suppress("LoggingStringTemplateAsArgument")
+            Matrix.LOGGER.debug("Magic channel failed: $result")
+        }
         context.responseSender().sendPacket(SyncHealthPayload(player))
     }
 }

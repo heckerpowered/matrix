@@ -7,6 +7,7 @@ package heckerpowered.matrix.client.ui.element
 
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
+import heckerpowered.matrix.core.plus
 import heckerpowered.matrix.core.worldToScreen
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.font.TextRenderer
@@ -19,7 +20,7 @@ import java.time.Duration
 import kotlin.math.round
 
 object DamageNumberHud {
-    private data class DamageNumber(val damage: Float, val rgbColor: Vector3f, val position: Vec3d, val size: SimpleDoubleAnimation, var opacity: SimpleDoubleAnimation, val uid: Long)
+    private data class DamageNumber(val damage: Float, val rgbColor: Vector3f, val position: Vec3d, val size: SimpleDoubleAnimation, val yOffset: SimpleDoubleAnimation, var opacity: SimpleDoubleAnimation, val uid: Long)
 
     private val damageNumbers = mutableListOf<DamageNumber>()
     private var counter = 0L
@@ -40,12 +41,18 @@ object DamageNumberHud {
     }
 
     fun addDamageNumber(damage: Float, color: Vector3f, position: Vec3d) {
-        val damageNumber = DamageNumber(damage, color, position, SimpleDoubleAnimation(), SimpleDoubleAnimation(), counter++)
+        val damageNumber = DamageNumber(damage, color, position, SimpleDoubleAnimation(), SimpleDoubleAnimation(), SimpleDoubleAnimation(), counter++)
 
         damageNumber.size.from = 20.0
         damageNumber.size.to = 4.0
         damageNumber.size.duration = Duration.ofMillis(300)
         damageNumber.size.start()
+
+        damageNumber.yOffset.from = 0.0
+        damageNumber.yOffset.to = .5
+        damageNumber.yOffset.duration = Duration.ofMillis(900)
+        damageNumber.yOffset.startTime = Duration.ofMillis(0)
+        damageNumber.yOffset.start()
 
         damageNumber.opacity.value = 255.0
 
@@ -65,7 +72,7 @@ object DamageNumberHud {
             return
         }
         val matrixStack = drawContext.matrices
-        val damageNumberPosition = worldToScreen(damageNumber.position) ?: return
+        val damageNumberPosition = worldToScreen(damageNumber.position.plus(Vec3d(.0, damageNumber.yOffset.animatedValue, .0))) ?: return
 
         val textRenderer = minecraft.textRenderer
         val damageText = if (damageNumber.damage.isInfinite()) {

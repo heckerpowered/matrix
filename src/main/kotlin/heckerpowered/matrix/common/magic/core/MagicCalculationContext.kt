@@ -11,7 +11,6 @@ import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChann
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import heckerpowered.matrix.core.common.balance.Accumulator
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.player.PlayerEntity
@@ -48,8 +47,6 @@ class MagicCalculationContext(
             )
         }
     }
-
-    val accumulator: Accumulator = Accumulator()
 
     fun entityOrNull(): LivingEntity? = caster?.entityOrNull()
     fun playerOrNull(): PlayerEntity? = caster?.entityOrNull() as? PlayerEntity

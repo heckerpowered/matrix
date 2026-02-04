@@ -210,6 +210,8 @@ class ChannelSequenceRenderer(
 
         val channelAnimations = channelSequenceAnimationMap[entity] ?: return
 
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
+
         val minecraftClient = MinecraftClient.getInstance()
         val camera = minecraftClient.gameRenderer.camera
         val entityRenderer = minecraftClient.entityRenderDispatcher.getRenderer(entity)
@@ -304,6 +306,7 @@ class ChannelSequenceRenderer(
         RenderSystem.disableBlend()
         matrixStack.pop()
         matrixStack.pop()
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
     }
 
     private fun renderRectangle(
