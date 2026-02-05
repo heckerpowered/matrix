@@ -6,6 +6,7 @@
 package heckerpowered.matrix.client.ui.element
 
 import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.render.Color
 import heckerpowered.matrix.client.render.LegacyMatrixUIRenderer
 import heckerpowered.matrix.client.render.Point
@@ -14,6 +15,9 @@ import heckerpowered.matrix.client.shader.DissolveShader
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
+import heckerpowered.matrix.common.magic.channel.CasterContext
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
+import heckerpowered.matrix.common.magic.rule.resource.CastingResourcePipeline
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Text
@@ -36,6 +40,8 @@ class ManaBar {
     val mana = SimpleDoubleAnimation()
     var manaUsage = SimpleDoubleAnimation()
     val manaCost = SimpleDoubleAnimation()
+
+    private val castingResources = SimpleDoubleAnimation()
 
     init {
         easingFunction.easingMode = EasingMode.OUT
@@ -141,11 +147,24 @@ class ManaBar {
         val manaUsage = this.manaUsage.animatedValue
         val currentMana = ((mana * 10).toLong() - (manaUsage * 10).toLong()) / 10.0
         val maxMana = (maxMana.animatedValue * 10).toLong() / 10.0
-        renderer.render(
-            Text.literal("${MatrixLanguage.mana.string} - ${currentMana}/${maxMana}"),
-            Point(55.0, 12.5 + shownAnimation.animatedValue), Color(255, 255, 255, 255),
-            true
-        )
+
+        val context = MagicCalculationContext(CasterContext.fromEntity(player))
+        castingResources.value = CastingResourcePipeline.collect(context).resources.drop(1).sumOf { it.availableAmount(context).amount }
+
+        val total = (castingResources.animatedValue * 10).toLong() / 10.0
+        if (total != 0.0) {
+            renderer.render(
+                Text.literal("${MatrixLanguage.mana.string} ≈ $total + ${currentMana}/${maxMana}"),
+                Point(55.0, 12.5 + shownAnimation.animatedValue), Color(255, 255, 255, 255),
+                true
+            )
+        } else {
+            renderer.render(
+                Text.literal("${MatrixLanguage.mana.string} = ${currentMana}/${maxMana}"),
+                Point(55.0, 12.5 + shownAnimation.animatedValue), Color(255, 255, 255, 255),
+                true
+            )
+        }
     }
 
     val animationRemaining: Boolean

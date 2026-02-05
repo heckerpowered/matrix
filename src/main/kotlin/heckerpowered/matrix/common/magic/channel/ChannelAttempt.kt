@@ -110,7 +110,7 @@ open class ChannelAttempt(
         }
 
         val context = MagicCalculationContext.fromInvocation(invocation)
-        val resourceSet = CastingResourcePipeline.collect(magic, context)
+        val resourceSet = CastingResourcePipeline.collect(context)
         val result = resourceSet.consume(invocation, cost)
         ServerPlayNetworking.send(caster, SyncHealthPayload(caster))
         return result

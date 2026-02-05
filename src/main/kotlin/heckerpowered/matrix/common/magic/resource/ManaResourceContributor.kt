@@ -5,7 +5,6 @@
 
 package heckerpowered.matrix.common.magic.resource
 
-import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 
 object ManaResourceContributor : CastingResourceContributor {
@@ -30,7 +29,7 @@ object ManaResourceContributor : CastingResourceContributor {
      * @param sink collection to which available [CastingResource] instances
      *             should be added.
      */
-    override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MutableCollection<CastingResource>) {
+    override fun contribute(context: MagicCalculationContext, sink: MutableCollection<CastingResource>) {
         sink += ManaReserve()
     }
 }

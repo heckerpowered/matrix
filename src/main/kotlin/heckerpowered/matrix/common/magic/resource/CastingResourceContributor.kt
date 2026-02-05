@@ -5,7 +5,6 @@
 
 package heckerpowered.matrix.common.magic.resource
 
-import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.registry.MagicRuleContributor
 
@@ -42,12 +41,9 @@ fun interface CastingResourceContributor : MagicRuleContributor {
      * - Mutate game state.
      * - Depend on external mutable state.
      *
-     * @param magic the magic instance currently being evaluated; used to
-     *              determine whether this contributor applies to the given
-     *              magic.
      * @param context calculation context describing the current casting scenario.
      * @param sink collection to which available [CastingResource] instances
      *             should be added.
      */
-    fun contribute(magic: Magic, context: MagicCalculationContext, sink: MutableCollection<CastingResource>)
+    fun contribute(context: MagicCalculationContext, sink: MutableCollection<CastingResource>)
 }

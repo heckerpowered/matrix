@@ -5,7 +5,6 @@
 
 package heckerpowered.matrix.common.magic.rule.resource
 
-import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.CastingResource
 import heckerpowered.matrix.common.magic.resource.CastingResourceContributor
@@ -18,13 +17,13 @@ object CastingResourcePipeline {
         MagicRuleRegistry.register(ManaResourceContributor)
     }
 
-    fun collect(magic: Magic, context: MagicCalculationContext): CastingResourceSet {
+    fun collect(context: MagicCalculationContext): CastingResourceSet {
         val collected = mutableListOf<CastingResource>()
 
         MagicRuleRegistry.all()
             .asSequence()
             .filterIsInstance<CastingResourceContributor>()
-            .forEach { it.contribute(magic, context, collected) }
+            .forEach { it.contribute(context, collected) }
 
         val normalized = collected
             .asSequence()

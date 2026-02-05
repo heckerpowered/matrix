@@ -177,7 +177,7 @@ abstract class Magic(val definition: MagicDefinition) {
      */
     protected open fun checkMana(context: MagicCalculationContext): Boolean {
         val requiredCost = getCost(context).mana
-        val resourceSet = CastingResourcePipeline.collect(this, context)
+        val resourceSet = CastingResourcePipeline.collect(context)
         return resourceSet.canAfford(context, requiredCost)
     }
 

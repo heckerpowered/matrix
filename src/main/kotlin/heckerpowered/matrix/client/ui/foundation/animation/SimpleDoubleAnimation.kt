@@ -85,5 +85,4 @@ class SimpleDoubleAnimation(
     fun suspend() {
         animationClock.suspend()
     }
-
 }

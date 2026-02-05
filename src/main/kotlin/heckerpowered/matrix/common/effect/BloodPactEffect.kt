@@ -9,7 +9,6 @@ import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.magic.channel.entityOrNull
-import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.CastingResource
 import heckerpowered.matrix.common.magic.resource.CastingResourceContributor
@@ -53,7 +52,7 @@ object BloodPactEffect : StatusEffect(
      *
      * The returned list may be empty.
      */
-    override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MutableCollection<CastingResource>) {
+    override fun contribute(context: MagicCalculationContext, sink: MutableCollection<CastingResource>) {
         val caster = context.caster?.entityOrNull() as? PlayerEntity ?: return
         if (!caster.isBloodPactActive) return
         sink += HealthReserve()

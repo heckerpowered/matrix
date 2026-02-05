@@ -12,6 +12,7 @@ classes/
 # idea
 
 .idea/
+htmlReport/
 *.iml
 *.ipr
 *.iws

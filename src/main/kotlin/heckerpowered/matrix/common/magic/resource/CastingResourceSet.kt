@@ -28,8 +28,7 @@ import kotlin.math.nextDown
  * Resource discovery is handled by [MagicRuleRegistry], while
  * consumption is performed explicitly via [consume].
  */
-class CastingResourceSet internal constructor(private val resources: List<CastingResource>) {
-
+class CastingResourceSet internal constructor(val resources: List<CastingResource>) {
     data class ConsumptionPlan(val resource: CastingResource, val amount: Mana)
 
     /**
