@@ -3,6 +3,6 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.ui.renderer
+package heckerpowered.matrix.core.extension
 
-class RenderBuffer
+object PlayerEntityExtension

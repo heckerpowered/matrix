@@ -54,7 +54,7 @@ class HealthReserve(override val priority: Int = 50) : CastingResource {
         val player = invocation.caster.asPlayerOrNull() ?: return
         val context = MagicCalculationContext.fromInvocation(invocation)
         val convertRatio = BloodPactEffect.getBloodPactConversionRatio(context)
-        val healthConsumed = (amount.amount / convertRatio).toFloat()
+        val healthConsumed = (amount.toDouble() / convertRatio).toFloat()
 
         val playerHealth = player.health
         player.health -= healthConsumed

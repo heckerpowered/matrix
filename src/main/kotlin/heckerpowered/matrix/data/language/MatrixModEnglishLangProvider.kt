@@ -329,6 +329,7 @@ Untraceable.
         translationBuilder.add(WizardHelmet3, "Wizard 3 'Blood-forged Ruin'")
         translationBuilder.add(WizardHelmet4, "Wizard 4 'Might and Method'")
         translationBuilder.add(WizardHelmet5, "Wizard 5 'Axiom of Annihilation'")
+        translationBuilder.add(WizardHelmet10, "Wizard X 'The Absent Presence'")
         translationBuilder.add(WizardHelmet13, "Wizard 13 'Overflux Crown'")
 
         translationBuilder.add(LightningChestplate1, "Lightning 1 'Warp Dancer'")

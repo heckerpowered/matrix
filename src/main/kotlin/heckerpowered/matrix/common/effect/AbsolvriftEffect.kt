@@ -15,10 +15,10 @@ import heckerpowered.matrix.common.magic.resource.Mana.Companion.plus
 import heckerpowered.matrix.common.persistent.mana
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import heckerpowered.matrix.core.extensions.EntityExtensions.damage
-import heckerpowered.matrix.core.extensions.LivingEntityExtensions.attackDamage
-import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
-import heckerpowered.matrix.core.extensions.SequenceExtensions.drain
+import heckerpowered.matrix.core.extension.EntityExtension.damage
+import heckerpowered.matrix.core.extension.LivingEntityExtension.attackDamage
+import heckerpowered.matrix.core.extension.SequenceExtension.consumeWhile
+import heckerpowered.matrix.core.extension.SequenceExtension.drain
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffect
@@ -63,7 +63,7 @@ object AbsolvriftEffect : StatusEffect(
                 entity.addEnchantedHitParticles(entity)
             }
             if (entity is ServerPlayerEntity) {
-                entity.mana += (entity.maxMana.amount * 0.001).mana
+                entity.mana += (entity.maxMana.toDouble() * 0.001).mana
             }
         }
 
@@ -98,7 +98,7 @@ object AbsolvriftEffect : StatusEffect(
                         entity.addEnchantedHitParticles(it)
                     }
                     if (entity is ServerPlayerEntity) {
-                        entity.mana += (entity.maxMana.amount * 0.01).mana
+                        entity.mana += (entity.maxMana.toDouble() * 0.01).mana
                     }
                 }
 

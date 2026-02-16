@@ -3,12 +3,12 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.core.extensions
+package heckerpowered.matrix.core.extension
 
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 
-object Matrix4fExtensions {
+object Matrix4fExtension {
     operator fun Matrix4f.times(rotation: Quaternionf): Matrix4f {
         val result = Matrix4f()
         rotate(rotation, result)

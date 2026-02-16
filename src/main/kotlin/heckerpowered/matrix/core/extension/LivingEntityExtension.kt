@@ -3,7 +3,7 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.core.extensions
+package heckerpowered.matrix.core.extension
 
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.item.WizardHelmet13
@@ -13,7 +13,7 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttributes.GENERIC_ATTACK_DAMAGE
 import net.minecraft.entity.player.PlayerEntity
 
-object LivingEntityExtensions {
+object LivingEntityExtension {
     val LivingEntity.attackDamage: Double
         get() = getAttributeValue(GENERIC_ATTACK_DAMAGE)
 

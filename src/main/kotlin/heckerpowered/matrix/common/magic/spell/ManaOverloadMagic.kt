@@ -13,7 +13,7 @@ import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.network.ExplosionPayload
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import heckerpowered.matrix.core.extensions.EntityExtensions.damage
+import heckerpowered.matrix.core.extension.EntityExtension.damage
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.network.packet.s2c.play.EntityStatusEffectS2CPacket

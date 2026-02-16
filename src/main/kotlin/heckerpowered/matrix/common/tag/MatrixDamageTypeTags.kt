@@ -16,4 +16,5 @@ object MatrixDamageTypeTags {
     }
 
     val magic = of("magic")
+    val noChain = of("no_chain")
 }

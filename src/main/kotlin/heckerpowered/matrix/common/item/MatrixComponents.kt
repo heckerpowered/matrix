@@ -33,6 +33,9 @@ object MatrixComponents {
     val BORROWED_TIME_STATE = register("borrowed_time_state") { codec(Codec.BOOL) }
     val SHOOT_PER_MINUTE = register("shoot_per_minute") { codec(Codec.LONG) }
 
+    val DEFERRED_DAMAGE = register("deferred_damage") { codec(Codec.DOUBLE) }
+    val DEFERRED_DAMAGE_TICK = register("deferred_damage_tick") { codec(Codec.LONG) }
+
     @OptIn(ExperimentalContracts::class)
     private fun <T> register(name: String, register: ComponentType.Builder<T>.() -> Unit): ComponentType<T> {
         contract {

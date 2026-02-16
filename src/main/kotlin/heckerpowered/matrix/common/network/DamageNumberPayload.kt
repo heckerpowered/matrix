@@ -9,7 +9,8 @@ import heckerpowered.matrix.client.ui.element.DamageNumberHud
 import heckerpowered.matrix.common.event.LivingDamageCallback
 import heckerpowered.matrix.common.event.LivingDamageEvent
 import heckerpowered.matrix.common.tag.MatrixDamageTypeTags
-import heckerpowered.matrix.core.extensions.BoxExtensions.sample
+import heckerpowered.matrix.core.extension.BoxExtension.sample
+import heckerpowered.matrix.core.math.Vector3fExtensions.toArgb8
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
@@ -68,11 +69,39 @@ class DamageNumberPayload(
 
         fun getColorForDamageSource(damage: DamageSource): Vector3f {
             return when {
-                damage.isOf(DamageTypes.MAGIC) -> Vector3f(25.0F, 25.0F, 128.0F)
-                damage.isIn(MatrixDamageTypeTags.magic) -> Vector3f(25.0F, 128.0F, 255.0F)
-                damage.isIn(DamageTypeTags.IS_FIRE) -> Vector3f(255.0F, 100.0F, 25.0F)
-                // damage.isOf(DamageTypes.) -> Vector3f(25.0F, 25.0F, 128.0F)
-                else -> Vector3f(255.0F, 255.0F, 255.0F)
+                damage.isIn(MatrixDamageTypeTags.magic) ->
+                    Vector3f(25f, 128f, 255f)
+
+                damage.isOf(DamageTypes.MAGIC) ||
+                        damage.isOf(DamageTypes.INDIRECT_MAGIC) ->
+                    Vector3f(25f, 25f, 128f)
+
+                damage.isIn(DamageTypeTags.IS_FIRE) ||
+                        damage.isOf(DamageTypes.LAVA) ||
+                        damage.isOf(DamageTypes.HOT_FLOOR) ->
+                    Vector3f(255f, 100f, 25f)
+
+                damage.isOf(DamageTypes.EXPLOSION) ||
+                        damage.isOf(DamageTypes.PLAYER_EXPLOSION) ||
+                        damage.isOf(DamageTypes.FIREWORKS) ->
+                    Vector3f(255f, 170f, 60f)
+
+                damage.isOf(DamageTypes.LIGHTNING_BOLT) ||
+                        damage.isOf(DamageTypes.SONIC_BOOM) ||
+                        damage.isOf(DamageTypes.WIND_CHARGE) ->
+                    Vector3f(160f, 80f, 255f)
+
+                damage.isOf(DamageTypes.STARVE) ||
+                        damage.isOf(DamageTypes.DRY_OUT) ->
+                    Vector3f(255f, 230f, 80f)
+
+                damage.isOf(DamageTypes.THORNS) ||
+                        damage.isOf(DamageTypes.CACTUS) ||
+                        damage.isOf(DamageTypes.SWEET_BERRY_BUSH) ->
+                    Vector3f(80f, 200f, 80f)
+
+                else ->
+                    Vector3f(255f, 255f, 255f)
             }
         }
     }
@@ -93,6 +122,6 @@ class DamageNumberPayload(
 
     @Environment(EnvType.CLIENT)
     fun handle(context: Context) {
-        DamageNumberHud.addDamageNumber(damage, color, position)
+        DamageNumberHud.addDamageNumber(damage, color.toArgb8(), position)
     }
 }

@@ -9,8 +9,8 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRI
 import heckerpowered.matrix.common.event.DamageAccumulator
 import heckerpowered.matrix.common.event.LivingHurtCallback
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
-import heckerpowered.matrix.core.extensions.EntityExtensions.damage
-import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
+import heckerpowered.matrix.core.extension.EntityExtension.damage
+import heckerpowered.matrix.core.extension.SequenceExtension.consumeWhile
 import heckerpowered.matrix.core.minus
 import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities
 import net.minecraft.enchantment.EnchantmentHelper

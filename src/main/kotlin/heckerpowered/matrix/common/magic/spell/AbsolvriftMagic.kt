@@ -14,8 +14,8 @@ import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import heckerpowered.matrix.core.extensions.EntityExtensions.damage
-import heckerpowered.matrix.core.extensions.LivingEntityExtensions.attackDamage
+import heckerpowered.matrix.core.extension.EntityExtension.damage
+import heckerpowered.matrix.core.extension.LivingEntityExtension.attackDamage
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.player.PlayerEntity

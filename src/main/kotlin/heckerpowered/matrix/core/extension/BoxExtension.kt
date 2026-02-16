@@ -3,14 +3,14 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.core.extensions
+package heckerpowered.matrix.core.extension
 
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.Vec3d
 import kotlin.math.floor
 import kotlin.random.Random
 
-object BoxExtensions {
+object BoxExtension {
     private fun hashToUnit(value: Long): Double {
         var x = value
         x = x xor (x shl 21)

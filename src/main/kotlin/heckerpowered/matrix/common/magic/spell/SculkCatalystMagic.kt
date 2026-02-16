@@ -19,7 +19,7 @@ import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationS
 import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.network.ExplosionPayload
-import heckerpowered.matrix.core.extensions.EntityExtensions.damage
+import heckerpowered.matrix.core.extension.EntityExtension.damage
 import heckerpowered.matrix.core.killed
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
 import kotlinx.serialization.Serializable

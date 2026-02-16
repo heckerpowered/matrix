@@ -12,8 +12,8 @@ import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChann
 import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
-import heckerpowered.matrix.core.extensions.SequenceExtensions.consumeWhile
-import heckerpowered.matrix.core.extensions.SequenceExtensions.drain
+import heckerpowered.matrix.core.extension.SequenceExtension.consumeWhile
+import heckerpowered.matrix.core.extension.SequenceExtension.drain
 import heckerpowered.matrix.core.utility.EntitySearch.getAdjacentEntities
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffectInstance

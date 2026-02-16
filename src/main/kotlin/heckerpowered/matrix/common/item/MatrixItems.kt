@@ -71,6 +71,7 @@ object MatrixItems {
         WizardHelmet3,
         WizardHelmet4,
         WizardHelmet5,
+        WizardHelmet10,
         WizardHelmet13,
 
         LightningChestplate1,
@@ -144,6 +145,7 @@ object MatrixItems {
         register(WizardHelmet3, "wizard_helmet_3")
         register(WizardHelmet4, "wizard_helmet_4")
         register(WizardHelmet5, "wizard_helmet_5")
+        register(WizardHelmet10, "wizard_helmet_10")
         register(WizardHelmet13, "wizard_helmet_13")
 
         register(LightningChestplate1, "lightning_chestplate_borrowed_time")

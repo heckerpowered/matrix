@@ -3,9 +3,9 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.core.extensions
+package heckerpowered.matrix.core.extension
 
-object SequenceExtensions {
+object SequenceExtension {
     /**
      * Returns a sequence of up to [targetCount] elements from this sequence
      * for which [consumer] returns true.

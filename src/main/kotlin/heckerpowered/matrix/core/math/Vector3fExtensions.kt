@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.core.math
 
+import heckerpowered.foundation.ui.color.Argb8
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.joml.Vector4f
@@ -18,5 +19,12 @@ object Vector3fExtensions {
 
     fun Vector3f.toVector4f(): Vector4f {
         return Vector4f(x, y, z, 1.0F)
+    }
+
+    fun Vector3f.toArgb8(alpha: Int = 255): Argb8 {
+        val red = x.toInt().coerceIn(0, 255)
+        val green = y.toInt().coerceIn(0, 255)
+        val blue = z.toInt().coerceIn(0, 255)
+        return Argb8.of(alpha, red, green, blue)
     }
 }

@@ -149,7 +149,7 @@ class ManaBar {
         val maxMana = (maxMana.animatedValue * 10).toLong() / 10.0
 
         val context = MagicCalculationContext(CasterContext.fromEntity(player))
-        castingResources.value = CastingResourcePipeline.collect(context).resources.drop(1).sumOf { it.availableAmount(context).amount }
+        castingResources.value = CastingResourcePipeline.collect(context).resources.drop(1).sumOf { it.availableAmount(context).toDouble() }
 
         val total = (castingResources.animatedValue * 10).toLong() / 10.0
         if (total != 0.0) {

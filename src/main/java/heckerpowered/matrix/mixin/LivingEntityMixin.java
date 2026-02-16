@@ -20,7 +20,7 @@ import heckerpowered.matrix.common.network.SyncManaPayload;
 import heckerpowered.matrix.common.persistent.ManaState;
 import heckerpowered.matrix.core.Accumulator;
 import heckerpowered.matrix.core.MatrixLivingEntity;
-import heckerpowered.matrix.core.extensions.LivingEntityExtensions;
+import heckerpowered.matrix.core.extension.LivingEntityExtension;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -63,6 +63,7 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
 
     @Unique
     private final Map<UUID, ChannelQueue> channelQueues = new HashMap<>();
+
     @Shadow
     @Final
     private Map<RegistryEntry<StatusEffect>, StatusEffectInstance> activeStatusEffects;
@@ -353,7 +354,7 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
 
     @ModifyVariable(method = "heal", at = @At("HEAD"), argsOnly = true)
     private float modifyHealAmount(float amount) {
-        return (float) (amount * LivingEntityExtensions.getHealingMultiplier((LivingEntity) (Object) this));
+        return (float) (amount * LivingEntityExtension.getHealingMultiplier((LivingEntity) (Object) this));
     }
 
     @Unique

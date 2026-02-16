@@ -19,7 +19,7 @@ import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.core.Accumulator
-import heckerpowered.matrix.core.extensions.LivingEntityExtensions.healOverflow
+import heckerpowered.matrix.core.extension.LivingEntityExtension.healOverflow
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.attribute.EntityAttribute
@@ -111,7 +111,7 @@ object WizardHelmet13 : WizardHelmet(
     override fun onBloodPactActive(player: ServerPlayerEntity, itemStack: ItemStack) {
         super.onBloodPactActive(player, itemStack)
         itemStack.set(MatrixComponents.ACCUMULATED_MANA_DELTA, 0.0)
-        player.healOverflow(player.maxMana.amount.toFloat())
+        player.healOverflow(player.maxMana.toDouble().toFloat())
     }
 
     fun getExcessConversionEfficiency(context: MagicCalculationContext): Double {

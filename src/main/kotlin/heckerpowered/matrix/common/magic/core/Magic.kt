@@ -185,7 +185,7 @@ abstract class Magic(val definition: MagicDefinition) {
      * Gets the base mana cost of this magic; this value is not necessarily the value needed to channel the magic,
      * but can be used to compare whether the mana required has increased or decreased.
      */
-    fun getNormalCost(): Long = definition.baseCost.amount.toLong()
+    fun getNormalCost(): Long = definition.baseCost.toDouble().toLong()
 
     open fun getBaseCost(context: MagicCalculationContext): Long {
         return getNormalCost()
@@ -224,7 +224,7 @@ abstract class Magic(val definition: MagicDefinition) {
         val baseCost = getBaseCost(context).toDouble()
         val costReduction = sink.costReduction
         val magicResistance = sink.magicResistance
-        return round(baseCost * (1.0 - costReduction) * (1.0 + magicResistance)).toLong()
+        return round(baseCost * (1.0 - costReduction) * (1.0 + magicResistance)).toLong().coerceAtLeast(0)
     }
 
     /**
@@ -258,7 +258,7 @@ abstract class Magic(val definition: MagicDefinition) {
         val channelSpeedBonus = sink.channelSpeedBonus
         val magicResistance = sink.magicResistance
         // ChannelTime = BaseTime / (1 + ChannelSpeed) * (1 + MagicResistance)
-        return round(baseTime / (1.0 + channelSpeedBonus) * (1.0 + magicResistance)).toLong()
+        return round(baseTime / (1.0 + channelSpeedBonus) * (1.0 + magicResistance)).toLong().coerceAtLeast(0)
     }
 }
 

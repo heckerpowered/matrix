@@ -17,7 +17,7 @@ import heckerpowered.matrix.common.magic.resource.Mana.Companion.minus
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.persistent.mana
 import heckerpowered.matrix.common.persistent.maxMana
-import heckerpowered.matrix.core.extensions.EntityExtensions.damage
+import heckerpowered.matrix.core.extension.EntityExtension.damage
 import net.minecraft.entity.attribute.EntityAttributes
 
 object DecisiveStrikeMagic : Magic(
@@ -39,7 +39,7 @@ object DecisiveStrikeMagic : Magic(
         val missingMana = if (caster == null) {
             .0
         } else {
-            ((caster.maxMana - caster.mana) / caster.maxMana).amount
+            ((caster.maxMana - caster.mana) / caster.maxMana)
         }
 
         val baseDamage = 6.0

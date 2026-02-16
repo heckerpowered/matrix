@@ -84,7 +84,7 @@ class FramebufferMixin implements FramebufferExtension {
 
         OpenGLExtensions.clearGLError();
 
-        final var self = (Framebuffer) (Object) this;
+        @SuppressWarnings("DataFlowIssue") final var self = (Framebuffer) (Object) this;
         final var recommendMipLevels = RenderExtensionsKt.recommendMipLevel(self);
         glTexStorage2D(target, recommendMipLevels, internalFormat, width, height);
         OpenGLExtensions.checkGLError(error -> {

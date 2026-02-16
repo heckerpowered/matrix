@@ -53,8 +53,8 @@ object MagicShieldEnchantment {
             return
         }
 
-        val mana = entity.mana.amount
-        val maxMana = entity.maxMana.amount
+        val mana = entity.mana.toDouble()
+        val maxMana = entity.maxMana.toDouble()
         val percentage = mana.inverseLerp((maxMana * 0.5)..maxMana).coerceIn(.0..1.0)
         if (percentage.isNaN() || percentage.isInfinite()) {
             return

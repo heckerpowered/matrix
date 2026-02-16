@@ -3,6 +3,6 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.core.extensions
+package heckerpowered.foundation.ui.animation.core
 
-object PlayerEntityExtensions
+interface AnimationSpec

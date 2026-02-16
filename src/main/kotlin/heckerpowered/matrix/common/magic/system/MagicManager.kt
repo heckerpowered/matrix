@@ -161,7 +161,7 @@ object MagicManager {
                 manaRegen += manaRegen * (manaRegenerationLevel * 0.3)
             }
             it.mana += manaRegen.mana
-            ServerPlayNetworking.send(it, SyncManaPayload(it.mana.amount, it.maxMana.amount))
+            ServerPlayNetworking.send(it, SyncManaPayload(it.mana.toDouble(), it.maxMana.toDouble()))
         }
     }
 

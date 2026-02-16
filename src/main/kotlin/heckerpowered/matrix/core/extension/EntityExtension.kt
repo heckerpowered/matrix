@@ -3,14 +3,14 @@
  * Copyright (c) 2026 heckerpowered
  */
 
-package heckerpowered.matrix.core.extensions
+package heckerpowered.matrix.core.extension
 
 import heckerpowered.matrix.core.MatrixMath.eulerToQuaternion
 import net.minecraft.entity.Entity
 import net.minecraft.entity.damage.DamageSource
 import org.joml.Quaternionf
 
-object EntityExtensions {
+object EntityExtension {
     val Entity.rotation: Quaternionf
         get() = eulerToQuaternion(yaw, pitch)
 

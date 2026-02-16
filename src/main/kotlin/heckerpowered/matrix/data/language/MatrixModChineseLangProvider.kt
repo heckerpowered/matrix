@@ -326,6 +326,7 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(WizardHelmet3, "巫师3型“血铸湮灭”")
         translationBuilder.add(WizardHelmet4, "巫师4型“力气和手段”")
         translationBuilder.add(WizardHelmet5, "巫师5型“灭律构式”")
+        translationBuilder.add(WizardHelmet10, "巫师X型“幻真守卫”")
         translationBuilder.add(WizardHelmet13, "巫师13型“红溢盈契”")
 
         translationBuilder.add(LightningChestplate1, "闪电1型“实境扭曲”")

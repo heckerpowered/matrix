@@ -45,8 +45,8 @@ class CastingResourceSet internal constructor(val resources: List<CastingResourc
      * @return true if the cost can be satisfied; false otherwise.
      */
     fun canAfford(context: MagicCalculationContext, requiredAmount: Mana): Boolean {
-        val required = requiredAmount.amount
-        val reserve = resources.sumOf { it.availableAmount(context).amount }
+        val required = requiredAmount.toDouble()
+        val reserve = resources.sumOf { it.availableAmount(context).toDouble() }
         val allowExhaustion = resources.any { it.allowExhaustion }
         return if (allowExhaustion) reserve >= required else reserve > required
     }
@@ -91,8 +91,8 @@ class CastingResourceSet internal constructor(val resources: List<CastingResourc
      *         cannot be afforded.
      */
     fun planConsumption(context: MagicCalculationContext, resources: List<CastingResource>, requiredAmount: Mana): List<ConsumptionPlan> {
-        val required = requiredAmount.amount
-        val availableAmounts = resources.map { it to it.availableAmount(context).amount }
+        val required = requiredAmount.toDouble()
+        val availableAmounts = resources.map { it to it.availableAmount(context).toDouble() }
         val totalAvailable = availableAmounts.sumOf { it.second }
         val requiresOpenBound = resources.any { !it.allowExhaustion }
         val isAffordable = if (requiresOpenBound) totalAvailable > required else totalAvailable >= required
@@ -118,7 +118,7 @@ class CastingResourceSet internal constructor(val resources: List<CastingResourc
             val resource = availableAmount.first
             val consumed = consumable(availableAmount, remaining)
             ConsumptionPlan(resource, Mana(consumed))
-        }.filter { it.amount.amount > 0.0 }
+        }.filter { it.amount.toDouble() > 0.0 }
     }
 
     /**
@@ -149,7 +149,7 @@ class CastingResourceSet internal constructor(val resources: List<CastingResourc
      *         `false` if the calculation has no valid solution
      */
     fun consume(invocation: MagicInvocation, requiredAmount: Mana): Boolean {
-        if (requiredAmount.amount <= 0) {
+        if (requiredAmount.toDouble() <= 0) {
             return true
         }
         val context = MagicCalculationContext.fromInvocation(invocation)

@@ -92,9 +92,9 @@ var ServerPlayerEntity.mana: Mana
     set(value) {
         val manaData = ManaState.getPlayerState(this)
         val previousMana = manaData.mana
-        manaData.mana = value.amount.coerceIn(.0, manaData.maxMana.coerceAtLeast(.0))
+        manaData.mana = value.toDouble().coerceIn(.0, manaData.maxMana.coerceAtLeast(.0))
 
-        (player.wizardHelmet.item as? WizardHelmet)?.onManaChanged(this, previousMana, value.amount)
+        (player.wizardHelmet.item as? WizardHelmet)?.onManaChanged(this, previousMana, value.toDouble())
         ServerPlayNetworking.send(this, SyncManaPayload(manaData.mana, manaData.maxMana))
     }
 
@@ -102,7 +102,7 @@ var ServerPlayerEntity.maxMana: Mana
     get() = ManaState.getPlayerState(this).maxMana.mana
     set(value) {
         val manaData = ManaState.getPlayerState(this)
-        manaData.maxMana = value.amount.coerceAtLeast(.0)
+        manaData.maxMana = value.toDouble().coerceAtLeast(.0)
 
         ServerPlayNetworking.send(this, SyncManaPayload(manaData.mana, manaData.maxMana))
     }

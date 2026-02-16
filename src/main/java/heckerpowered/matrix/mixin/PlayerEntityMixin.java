@@ -5,8 +5,6 @@
 
 package heckerpowered.matrix.mixin;
 
-import com.llamalad7.mixinextras.expression.Definition;
-import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
@@ -38,9 +36,7 @@ class PlayerEntityMixin {
         return (PlayerEntity) (Object) this;
     }
 
-    @Definition(id = "modifyAppliedDamage", method = "Lnet/minecraft/entity/player/PlayerEntity;modifyAppliedDamage(Lnet/minecraft/entity/damage/DamageSource;F)F")
-    @Expression("? = ?.modifyAppliedDamage(?, ?)")
-    @Inject(method = "applyDamage", at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), cancellable = true)
+    @Inject(method = "applyDamage", at = @At(value = "INVOKE", shift = At.Shift.BEFORE, target = "Lnet/minecraft/entity/player/PlayerEntity;setHealth(F)V"), cancellable = true)
     private void applyDamage(DamageSource source, float amount, CallbackInfo ci, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
         final var livingDamageEvent = new LivingDamageEvent(self(), source, amount);
         final var result = LivingDamageCallback.EVENT.invoker().onHurt(livingDamageEvent);
