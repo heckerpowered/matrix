@@ -5,24 +5,24 @@
 
 package heckerpowered.matrix.data.enchantment
 
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRIKE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PROXIMATE_PROPAGATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_ACCELERATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.REVIVAL_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.SECOND_WIND_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.bloodPact
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.brutalStrength
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.guaranteed
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lastStand
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lightningStrike
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicQueue
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicShield
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.manaOverflow
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.manaRegeneration
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.peakOverdrive
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.proximatePropagation
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.queueAcceleration
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.queueMastery
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.revival
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.secondWind
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.witherArmor
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.wizardForce
 import heckerpowered.matrix.common.item.MatrixItemTags
 import heckerpowered.matrix.common.magic.system.MagicManager
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
@@ -46,7 +46,7 @@ class EnchantmentGenerator(
 
     override fun configure(registries: RegistryWrapper.WrapperLookup, entries: Entries) {
         register(
-            entries, WITHER_ARMOR_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, witherArmor, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(ItemTags.ARMOR_ENCHANTABLE),
                     10,
@@ -59,7 +59,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, GUARANTEED_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, guaranteed, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(ItemTags.SWORD_ENCHANTABLE),
                     10,
@@ -72,7 +72,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, LAST_STAND_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, lastStand, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(ItemTags.SWORD_ENCHANTABLE),
                     10,
@@ -85,7 +85,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, REVIVAL_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, revival, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(ItemTags.ARMOR_ENCHANTABLE),
                     10,
@@ -98,7 +98,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, SECOND_WIND_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, secondWind, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(ItemTags.ARMOR_ENCHANTABLE),
                     10,
@@ -127,7 +127,7 @@ class EnchantmentGenerator(
             )
         }
         register(
-            entries, PROXIMATE_PROPAGATION_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, proximatePropagation, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -140,7 +140,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, MAGIC_QUEUE_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, magicQueue, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -153,7 +153,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, QUEUE_ACCELERATION_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, queueAcceleration, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -166,7 +166,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, QUEUE_MASTERY_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, queueMastery, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -179,7 +179,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, MANA_OVERFLOW_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, manaOverflow, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -192,7 +192,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, MANA_REGENERATION_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, manaRegeneration, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -205,7 +205,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, WIZARD_FORCE_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, wizardForce, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -218,7 +218,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, BLOOD_PACT_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, bloodPact, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -231,7 +231,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, MAGIC_SHIELD_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, magicShield, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -244,7 +244,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, BRUTAL_STRENGTH_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, brutalStrength, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -257,7 +257,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, PEAK_OVERDRIVE_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, peakOverdrive, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(MatrixItemTags.wizardHelmetTag),
                     10,
@@ -270,7 +270,7 @@ class EnchantmentGenerator(
             )
         )
         register(
-            entries, LIGHTNING_STRIKE_ENCHANTMENT_KEY, Enchantment.builder(
+            entries, lightningStrike, Enchantment.builder(
                 Enchantment.definition(
                     registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(ItemTags.SWORD_ENCHANTABLE),
                     10,

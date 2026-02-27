@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicShield
 import heckerpowered.matrix.common.event.AccumulateAttributeValueCallback
 import heckerpowered.matrix.common.event.GetArmorCallback
 import heckerpowered.matrix.core.Accumulator
@@ -46,7 +46,7 @@ object MagicShieldEnchantment {
     private fun adjustArmorAndThoughness(entity: PlayerEntity, accumulator: Accumulator) {
         val registryManager = entity.world.registryManager
         val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-        val magicShieldEnchantmentEntry = registryWrapper.getOrThrow(MAGIC_SHIELD_ENCHANTMENT_KEY)
+        val magicShieldEnchantmentEntry = registryWrapper.getOrThrow(magicShield)
         val equippedHelmet = entity.getEquippedStack(EquipmentSlot.HEAD)
         val magicShieldLevel = EnchantmentHelper.getLevel(magicShieldEnchantmentEntry, equippedHelmet)
         if (magicShieldLevel <= 0) {

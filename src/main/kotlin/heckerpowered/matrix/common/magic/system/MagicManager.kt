@@ -157,7 +157,7 @@ object MagicManager {
             }
 
             var manaRegen = 1.0
-            val manaRegenerationLevel = wizardHelmet.getEnchantmentLevel(MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY)
+            val manaRegenerationLevel = wizardHelmet.getEnchantmentLevel(MatrixEnchantments.manaRegeneration)
             if (manaRegenerationLevel > 0) {
                 manaRegen += manaRegen * (manaRegenerationLevel * 0.3)
             }

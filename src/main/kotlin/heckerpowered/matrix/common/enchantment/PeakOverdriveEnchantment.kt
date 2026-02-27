@@ -9,8 +9,8 @@ import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
 import heckerpowered.matrix.common.effect.isBloodPactActive
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.peakOverdrive
 import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
@@ -51,7 +51,7 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
 
         val registryManager = attacker.world.registryManager
         val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-        val enchantmentEntry = registryWrapper.getOrThrow(PEAK_OVERDRIVE_ENCHANTMENT_KEY)
+        val enchantmentEntry = registryWrapper.getOrThrow(peakOverdrive)
         val enchantmentLevel = EnchantmentHelper.getLevel(enchantmentEntry, equippedHelmet)
         if (enchantmentLevel <= 0) {
             return
@@ -63,7 +63,7 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
     override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {
         val player = context.playerOrNull() ?: return
         if (!player.isBloodPactActive) return
-        if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) <= 0) return
+        if (player.wizardHelmet.getEnchantmentLevel(peakOverdrive) <= 0) return
         if (sink !is ChannelTimeCalculationSink) return
 
         sink.channelSpeedBonus += 0.5
@@ -72,7 +72,7 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
     override fun onChannel(magic: Magic, invocation: MagicInvocation) {
         val caster = invocation.caster.entityOrNull() as PlayerEntity
         if (!caster.isBloodPactActive) return
-        if (caster.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) <= 0) return
+        if (caster.wizardHelmet.getEnchantmentLevel(peakOverdrive) <= 0) return
 
         val currentLoad = caster.wizardHelmet.getOrDefault(MatrixComponents.LOAD, .0)
         caster.wizardHelmet.set(MatrixComponents.LOAD, currentLoad + 1)
@@ -81,7 +81,7 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         val player = context.playerOrNull() ?: return
         if (!player.isBloodPactActive) return
-        if (player.wizardHelmet.getEnchantmentLevel(PEAK_OVERDRIVE_ENCHANTMENT_KEY) <= 0) return
+        if (player.wizardHelmet.getEnchantmentLevel(peakOverdrive) <= 0) return
         if (sink !is BloodPactCalculationSink) return
 
         sink.conversionRatio += 1.0

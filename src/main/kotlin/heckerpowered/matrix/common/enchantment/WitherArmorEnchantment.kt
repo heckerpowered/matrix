@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.witherArmor
 import heckerpowered.matrix.common.event.EntityTickCallback
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.EquipmentSlot
@@ -26,7 +26,7 @@ object WitherArmorEnchantment {
         }
 
         val itemStack = entity.getEquippedStack(EquipmentSlot.CHEST)
-        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
+        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(witherArmor)
         val level = EnchantmentHelper.getLevel(witherArmorEnchantment, itemStack)
         if (level <= 0) {
             return

@@ -8,8 +8,8 @@ package heckerpowered.matrix.common.enchantment
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.wizardForce
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
@@ -30,7 +30,7 @@ object WizardForceEnchantment : DamageComputationRule {
             return
         }
 
-        val level = attacker.wizardHelmet.getEnchantmentLevel(WIZARD_FORCE_ENCHANTMENT_KEY)
+        val level = attacker.wizardHelmet.getEnchantmentLevel(wizardForce)
         context.damageMultiplier += level * 0.05
     }
 }

@@ -9,7 +9,7 @@ import heckerpowered.matrix.common.combat.damage.DamageSettlementContext
 import heckerpowered.matrix.common.combat.damage.DamageSettlementRule
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.witherArmor
 import heckerpowered.matrix.common.event.EntityTickCallback
 import heckerpowered.matrix.common.event.LivingDeathCallback
 import heckerpowered.matrix.common.event.StatusEffectRemovedCallback
@@ -194,7 +194,7 @@ object WitherArmorChargedEffect : StatusEffect(
     }
 
     private fun getWitherArmorLevel(entity: LivingEntity): Int {
-        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
+        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(witherArmor)
         return EnchantmentHelper.getLevel(witherArmorEnchantment, entity.getEquippedStack(EquipmentSlot.CHEST))
     }
 

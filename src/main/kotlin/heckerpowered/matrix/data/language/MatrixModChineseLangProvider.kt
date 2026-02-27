@@ -6,23 +6,23 @@
 package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRIKE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_QUEUE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PROXIMATE_PROPAGATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_ACCELERATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.REVIVAL_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.SECOND_WIND_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.bloodPact
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.brutalStrength
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.guaranteed
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lastStand
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lightningStrike
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicQueue
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicShield
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.manaOverflow
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.manaRegeneration
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.peakOverdrive
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.proximatePropagation
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.queueAcceleration
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.queueMastery
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.revival
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.secondWind
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.witherArmor
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.wizardForce
 import heckerpowered.matrix.common.item.*
 import heckerpowered.matrix.common.magic.spell.*
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
@@ -227,23 +227,23 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(BloodPactEffect, "血之契约")
         translationBuilder.add(BorrowedTimeEffect, "时不我待")
 
-        translationBuilder.add(WITHER_ARMOR_ENCHANTMENT_KEY, "凋灵护甲")
-        translationBuilder.add(GUARANTEED_ENCHANTMENT_KEY, "稳操胜券")
-        translationBuilder.add(LAST_STAND_ENCHANTMENT_KEY, "绝处逢生")
-        translationBuilder.add(REVIVAL_ENCHANTMENT_KEY, "复苏")
-        translationBuilder.add(SECOND_WIND_ENCHANTMENT_KEY, "复苏之风")
-        translationBuilder.add(PROXIMATE_PROPAGATION_ENCHANTMENT_KEY, "抵近传播")
-        translationBuilder.add(MAGIC_QUEUE_ENCHANTMENT_KEY, "魔法队列")
-        translationBuilder.add(QUEUE_ACCELERATION_ENCHANTMENT_KEY, "队列加速")
-        translationBuilder.add(QUEUE_MASTERY_ENCHANTMENT_KEY, "队列精通")
-        translationBuilder.add(MANA_OVERFLOW_ENCHANTMENT_KEY, "法力溢出")
-        translationBuilder.add(MANA_REGENERATION_ENCHANTMENT_KEY, "法力再生")
-        translationBuilder.add(WIZARD_FORCE_ENCHANTMENT_KEY, "巫师神力")
-        translationBuilder.add(BLOOD_PACT_ENCHANTMENT_KEY, "血之契约")
-        translationBuilder.add(MAGIC_SHIELD_ENCHANTMENT_KEY, "法术护盾")
-        translationBuilder.add(BRUTAL_STRENGTH_ENCHANTMENT_KEY, "所向无敌")
-        translationBuilder.add(PEAK_OVERDRIVE_ENCHANTMENT_KEY, "大力神超")
-        translationBuilder.add(LIGHTNING_STRIKE_ENCHANTMENT_KEY, "闪电五连鞭")
+        translationBuilder.add(witherArmor, "凋灵护甲")
+        translationBuilder.add(guaranteed, "稳操胜券")
+        translationBuilder.add(lastStand, "绝处逢生")
+        translationBuilder.add(revival, "复苏")
+        translationBuilder.add(secondWind, "复苏之风")
+        translationBuilder.add(proximatePropagation, "抵近传播")
+        translationBuilder.add(magicQueue, "魔法队列")
+        translationBuilder.add(queueAcceleration, "队列加速")
+        translationBuilder.add(queueMastery, "队列精通")
+        translationBuilder.add(manaOverflow, "法力溢出")
+        translationBuilder.add(manaRegeneration, "法力再生")
+        translationBuilder.add(wizardForce, "巫师神力")
+        translationBuilder.add(bloodPact, "血之契约")
+        translationBuilder.add(magicShield, "法术护盾")
+        translationBuilder.add(brutalStrength, "所向无敌")
+        translationBuilder.add(peakOverdrive, "大力神超")
+        translationBuilder.add(lightningStrike, "闪电五连鞭")
 
         translationBuilder.add(WardenChestplateItem, "幽匿“坚守”胸甲")
         translationBuilder.add(

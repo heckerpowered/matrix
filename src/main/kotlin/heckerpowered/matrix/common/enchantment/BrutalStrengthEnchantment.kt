@@ -8,7 +8,7 @@ package heckerpowered.matrix.common.enchantment
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.brutalStrength
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
@@ -27,7 +27,7 @@ object BrutalStrengthEnchantment : DamageComputationRule {
 
         val registryManager = attacker.world.registryManager
         val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-        val enchantmentEntry = registryWrapper.getOrThrow(BRUTAL_STRENGTH_ENCHANTMENT_KEY)
+        val enchantmentEntry = registryWrapper.getOrThrow(brutalStrength)
         val equippedHelmet = attacker.getEquippedStack(EquipmentSlot.HEAD)
         val enchantmentLevel = EnchantmentHelper.getLevel(enchantmentEntry, equippedHelmet)
         if (enchantmentLevel <= 0) {

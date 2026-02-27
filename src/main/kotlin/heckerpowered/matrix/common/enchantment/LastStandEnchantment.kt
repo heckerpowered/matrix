@@ -8,7 +8,7 @@ package heckerpowered.matrix.common.enchantment
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lastStand
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.core.inverseLerp
@@ -27,7 +27,7 @@ object LastStandEnchantment : DamageComputationRule {
             return
         }
 
-        val lastStandEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(LAST_STAND_ENCHANTMENT_KEY)
+        val lastStandEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(lastStand)
         val lastStandEnchantmentLevel = EnchantmentHelper.getEquipmentLevel(lastStandEnchantmentEntry, attacker)
         if (lastStandEnchantmentLevel <= 0) {
             return

@@ -6,8 +6,8 @@
 package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.effect.isBloodPactActive
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.manaOverflow
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
@@ -39,7 +39,7 @@ object ManaOverflowEnchantment : CalculationContributor, CastEffect {
         val payload = invocation.payload
 
         if (!caster.isBloodPactActive) return
-        if (caster.wizardHelmet.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY) < 5) return
+        if (caster.wizardHelmet.getEnchantmentLevel(manaOverflow) < 5) return
         if (payload.isSpread) return
         if (Random.nextBoolean()) return
 
@@ -62,7 +62,7 @@ object ManaOverflowEnchantment : CalculationContributor, CastEffect {
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         if (sink !is MaxManaCalculationSink) return
         val caster = context.playerOrNull() ?: return
-        val manaOverflowLevel = caster.wizardHelmet.getEnchantmentLevel(MANA_OVERFLOW_ENCHANTMENT_KEY)
+        val manaOverflowLevel = caster.wizardHelmet.getEnchantmentLevel(manaOverflow)
         if (manaOverflowLevel <= 0) return
 
         sink.multiplier += manaOverflowLevel * 0.2

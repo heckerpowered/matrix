@@ -7,7 +7,7 @@ package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.combat.damage.DamageOutcomeContext
 import heckerpowered.matrix.common.combat.damage.DamageOutcomeRule
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.SECOND_WIND_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.secondWind
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
 import net.minecraft.enchantment.EnchantmentHelper
@@ -22,7 +22,7 @@ object SecondWindEnchantment : DamageOutcomeRule {
 
     override fun onOutcome(context: DamageOutcomeContext) {
         val target = context.target
-        val secondWindEnchantmentEntry = target.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(SECOND_WIND_ENCHANTMENT_KEY)
+        val secondWindEnchantmentEntry = target.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(secondWind)
         val level = EnchantmentHelper.getEquipmentLevel(secondWindEnchantmentEntry, target)
         if (level <= 0) {
             return

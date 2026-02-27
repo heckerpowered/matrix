@@ -5,8 +5,8 @@
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PROXIMATE_PROPAGATION_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.proximatePropagation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
@@ -29,7 +29,7 @@ object ProximatePropagationEnchantment : MagicCalculationContributor {
         if (sink !is CostCalculationSink) return
         val caster = context.caster?.entityOrNull() as? PlayerEntity ?: return
         val target = context.target ?: return
-        if (caster.wizardHelmet.getEnchantmentLevel(PROXIMATE_PROPAGATION_ENCHANTMENT_KEY) <= 0) return
+        if (caster.wizardHelmet.getEnchantmentLevel(proximatePropagation) <= 0) return
 
         val squaredDistance = caster.squaredDistanceTo(target)
         val maxDistanceSquare = 12.0 * 12.0

@@ -8,7 +8,7 @@ package heckerpowered.matrix.common.enchantment
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.guaranteed
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
 import net.minecraft.enchantment.EnchantmentHelper
@@ -26,7 +26,7 @@ object GuaranteedEnchantment : DamageComputationRule {
         }
 
         val target = context.target
-        val guaranteedEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(GUARANTEED_ENCHANTMENT_KEY)
+        val guaranteedEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(guaranteed)
         val guaranteedEnchantmentLevel = EnchantmentHelper.getEquipmentLevel(guaranteedEnchantmentEntry, attacker)
         if (guaranteedEnchantmentLevel <= 0) {
             return

@@ -16,55 +16,58 @@ import net.minecraft.registry.RegistryKeys
 
 object MatrixEnchantments {
     @JvmField
-    val WITHER_ARMOR_ENCHANTMENT_KEY = of("wither_armor")
+    val witherArmor = of("wither_armor")
 
     @JvmField
-    val GUARANTEED_ENCHANTMENT_KEY = of("guaranteed")
+    val guaranteed = of("guaranteed")
 
     @JvmField
-    val LAST_STAND_ENCHANTMENT_KEY = of("last_stand")
+    val lastStand = of("last_stand")
 
     @JvmField
-    val REVIVAL_ENCHANTMENT_KEY = of("revival")
+    val revival = of("revival")
 
     @JvmField
-    val SECOND_WIND_ENCHANTMENT_KEY = of("second_wind")
+    val secondWind = of("second_wind")
 
     @JvmField
-    val PROXIMATE_PROPAGATION_ENCHANTMENT_KEY = of("proximate_propagation")
+    val proximatePropagation = of("proximate_propagation")
 
     @JvmField
-    val MAGIC_QUEUE_ENCHANTMENT_KEY = of("magic_queue")
+    val magicQueue = of("magic_queue")
 
     @JvmField
-    val QUEUE_ACCELERATION_ENCHANTMENT_KEY = of("queue_acceleration")
+    val queueAcceleration = of("queue_acceleration")
 
     @JvmField
-    val QUEUE_MASTERY_ENCHANTMENT_KEY = of("queue_mastery")
+    val queueMastery = of("queue_mastery")
 
     @JvmField
-    val MANA_OVERFLOW_ENCHANTMENT_KEY = of("mana_overflow")
+    val manaOverflow = of("mana_overflow")
 
     @JvmField
-    val MANA_REGENERATION_ENCHANTMENT_KEY = of("mana_regeneration")
+    val manaRegeneration = of("mana_regeneration")
 
     @JvmField
-    val WIZARD_FORCE_ENCHANTMENT_KEY = of("wizard_force")
+    val wizardForce = of("wizard_force")
 
     @JvmField
-    val BLOOD_PACT_ENCHANTMENT_KEY = of("blood_pact")
+    val bloodPact = of("blood_pact")
 
     @JvmField
-    val MAGIC_SHIELD_ENCHANTMENT_KEY = of("magic_shield")
+    val magicShield = of("magic_shield")
 
     @JvmField
-    val BRUTAL_STRENGTH_ENCHANTMENT_KEY = of("brutal_strength")
+    val brutalStrength = of("brutal_strength")
 
     @JvmField
-    val PEAK_OVERDRIVE_ENCHANTMENT_KEY = of("peak_overdrive")
+    val peakOverdrive = of("peak_overdrive")
 
     @JvmField
-    val LIGHTNING_STRIKE_ENCHANTMENT_KEY = of("lightning_strike")
+    val lightningStrike = of("lightning_strike")
+
+    @JvmField
+    val kineticThrow = of("lightning_strike")
 
     fun LivingEntity.getEnchantmentLevel(registryKey: RegistryKey<Enchantment>): Int {
         val entry = world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(registryKey)

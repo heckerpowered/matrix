@@ -6,20 +6,20 @@
 package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LAST_STAND_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRIKE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MAGIC_SHIELD_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_OVERFLOW_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.MANA_REGENERATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PROXIMATE_PROPAGATION_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.REVIVAL_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.SECOND_WIND_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.bloodPact
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.brutalStrength
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.guaranteed
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lastStand
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lightningStrike
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicShield
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.manaOverflow
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.manaRegeneration
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.peakOverdrive
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.proximatePropagation
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.revival
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.secondWind
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.witherArmor
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.wizardForce
 import heckerpowered.matrix.common.item.*
 import heckerpowered.matrix.common.magic.spell.*
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
@@ -229,20 +229,20 @@ Untraceable.
         translationBuilder.add(BloodPactEffect, "Blood Pact")
         translationBuilder.add(BorrowedTimeEffect, "Borrowed Time")
 
-        translationBuilder.add(WITHER_ARMOR_ENCHANTMENT_KEY, "Wither Armor")
-        translationBuilder.add(GUARANTEED_ENCHANTMENT_KEY, "Guaranteed")
-        translationBuilder.add(LAST_STAND_ENCHANTMENT_KEY, "Last Stand")
-        translationBuilder.add(REVIVAL_ENCHANTMENT_KEY, "Revival")
-        translationBuilder.add(SECOND_WIND_ENCHANTMENT_KEY, "Second Wind")
-        translationBuilder.add(PROXIMATE_PROPAGATION_ENCHANTMENT_KEY, "Proximate Propagation")
-        translationBuilder.add(MANA_OVERFLOW_ENCHANTMENT_KEY, "Mana Overflow")
-        translationBuilder.add(MANA_REGENERATION_ENCHANTMENT_KEY, "Mana Regeneration")
-        translationBuilder.add(WIZARD_FORCE_ENCHANTMENT_KEY, "Wizard Force")
-        translationBuilder.add(BLOOD_PACT_ENCHANTMENT_KEY, "Blood Pact")
-        translationBuilder.add(MAGIC_SHIELD_ENCHANTMENT_KEY, "Magic Shield")
-        translationBuilder.add(BRUTAL_STRENGTH_ENCHANTMENT_KEY, "Brutal Strength")
-        translationBuilder.add(PEAK_OVERDRIVE_ENCHANTMENT_KEY, "Peak Overdrive")
-        translationBuilder.add(LIGHTNING_STRIKE_ENCHANTMENT_KEY, "Lightning Strike")
+        translationBuilder.add(witherArmor, "Wither Armor")
+        translationBuilder.add(guaranteed, "Guaranteed")
+        translationBuilder.add(lastStand, "Last Stand")
+        translationBuilder.add(revival, "Revival")
+        translationBuilder.add(secondWind, "Second Wind")
+        translationBuilder.add(proximatePropagation, "Proximate Propagation")
+        translationBuilder.add(manaOverflow, "Mana Overflow")
+        translationBuilder.add(manaRegeneration, "Mana Regeneration")
+        translationBuilder.add(wizardForce, "Wizard Force")
+        translationBuilder.add(bloodPact, "Blood Pact")
+        translationBuilder.add(magicShield, "Magic Shield")
+        translationBuilder.add(brutalStrength, "Brutal Strength")
+        translationBuilder.add(peakOverdrive, "Peak Overdrive")
+        translationBuilder.add(lightningStrike, "Lightning Strike")
 
         translationBuilder.add(WardenChestplateItem, "Sculk 'Warden' Chestplate")
         translationBuilder.add(

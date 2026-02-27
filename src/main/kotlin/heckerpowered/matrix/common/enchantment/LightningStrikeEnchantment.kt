@@ -8,7 +8,7 @@ package heckerpowered.matrix.common.enchantment
 import heckerpowered.matrix.common.combat.damage.DamageOutcomeContext
 import heckerpowered.matrix.common.combat.damage.DamageOutcomeRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.LIGHTNING_STRIKE_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lightningStrike
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.core.extension.EntityExtension.damage
@@ -40,7 +40,7 @@ object LightningStrikeEnchantment : DamageOutcomeRule {
 
         val registryManager = attacker.world.registryManager
         val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-        val enchantmentEntry = registryWrapper.getOrThrow(LIGHTNING_STRIKE_ENCHANTMENT_KEY)
+        val enchantmentEntry = registryWrapper.getOrThrow(lightningStrike)
         val enchantmentLevel = attacker.handItems.sumOf { EnchantmentHelper.getLevel(enchantmentEntry, it) }
         if (enchantmentLevel <= 0) return
 

@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BLOOD_PACT_ENCHANTMENT_KEY
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.bloodPact
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
 import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.persistent.wizardHelmet
@@ -37,7 +37,7 @@ class ActiveBloodPactPayload : CustomPayload {
 
     fun handle(context: Context) {
         val player = context.player()
-        if (player.wizardHelmet.getEnchantmentLevel(BLOOD_PACT_ENCHANTMENT_KEY) <= 0) {
+        if (player.wizardHelmet.getEnchantmentLevel(bloodPact) <= 0) {
             return
         }
 

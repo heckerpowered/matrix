@@ -7,8 +7,8 @@ package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
-import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.queueMastery
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.allChannelQueues
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
@@ -44,7 +44,7 @@ object QueueMasteryEnchantment : MagicCalculationContributor, CalculationContrib
     override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {
         if (sink !is CostCalculationSink) return
         val caster = context.playerOrNull() ?: return
-        if (caster.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) <= 0) return
+        if (caster.wizardHelmet.getEnchantmentLevel(queueMastery) <= 0) return
 
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
@@ -60,14 +60,14 @@ object QueueMasteryEnchantment : MagicCalculationContributor, CalculationContrib
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         if (sink !is ChannelQueueSizeCalculationSink) return
         val caster = context.playerOrNull() ?: return
-        if (caster.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) <= 0) return
+        if (caster.wizardHelmet.getEnchantmentLevel(queueMastery) <= 0) return
 
         sink.queueSize += 1
     }
 
     override fun onChannel(magic: Magic, invocation: MagicInvocation) {
         val caster = invocation.caster.entityOrNull() as? PlayerEntity ?: return
-        if (caster.wizardHelmet.getEnchantmentLevel(QUEUE_MASTERY_ENCHANTMENT_KEY) <= 0) return
+        if (caster.wizardHelmet.getEnchantmentLevel(queueMastery) <= 0) return
 
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
