@@ -8,12 +8,12 @@ package heckerpowered.matrix.common.magic.spell
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.asPlayerOrNull
-import heckerpowered.matrix.common.magic.core.Magic
-import heckerpowered.matrix.common.magic.core.MagicDefinition
+import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.rule.effect.ChannelEffect
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.Angerable
 import net.minecraft.entity.mob.MobEntity
@@ -23,12 +23,12 @@ import net.minecraft.village.VillageGossipType
 object MemoryWipeMagic : Magic(
     MagicDefinition(
         Matrix.identifier("memory_wipe"),
-        10.mana,
+        8.mana,
         30.ticks
     )
 ), ChannelEffect {
     init {
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<ChannelEffect>(this)
     }
 
     override fun cast(invocation: MagicInvocation) {
@@ -83,5 +83,12 @@ object MemoryWipeMagic : Magic(
         if (queue.contains<MemoryWipeMagic>()) {
             payload.isSpoofed = true
         }
+    }
+
+    override fun getBaseCost(context: MagicCalculationContext): Long {
+        if (context.targetRank() == SpellRank.BOSS) {
+            return 25
+        }
+        return super.getBaseCost(context)
     }
 }

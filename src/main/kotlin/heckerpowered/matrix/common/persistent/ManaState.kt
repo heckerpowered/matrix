@@ -6,7 +6,6 @@
 package heckerpowered.matrix.common.persistent
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.client.player
 import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.magic.channel.CasterContext
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
@@ -94,7 +93,7 @@ var ServerPlayerEntity.mana: Mana
         val previousMana = manaData.mana
         manaData.mana = value.toDouble().coerceIn(.0, manaData.maxMana.coerceAtLeast(.0))
 
-        (player.wizardHelmet.item as? WizardHelmet)?.onManaChanged(this, previousMana, value.toDouble())
+        (wizardHelmet.item as? WizardHelmet)?.onManaChanged(this, previousMana, value.toDouble())
         ServerPlayNetworking.send(this, SyncManaPayload(manaData.mana, manaData.maxMana))
     }
 

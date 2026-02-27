@@ -5,15 +5,18 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attacker
 import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
 import heckerpowered.matrix.common.magic.rule.calculation.sink.ChannelTimeCalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.ActionResult
@@ -28,10 +31,10 @@ object WizardHelmet5 : WizardHelmet(
         .fireproof()
         .rarity(Rarity.EPIC)
         .component(MatrixComponents.MAX_LOAD, 20.0)
-), MagicCalculationContributor {
+), MagicCalculationContributor, DamageComputationRule {
     init {
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<MagicCalculationContributor>(this)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
     private fun onLivingAttack(event: DamageAccumulator): ActionResult {
@@ -54,6 +57,15 @@ object WizardHelmet5 : WizardHelmet(
         val player = context.playerOrNull() ?: return
         if (player.wizardHelmet.item is WizardHelmet5) {
             sink.channelSpeedBonus += 1.0
+        }
+    }
+
+    override fun onComputation(context: DamageComputationContext) {
+        val attacker = context.attacker as? ServerPlayerEntity ?: return
+        if (!context.source.isOf(MatrixDamageTypes.magic)) return
+
+        if (attacker.wizardHelmet.item is WizardHelmet5) {
+            context.damageMultiplier += 1
         }
     }
 }

@@ -5,23 +5,20 @@
 
 package heckerpowered.matrix.mixin;
 
+import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import heckerpowered.matrix.common.event.LivingDamageCallback;
-import heckerpowered.matrix.common.event.LivingDamageEvent;
+import heckerpowered.matrix.Matrix;
+import heckerpowered.matrix.common.combat.damage.*;
 import heckerpowered.matrix.common.item.WardenChestplateItem;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking;
@@ -36,16 +33,49 @@ class PlayerEntityMixin {
         return (PlayerEntity) (Object) this;
     }
 
-    @Inject(method = "applyDamage", at = @At(value = "INVOKE", shift = At.Shift.BEFORE, target = "Lnet/minecraft/entity/player/PlayerEntity;setHealth(F)V"), cancellable = true)
-    private void applyDamage(DamageSource source, float amount, CallbackInfo ci, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
-        final var livingDamageEvent = new LivingDamageEvent(self(), source, amount);
-        final var result = LivingDamageCallback.EVENT.invoker().onHurt(livingDamageEvent);
-        if (result == ActionResult.FAIL) {
-            ci.cancel();
+    @ModifyVariable(
+            method = "applyDamage",
+            at = @At("HEAD"),
+            argsOnly = true
+    )
+    private DamageSource unwrapSource(DamageSource source, @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference) {
+        if (source instanceof final DamageSourceEnvelope envelope) {
+            rawDamageReference.set(envelope.getRawDamage());
+            return envelope.getOrigin();
         }
+        return source;
+    }
 
-        sourceReference.set(livingDamageEvent.getDamageSource());
-        amountReference.set(livingDamageEvent.getAmount());
+    @ModifyArg(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;spawnParticles(Lnet/minecraft/particle/ParticleEffect;DDDIDDDD)I"))
+    private int attack(int count) {
+        return Math.min(count, 512);
+    }
+
+
+    @SuppressWarnings("DuplicatedCode")
+    @Definition(id = "modifyAppliedDamage", method = "Lnet/minecraft/entity/player/PlayerEntity;modifyAppliedDamage(Lnet/minecraft/entity/damage/DamageSource;F)F")
+    @Expression("? = ?.modifyAppliedDamage(?, ?)")
+    @ModifyVariable(
+            method = "applyDamage",
+            at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), argsOnly = true)
+    private float applyDamage(
+            float amount,
+            @Local(argsOnly = true) DamageSource source,
+            @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference) {
+        final var self = (PlayerEntity) (Object) this;
+        final var rawDamage = rawDamageReference.get();
+        final var realizationContext = new DamageRealizationContext(self, source, rawDamage, amount);
+        DamagePipeline.realization(realizationContext);
+
+        final var retention = realizationContext.getRetention();
+        final var realizedDamage = realizationContext.getRealizedDamage();
+        final var outcomeContext = new DamageOutcomeContext(self, source, rawDamage, amount, retention);
+        DamagePipeline.outcome(outcomeContext);
+
+        final var settlementContext = new DamageSettlementContext(self, source, rawDamage, amount, realizedDamage);
+        DamagePipeline.settlement(settlementContext);
+
+        return settlementContext.getRemainingDamage();
     }
 
     @Inject(method = "getAttackCooldownProgress", at = @At(value = "HEAD"), cancellable = true)

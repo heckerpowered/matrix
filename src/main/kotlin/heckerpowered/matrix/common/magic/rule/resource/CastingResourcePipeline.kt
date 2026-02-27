@@ -10,19 +10,19 @@ import heckerpowered.matrix.common.magic.resource.CastingResource
 import heckerpowered.matrix.common.magic.resource.CastingResourceContributor
 import heckerpowered.matrix.common.magic.resource.CastingResourceSet
 import heckerpowered.matrix.common.magic.resource.ManaResourceContributor
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.all
+import heckerpowered.matrix.common.rule.register
 
 object CastingResourcePipeline {
     init {
-        MagicRuleRegistry.register(ManaResourceContributor)
+        RuleRegistry.register<CastingResourceContributor>(ManaResourceContributor)
     }
 
     fun collect(context: MagicCalculationContext): CastingResourceSet {
         val collected = mutableListOf<CastingResource>()
 
-        MagicRuleRegistry.all()
-            .asSequence()
-            .filterIsInstance<CastingResourceContributor>()
+        RuleRegistry.all<CastingResourceContributor>()
             .forEach { it.contribute(context, collected) }
 
         val normalized = collected

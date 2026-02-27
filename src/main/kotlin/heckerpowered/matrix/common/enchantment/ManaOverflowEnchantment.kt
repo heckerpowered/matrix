@@ -20,15 +20,17 @@ import heckerpowered.matrix.common.magic.rule.calculation.contributor.Calculatio
 import heckerpowered.matrix.common.magic.rule.calculation.sink.CalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.MaxManaCalculationSink
 import heckerpowered.matrix.common.magic.rule.effect.CastEffect
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
 import net.minecraft.entity.LivingEntity
 import kotlin.random.Random
 
 object ManaOverflowEnchantment : CalculationContributor, CastEffect {
     fun onInitialize() {
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<CalculationContributor>(this)
+        RuleRegistry.register<CastEffect>(this)
     }
 
     override fun onCast(magic: Magic, invocation: MagicInvocation) {

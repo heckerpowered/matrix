@@ -6,7 +6,6 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.client.player
 import heckerpowered.matrix.common.magic.channel.*
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.core.*
@@ -24,7 +23,7 @@ import net.minecraft.world.World
 object BreakingBadMagic : Magic(
     MagicDefinition(
         Matrix.identifier("breaking_bad"),
-        9.mana,
+        12.mana,
         40.ticks
     )
 ) {
@@ -52,10 +51,11 @@ object BreakingBadMagic : Magic(
             .filter { it != target && it != caster && it.isAlive }
             .filter { it.getChannelQueue(caster)?.isEmpty ?: true }
             .consumeWhile(4) {
-                val spreadInvocation = MagicInvocation.fromEntity(player, it)
                 val spreadPayload = ExecutionPayload(isSpread = true)
-                val spreadAttempt = ChannelAttempt(costMana = false, payload = spreadPayload)
-                ChannelExecutor.channel(BreakingBadMagic, spreadInvocation, spreadAttempt) == MagicAvailableStatus.AVAILABLE
+                val spreadInvocation = MagicInvocation.fromEntity(caster, it, spreadPayload)
+                val spreadAttempt = ChannelAttempt(costMana = false)
+                val result = ChannelExecutor.channel(BreakingBadMagic, spreadInvocation, spreadAttempt)
+                result == MagicAvailableStatus.AVAILABLE
             }
             .drain()
     }

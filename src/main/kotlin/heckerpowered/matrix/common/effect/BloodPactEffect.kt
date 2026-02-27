@@ -5,9 +5,10 @@
 
 package heckerpowered.matrix.common.effect
 
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attackerAsLiving
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.CastingResource
@@ -15,12 +16,12 @@ import heckerpowered.matrix.common.magic.resource.CastingResourceContributor
 import heckerpowered.matrix.common.magic.resource.HealthReserve
 import heckerpowered.matrix.common.magic.rule.calculation.pipeline.CalculationPipeline
 import heckerpowered.matrix.common.magic.rule.calculation.sink.BloodPactCalculationSink
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectCategory
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.util.ActionResult
 
 val PlayerEntity.isBloodPactActive: Boolean
     get() = hasStatusEffect(BLOOD_PACT_EFFECT)
@@ -28,23 +29,21 @@ val PlayerEntity.isBloodPactActive: Boolean
 object BloodPactEffect : StatusEffect(
     StatusEffectCategory.BENEFICIAL,
     0xFF0000
-), CastingResourceContributor {
+), CastingResourceContributor, DamageComputationRule {
     const val DEFAULT_BLOOD_PACT_CONVERT_RATIO = 2.0
 
     init {
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<CastingResourceContributor>(this)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
-    private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
-        val attacker = accumulator.attacker!!
-        if (attacker.hasStatusEffect(BLOOD_PACT_EFFECT) &&
-            accumulator.damageSource.isOf(MatrixDamageTypes.magic)
-        ) {
-            accumulator.damageMultiplier += 0.1
-        }
+    override fun onComputation(context: DamageComputationContext) {
+        val attacker = context.attackerAsLiving() ?: return
+        val source = context.source
+        if (!attacker.hasStatusEffect(BLOOD_PACT_EFFECT)) return
+        if (source.isOf(MatrixDamageTypes.magic)) return
 
-        return ActionResult.PASS
+        context.damageMultiplier += 0.1
     }
 
     /**

@@ -25,6 +25,7 @@ class MagicLightningEntityRenderer(context: EntityRendererFactory.Context) : Ent
     override fun render(lightningEntity: MagicLightningEntity, f: Float, g: Float, matrixStack: MatrixStack, vertexConsumerProvider: VertexConsumerProvider, i: Int) {
         val multiplier = 5.825f
         RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
+        RenderSystem.disableBlend()
         val fs = FloatArray(8)
         val gs = FloatArray(8)
         var h = 0.0f

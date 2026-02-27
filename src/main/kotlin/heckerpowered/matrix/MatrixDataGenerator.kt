@@ -50,7 +50,6 @@ object MatrixDataGenerator : DataGeneratorEntrypoint {
         super.buildRegistry(registryBuilder)
         registryBuilder.addRegistry(RegistryKeys.DAMAGE_TYPE) {
             it.register(MatrixDamageTypes.magic, DamageType("magic", DamageScaling.NEVER, 0.1F))
-            it.register(MatrixDamageTypes.recursiveMagic, DamageType("recursive_magic", DamageScaling.NEVER, 0.1F))
         }
     }
 }

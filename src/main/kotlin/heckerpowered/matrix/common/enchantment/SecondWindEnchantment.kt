@@ -5,29 +5,28 @@
 
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.combat.damage.DamageOutcomeContext
+import heckerpowered.matrix.common.combat.damage.DamageOutcomeRule
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.SECOND_WIND_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingHurtCallback
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.effect.StatusEffects
 import net.minecraft.registry.RegistryKeys
-import net.minecraft.util.ActionResult
 
-object SecondWindEnchantment {
+object SecondWindEnchantment : DamageOutcomeRule {
     fun onInitialize() {
-        LivingHurtCallback.EVENT.register(::onLivingHurt)
+        RuleRegistry.register<DamageOutcomeRule>(this)
     }
 
-    private fun onLivingHurt(event: DamageAccumulator): ActionResult {
-        val target = event.target
+    override fun onOutcome(context: DamageOutcomeContext) {
+        val target = context.target
         val secondWindEnchantmentEntry = target.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(SECOND_WIND_ENCHANTMENT_KEY)
         val level = EnchantmentHelper.getEquipmentLevel(secondWindEnchantmentEntry, target)
         if (level <= 0) {
-            return ActionResult.PASS
+            return
         }
         target.addStatusEffect(StatusEffectInstance(StatusEffects.REGENERATION, level * 20 * 5, 0))
-
-        return ActionResult.PASS
     }
 }

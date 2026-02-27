@@ -6,18 +6,20 @@
 package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attacker
 import heckerpowered.matrix.common.effect.BloodPactEffect
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.event.AccumulateAttributeValueCallback
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingHurtCallback
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.CalculationContributor
 import heckerpowered.matrix.common.magic.rule.calculation.sink.BloodPactCalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.CalculationSink
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.core.Accumulator
 import heckerpowered.matrix.core.extension.LivingEntityExtension.healOverflow
 import heckerpowered.matrix.data.language.MatrixLanguage
@@ -30,7 +32,6 @@ import net.minecraft.item.tooltip.TooltipType
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
-import net.minecraft.util.ActionResult
 import net.minecraft.util.Rarity
 import kotlin.math.abs
 import kotlin.math.floor
@@ -45,28 +46,11 @@ object WizardHelmet13 : WizardHelmet(
         .rarity(Rarity.EPIC)
         .component(MatrixComponents.MAX_LOAD, 20.0)
         .component(MatrixComponents.ACCUMULATED_MANA_DELTA, 0.0)
-), CalculationContributor {
+), CalculationContributor, DamageComputationRule {
     init {
-        LivingHurtCallback.EVENT.register(this::onLivingHurt)
         AccumulateAttributeValueCallback.EVENT.register(this::getAttributeValue)
-        MagicRuleRegistry.register(this)
-    }
-
-    private fun onLivingHurt(event: DamageAccumulator): ActionResult {
-        val attacker = event.attacker
-        if (attacker !is PlayerEntity) {
-            return ActionResult.PASS
-        }
-        val wizardHelmet = attacker.wizardHelmet
-        val item = wizardHelmet.item
-        if (!attacker.isBloodPactActive || item !is WizardHelmet13) {
-            return ActionResult.PASS
-        }
-
-        val calculationContext = MagicCalculationContext.fromEntity(player, event.target)
-        val excessConversionEfficiency = item.getExcessConversionEfficiency(calculationContext)
-        event.damageMultiplier += excessConversionEfficiency * 0.25
-        return ActionResult.PASS
+        RuleRegistry.register<CalculationContributor>(this)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
     private fun getAttributeValue(entity: LivingEntity, attribute: RegistryEntry<EntityAttribute>, accumulator: Accumulator) {
@@ -138,5 +122,18 @@ object WizardHelmet13 : WizardHelmet(
         val accumulatedManaDelta = caster.wizardHelmet.getOrDefault(MatrixComponents.ACCUMULATED_MANA_DELTA, .0)
         val bonusConversionRatio = 1.0 + (accumulatedManaDelta * 0.01).coerceAtMost(1.0)
         sink.conversionRatio += bonusConversionRatio
+    }
+
+    override fun onComputation(context: DamageComputationContext) {
+        val attacker = context.attacker as? PlayerEntity ?: return
+        val wizardHelmet = attacker.wizardHelmet
+        val item = wizardHelmet.item
+        if (!attacker.isBloodPactActive || item !is WizardHelmet13) {
+            return
+        }
+
+        val calculationContext = MagicCalculationContext.fromEntity(attacker, context.target)
+        val excessConversionEfficiency = item.getExcessConversionEfficiency(calculationContext)
+        context.damageMultiplier += excessConversionEfficiency * 0.25
     }
 }

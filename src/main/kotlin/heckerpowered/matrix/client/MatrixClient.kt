@@ -10,6 +10,7 @@ import heckerpowered.matrix.client.network.MatrixClientPlayNetworking
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
 import heckerpowered.matrix.client.render.MatrixRenderSystem
 import heckerpowered.matrix.client.render.ScreenEffectRenderer
+import heckerpowered.matrix.client.render.entity.DevEntityRenderer
 import heckerpowered.matrix.client.render.entity.EmptyRenderer
 import heckerpowered.matrix.client.render.entity.FinderArrowEntityRenderer
 import heckerpowered.matrix.client.render.entity.MagicLightningEntityRenderer
@@ -93,6 +94,7 @@ class MatrixClient : ClientModInitializer {
         EntityRendererRegistry.register(MatrixEntityType.MAGIC_LIGHTNING_ENTITY) { context -> MagicLightningEntityRenderer(context) }
         EntityRendererRegistry.register(MatrixEntityType.ATTRACTOR_ENTITY) { context -> EmptyRenderer(context) }
         EntityRendererRegistry.register(MatrixEntityType.FINDER_ARROW_ENTITY) { context -> FinderArrowEntityRenderer(context) }
+        EntityRendererRegistry.register(MatrixEntityType.devEntity) { context -> DevEntityRenderer(context) }
     }
 
     companion object {

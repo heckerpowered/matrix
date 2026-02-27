@@ -5,7 +5,6 @@
 
 package heckerpowered.matrix.common.effect
 
-import heckerpowered.matrix.client.player
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectCategory
@@ -26,7 +25,7 @@ object WitherArmorEffect : StatusEffect(
         val maxAbsorptionAmount = entity.maxHealth
         val newAbsorptionAmount = (entity.absorptionAmount + entity.maxHealth * (0.05F + (amplifier + 1) * 0.05F))
             .coerceAtMost(maxAbsorptionAmount)
-            .coerceAtLeast(player.absorptionAmount)
+            .coerceAtLeast(entity.absorptionAmount)
 
         entity.setAbsorptionAmountUnclamped(newAbsorptionAmount)
     }

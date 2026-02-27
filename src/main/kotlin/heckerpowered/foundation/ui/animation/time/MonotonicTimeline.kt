@@ -16,7 +16,7 @@ class MonotonicTimeline(
 ) : Timeline, DelayedStart {
     override fun progress(): Double {
         if (duration <= Duration.ZERO) return 1.0
-        val elapsedTime = startTimeMark.elapsedNow().coerceAtLeast(Duration.ZERO)
+        val elapsedTime = (startTimeMark.elapsedNow() - delay).coerceAtLeast(Duration.ZERO)
         val normalized = elapsedTime / duration
         return normalized.coerceIn(0.0, 1.0)
     }

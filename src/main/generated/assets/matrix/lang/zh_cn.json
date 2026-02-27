@@ -132,6 +132,8 @@
   "matrix.magic.target_positioning.name": "目标定位",
   "matrix.magic.teleport.description": "传送到目标位置，并自动攻击附近3米内的生物。\n\n可被追踪。",
   "matrix.magic.teleport.name": "传送",
+  "matrix.magic.tuck_in.description": "对目标造成§a500§r%攻击力的§9法术伤害§r。\n\n伤害基于你当前§c生命值§r与§6护盾量§r之和，占§c最大生命值§r的比例进行缩放。\n伤害倍率最低为§a30§r%，没有上限。\n\n释放时消耗当前§c生命值§r与§6护盾量§r之和的§a7.5§r%，优先消耗§6护盾§r。\n\n可被追踪。",
+  "matrix.magic.tuck_in.name": "温柔哄睡",
   "matrix.magic_available": "就绪",
   "matrix.magic_available.mana_not_enough": "可用法力不足",
   "matrix.magic_channel_queue_full": "队列已满",

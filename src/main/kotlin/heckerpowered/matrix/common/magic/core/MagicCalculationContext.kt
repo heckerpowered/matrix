@@ -76,3 +76,15 @@ fun MagicCalculationContext.removeSourceIfSpoofed(sourceSupplier: () -> DamageSo
     caster?.entityOrNull() ?: return wipedDamageSource
     return sourceSupplier() ?: wipedDamageSource
 }
+
+fun MagicCalculationContext.targetProfile(): SpellProfile? {
+    return target?.let { SpellProfile.getProfile(target) }
+}
+
+fun MagicCalculationContext.targetRank(fallback: SpellRank = SpellRank.NORMAL): SpellRank {
+    return targetProfile()?.rank ?: fallback
+}
+
+fun MagicCalculationContext.targetForm(fallback: SpellForm = SpellForm.NATURAL): SpellForm {
+    return targetProfile()?.form ?: fallback
+}

@@ -7,13 +7,12 @@ package heckerpowered.matrix.common.magic.rule.effect
 
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.Magic
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.all
 
 object MagicChannelPipeline {
     fun onChannel(magic: Magic, invocation: MagicInvocation) {
-        MagicRuleRegistry.all()
-            .asSequence()
-            .filterIsInstance<ChannelEffect>()
+        RuleRegistry.all<ChannelEffect>()
             .forEach { it.onChannel(magic, invocation) }
     }
 }

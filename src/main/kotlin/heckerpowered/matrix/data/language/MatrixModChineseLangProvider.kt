@@ -194,6 +194,16 @@ class MatrixModChineseLangProvider(
             "对目标及其§a6m§r范围内的目标造成一次伤害，相当于你§a100%§r的攻击力。\n\n在接下来20秒内，自动攻击§a8§r米内至多§a5§r个目标，按距离排序，伤害相当于你§a100%§r的攻击力，每秒一次。\n\n自动攻击会使目标在接下来§a8§r秒内的生命上限减少§a2.5%§r，可叠加，至多至§a50%§r。\n\n造成伤害时自动追加一次攻击，伤害相当于你75%攻击力，视为自动攻击。\n\n可被追踪。"
         )
 
+        translationBuilder.add(TuckInMagic.definition.name.key, "温柔哄睡")
+        translationBuilder.add(
+            TuckInMagic.definition.description.key,
+            "对目标造成§a500§r%攻击力的§9法术伤害§r。\n\n" +
+                    "伤害基于你当前§c生命值§r与§6护盾量§r之和，占§c最大生命值§r的比例进行缩放。\n" +
+                    "伤害倍率最低为§a30§r%，没有上限。\n\n" +
+                    "释放时消耗当前§c生命值§r与§6护盾量§r之和的§a7.5§r%，优先消耗§6护盾§r。\n\n" +
+                    "可被追踪。"
+        )
+
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "超频或降频魔法")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "超频或降频法力")
         translationBuilder.add(MatrixLanguage.switchClock.key, "切换超频或降频")

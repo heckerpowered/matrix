@@ -5,10 +5,12 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.event.LivingDamageCallback
-import heckerpowered.matrix.common.event.LivingDamageEvent
+import heckerpowered.matrix.common.combat.damage.DamageRealizationContext
+import heckerpowered.matrix.common.combat.damage.DamageRealizationRule
 import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_MAX_POWER
 import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_POWER
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.item.ArmorItem
@@ -16,7 +18,6 @@ import net.minecraft.item.ItemStack
 import net.minecraft.item.tooltip.TooltipType
 import net.minecraft.registry.tag.ItemTags
 import net.minecraft.text.Text
-import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
 
 object RedstoneChestplateItem : ArmorItem(
@@ -26,25 +27,33 @@ object RedstoneChestplateItem : ArmorItem(
         .maxDamage(Type.CHESTPLATE.getMaxDamage(24))
         .component(REDSTONE_SUIT_MAX_POWER, 20)
         .component(REDSTONE_SUIT_POWER, 0)
-), RedstoneSuit {
+), RedstoneSuit, DamageRealizationRule {
     init {
         ItemTags.ARMOR_ENCHANTABLE
-        LivingDamageCallback.EVENT.register(this::onLivingDamage)
+        RuleRegistry.register<DamageRealizationRule>(this)
     }
 
-    private fun onLivingDamage(event: LivingDamageEvent): ActionResult {
-        val entity = event.entity
-        val chestplate = entity.getEquippedStack(EquipmentSlot.CHEST)
-        if (!chestplate.isRedstoneSuit() || chestplate.redstoneSuitPower <= 0) {
-            return ActionResult.PASS
+    override fun onRealization(context: DamageRealizationContext) {
+        if (context.rawDamage <= 0f) {
+            return
         }
 
-        val damageToReduce = (event.amount * 0.4).coerceAtMost(chestplate.redstoneSuitPower * 4.0)
+        val entity = context.target
+        val chestplate = entity.getEquippedStack(EquipmentSlot.CHEST)
+        if (!chestplate.isRedstoneSuit() || chestplate.redstoneSuitPower <= 0) {
+            return
+        }
+
+        val currentDamage = context.rawDamage * context.retention
+        if (currentDamage <= 0f) {
+            return
+        }
+
+        val damageToReduce = (currentDamage * 0.4).coerceAtMost(chestplate.redstoneSuitPower * 4.0).toFloat()
         val powerUsage = damageToReduce / 4
         chestplate.redstoneSuitPower -= powerUsage.toLong()
-        event.amount -= damageToReduce.toFloat()
-
-        return ActionResult.CONSUME
+        val newDamage = (currentDamage - damageToReduce).coerceAtLeast(0f)
+        context.retention = newDamage / context.rawDamage
     }
 
     override fun appendTooltip(

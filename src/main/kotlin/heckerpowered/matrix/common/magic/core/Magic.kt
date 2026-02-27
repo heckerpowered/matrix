@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.magic.core
 
-import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes.adjustedManaResistance
+import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes.magicResistance
 import heckerpowered.matrix.common.magic.channel.ChannelQueue
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.resource.CastingResource
@@ -22,7 +22,10 @@ import net.minecraft.entity.boss.WitherEntity
 import net.minecraft.entity.boss.dragon.EnderDragonEntity
 import net.minecraft.entity.effect.StatusEffect
 import net.minecraft.entity.effect.StatusEffectInstance
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.registry.entry.RegistryEntry
+import net.minecraft.world.Difficulty
+import kotlin.math.ceil
 import kotlin.math.round
 
 /**
@@ -192,11 +195,22 @@ abstract class Magic(val definition: MagicDefinition) {
     }
 
     open fun getMagicResistance(context: MagicCalculationContext): Double {
-        val target = context.target
-        if (target?.name?.string == "hecker") {
-            return 4.0
+        val target = context.target ?: return .0
+        if (target.name.string == "hecker") return 1145141919810.0
+
+        val world = target.world
+        val difficultyScale = if (target is PlayerEntity) 1.0 else when (world.difficulty) {
+            Difficulty.PEACEFUL -> .0 // -100% magic resistance
+            Difficulty.EASY -> 0.6 // -40% magic resistance
+            Difficulty.NORMAL -> 1.0
+            Difficulty.HARD -> 1.4 // + 40% magic resistance
         }
-        return target?.adjustedManaResistance ?: .0
+        val spellProfile = SpellProfile.getProfile(target)
+        val attributeResistance = target.magicResistance // usually 0
+        val spellResistance = spellProfile.effectiveResistance
+
+        val magicResistance = (attributeResistance + spellResistance) * difficultyScale
+        return magicResistance
     }
 
     /**
@@ -220,11 +234,11 @@ abstract class Magic(val definition: MagicDefinition) {
 
         MagicCalculationPipeline.apply(this, context, sink)
 
-        // Cost = BaseCost * (1.0 - CostReduction) * (1.0 + MagicResistance)
+        // Cost = (BaseCost + MagicResistance) * (1.0 - CostReduction)
         val baseCost = getBaseCost(context).toDouble()
         val costReduction = sink.costReduction
         val magicResistance = sink.magicResistance
-        return round(baseCost * (1.0 - costReduction) * (1.0 + magicResistance)).toLong().coerceAtLeast(0)
+        return ceil((baseCost + magicResistance) * (1.0 - costReduction)).toLong().coerceAtLeast(0)
     }
 
     /**
@@ -257,8 +271,8 @@ abstract class Magic(val definition: MagicDefinition) {
         val baseTime = getBaseChannelTime(context).toDouble()
         val channelSpeedBonus = sink.channelSpeedBonus
         val magicResistance = sink.magicResistance
-        // ChannelTime = BaseTime / (1 + ChannelSpeed) * (1 + MagicResistance)
-        return round(baseTime / (1.0 + channelSpeedBonus) * (1.0 + magicResistance)).toLong().coerceAtLeast(0)
+        // ChannelTime = BaseTime / (1 + ChannelSpeed) * (1 + ceil(MagicResistance) * 0.2)
+        return round(baseTime / (1.0 + channelSpeedBonus) * (1.0 + ceil(magicResistance) * 0.2)).toLong().coerceAtLeast(0)
     }
 }
 

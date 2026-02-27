@@ -5,10 +5,10 @@
 
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.QUEUE_MASTERY_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingHurtCallback
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.allChannelQueues
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
@@ -21,23 +21,24 @@ import heckerpowered.matrix.common.magic.rule.calculation.sink.ChannelQueueSizeC
 import heckerpowered.matrix.common.magic.rule.calculation.sink.CostCalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
 import heckerpowered.matrix.common.magic.rule.effect.ChannelEffect
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.queueSize
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.util.ActionResult
 
-object QueueMasteryEnchantment : MagicCalculationContributor, CalculationContributor, ChannelEffect {
+object QueueMasteryEnchantment : MagicCalculationContributor, CalculationContributor, ChannelEffect, DamageComputationRule {
     fun onInitialize() {
-        LivingHurtCallback.EVENT.register(::onLivingHurt)
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<DamageComputationRule>(this)
+        RuleRegistry.register<MagicCalculationContributor>(this)
+        RuleRegistry.register<CalculationContributor>(this)
+        RuleRegistry.register<ChannelEffect>(this)
     }
 
-    private fun onLivingHurt(event: DamageAccumulator): ActionResult {
+    override fun onComputation(context: DamageComputationContext) {
         // Queue Mastery: +15% damage against enemies with a locked queue.
-        val lockedCount = event.target.allChannelQueues.values.count { it.isLocked }
-        event.damageMultiplier += 0.15 * lockedCount
-        return ActionResult.PASS
+        val lockedCount = context.target.allChannelQueues.values.count { it.isLocked }
+        context.damageMultiplier += 0.15 * lockedCount
     }
 
     override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {

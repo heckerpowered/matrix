@@ -80,6 +80,7 @@ object MagicManager {
         registerMagic(AttractMagic)
         registerMagic(LevitationMagic)
         registerMagic(AbsolvriftMagic)
+        registerMagic(TuckInMagic)
     }
 
     fun getMagics(player: PlayerEntity): List<Magic> {

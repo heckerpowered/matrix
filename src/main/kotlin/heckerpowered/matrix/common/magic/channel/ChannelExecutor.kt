@@ -20,7 +20,7 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.server.network.ServerPlayerEntity
 
 object ChannelExecutor {
-    fun channel(magic: Magic, invocation: MagicInvocation, attempt: ChannelAttempt = ChannelAttempt(payload = invocation.payload)): MagicAvailableStatus {
+    fun channel(magic: Magic, invocation: MagicInvocation, attempt: ChannelAttempt = ChannelAttempt()): MagicAvailableStatus {
         val caster = invocation.caster
         val target = invocation.target
         val queue = invocation.queue

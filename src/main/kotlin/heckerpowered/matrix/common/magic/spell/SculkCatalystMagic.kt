@@ -16,9 +16,10 @@ import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
 import heckerpowered.matrix.common.magic.rule.calculation.sink.CostCalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.network.ExplosionPayload
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.core.extension.EntityExtension.damage
 import heckerpowered.matrix.core.killed
 import heckerpowered.matrix.core.utility.EntitySearch.getNearestEntities
@@ -53,8 +54,7 @@ object SculkCatalystMagic : Magic(
     private class SculkCatalystChannelAttempt(
         bypassLock: Boolean = false,
         costMana: Boolean = true,
-        payload: ExecutionPayload = ExecutionPayload(),
-    ) : ChannelAttempt(bypassLock, costMana, payload) {
+    ) : ChannelAttempt(bypassLock, costMana) {
         override fun isMagicAvailable(availableStatus: MagicAvailableStatus): Boolean {
             if (availableStatus == MagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE) {
                 return true
@@ -66,7 +66,7 @@ object SculkCatalystMagic : Magic(
     init {
         WriteDataCallback.EVENT.register(::onWriteData)
         ReadDataCallback.EVENT.register(::onReadData)
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<MagicCalculationContributor>(this)
     }
 
     private fun onWriteData(entity: LivingEntity, nbt: NbtCompound) {
@@ -161,8 +161,8 @@ object SculkCatalystMagic : Magic(
             .filter { it != caster && it.isAlive }
             .firstOrNull { it.getChannelQueue(caster)?.isEmpty ?: true }
         if (nearestEntity != null) {
-            val spreadInvocation = MagicInvocation.fromEntity(caster, nearestEntity, payload = spreadPayload)
-            val spreadAttempt = SculkCatalystChannelAttempt(payload = spreadPayload)
+            val spreadInvocation = MagicInvocation.fromEntity(caster, nearestEntity, spreadPayload)
+            val spreadAttempt = SculkCatalystChannelAttempt()
             ChannelExecutor.channel(SculkCatalystMagic, spreadInvocation, spreadAttempt)
         }
     }
@@ -170,10 +170,10 @@ object SculkCatalystMagic : Magic(
     override fun getBaseCost(context: MagicCalculationContext): Long {
         val target = context.target
         val payload = context.payload
-        val normalCost = when (target) {
-            is EnderDragonEntity, is WitherEntity -> 110
-            is PlayerEntity, is WardenEntity -> 180
-            else -> getNormalCost()
+        val normalCost = when (context.targetRank()) {
+            SpellRank.BOSS -> 110
+            SpellRank.CHIMERA -> 180
+            else -> if (target is PlayerEntity) 180 else getNormalCost()
         }
         val bounces = (payload as? SculkCatalystExecutionPayload)?.bounces ?: 0
         return normalCost + bounces.coerceAtMost(5) * 6
@@ -188,13 +188,12 @@ object SculkCatalystMagic : Magic(
     }
 
     override fun getBaseChannelTime(context: MagicCalculationContext): Long {
-        val target = context.target
         val payload = context.payload
 
         val bounces = (payload as? SculkCatalystExecutionPayload)?.bounces ?: 0
-        val additionChannelTime = when (target) {
-            is EnderDragonEntity, is WitherEntity -> 8 * 20L
-            is WardenEntity -> 8 * 20L
+        val additionChannelTime = when (context.targetRank()) {
+            SpellRank.BOSS -> 8 * 20L
+            SpellRank.CHIMERA -> 8 * 20L
             else -> 0L
         }
         return when (bounces) {

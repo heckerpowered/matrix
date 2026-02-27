@@ -5,7 +5,6 @@
 
 package heckerpowered.matrix.common.magic.channel
 
-import heckerpowered.matrix.common.magic.core.ExecutionPayload
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
@@ -36,12 +35,10 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
  *
  * @property bypassLock whether this attempt ignores a locked channel queue
  * @property costMana whether this attempt should consume mana
- * @property payload execution-scoped data carried with this attempt
  */
 open class ChannelAttempt(
     val bypassLock: Boolean = false,
     val costMana: Boolean = true,
-    val payload: ExecutionPayload = ExecutionPayload(),
 ) {
     /**
      * Checks whether the given channel queue is locked for this plan.

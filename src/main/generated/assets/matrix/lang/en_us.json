@@ -129,6 +129,8 @@
   "matrix.magic.target_positioning.name": "Target Positioning",
   "matrix.magic.teleport.description": "Teleports to the target location and automatically attacks entities within §a3§r meters.\n\nTrackable.",
   "matrix.magic.teleport.name": "Teleport",
+  "matrix.magic.tuck_in.description": "Deal Magic Damage to the target equal to §a500%§r of your Attack Damage.\nThis damage is multiplied by the ratio of your §acurrent health + absorption§r to your §amax health§r.\nThe multiplier has a minimum of §a30%§r and no upper limit.\n\nOn cast, consume §a7.5%§r of your current (health + absorption), draining absorption first.\n\nTrackable.",
+  "matrix.magic.tuck_in.name": "Tuck In",
   "matrix.magic_available": "Ready",
   "matrix.magic_available.mana_not_enough": "Insufficient Mana Available",
   "matrix.magic_channel_queue_full": "Queue Full",

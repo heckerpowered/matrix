@@ -5,31 +5,32 @@
 
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attackerAsLiving
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WIZARD_FORCE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.ActionResult
 
-object WizardForceEnchantment {
+object WizardForceEnchantment : DamageComputationRule {
     fun onInitialize() {
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
-    private fun onLivingAttack(event: DamageAccumulator): ActionResult {
-        val attacker = event.attacker!!
+    override fun onComputation(context: DamageComputationContext) {
+        val attacker = context.attackerAsLiving() ?: return
         if (attacker !is ServerPlayerEntity) {
-            return ActionResult.PASS
+            return
         }
-        if (!event.damageSource.isOf(MatrixDamageTypes.magic)) {
-            return ActionResult.PASS
+        if (!context.source.isOf(MatrixDamageTypes.magic)) {
+            return
         }
 
         val level = attacker.wizardHelmet.getEnchantmentLevel(WIZARD_FORCE_ENCHANTMENT_KEY)
-        event.damageMultiplier += level * 0.05
-        return ActionResult.PASS
+        context.damageMultiplier += level * 0.05
     }
 }

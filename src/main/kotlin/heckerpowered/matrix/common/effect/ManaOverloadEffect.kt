@@ -5,11 +5,11 @@
 
 package heckerpowered.matrix.common.effect
 
+import heckerpowered.matrix.common.combat.damage.*
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
 import heckerpowered.matrix.common.event.CanHaveStatusEffectCallback
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingAttackCallback
-import heckerpowered.matrix.common.event.LivingHurtCallback
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.damage.DamageTypes
 import net.minecraft.entity.effect.StatusEffect
@@ -20,21 +20,11 @@ import net.minecraft.util.ActionResult
 object ManaOverloadEffect : StatusEffect(
     StatusEffectCategory.HARMFUL,
     0x98D982
-) {
+), DamageAttemptRule, DamageComputationRule {
     init {
-        LivingHurtCallback.EVENT.register(::onLivingHurt)
         CanHaveStatusEffectCallback.EVENT.register(::canHaveStatusEffect)
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
-    }
-
-    private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
-        if (isMagicAbilityDisabled(accumulator.attacker!!) &&
-            (accumulator.damageSource.isOf(DamageTypes.MAGIC) || accumulator.damageSource.isOf(DamageTypes.INDIRECT_MAGIC))
-        ) {
-            return ActionResult.FAIL
-        }
-
-        return ActionResult.PASS
+        RuleRegistry.register<DamageAttemptRule>(this)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
     fun isMagicAbilityDisabled(entity: LivingEntity): Boolean {
@@ -50,14 +40,21 @@ object ManaOverloadEffect : StatusEffect(
         return ActionResult.PASS
     }
 
-    private fun onLivingHurt(accumulator: DamageAccumulator): ActionResult {
-        val target = accumulator.target
-        val effect = target.getStatusEffect(MANA_OVERLOAD_EFFECT) ?: return ActionResult.PASS
-        accumulator.damageMultiplier += 0.15
-        if (effect.amplifier >= 2) {
-            accumulator.baseDamageBonus += target.health * 0.08F
+    override fun onAttempt(context: DamageAttemptContext) {
+        val attacker = context.attackerAsLiving() ?: return
+        val source = context.source
+        if (!isMagicAbilityDisabled(attacker)) return
+        if (source.isOf(DamageTypes.MAGIC) || source.isOf(DamageTypes.INDIRECT_MAGIC)) {
+            context.cancel()
         }
+    }
 
-        return ActionResult.PASS
+    override fun onComputation(context: DamageComputationContext) {
+        val target = context.target
+        val effect = target.getStatusEffect(MANA_OVERLOAD_EFFECT) ?: return
+        context.damageMultiplier += 0.15
+        if (effect.amplifier >= 2) {
+            context.baseDamageBonus += target.health * 0.08F
+        }
     }
 }

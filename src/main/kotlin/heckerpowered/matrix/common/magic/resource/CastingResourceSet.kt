@@ -7,7 +7,7 @@ package heckerpowered.matrix.common.magic.resource
 
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
+import heckerpowered.matrix.common.rule.RuleRegistry
 import kotlin.math.nextDown
 
 /**
@@ -25,7 +25,7 @@ import kotlin.math.nextDown
  * - Mutate game state by itself.
  * - Perform context-dependent branching.
  *
- * Resource discovery is handled by [MagicRuleRegistry], while
+ * Resource discovery is handled by [RuleRegistry], while
  * consumption is performed explicitly via [consume].
  */
 class CastingResourceSet internal constructor(val resources: List<CastingResource>) {
@@ -96,9 +96,7 @@ class CastingResourceSet internal constructor(val resources: List<CastingResourc
         val totalAvailable = availableAmounts.sumOf { it.second }
         val requiresOpenBound = resources.any { !it.allowExhaustion }
         val isAffordable = if (requiresOpenBound) totalAvailable > required else totalAvailable >= required
-        if (!isAffordable) {
-            return emptyList()
-        }
+        if (!isAffordable) return emptyList()
 
         fun consumable(availableAmount: Pair<CastingResource, Double>, amount: Double): Double {
             val resource = availableAmount.first

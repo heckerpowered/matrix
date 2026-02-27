@@ -72,6 +72,8 @@ import org.lwjgl.opengl.GL15.glDeleteBuffers
 import org.lwjgl.opengl.GL30.glDeleteVertexArrays
 import org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Duration
 import kotlin.math.abs
 import kotlin.math.min
@@ -1567,10 +1569,16 @@ object MatrixHud {
             }
             val descriptionForegroundColor = ColorHelper.Argb.getArgb(descriptionAlpha, 255, 255, 255)
             if (descriptionAlpha > 3) {
+                val currentHealth = BigDecimal.valueOf(healthAnimation.animatedValue)
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .toPlainString()
+                val maxHealth = BigDecimal.valueOf(maxHealthAnimation.animatedValue)
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .toPlainString()
                 val healthText = StringBuilder()
-                    .append((healthAnimation.animatedValue * 100).toLong().toDouble() / 100)
+                    .append(currentHealth)
                     .append("/")
-                    .append((maxHealthAnimation.animatedValue * 100).toLong().toDouble() / 100)
+                    .append(maxHealth)
                     .toString()
 
                 val textX = drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt()

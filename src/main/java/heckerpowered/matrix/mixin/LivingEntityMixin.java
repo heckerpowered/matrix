@@ -5,10 +5,14 @@
 
 package heckerpowered.matrix.mixin;
 
+import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalDoubleRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import heckerpowered.matrix.Matrix;
+import heckerpowered.matrix.common.combat.damage.*;
 import heckerpowered.matrix.common.effect.MatrixStatusEffects;
 import heckerpowered.matrix.common.entity.EntityProtection;
 import heckerpowered.matrix.common.event.*;
@@ -46,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -80,6 +85,9 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
 
     @Shadow
     public abstract float getMaxHealth();
+
+    @Shadow
+    public abstract boolean isAlive();
 
     @Intrinsic(displace = true)
     private LivingEntity self() {
@@ -151,36 +159,118 @@ abstract class LivingEntityMixin extends Entity implements MatrixLivingEntity {
     }
 
     @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
-    private void damage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
-        final var attacker = source.getAttacker() instanceof LivingEntity ? (LivingEntity) source.getAttacker() : null;
-        final var damageAccumulator = new DamageAccumulator(attacker, self(), source, amount, .0, 1.0, 1.0, false);
-        if (attacker != null) {
-            final var result = LivingAttackCallback.EVENT.invoker().onAttack(damageAccumulator);
-            if (result == ActionResult.FAIL) {
-                cir.setReturnValue(false);
-                return;
-            }
-        }
-        final var result = LivingHurtCallback.EVENT.invoker().onHurt(damageAccumulator);
-        if (result == ActionResult.FAIL) {
+    private void damage(
+            DamageSource source,
+            float amount,
+            CallbackInfoReturnable<Boolean> cir,
+            @Local(argsOnly = true) LocalFloatRef amountReference,
+            @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference
+    ) {
+        final var self = (LivingEntity) (Object) this;
+        final var attemptContext = new DamageAttemptContext(self, source, amount);
+        DamagePipeline.attempt(attemptContext);
+        if (attemptContext.isCancelled()) {
             cir.setReturnValue(false);
+            return;
         }
 
-        sourceReference.set(damageAccumulator.getDamageSource());
-        amountReference.set((float) damageAccumulator.accumulateDamage());
-    }
-
-    @Inject(method = "applyDamage", at = @At("HEAD"), cancellable = true)
-    private void applyDamage(DamageSource source, float amount, CallbackInfo ci, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
-        final var livingDamageEvent = new LivingDamageEvent(self(), source, amount);
-        final var result = LivingDamageCallback.EVENT.invoker().onHurt(livingDamageEvent);
-        if (result == ActionResult.FAIL) {
-            ci.cancel();
+        rawDamageReference.set(amount);
+        final var computationContext = new DamageComputationContext(self, source, amount);
+        DamagePipeline.computation(computationContext);
+        if (computationContext.isCancelled()) {
+            cir.setReturnValue(false);
+            return;
         }
 
-        sourceReference.set(livingDamageEvent.getDamageSource());
-        amountReference.set(livingDamageEvent.getAmount());
+        amountReference.set(computationContext.computeDamage());
     }
+
+    @ModifyArg(
+            method = "damage",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;applyDamage(Lnet/minecraft/entity/damage/DamageSource;F)V"),
+            index = 0
+    )
+    private DamageSource wrapSource(DamageSource source, @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference) {
+        return new DamageSourceEnvelope(source, rawDamageReference.get());
+    }
+
+    @ModifyVariable(
+            method = "applyDamage",
+            at = @At("HEAD"),
+            argsOnly = true
+    )
+    private DamageSource unwrapSource(DamageSource source, @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference) {
+        if (source instanceof final DamageSourceEnvelope envelope) {
+            rawDamageReference.set(envelope.getRawDamage());
+            return envelope.getOrigin();
+        }
+        return source;
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    @Definition(id = "modifyAppliedDamage", method = "Lnet/minecraft/entity/LivingEntity;modifyAppliedDamage(Lnet/minecraft/entity/damage/DamageSource;F)F")
+    @Expression("? = ?.modifyAppliedDamage(?, ?)")
+    @ModifyVariable(
+            method = "applyDamage",
+            at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), argsOnly = true)
+    private float applyDamage(
+            float amount,
+            @Local(argsOnly = true) DamageSource source,
+            @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference) {
+        final var self = (LivingEntity) (Object) this;
+        final var rawDamage = rawDamageReference.get();
+        final var realizationContext = new DamageRealizationContext(self, source, rawDamage, amount);
+        DamagePipeline.realization(realizationContext);
+
+        final var retention = realizationContext.getRetention();
+        final var realizedDamage = realizationContext.getRealizedDamage();
+        final var outcomeContext = new DamageOutcomeContext(self, source, rawDamage, amount, retention);
+        DamagePipeline.outcome(outcomeContext);
+
+        final var settlementContext = new DamageSettlementContext(self, source, rawDamage, amount, realizedDamage);
+        DamagePipeline.settlement(settlementContext);
+
+        return settlementContext.getRemainingDamage();
+    }
+
+    // @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
+    // private void damage(
+    //         DamageSource source,
+    //         float amount,
+    //         CallbackInfoReturnable<Boolean> cir,
+    //         @Local(argsOnly = true) LocalRef<DamageSource> sourceReference,
+    //         @Local(argsOnly = true) LocalFloatRef amountReference,
+    //         @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference
+    // ) {
+    //     final var attacker = source.getAttacker() instanceof LivingEntity ? (LivingEntity) source.getAttacker() : null;
+    //     final var damageAccumulator = new DamageAccumulator(attacker, self(), source, amount, .0, 1.0, 1.0, false);
+    //     if (attacker != null) {
+    //         final var result = LivingAttackCallback.EVENT.invoker().onAttack(damageAccumulator);
+    //         if (result == ActionResult.FAIL) {
+    //             cir.setReturnValue(false);
+    //             return;
+    //         }
+    //     }
+    //     final var result = LivingHurtCallback.EVENT.invoker().onHurt(damageAccumulator);
+    //     if (result == ActionResult.FAIL) {
+    //         cir.setReturnValue(false);
+    //     }
+//
+    //     sourceReference.set(damageAccumulator.getDamageSource());
+    //     amountReference.set((float) damageAccumulator.accumulateDamage());
+    // }
+
+    // @Inject(method = "applyDamage", at = @At("HEAD"), cancellable = true)
+    // private void applyDamage(DamageSource source, float amount, CallbackInfo ci, @Local(argsOnly = true) LocalRef<DamageSource> sourceReference, @Local(argsOnly = true) LocalFloatRef amountReference) {
+    //     final var livingDamageEvent = new LivingDamageEvent(self(), source, amount);
+    //     final var result = LivingDamageCallback.EVENT.invoker().onHurt(livingDamageEvent);
+    //     if (result == ActionResult.FAIL) {
+    //         ci.cancel();
+    //     }
+//
+    //     sourceReference.set(livingDamageEvent.getDamageSource());
+    //     amountReference.set(livingDamageEvent.getAmount());
+    // }
 
     @Inject(method = "onStatusEffectRemoved", at = @At(value = "HEAD"), cancellable = true)
     private void onStatusEffectRemoved(StatusEffectInstance effect, CallbackInfo ci) {

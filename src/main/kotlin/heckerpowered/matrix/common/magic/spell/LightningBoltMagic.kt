@@ -16,8 +16,9 @@ import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
 import heckerpowered.matrix.common.magic.rule.calculation.sink.CostCalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 
 object LightningBoltMagic : Magic(
     MagicDefinition(
@@ -27,7 +28,7 @@ object LightningBoltMagic : Magic(
     )
 ), MagicCalculationContributor {
     init {
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<MagicCalculationContributor>(this)
     }
 
     override fun cast(invocation: MagicInvocation) {

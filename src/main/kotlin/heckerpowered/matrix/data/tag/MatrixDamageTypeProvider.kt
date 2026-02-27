@@ -22,10 +22,8 @@ class MatrixDamageTypeProvider(
     override fun configure(registries: RegistryWrapper.WrapperLookup) {
         getOrCreateTagBuilder(DamageTypeTags.BYPASSES_SHIELD)
             .add(MatrixDamageTypes.magic)
-            .add(MatrixDamageTypes.recursiveMagic)
 
         getOrCreateTagBuilder(MatrixDamageTypeTags.magic)
             .add(MatrixDamageTypes.magic)
-            .add(MatrixDamageTypes.recursiveMagic)
     }
 }

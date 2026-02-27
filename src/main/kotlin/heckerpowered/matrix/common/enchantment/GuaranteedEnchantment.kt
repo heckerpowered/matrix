@@ -5,38 +5,39 @@
 
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attackerAsLiving
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.GUARANTEED_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingAttackCallback
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.registry.RegistryKeys
-import net.minecraft.util.ActionResult
 
-object GuaranteedEnchantment {
+object GuaranteedEnchantment : DamageComputationRule {
     fun onInitialize() {
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
-    private fun onLivingAttack(event: DamageAccumulator): ActionResult {
-        if (event.attacker!!.world.isClient) {
-            return ActionResult.PASS
+    override fun onComputation(context: DamageComputationContext) {
+        val attacker = context.attackerAsLiving() ?: return
+        if (attacker.world.isClient) {
+            return
         }
 
-        val attacker = event.attacker
-        val target = event.target
+        val target = context.target
         val guaranteedEnchantmentEntry = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(GUARANTEED_ENCHANTMENT_KEY)
         val guaranteedEnchantmentLevel = EnchantmentHelper.getEquipmentLevel(guaranteedEnchantmentEntry, attacker)
         if (guaranteedEnchantmentLevel <= 0) {
-            return ActionResult.PASS
+            return
         }
 
         val percentage = target.maxHealth.toDouble() / attacker.maxHealth.toDouble()
         if (percentage <= 1) {
-            return ActionResult.PASS
+            return
         }
 
         val damageBonusRatio = (percentage - 1).coerceAtMost(0.3) * guaranteedEnchantmentLevel
-        event.damageMultiplier += damageBonusRatio
-        return ActionResult.PASS
+        context.damageMultiplier += damageBonusRatio
     }
 }

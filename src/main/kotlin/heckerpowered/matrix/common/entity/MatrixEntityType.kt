@@ -6,6 +6,7 @@
 package heckerpowered.matrix.common.entity
 
 import heckerpowered.matrix.Matrix
+import net.fabricmc.fabric.api.`object`.builder.v1.entity.FabricDefaultAttributeRegistry
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.SpawnGroup
 import net.minecraft.registry.Registries
@@ -43,6 +44,16 @@ object MatrixEntityType {
             .build()
     )
 
+    val devEntity: EntityType<DevEntity> = Registry.register(
+        Registries.ENTITY_TYPE, Matrix.identifier("dev"),
+        EntityType.Builder.create({ entityType, world -> DevEntity(world) }, SpawnGroup.CREATURE)
+            .dimensions(0.6f, 1.95f)
+            .eyeHeight(1.74F)
+            .maxTrackingRange(8)
+            .build()
+    )
+
     fun onInitialize() {
+        FabricDefaultAttributeRegistry.register(devEntity, DevEntity.createDevAttributes())
     }
 }

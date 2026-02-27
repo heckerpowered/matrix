@@ -196,6 +196,15 @@ Untraceable.
             "Deal damage to the target and all enemies within §a6m§r, equal to §a100%§r of your Attack Damage.\n\nFor the next §a20§r seconds, automatically strike up to §a5§r enemies within §a8m§r, prioritized by distance, dealing §a100%§r of your Attack Damage once per second.\n\nEach strike reduces the target’s maximum health by §a2.5%§r for §a8§r seconds. This effect can stack, up to a maximum of §a50%§r.\n\nWhenever you deal damage, automatically perform an additional strike, dealing 75% of your Attack Damage, considered as an auto-attack.\n\nTrackable."
         )
 
+        translationBuilder.add(TuckInMagic.definition.name.key, "Tuck In")
+        translationBuilder.add(
+            TuckInMagic.definition.description.key,
+            "Deal Magic Damage to the target equal to §a500%§r of your Attack Damage.\n" +
+                    "This damage is multiplied by the ratio of your §acurrent health + absorption§r to your §amax health§r.\n" +
+                    "The multiplier has a minimum of §a30%§r and no upper limit.\n\n" +
+                    "On cast, consume §a7.5%§r of your current (health + absorption), draining absorption first.\n\n" +
+                    "Trackable."
+        )
 
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "Overclock or Underclock Magic")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "Overclock or Underclock Mana")

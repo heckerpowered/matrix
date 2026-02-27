@@ -5,8 +5,12 @@
 
 package heckerpowered.matrix.common.entity
 
-import heckerpowered.matrix.common.event.*
+import heckerpowered.matrix.common.combat.damage.DamageAttemptContext
+import heckerpowered.matrix.common.combat.damage.DamageAttemptRule
+import heckerpowered.matrix.common.event.LivingDeathCallback
 import heckerpowered.matrix.common.item.WardenChestplateItem
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.core.MatrixLivingEntity
 import heckerpowered.matrix.core.killed
 import net.minecraft.entity.Entity
@@ -88,8 +92,7 @@ enum class EntityProtection {
 
         init {
             LivingDeathCallback.EVENT.register(::onLivingDeath)
-            LivingAttackCallback.EVENT.register(::onLivingAttack)
-            LivingDamageCallback.EVENT.register(::onLivingDamage)
+            RuleRegistry.register<DamageAttemptRule>(DamageProtectionRule)
         }
 
         fun onLivingDeath(entity: LivingEntity, damageSource: DamageSource): ActionResult {
@@ -100,20 +103,12 @@ enum class EntityProtection {
             return ActionResult.PASS
         }
 
-        fun onLivingAttack(event: DamageAccumulator): ActionResult {
-            if (event.target.protection == PROTECTED_COMPLETE) {
-                return ActionResult.FAIL
+        private object DamageProtectionRule : DamageAttemptRule {
+            override fun onAttempt(context: DamageAttemptContext) {
+                if (context.target.protection == PROTECTED_COMPLETE) {
+                    context.cancel()
+                }
             }
-
-            return ActionResult.PASS
-        }
-
-        fun onLivingDamage(event: LivingDamageEvent): ActionResult {
-            if (event.entity.protection == PROTECTED_COMPLETE) {
-                return ActionResult.FAIL
-            }
-
-            return ActionResult.PASS
         }
     }
 }

@@ -13,8 +13,6 @@ import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 
 class HealthReserve(override val priority: Int = 50) : CastingResource {
-    companion object;
-
     /**
      * Indicates whether this resource is allowed to be fully exhausted.
      *

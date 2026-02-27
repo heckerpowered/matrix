@@ -9,6 +9,8 @@ import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.*
+import heckerpowered.matrix.common.magic.core.SpellRank.BOSS
+import heckerpowered.matrix.common.magic.core.SpellRank.CHIMERA
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.network.ExplosionPayload
@@ -22,8 +24,8 @@ import net.minecraft.server.world.ServerWorld
 object ManaOverloadMagic : Magic(
     MagicDefinition(
         Matrix.identifier("magic_overload"),
-        4.mana,
-        6.ticks
+        10.mana,
+        30.ticks
     )
 ) {
     override fun cast(invocation: MagicInvocation) {
@@ -76,5 +78,22 @@ object ManaOverloadMagic : Magic(
         }
 
         return super.availableStatus(context)
+    }
+
+    override fun getBaseCost(context: MagicCalculationContext): Long {
+        val cost = super.getBaseCost(context)
+        return when (context.targetRank()) {
+            CHIMERA -> cost - 4
+            else -> cost
+        }
+    }
+
+    override fun getBaseChannelTime(context: MagicCalculationContext): Long {
+        val channelTime = super.getBaseChannelTime(context)
+        return when (context.targetRank()) {
+            BOSS -> channelTime + 2 * 20
+            CHIMERA -> channelTime + 4 * 20
+            else -> channelTime - 20
+        }
     }
 }

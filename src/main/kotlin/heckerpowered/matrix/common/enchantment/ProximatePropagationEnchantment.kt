@@ -13,15 +13,16 @@ import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
 import heckerpowered.matrix.common.magic.rule.calculation.sink.CostCalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.core.inverseLerp
 import heckerpowered.matrix.core.lerp
 import net.minecraft.entity.player.PlayerEntity
 
 object ProximatePropagationEnchantment : MagicCalculationContributor {
     fun onInitialize() {
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<MagicCalculationContributor>(this)
     }
 
     override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {

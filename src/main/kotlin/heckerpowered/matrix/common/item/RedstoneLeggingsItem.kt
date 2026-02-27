@@ -5,10 +5,12 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.event.LivingDamageCallback
-import heckerpowered.matrix.common.event.LivingDamageEvent
+import heckerpowered.matrix.common.combat.damage.DamageOutcomeContext
+import heckerpowered.matrix.common.combat.damage.DamageOutcomeRule
 import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_MAX_POWER
 import heckerpowered.matrix.common.item.MatrixComponents.REDSTONE_SUIT_POWER
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.LivingEntity
@@ -16,7 +18,6 @@ import net.minecraft.item.ArmorItem
 import net.minecraft.item.ItemStack
 import net.minecraft.item.tooltip.TooltipType
 import net.minecraft.text.Text
-import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
 
 object RedstoneLeggingsItem : ArmorItem(
@@ -26,25 +27,23 @@ object RedstoneLeggingsItem : ArmorItem(
         .maxDamage(Type.LEGGINGS.getMaxDamage(24))
         .component(REDSTONE_SUIT_MAX_POWER, 20)
         .component(REDSTONE_SUIT_POWER, 0)
-), RedstoneSuit {
+), RedstoneSuit, DamageOutcomeRule {
 
     init {
-        LivingDamageCallback.EVENT.register(this::onLivingDamage)
+        RuleRegistry.register<DamageOutcomeRule>(this)
     }
 
-    private fun onLivingDamage(event: LivingDamageEvent): ActionResult {
-        val entity = event.entity
+    override fun onOutcome(context: DamageOutcomeContext) {
+        val entity = context.target
         val leggings = entity.getEquippedStack(EquipmentSlot.LEGS)
         if (!leggings.isRedstoneSuit() || leggings.redstoneSuitPower <= 0) {
-            return ActionResult.PASS
+            return
         }
 
         --leggings.redstoneSuitPower
         if ((0..100).random() in 0..33) {
             powerLeakage(entity)
         }
-
-        return ActionResult.PASS
     }
 
     private fun powerLeakage(entity: LivingEntity) {

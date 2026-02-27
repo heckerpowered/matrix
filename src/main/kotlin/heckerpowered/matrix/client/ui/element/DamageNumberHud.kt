@@ -87,7 +87,7 @@ object DamageNumberHud {
         if (damageNumber.opacity <= 4.0) return
         if (!damageNumber.isFading && damageNumber.opacity >= 255.0) {
             damageNumber.isFading = true
-            scope.withAnimation(TweenSpec(300.milliseconds, easingFunction, 300.milliseconds)) {
+            scope.withAnimation(TweenSpec(300.milliseconds, easingFunction, 0.milliseconds)) {
                 damageNumber.opacity = .0
             }
         }
@@ -136,43 +136,10 @@ object DamageNumberHud {
         matrices.pop()
     }
 
-    private var accumulatedRenderTime = 0L
-    private var accumulatedRenderCount = 0
-    private var lastReportTime = System.nanoTime()
-
-    private fun logRenderStats(elapsedNanos: Long, count: Int) {
-        accumulatedRenderTime += elapsedNanos
-        accumulatedRenderCount++
-
-        val now = System.nanoTime()
-        if (now - lastReportTime >= 1_000_000_000L) {
-
-            val averagePerFrame = accumulatedRenderTime / accumulatedRenderCount
-            val averagePerElement =
-                if (count > 0) averagePerFrame / count else 0
-
-            println(
-                "Damage render: active=$count, " +
-                        "avg/frame=${averagePerFrame / 1_000_000.0} ms, " +
-                        "avg/element=${averagePerElement} ns"
-            )
-
-            accumulatedRenderTime = 0
-            accumulatedRenderCount = 0
-            lastReportTime = now
-        }
-    }
-
     fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val startTime = System.nanoTime()
-
         for (damageNumber in damageNumbers) {
             renderDamageNumber(damageNumber, drawContext, tickCounter)
         }
-
-        val endTime = System.nanoTime()
-        val elapsedNanos = endTime - startTime
-        logRenderStats(elapsedNanos, damageNumbers.size)
 
         for (i in damageNumbers.lastIndex downTo 0) {
             if (damageNumbers[i].opacity <= 0.0 && damageNumbers[i].isFading) {

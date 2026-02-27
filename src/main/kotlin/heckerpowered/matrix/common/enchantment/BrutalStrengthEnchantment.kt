@@ -5,23 +5,25 @@
 
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attackerAsLiving
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.BRUTAL_STRENGTH_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingAttackCallback
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.registry.RegistryKeys
-import net.minecraft.util.ActionResult
 
-object BrutalStrengthEnchantment {
+object BrutalStrengthEnchantment : DamageComputationRule {
     fun onInitialize() {
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
-    private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
-        val attacker = accumulator.attacker!!
-        val target = accumulator.target
+    override fun onComputation(context: DamageComputationContext) {
+        val attacker = context.attackerAsLiving() ?: return
+        val target = context.target
 
         val registryManager = attacker.world.registryManager
         val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
@@ -29,15 +31,14 @@ object BrutalStrengthEnchantment {
         val equippedHelmet = attacker.getEquippedStack(EquipmentSlot.HEAD)
         val enchantmentLevel = EnchantmentHelper.getLevel(enchantmentEntry, equippedHelmet)
         if (enchantmentLevel <= 0) {
-            return ActionResult.PASS
+            return
         }
 
         if (attacker.attacking != target &&
-            accumulator.damageSource.isOf(MatrixDamageTypes.magic)
+            context.source.isOf(MatrixDamageTypes.magic)
         ) {
-            accumulator.damageMultiplier += enchantmentLevel * 0.08
+            context.damageMultiplier += enchantmentLevel * 0.08
             attacker.onAttacking(target)
         }
-        return ActionResult.PASS
     }
 }

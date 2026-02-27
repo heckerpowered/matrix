@@ -19,7 +19,7 @@ import net.minecraft.entity.effect.StatusEffects
 object TargetPositioningMagic : Magic(
     MagicDefinition(
         Matrix.identifier("target_positioning"),
-        4.mana,
+        7.mana,
         20.ticks
     )
 ) {

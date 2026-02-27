@@ -5,17 +5,18 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.event.LivingDamageCallback
-import heckerpowered.matrix.common.event.LivingDamageEvent
+import heckerpowered.matrix.common.combat.damage.DamageSettlementContext
+import heckerpowered.matrix.common.combat.damage.DamageSettlementRule
 import heckerpowered.matrix.common.network.SyncHealthPayload
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.ActionResult
 import net.minecraft.util.Rarity
 import net.minecraft.world.World
 
@@ -26,24 +27,9 @@ object WizardHelmet10 : WizardHelmet(
         .rarity(Rarity.EPIC)
         .component(MatrixComponents.DEFERRED_DAMAGE, .0)
         .component(MatrixComponents.DEFERRED_DAMAGE_TICK, 0)
-) {
+), DamageSettlementRule {
     init {
-        LivingDamageCallback.EVENT.register(::onLivingDamage)
-    }
-
-    fun onLivingDamage(event: LivingDamageEvent): ActionResult {
-        val entity = event.entity
-        if (entity !is PlayerEntity) return ActionResult.PASS
-        if (entity.wizardHelmet.item !is WizardHelmet10) return ActionResult.PASS
-
-        val stack = entity.wizardHelmet
-        val deferredDamage = stack.getOrDefault(MatrixComponents.DEFERRED_DAMAGE, 0.0)
-        val deferredDamageTick = stack.getOrDefault(MatrixComponents.DEFERRED_DAMAGE_TICK, 0)
-
-        stack.set(MatrixComponents.DEFERRED_DAMAGE, deferredDamage + event.amount)
-        stack.set(MatrixComponents.DEFERRED_DAMAGE_TICK, (deferredDamageTick + 20).coerceAtLeast(60))
-
-        return ActionResult.FAIL
+        RuleRegistry.register<DamageSettlementRule>(this)
     }
 
     override fun inventoryTick(stack: ItemStack, world: World, entity: Entity, slot: Int, selected: Boolean) {
@@ -72,5 +58,20 @@ object WizardHelmet10 : WizardHelmet(
 
         stack.set(MatrixComponents.DEFERRED_DAMAGE, deferredDamage - damage)
         stack.set(MatrixComponents.DEFERRED_DAMAGE_TICK, deferredDamageTick - 1)
+    }
+
+    override fun onSettlement(context: DamageSettlementContext) {
+        val entity = context.target
+        if (entity !is PlayerEntity) return
+        if (entity.wizardHelmet.item !is WizardHelmet10) return
+
+        val stack = entity.wizardHelmet
+        val deferredDamage = stack.getOrDefault(MatrixComponents.DEFERRED_DAMAGE, 0.0)
+        val deferredDamageTick = stack.getOrDefault(MatrixComponents.DEFERRED_DAMAGE_TICK, 0)
+
+        stack.set(MatrixComponents.DEFERRED_DAMAGE, deferredDamage + context.remainingDamage)
+        stack.set(MatrixComponents.DEFERRED_DAMAGE_TICK, (deferredDamageTick + 20).coerceAtLeast(60))
+
+        context.consume(context.remainingDamage)
     }
 }

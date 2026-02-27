@@ -5,12 +5,14 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingAttackCallback
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attacker
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.ActionResult
 import net.minecraft.util.Rarity
 
 /**
@@ -22,23 +24,16 @@ object WizardHelmet3 : WizardHelmet(
         .fireproof()
         .rarity(Rarity.UNCOMMON)
         .component(MatrixComponents.MAX_LOAD, 15.0)
-) {
+), DamageComputationRule {
     init {
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
-    private fun onLivingAttack(event: DamageAccumulator): ActionResult {
-        val attacker = event.attacker!!
-        if (attacker !is ServerPlayerEntity) {
-            return ActionResult.PASS
-        }
-        if (!event.damageSource.isOf(MatrixDamageTypes.magic)) {
-            return ActionResult.PASS
-        }
+    override fun onComputation(context: DamageComputationContext) {
+        if (!context.source.isOf(MatrixDamageTypes.magic)) return
+        val attacker = context.attacker as? ServerPlayerEntity ?: return
+        if (attacker.wizardHelmet.item !is WizardHelmet3) return
 
-        if (attacker.wizardHelmet.item is WizardHelmet3) {
-            event.damageMultiplier += 1
-        }
-        return ActionResult.PASS
+        context.damageMultiplier += 1
     }
 }

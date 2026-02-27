@@ -5,11 +5,12 @@
 
 package heckerpowered.matrix.common.enchantment
 
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attackerAsLiving
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.PEAK_OVERDRIVE_ENCHANTMENT_KEY
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.getEnchantmentLevel
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingAttackCallback
 import heckerpowered.matrix.common.item.MatrixComponents
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
@@ -22,28 +23,30 @@ import heckerpowered.matrix.common.magic.rule.calculation.sink.CalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.ChannelTimeCalculationSink
 import heckerpowered.matrix.common.magic.rule.calculation.sink.MagicCalculationSink
 import heckerpowered.matrix.common.magic.rule.effect.ChannelEffect
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.registry.RegistryKeys
-import net.minecraft.util.ActionResult
 
-object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContributor, ChannelEffect {
+object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContributor, ChannelEffect, DamageComputationRule {
     fun onInitialize() {
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<DamageComputationRule>(this)
+        RuleRegistry.register<MagicCalculationContributor>(this)
+        RuleRegistry.register<CalculationContributor>(this)
+        RuleRegistry.register<ChannelEffect>(this)
     }
 
-    private fun onLivingAttack(accumulator: DamageAccumulator): ActionResult {
-        val attacker = accumulator.attacker!!
+    override fun onComputation(context: DamageComputationContext) {
+        val attacker = context.attackerAsLiving() ?: return
         if (attacker !is PlayerEntity || !attacker.isBloodPactActive) {
-            return ActionResult.PASS
+            return
         }
 
         val equippedHelmet = attacker.wizardHelmet
         if (equippedHelmet.isEmpty) {
-            return ActionResult.PASS
+            return
         }
 
         val registryManager = attacker.world.registryManager
@@ -51,11 +54,10 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
         val enchantmentEntry = registryWrapper.getOrThrow(PEAK_OVERDRIVE_ENCHANTMENT_KEY)
         val enchantmentLevel = EnchantmentHelper.getLevel(enchantmentEntry, equippedHelmet)
         if (enchantmentLevel <= 0) {
-            return ActionResult.PASS
+            return
         }
 
-        accumulator.damageMultiplier += 0.5
-        return ActionResult.PASS
+        context.damageMultiplier += 0.5
     }
 
     override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {

@@ -5,7 +5,13 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.event.*
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.combat.damage.attackerAsLiving
+import heckerpowered.matrix.common.event.LivingKnockbackCallback
+import heckerpowered.matrix.common.event.LivingKnockbackEvent
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.LivingEntity
@@ -24,25 +30,21 @@ object WardenChestplateItem : ArmorItem(
         .fireproof()
         .maxDamage(Type.CHESTPLATE.getMaxDamage(37))
         .rarity(Rarity.EPIC)
-) {
+), DamageComputationRule {
     init {
-        LivingAttackCallback.EVENT.register(::onLivingAttack)
-        LivingHurtCallback.EVENT.register(::onLivingHurt)
+        RuleRegistry.register<DamageComputationRule>(this)
         LivingKnockbackCallback.EVENT.register(::onLivingKnockback)
     }
 
-    private fun onLivingAttack(event: DamageAccumulator): ActionResult {
-        if (isAngered(event.attacker!!)) {
-            event.damageMultiplier += 1
+    override fun onComputation(context: DamageComputationContext) {
+        val attacker = context.attackerAsLiving()
+        if (attacker != null && isAngered(attacker)) {
+            context.damageMultiplier += 1
         }
-        return ActionResult.PASS
-    }
 
-    private fun onLivingHurt(event: DamageAccumulator): ActionResult {
-        if (isAngered(event.target)) {
-            event.immune = true
+        if (isAngered(context.target)) {
+            context.cancel()
         }
-        return ActionResult.PASS
     }
 
     private fun onLivingKnockback(event: LivingKnockbackEvent): ActionResult {

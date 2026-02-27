@@ -5,17 +5,21 @@
 
 package heckerpowered.matrix.common.effect
 
-import heckerpowered.matrix.client.player
+import heckerpowered.matrix.common.combat.damage.DamageSettlementContext
+import heckerpowered.matrix.common.combat.damage.DamageSettlementRule
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
 import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.WITHER_ARMOR_ENCHANTMENT_KEY
-import heckerpowered.matrix.common.event.*
+import heckerpowered.matrix.common.event.EntityTickCallback
+import heckerpowered.matrix.common.event.LivingDeathCallback
+import heckerpowered.matrix.common.event.StatusEffectRemovedCallback
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.rule.effect.ChannelEffect
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.network.SyncHealthPayload
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.EquipmentSlot
@@ -30,18 +34,19 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 import net.minecraft.util.ActionResult
+import kotlin.math.ceil
 
 object WitherArmorChargedEffect : StatusEffect(
     StatusEffectCategory.BENEFICIAL,
     0x32C8A8
-), ChannelEffect {
+), DamageSettlementRule, ChannelEffect {
     init {
         fadeTicks(0)
         StatusEffectRemovedCallback.EVENT.register(::onStatusEffectRemoved)
-        LivingDamageCallback.EVENT.register(::onLivingDamage)
         EntityTickCallback.EVENT.register(::onEntityTick)
         LivingDeathCallback.EVENT.register(::onLivingDeath)
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<ChannelEffect>(this)
+        RuleRegistry.register<DamageSettlementRule>(this)
     }
 
     private fun onLivingDeath(entity: LivingEntity, damageSource: DamageSource): ActionResult {
@@ -49,8 +54,7 @@ object WitherArmorChargedEffect : StatusEffect(
         if (attacker !is ServerPlayerEntity || !attacker.isBloodPactActive) {
             return ActionResult.PASS
         }
-        val witherArmorEnchantment = attacker.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
-        val level = EnchantmentHelper.getLevel(witherArmorEnchantment, attacker.getEquippedStack(EquipmentSlot.CHEST))
+        val level = getWitherArmorLevel(attacker)
         if (level <= 0) {
             return ActionResult.PASS
         }
@@ -64,56 +68,10 @@ object WitherArmorChargedEffect : StatusEffect(
     }
 
     fun onEntityTick(entity: LivingEntity) {
-        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
-        val level = EnchantmentHelper.getLevel(witherArmorEnchantment, entity.getEquippedStack(EquipmentSlot.CHEST))
-        if (level <= 0) {
-            return
-        }
+        val context = buildContext(entity) ?: return
+        if (!shouldTriggerOnTick(context)) return
 
-        val witherArmorChargedStatusEffectInstance = entity.getStatusEffect(WITHER_ARMOR_CHARGED_EFFECT) ?: return
-        val amplifier = witherArmorChargedStatusEffectInstance.amplifier
-        if (amplifier <= 0) {
-            return
-        }
-
-        if (entity.health > entity.maxHealth * 0.5) {
-            return
-        }
-
-        val healAmount = 1F + level * 1F
-
-        // Heal may exceed the maximum health, convert it to absorption.
-        if (entity.health + healAmount > entity.maxHealth) {
-            // Absorption amount gains by wither armor has a maximum limit, make sure it does not exceed the
-            // maximum absorption amount, and does not less than the current absorption amount, do not call
-            // .coerceIn() because the size relationship of two values are unknown.
-            val maxAbsorptionAmount = entity.maxHealth
-            val newAbsorptionAmount = (entity.absorptionAmount + entity.health + healAmount - entity.maxHealth)
-                .coerceAtMost(maxAbsorptionAmount)
-                .coerceAtLeast(player.absorptionAmount)
-            entity.setAbsorptionAmountUnclamped(newAbsorptionAmount)
-        }
-        entity.heal(healAmount)
-        entity.setStatusEffect(StatusEffectInstance(WITHER_ARMOR_EFFECT, 200, level - 1, false, true).also {
-            // Cannot add a weaker status effect to an entity, when we set the status effect directly,
-            // it is not considered as a new status effect, call onApplied() manually.
-            it.onApplied(entity)
-        }, entity)
-
-        // Wither armor charges has no special effect when it is applied. Call onApplied() is not necessary.
-        entity.setStatusEffect(
-            StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, amplifier - 1, false, true),
-            entity
-        )
-        if (entity is ServerPlayerEntity) {
-            entity.serverWorld.playSound(null, entity.x, entity.y, entity.z, SoundEvents.ENTITY_WITHER_BREAK_BLOCK, SoundCategory.PLAYERS, 3.0F, 1.0F)
-
-            // When the wither armor is triggered when the time is slowed down, the health and absorption amount
-            // may not be synchronized to the client just in time. Send a packet to synchronize the health and
-            // absorption amount to the client.
-            ServerPlayNetworking.send(entity, SyncHealthPayload(entity))
-            // ServerPlayNetworking.send(entity, WitherArmorTriggerPayload())
-        }
+        trigger(context, 0)
     }
 
     private fun onStatusEffectRemoved(entity: LivingEntity, statusEffectInstance: StatusEffectInstance): ActionResult {
@@ -125,8 +83,7 @@ object WitherArmorChargedEffect : StatusEffect(
             return ActionResult.PASS
         }
 
-        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
-        val level = EnchantmentHelper.getLevel(witherArmorEnchantment, entity.getEquippedStack(EquipmentSlot.CHEST))
+        val level = getWitherArmorLevel(entity)
         if (level <= 0) {
             return ActionResult.PASS
         }
@@ -135,51 +92,74 @@ object WitherArmorChargedEffect : StatusEffect(
         // of wither armor charges when the player obtains more than maximum number of charges by other ways.
         // (e.g. commands).
         val currentAmplifier = statusEffectInstance.amplifier
+        val maxAmplifier = level.coerceAtMost(3)
         val nextAmplifier = (currentAmplifier + 1)
-            .coerceAtMost(3)
+            .coerceAtMost(maxAmplifier)
             .coerceAtLeast(currentAmplifier)
         entity.addStatusEffect(StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, nextAmplifier, false, true))
         return ActionResult.FAIL
     }
 
-    private fun onLivingDamage(event: LivingDamageEvent): ActionResult {
-        val entity = event.entity
-        val amount = event.amount
-        if (entity.world.isClient) {
-            return ActionResult.PASS
-        }
+    override fun onChannel(magic: Magic, invocation: MagicInvocation) {
+        val caster = invocation.caster.entityOrNull() as PlayerEntity
+        if (!caster.isBloodPactActive) return
+        onEntityTick(caster)
+    }
 
-        val registryManager = entity.world.registryManager
-        val registryWrapper = registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT)
-        val witherArmorEnchantment = registryWrapper.getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
-        val equippedChestplate = entity.getEquippedStack(EquipmentSlot.CHEST)
-        val level = EnchantmentHelper.getLevel(witherArmorEnchantment, equippedChestplate)
+    override fun onSettlement(context: DamageSettlementContext) {
+        val entity = context.target
+        val amount = context.remainingDamage
+        if (entity.world.isClient) return
+
+        val calculationContext = buildContext(entity) ?: return
+        if (!shouldTriggerOnDamage(calculationContext, amount)) return
+
+        val extraCharges = calculationContext.computeExtraChargesForDamage(amount)
+        if (extraCharges > 0) {
+            context.consume(calculationContext.recoveryAmountPerCharge * extraCharges)
+        }
+        trigger(calculationContext, extraCharges)
+    }
+
+    private fun buildContext(entity: LivingEntity): CalculationContext? {
+        val level = getWitherArmorLevel(entity)
         if (level <= 0) {
-            return ActionResult.PASS
+            return null
         }
-
-        val witherArmorChargedStatusEffectInstance = entity.getStatusEffect(WITHER_ARMOR_CHARGED_EFFECT) ?: return ActionResult.PASS
-        val amplifier = witherArmorChargedStatusEffectInstance.amplifier
-        if (amplifier <= 0) {
-            return ActionResult.PASS
+        val charges = entity.getStatusEffect(WITHER_ARMOR_CHARGED_EFFECT)?.amplifier ?: 0
+        if (charges <= 0) {
+            return null
         }
+        return CalculationContext(entity, level, charges)
+    }
 
-        // Effect trigger condition
-        if (entity.health > entity.maxHealth * 0.5 &&
-            entity.health + entity.absorptionAmount - amount > entity.maxHealth * 0.5
-        ) {
-            return ActionResult.PASS
-        }
+    private fun shouldTriggerOnTick(context: CalculationContext): Boolean {
+        return context.entity.health <= context.entity.maxHealth * 0.5f
+    }
 
-        // Calculate how many times the wither armor needs to be used to save the owner.
-        val healAmount = 1F + level * 1F
-        val absorptionAmount = entity.maxHealth * (0.05F + level * 0.05F)
-        val useAmount = ((amount - entity.health) / (healAmount + absorptionAmount)).toInt().coerceIn(0..<amplifier)
+    private fun shouldTriggerOnDamage(context: CalculationContext, damage: Float): Boolean {
+        val entity = context.entity
+        return entity.health <= entity.maxHealth * 0.5f ||
+                entity.health + entity.absorptionAmount - damage <= entity.maxHealth * 0.5f
+    }
 
-        val neutralizedDamageAmount = (healAmount + absorptionAmount) * useAmount
-        event.amount -= neutralizedDamageAmount
+    private fun trigger(context: CalculationContext, extraCharges: Int) {
+        val entity = context.entity
+        val totalChargesUsed = 1 + extraCharges
+        val remainingCharges = (context.charges - totalChargesUsed).coerceAtLeast(0)
 
-        // Heal may exceed the maximum health, convert it to absorption.
+        applyHealWithOverflow(entity, context.healAmountPerCharge)
+        applyWitherArmorEffect(entity, context.level)
+
+        // Wither armor charges has no special effect when it is applied. Call onApplied() is not necessary.
+        entity.setStatusEffect(
+            StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, remainingCharges, false, true),
+            entity
+        )
+        notifyTriggered(entity)
+    }
+
+    private fun applyHealWithOverflow(entity: LivingEntity, healAmount: Float) {
         if (entity.health + healAmount > entity.maxHealth) {
             // Absorption amount gains by wither armor has a maximum limit, make sure it does not exceed the
             // maximum absorption amount, and does not less than the current absorption amount, do not call
@@ -187,21 +167,21 @@ object WitherArmorChargedEffect : StatusEffect(
             val maxAbsorptionAmount = entity.maxHealth
             val newAbsorptionAmount = (entity.absorptionAmount + entity.health + healAmount - entity.maxHealth)
                 .coerceAtMost(maxAbsorptionAmount)
-                .coerceAtLeast(player.absorptionAmount)
+                .coerceAtLeast(entity.absorptionAmount)
             entity.setAbsorptionAmountUnclamped(newAbsorptionAmount)
         }
         entity.heal(healAmount)
+    }
+
+    private fun applyWitherArmorEffect(entity: LivingEntity, level: Int) {
         entity.setStatusEffect(StatusEffectInstance(WITHER_ARMOR_EFFECT, 200, level - 1, false, true).also {
             // Cannot add a weaker status effect to an entity, when we set the status effect directly,
             // it is not considered as a new status effect, call onApplied() manually.
             it.onApplied(entity)
         }, entity)
+    }
 
-        // Wither armor charges has no special effect when it is applied. Call onApplied() is not necessary.
-        entity.setStatusEffect(
-            StatusEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, amplifier - useAmount - 1, false, true),
-            entity
-        )
+    private fun notifyTriggered(entity: LivingEntity) {
         if (entity is ServerPlayerEntity) {
             entity.serverWorld.playSound(null, entity.x, entity.y, entity.z, SoundEvents.ENTITY_WITHER_BREAK_BLOCK, SoundCategory.PLAYERS, 3.0F, 1.0F)
 
@@ -211,12 +191,34 @@ object WitherArmorChargedEffect : StatusEffect(
             ServerPlayNetworking.send(entity, SyncHealthPayload(entity))
             // ServerPlayNetworking.send(entity, WitherArmorTriggerPayload())
         }
-        return ActionResult.PASS
     }
 
-    override fun onChannel(magic: Magic, invocation: MagicInvocation) {
-        val caster = invocation.caster.entityOrNull() as PlayerEntity
-        if (!caster.isBloodPactActive) return
-        onEntityTick(caster)
+    private fun getWitherArmorLevel(entity: LivingEntity): Int {
+        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(WITHER_ARMOR_ENCHANTMENT_KEY)
+        return EnchantmentHelper.getLevel(witherArmorEnchantment, entity.getEquippedStack(EquipmentSlot.CHEST))
+    }
+
+    private data class CalculationContext(
+        val entity: LivingEntity,
+        val level: Int,
+        val charges: Int,
+    ) {
+        val healAmountPerCharge = 1f + level * 1f
+        val shieldAmountPerCharge = entity.maxHealth * (0.05f + level * 0.05f)
+        val recoveryAmountPerCharge = healAmountPerCharge + shieldAmountPerCharge
+
+        fun computeExtraChargesForDamage(damage: Float): Int {
+            if (charges <= 1) {
+                return 0
+            }
+
+            val remainingAfterCurrentBuffer = damage - entity.health - entity.absorptionAmount
+            if (remainingAfterCurrentBuffer <= 0f) {
+                return 0
+            }
+
+            val requiredExtra = ceil(remainingAfterCurrentBuffer / recoveryAmountPerCharge).toInt()
+            return requiredExtra.coerceAtMost(charges - 1).coerceAtLeast(0)
+        }
     }
 }

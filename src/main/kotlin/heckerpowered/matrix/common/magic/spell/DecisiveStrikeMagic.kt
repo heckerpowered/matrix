@@ -44,9 +44,9 @@ object DecisiveStrikeMagic : Magic(
 
         val baseDamage = 6.0
         val damageIncreaseBasedOnMaxHealth = (target.maxHealth * 0.14).coerceAtLeast(.0)
-        val playerAttackDamage = caster?.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE) ?: .0
+        val playerAttackDamage = caster?.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE) ?: 2.0
 
-        val damageMultiplierBasedOnCost = (missingMana * 0.04).coerceIn(.0..4.0)
+        val damageMultiplierBasedOnCost = (missingMana * 4.0).coerceIn(.0..4.0)
         val damageMultiplierBloodPact = if (caster?.isBloodPactActive == true) {
             1.0
         } else {
@@ -71,5 +71,13 @@ object DecisiveStrikeMagic : Magic(
         }
 
         return super.availableStatus(context)
+    }
+
+    override fun getBaseCost(context: MagicCalculationContext): Long {
+        val cost = super.getBaseCost(context)
+        return when (context.targetRank()) {
+            SpellRank.CHIMERA -> cost - 2
+            else -> cost
+        }
     }
 }

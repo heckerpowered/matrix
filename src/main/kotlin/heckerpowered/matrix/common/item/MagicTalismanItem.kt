@@ -5,12 +5,13 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.event.DamageAccumulator
-import heckerpowered.matrix.common.event.LivingHurtCallback
+import heckerpowered.matrix.common.combat.damage.DamageComputationContext
+import heckerpowered.matrix.common.combat.damage.DamageComputationRule
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.ActionResult
 import net.minecraft.util.Rarity
 
 object MagicTalismanItem : Item(
@@ -18,22 +19,20 @@ object MagicTalismanItem : Item(
         .fireproof()
         .maxCount(1)
         .rarity(Rarity.EPIC)
-) {
+), DamageComputationRule {
     init {
-        LivingHurtCallback.EVENT.register(::onLivingHurt)
+        RuleRegistry.register<DamageComputationRule>(this)
     }
 
-    private fun onLivingHurt(accumulator: DamageAccumulator): ActionResult {
-        val target = accumulator.target
+    override fun onComputation(context: DamageComputationContext) {
+        val target = context.target
         if (target !is ServerPlayerEntity) {
-            return ActionResult.PASS
+            return
         }
 
         if (target.inventory.contains(ItemStack(MagicTalismanItem))) {
             target.inventory.removeOne(ItemStack(MagicTalismanItem))
-            accumulator.damageReductionMultiplier -= 0.9
+            context.damageMultiplier -= 0.9
         }
-
-        return ActionResult.PASS
     }
 }

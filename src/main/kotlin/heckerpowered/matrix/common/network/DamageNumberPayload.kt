@@ -6,8 +6,12 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.client.ui.element.DamageNumberHud
-import heckerpowered.matrix.common.event.LivingDamageCallback
-import heckerpowered.matrix.common.event.LivingDamageEvent
+import heckerpowered.matrix.common.combat.damage.DamageOutcomeContext
+import heckerpowered.matrix.common.combat.damage.DamageOutcomeRule
+import heckerpowered.matrix.common.event.LivingHealCallback
+import heckerpowered.matrix.common.event.LivingHealEvent
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypeTags
 import heckerpowered.matrix.core.extension.BoxExtension.sample
 import heckerpowered.matrix.core.math.Vector3fExtensions.toArgb8
@@ -51,20 +55,34 @@ class DamageNumberPayload(
             }
 
         init {
-            LivingDamageCallback.EVENT.register(::onLivingDamage)
+            RuleRegistry.register<DamageOutcomeRule>(DamageOutcomeRule(::onOutcome))
+            LivingHealCallback.EVENT.register(::onLivingHeal)
         }
 
-        fun onLivingDamage(event: LivingDamageEvent): ActionResult {
-            if (event.entity.world !is ServerWorld) {
-                return ActionResult.PASS
-            }
-            val position = event.entity.boundingBox.sample(event.amount.toDouble(), 0.1)
-            val color = getColorForDamageSource(event.damageSource)
+        private fun onLivingHeal(event: LivingHealEvent): ActionResult {
+            val target = event.entity
+            if (target.world !is ServerWorld) return ActionResult.PASS
+
+            val position = target.boundingBox.sample(event.amount.toDouble(), 0.1)
+            val color = Vector3f(25f, 255f, 25f)
             val payload = DamageNumberPayload(event.amount, position, color)
-            event.entity.world.server?.playerManager?.playerList?.forEach { player ->
+            target.world.server?.playerManager?.playerList?.forEach { player ->
                 ServerPlayNetworking.send(player, payload)
             }
+
             return ActionResult.PASS
+        }
+
+        private fun onOutcome(context: DamageOutcomeContext) {
+            val target = context.target
+            if (target.world !is ServerWorld) return
+
+            val position = target.boundingBox.sample(context.realizedDamage.toDouble(), 0.1)
+            val color = getColorForDamageSource(context.source)
+            val payload = DamageNumberPayload(context.realizedDamage, position, color)
+            target.world.server?.playerManager?.playerList?.forEach { player ->
+                ServerPlayNetworking.send(player, payload)
+            }
         }
 
         fun getColorForDamageSource(damage: DamageSource): Vector3f {

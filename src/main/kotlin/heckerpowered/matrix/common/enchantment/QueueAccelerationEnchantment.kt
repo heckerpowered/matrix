@@ -12,12 +12,14 @@ import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.CalculationContributor
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
 import heckerpowered.matrix.common.magic.rule.calculation.sink.*
-import heckerpowered.matrix.common.magic.rule.registry.MagicRuleRegistry
 import heckerpowered.matrix.common.persistent.wizardHelmet
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 
 object QueueAccelerationEnchantment : MagicCalculationContributor, CalculationContributor {
     fun onInitialize() {
-        MagicRuleRegistry.register(this)
+        RuleRegistry.register<MagicCalculationContributor>(this)
+        RuleRegistry.register<CalculationContributor>(this)
     }
 
     override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {
