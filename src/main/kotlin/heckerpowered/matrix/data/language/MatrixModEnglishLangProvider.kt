@@ -9,6 +9,7 @@ import heckerpowered.matrix.common.effect.*
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.bloodPact
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.brutalStrength
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.guaranteed
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.kineticThrow
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lastStand
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lightningStrike
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicShield
@@ -243,6 +244,7 @@ Untraceable.
         translationBuilder.add(brutalStrength, "Brutal Strength")
         translationBuilder.add(peakOverdrive, "Peak Overdrive")
         translationBuilder.add(lightningStrike, "Lightning Strike")
+        translationBuilder.add(kineticThrow, "Kinetic Throw")
 
         translationBuilder.add(WardenChestplateItem, "Sculk 'Warden' Chestplate")
         translationBuilder.add(

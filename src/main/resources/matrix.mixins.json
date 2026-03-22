@@ -10,6 +10,7 @@
     "EntityMixin",
     "EntityTrackerEntryMixin",
     "FireBeamGoalMixin",
+    "ItemStackMixin",
     "LivingEntityMixin",
     "MinecraftServerMixin",
     "PlayerEntityMixin",

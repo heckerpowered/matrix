@@ -9,6 +9,7 @@ import heckerpowered.matrix.common.enchantment.MatrixEnchantments.bloodPact
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.brutalStrength
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.enchantmentKey
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.guaranteed
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.kineticThrow
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lastStand
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lightningStrike
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicQueue
@@ -278,7 +279,20 @@ class EnchantmentGenerator(
                     Enchantment.leveledCost(1, 10),
                     Enchantment.leveledCost(1, 15),
                     5,
-                    AttributeModifierSlot.HEAD
+                    AttributeModifierSlot.HAND
+                )
+            )
+        )
+        register(
+            entries, kineticThrow, Enchantment.builder(
+                Enchantment.definition(
+                    registries.getWrapperOrThrow(RegistryKeys.ITEM).getOrThrow(ItemTags.SWORD_ENCHANTABLE),
+                    10,
+                    5,
+                    Enchantment.leveledCost(1, 10),
+                    Enchantment.leveledCost(1, 15),
+                    5,
+                    AttributeModifierSlot.HAND
                 )
             )
         )

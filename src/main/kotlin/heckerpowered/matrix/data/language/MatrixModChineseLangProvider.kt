@@ -9,6 +9,7 @@ import heckerpowered.matrix.common.effect.*
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.bloodPact
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.brutalStrength
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.guaranteed
+import heckerpowered.matrix.common.enchantment.MatrixEnchantments.kineticThrow
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lastStand
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.lightningStrike
 import heckerpowered.matrix.common.enchantment.MatrixEnchantments.magicQueue
@@ -244,6 +245,7 @@ class MatrixModChineseLangProvider(
         translationBuilder.add(brutalStrength, "所向无敌")
         translationBuilder.add(peakOverdrive, "大力神超")
         translationBuilder.add(lightningStrike, "闪电五连鞭")
+        translationBuilder.add(kineticThrow, "释放剑气")
 
         translationBuilder.add(WardenChestplateItem, "幽匿“坚守”胸甲")
         translationBuilder.add(
