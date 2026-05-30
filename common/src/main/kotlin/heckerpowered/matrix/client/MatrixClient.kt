@@ -1,0 +1,107 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 heckerpowered
+ */
+
+package heckerpowered.matrix.client
+
+import heckerpowered.matrix.Matrix
+import heckerpowered.matrix.client.network.MatrixClientPlayNetworking
+import heckerpowered.matrix.client.render.ChannelSequenceRenderer
+import heckerpowered.matrix.client.render.MatrixRenderSystem
+import heckerpowered.matrix.client.render.ScreenEffectRenderer
+import heckerpowered.matrix.client.render.entity.DevEntityRenderer
+import heckerpowered.matrix.client.render.entity.EmptyRenderer
+import heckerpowered.matrix.client.render.entity.FinderArrowEntityRenderer
+import heckerpowered.matrix.client.render.entity.MagicLightningEntityRenderer
+import heckerpowered.matrix.client.render.item.VortexItemRenderer
+import heckerpowered.matrix.client.shader.ShaderStageStore
+import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
+import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
+import heckerpowered.matrix.common.entity.ModEntityTypes
+import heckerpowered.matrix.common.item.MagicTalismanItem
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.system.MagicSystem
+import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
+import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback
+import net.minecraft.client.render.entity.feature.FeatureRendererContext
+import net.minecraft.client.render.entity.model.EntityModel
+import net.minecraft.entity.LivingEntity
+import org.joml.Matrix4f
+import java.time.Duration
+
+val projectionMatrix: Matrix4f
+    get() {
+        // Basic projection calculation:
+        // val gameRenderer = minecraft.gameRenderer
+        // val tickDelta = minecraft.renderTickCounter.getTickDelta(true)
+        // val projectionMatrix = gameRenderer.getBasicProjectionMatrix(gameRenderer.getFov(gameRenderer.camera, tickDelta, true))
+        // return projectionMatrix
+        return MatrixRenderSystem.projectionMatrix
+    }
+
+val viewMatrix: Matrix4f
+    get() {
+        // val camera = minecraft.gameRenderer.camera
+        // val cameraPosition = camera.pos.toVector3f()
+        // val cameraRotation = camera.rotation
+//
+        // return Matrix4f()
+        //     .rotate(cameraRotation.conjugate(Quaternionf()))
+        //     .translate(-cameraPosition)
+
+        return MatrixRenderSystem.viewMatrix
+    }
+
+val animationDuration: Duration = Duration.ofMillis(300)
+
+val easingFunction = ElasticEase().also {
+    it.oscillations = 0
+    it.easingMode = EasingMode.OUT
+}
+
+class MatrixClient : ClientModInitializer {
+    override fun onInitializeClient() {
+        Matrix.proxy = MatrixClientProxy()
+
+        MatrixHud.onInitialize()
+        MatrixClientPlayNetworking.onInitialize()
+        ScreenEffectRenderer.onInitialize()
+        MatrixKeyBindings.onInitialize()
+        registerEntityRenderers()
+
+        LivingEntityFeatureRendererRegistrationCallback.EVENT.register { _, entityRenderer, registrationHelper, _ ->
+            @Suppress("UNCHECKED_CAST")
+            registrationHelper.register(ChannelSequenceRenderer(entityRenderer as FeatureRendererContext<LivingEntity, EntityModel<LivingEntity>>))
+        }
+
+        BuiltinItemRendererRegistry.INSTANCE.register(MagicTalismanItem, VortexItemRenderer)
+    }
+
+    private fun registerEntityRenderers() {
+        EntityRendererRegistry.register(ModEntityTypes.MAGIC_LIGHTNING_ENTITY) { context -> MagicLightningEntityRenderer(context) }
+        EntityRendererRegistry.register(ModEntityTypes.attractor) { context -> EmptyRenderer(context) }
+        EntityRendererRegistry.register(ModEntityTypes.FINDER_ARROW_ENTITY) { context -> FinderArrowEntityRenderer(context) }
+        EntityRendererRegistry.register(ModEntityTypes.devEntity) { context -> DevEntityRenderer(context) }
+    }
+
+    companion object {
+        private var lastNonEmptyMagicList: List<Magic>? = null
+
+        fun getPlayerMagics(): List<Magic> {
+            val magics = MagicSystem.getMagics(player)
+            if (magics.isNotEmpty()) {
+                this.lastNonEmptyMagicList = magics
+            }
+            return magics
+        }
+
+        @JvmStatic
+        fun onWindowInitialization() {
+            ShaderStageStore.Default.discoverFiles()
+            ShaderStageStore.Default.precompileAll()
+        }
+    }
+}

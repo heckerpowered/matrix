@@ -1,0 +1,43 @@
+classTweaker v1 official
+
+# ServerTimeRatio.kt
+accessible field net/minecraft/server/MinecraftServer waitingForNextTick Z
+accessible field net/minecraft/server/MinecraftServer nextTickTimeNanos J
+accessible field net/minecraft/world/TickRateManager nanosecondsPerTick J
+inject-interface net/minecraft/server/MinecraftServer heckerpowered/matrix/extension/MatrixMinecraftServer
+
+inject-interface net/minecraft/world/entity/LivingEntity heckerpowered/matrix/extension/MatrixLivingEntity
+inject-interface net/minecraft/world/level/Level heckerpowered/matrix/extension/MatrixLevel
+
+accessible field net/minecraft/world/level/entity/LevelEntityGetterAdapter sectionStorage Lnet/minecraft/world/level/entity/EntitySectionStorage;
+accessible field net/minecraft/world/level/entity/EntitySectionStorage sectionIds Lit/unimi/dsi/fastutil/longs/LongSortedSet;
+accessible field net/minecraft/world/level/entity/EntitySection storage Lnet/minecraft/util/ClassInstanceMultiMap;
+
+accessible method net/minecraft/world/entity/Entity isInvulnerableToBase (Lnet/minecraft/world/damagesource/DamageSource;)Z
+
+#accessible field net/minecraft/client/MinecraftClient renderTickCounter Lnet/minecraft/client/render/RenderTickCounter$Dynamic;
+#accessible field net/minecraft/client/render/RenderTickCounter$Dynamic tickTime F
+#accessible field net/minecraft/client/render/RenderTickCounter$Dynamic tickDelta F
+#mutable field net/minecraft/client/render/RenderTickCounter$Dynamic tickTime F
+#accessible method net/minecraft/client/gl/Framebuffer drawInternal (IIZ)V
+accessible field net/minecraft/world/entity/Mob targetSelector Lnet/minecraft/world/entity/ai/goal/GoalSelector;
+#accessible field net/minecraft/entity/passive/VillagerEntity gossip Lnet/minecraft/village/VillagerGossips;
+#accessible field net/minecraft/entity/LivingEntity itemUseTimeLeft I
+accessible field net/minecraft/world/entity/LivingEntity attackStrengthTicker I
+#accessible method net/minecraft/client/render/GameRenderer updateFovMultiplier ()V
+#accessible method net/minecraft/client/render/GameRenderer getFov (Lnet/minecraft/client/render/Camera;FZ)D
+#accessible method net/minecraft/client/MinecraftClient handleInputEvents ()V
+accessible method net/minecraft/world/entity/LivingEntity internalSetAbsorptionAmount (F)V
+accessible method net/minecraft/world/entity/player/Player internalSetAbsorptionAmount (F)V
+#accessible class net/minecraft/client/gui/hud/InGameHud$HeartType
+#accessible class net/minecraft/entity/mob/SpellcastingIllagerEntity$CastSpellGoal
+#accessible method net/minecraft/entity/mob/SpellcastingIllagerEntity$CastSpellGoal castSpell ()V
+#accessible class net/minecraft/entity/mob/GuardianEntity$FireBeamGoal
+#accessible method net/minecraft/world/World getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;
+
+accessible field net/minecraft/world/entity/LivingEntity lastHurtByPlayer Lnet/minecraft/world/entity/EntityReference;
+accessible field net/minecraft/world/entity/LivingEntity lastHurtByPlayerMemoryTime I
+
+accessible field net/minecraft/world/entity/ai/Brain memories Ljava/util/Map;
+
+inject-interface net/minecraft/world/damagesource/DamageSource heckerpowered/matrix/extension/MatrixDamageSource

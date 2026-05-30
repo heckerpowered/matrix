@@ -14,9 +14,14 @@ pluginManagement {
 
     val loomVersion: String by settings
     val kotlinVersion: String by settings
+
     plugins {
-        id("fabric-loom") version loomVersion
+        id("net.fabricmc.fabric-loom") version loomVersion
         kotlin("jvm") version kotlinVersion
         kotlin("plugin.serialization") version kotlinVersion
     }
 }
+
+include("common")
+include("render-hardware-interface")
+include("ledger")

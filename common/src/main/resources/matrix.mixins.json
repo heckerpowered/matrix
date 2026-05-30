@@ -1,0 +1,44 @@
+{
+  "required": true,
+  "package": "heckerpowered.matrix.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "CastSpellGoalMixin",
+    "DamageSourceMixin",
+    "ElderGuardianEntityMixin",
+    "EndermanEntityMixin",
+    "EntityMixin",
+    "EntityTrackerEntryMixin",
+    "FireBeamGoalMixin",
+    "ItemStackMixin",
+    "LevelMixin",
+    "LivingEntityMixin",
+    "MinecraftServerMixin",
+    "PlayerEntityMixin",
+    "PlayerMixin",
+    "ServerCommonNetworkHandlerMixin",
+    "ServerPlayerEntityMixin",
+    "ServerPlayNetworkHandlerMixin",
+    "SonicBoomTaskMixin",
+    "TargetPredicateMixin",
+    "TridentEntityMixin",
+    "TridentItemMixin",
+    "WitchEntityMixin",
+    "WorldMixin"
+  ],
+  "client": [
+    "FramebufferMixin",
+    "GameRendererMixin",
+    "KeyboardMixin",
+    "MinecraftClientMixin",
+    "MixinInGameHud",
+    "MouseMixin",
+    "WorldRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixinextras": {
+    "minVersion": "0.5.0"
+  }
+}

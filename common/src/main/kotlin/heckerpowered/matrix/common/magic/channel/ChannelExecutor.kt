@@ -1,0 +1,74 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 heckerpowered
+ */
+
+package heckerpowered.matrix.common.magic.channel
+
+import heckerpowered.matrix.client.render.ChannelAnimation
+import heckerpowered.matrix.client.render.ChannelSequenceRenderer
+import heckerpowered.matrix.common.magic.core.LMagicAvailableStatus
+import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicCalculationContext
+import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.common.network.ClientboundChannelMagicPayload
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.minecraft.client.Minecraft
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.entity.LivingEntity
+
+object ChannelExecutor {
+    fun channel(magic: Magic, invocation: MagicInvocation, attempt: ExecutionPolicy = ExecutionPolicy()): LMagicAvailableStatus {
+        val caster = invocation.caster
+        val target = invocation.target
+        val queue = invocation.queue
+
+        val casterEntity = caster.entityOrNull() ?: return LMagicAvailableStatus.UNAVAILABLE
+        val player = casterEntity as? ServerPlayer ?: return LMagicAvailableStatus.UNAVAILABLE
+        val calculationContext = MagicCalculationContext.fromInvocation(invocation)
+
+        val available = magic.availableStatus(calculationContext)
+        if (!attempt.isMagicAvailable(available)) {
+            val rejectedStatus = if (available == LMagicAvailableStatus.AVAILABLE)
+                LMagicAvailableStatus.UNAVAILABLE else available
+            return rejectedStatus
+        }
+
+        val cost = magic.getCost(calculationContext)
+        if (!attempt.payCost(magic, cost.mana, invocation)) {
+            return LMagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
+        }
+
+        val channelTime = magic.getChannelTime(calculationContext)
+        val payload = invocation.payload
+        val entry = ChannelEntry(
+            magic = magic,
+            cost = cost,
+            channelTime = channelTime,
+            payload = payload
+        )
+
+        queue.enqueue(entry)
+        entry.magic.channel(invocation)
+
+        val channelPayload = ClientboundChannelMagicPayload(magic.definition.uuid, target.id, channelTime)
+        ServerPlayNetworking.send(player, channelPayload)
+        return LMagicAvailableStatus.AVAILABLE
+    }
+
+    @Environment(EnvType.CLIENT)
+    fun performChannelAnimation(magic: ChannelEntry, target: LivingEntity, channelTime: Long = magic.channelTime, currentChannelTime: Long = 0L) {
+        ChannelSequenceRenderer
+            .channelSequenceAnimationMap
+            .computeIfAbsent(target) { mutableListOf() }
+            .add(ChannelAnimation(magic.magic).also {
+                it.channelTime = channelTime
+                it.currentChannelTime = currentChannelTime
+                it.initialProgressOffset = Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(true)
+            })
+        ChannelSequenceRenderer.offsetAnimationMap
+            .computeIfAbsent(target) { ChannelSequenceRenderer.Companion.OffsetAnimation() }
+    }
+}
