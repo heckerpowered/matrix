@@ -15,7 +15,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import net.minecraft.util.Rarity
+import net.minecraft.world.item.Rarity
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals

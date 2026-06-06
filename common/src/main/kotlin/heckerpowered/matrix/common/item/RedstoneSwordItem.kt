@@ -23,7 +23,7 @@ import net.minecraft.world.item.component.TooltipProvider
 import java.util.function.Consumer
 
 object RedstoneSwordItem : Item(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstoneSword)
         .sword(ModToolMaterials.redstone, 3.0F, -2.4F)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)

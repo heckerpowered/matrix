@@ -16,6 +16,8 @@ import heckerpowered.matrix.common.item.ModComponents
 import heckerpowered.matrix.common.item.ModCreativeTab
 import heckerpowered.matrix.common.item.ModItems
 import heckerpowered.matrix.common.magic.system.MagicSystem
+import heckerpowered.matrix.MatrixCommonProxy
+import heckerpowered.matrix.common.recipe.RedstoneSuitChargeRecipe
 import net.fabricmc.api.ModInitializer
 import net.minecraft.resources.Identifier
 import org.slf4j.Logger
@@ -26,6 +28,9 @@ object Matrix : ModInitializer {
 
     @JvmField
     val LOGGER: Logger = LoggerFactory.getLogger("matrix")
+
+    @JvmField
+    var proxy: MatrixCommonProxy = MatrixCommonProxy()
 
     override fun onInitialize() {
         MatrixServerPlayNetworking.onInitialize()
@@ -39,6 +44,7 @@ object Matrix : ModInitializer {
         MatrixPotions.onInitialize()
         ModEntityTypes.onInitialize()
         MatrixEntityAttributes.onInitialize()
+        RedstoneSuitChargeRecipe.onInitialize()
     }
 
     @JvmStatic

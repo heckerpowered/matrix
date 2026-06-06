@@ -12,7 +12,7 @@ import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
-import heckerpowered.matrix.common.magic.system.MagicSystem
+import heckerpowered.matrix.common.magic.system.Magics
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.core.UUIDUtil
 import net.minecraft.network.codec.ByteBufCodecs
@@ -45,7 +45,7 @@ class ClientboundChannelMagicPayload(
 
     fun handle(context: Context) {
         context.client().execute {
-            val magic = MagicSystem.getMagicByUuid(magicUuid) ?: return@execute
+            val magic = Magics[magicUuid] ?: return@execute
             val player = context.player()
             val entity = player.level().getEntity(entityId) ?: return@execute
             if (entity !is LivingEntity) {

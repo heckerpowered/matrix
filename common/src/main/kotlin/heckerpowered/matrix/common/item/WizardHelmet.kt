@@ -56,8 +56,10 @@ open class WizardHelmet(properties: Properties) : Item(
 
         override fun onEquipItem(context: EquipItemContext) {
             val entity = context.entity as? ServerPlayer ?: return
-            val stack = context.stack
+            syncManaBounds(entity, context.stack)
+        }
 
+        fun syncManaBounds(entity: ServerPlayer, stack: ItemStack = entity.wizardHelmetStack) {
             val item = stack.item
             val maxMana = if (item is WizardHelmet) item.getMaxMana(entity, stack).mana else .0.mana
             val account = ManaLedger.account(entity)

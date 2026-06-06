@@ -10,5 +10,5 @@ import net.minecraft.world.item.HoeItem
 object CoalHoeItem : HoeItem(
     ModToolMaterials.coal,
     -1.5F, -1.0F,
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.coalHoe)
 )

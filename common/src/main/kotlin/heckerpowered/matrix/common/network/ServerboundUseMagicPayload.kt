@@ -8,8 +8,7 @@ package heckerpowered.matrix.common.network
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
-import heckerpowered.matrix.common.magic.core.LMagicAvailableStatus
-import heckerpowered.matrix.common.magic.system.MagicSystem
+import heckerpowered.matrix.common.magic.system.Magics
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.common.persistent.wizardHelmetStack
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
@@ -47,14 +46,14 @@ data class ServerboundUseMagicPayload(
         }
 
         val wizardHelmetStack = player.wizardHelmetStack
-        val magic = MagicSystem.getMagicByUuid(uuid) ?: return
-        if (player.wizardHelmet?.hasMagic(wizardHelmetStack, magic) != true) {
+        val magic = Magics[uuid] ?: return
+        if (player.wizardHelmet?.hasMagic(player, wizardHelmetStack, magic) != true) {
             return
         }
 
         val invocation = MagicInvocation.fromEntity(player, targetedEntity)
         val result = ChannelExecutor.channel(magic, invocation)
-        if (result != LMagicAvailableStatus.AVAILABLE) {
+        if (!result.isAvailable) {
             @Suppress("LoggingStringTemplateAsArgument")
             Matrix.LOGGER.debug("Magic channel failed: $result")
         }

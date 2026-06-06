@@ -21,7 +21,7 @@ import net.minecraft.world.level.Level
 import kotlin.time.Duration.Companion.minutes
 
 object MetaBowItem : BowItem(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.metaBow)
         .durability(3840)
         .component(shootPerMinute, 3600)
 ) {

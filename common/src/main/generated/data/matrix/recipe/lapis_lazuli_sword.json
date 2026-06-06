@@ -3,12 +3,8 @@
   "category": "equipment",
   "group": "matrix_lapis_lazuli_suit",
   "key": {
-    "#": {
-      "item": "minecraft:lapis_block"
-    },
-    "|": {
-      "item": "minecraft:stick"
-    }
+    "#": "minecraft:lapis_block",
+    "|": "minecraft:stick"
   },
   "pattern": [
     " # ",
@@ -16,7 +12,6 @@
     " | "
   ],
   "result": {
-    "count": 1,
     "id": "matrix:lapis_lazuli_sword"
   }
 }

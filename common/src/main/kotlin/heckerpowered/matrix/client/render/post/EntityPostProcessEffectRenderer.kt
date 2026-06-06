@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.client.render.post
 
-import net.minecraft.entity.Entity
+import net.minecraft.world.entity.Entity
 
 object EntityPostProcessEffectRenderer {
     @JvmStatic

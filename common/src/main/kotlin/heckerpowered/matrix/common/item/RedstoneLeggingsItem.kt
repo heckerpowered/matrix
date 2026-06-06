@@ -27,7 +27,7 @@ import net.minecraft.world.item.equipment.ArmorType
 import java.util.function.Consumer
 
 object RedstoneLeggingsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.redstone, ArmorType.LEGGINGS)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstoneLeggings).humanoidArmor(ModArmorMaterials.redstone, ArmorType.LEGGINGS)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), RedstoneSuit, TooltipProvider, DamageOutcomeRule {

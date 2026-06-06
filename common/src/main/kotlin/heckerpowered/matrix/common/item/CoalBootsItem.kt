@@ -9,5 +9,5 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object CoalBootsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.coal, ArmorType.BOOTS)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.coalBoots).humanoidArmor(ModArmorMaterials.coal, ArmorType.BOOTS)
 )

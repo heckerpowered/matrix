@@ -18,13 +18,14 @@ import net.minecraft.world.entity.MobCategory
 
 object ModEntityTypes {
     val MAGIC_LIGHTNING_ENTITY: EntityType<MagicLightningBolt> = Registry.register(
-        Registries.ENTITY_TYPE, Matrix.identifier("magic_lightning"),
-        EntityType.Builder.create({ entityType, world -> MagicLightningBolt(entityType, world) }, SpawnGroup.MISC)
-            .disableSaving()
-            .dimensions(0.0F, 0.0F)
-            .maxTrackingRange(16)
-            .trackingTickInterval(Integer.MAX_VALUE)
-            .build()
+        BuiltInRegistries.ENTITY_TYPE,
+        ResourceKey.create(Registries.ENTITY_TYPE, Matrix.identifier("magic_lightning")),
+        EntityType.Builder.of(::MagicLightningBolt, MobCategory.MISC)
+            .noSave()
+            .sized(0.0F, 0.0F)
+            .clientTrackingRange(16)
+            .updateInterval(Integer.MAX_VALUE)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE, Matrix.identifier("magic_lightning")))
     )
 
     val attractor = register(
@@ -38,22 +39,24 @@ object ModEntityTypes {
     )
 
     val FINDER_ARROW_ENTITY: EntityType<FinderArrowEntity> = Registry.register(
-        Registries.ENTITY_TYPE, Matrix.identifier("finder_arrow"),
-        EntityType.Builder.create({ entityType, world -> FinderArrowEntity(world) }, SpawnGroup.MISC)
-            .dimensions(0.5F, 0.5F)
+        BuiltInRegistries.ENTITY_TYPE,
+        ResourceKey.create(Registries.ENTITY_TYPE, Matrix.identifier("finder_arrow")),
+        EntityType.Builder.of({ entityType, level -> FinderArrowEntity(entityType, level) }, MobCategory.MISC)
+            .sized(0.5F, 0.5F)
             .eyeHeight(0.13F)
-            .maxTrackingRange(4)
-            .trackingTickInterval(20)
-            .build()
+            .clientTrackingRange(4)
+            .updateInterval(20)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE, Matrix.identifier("finder_arrow")))
     )
 
     val devEntity: EntityType<DevEntity> = Registry.register(
-        Registries.ENTITY_TYPE, Matrix.identifier("dev"),
-        EntityType.Builder.create({ entityType, world -> DevEntity(world) }, SpawnGroup.CREATURE)
-            .dimensions(0.6f, 1.95f)
+        BuiltInRegistries.ENTITY_TYPE,
+        ResourceKey.create(Registries.ENTITY_TYPE, Matrix.identifier("dev")),
+        EntityType.Builder.of(::DevEntity, MobCategory.CREATURE)
+            .sized(0.6f, 1.95f)
             .eyeHeight(1.74F)
-            .maxTrackingRange(8)
-            .build()
+            .clientTrackingRange(8)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE, Matrix.identifier("dev")))
     )
 
     private fun <T : Entity> register(name: String, builder: EntityType.Builder<T>): EntityType<T> {

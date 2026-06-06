@@ -3,12 +3,8 @@
   "category": "equipment",
   "group": "matrix_emerald_suit",
   "key": {
-    "#": {
-      "item": "minecraft:emerald"
-    },
-    "|": {
-      "item": "minecraft:stick"
-    }
+    "#": "minecraft:emerald",
+    "|": "minecraft:stick"
   },
   "pattern": [
     "## ",
@@ -16,7 +12,6 @@
     " | "
   ],
   "result": {
-    "count": 1,
     "id": "matrix:emerald_hoe"
   }
 }

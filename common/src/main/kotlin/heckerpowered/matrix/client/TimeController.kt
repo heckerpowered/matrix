@@ -7,11 +7,7 @@ package heckerpowered.matrix.client
 
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.network.ServerboundWarpPayload
-import it.unimi.dsi.fastutil.floats.FloatUnaryOperator
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.render.RenderTickCounter
-import net.minecraft.util.Util
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -32,12 +28,18 @@ object TimeController {
         return controller
     }
 
+    class StandaloneRenderTickCounter {
+        fun beginRenderTick(timeMillis: Long, tick: Boolean): Int = if (tick) 1 else 0
+        fun tick(paused: Boolean) = Unit
+        fun setTickFrozen(frozen: Boolean) = Unit
+        fun getTickDelta(tick: Boolean): Float = 1.0F
+    }
+
     @JvmField
-    var standaloneRenderTickCounter: RenderTickCounter.Dynamic =
-        RenderTickCounter.Dynamic(20.0f, 0L, FloatUnaryOperator.identity())
+    var standaloneRenderTickCounter = StandaloneRenderTickCounter()
 
     val isTimeScaled: Boolean
-        get() = MinecraftClient.getInstance().renderTickCounter.tickTime - 50.0F > 0.001F
+        get() = previousMinScale != 1.0
 
     @JvmStatic
     var playerImmuneTimeScale: Boolean = false
@@ -51,16 +53,13 @@ object TimeController {
     private var previousPlayerStandaloneTickState = false
 
     private fun setTimeScale(timeScale: Double) {
-        MinecraftClient.getInstance().renderTickCounter.tickTime = (50.0 / timeScale).toFloat()
         ClientPlayNetworking.send(ServerboundWarpPayload(timeScale, playerStandaloneRenderTick))
     }
 
     private fun setClientTimeScale(timeScale: Double) {
-        MinecraftClient.getInstance().renderTickCounter.tickTime = (50.0 / timeScale).toFloat()
     }
 
     fun setPlayerStandaloneTimeScale(timeScale: Double) {
-        MinecraftClient.getInstance().renderTickCounter.tickTime = (50.0 / timeScale).toFloat()
     }
 
     @JvmStatic
@@ -69,19 +68,7 @@ object TimeController {
             deltaTime = System.nanoTime().nanoseconds - lastFrameTime
         }
         lastFrameTime = System.nanoTime().nanoseconds
-        val ticks = standaloneRenderTickCounter.beginRenderTick(Util.getMeasuringTimeMs(), tick)
-        if (minecraft.world == null || minecraft.player == null) {
-            return
-        }
-        if (!playerStandaloneRenderTick) {
-            return
-        }
-        for (i in 0..<ticks) {
-            world.tickEntity(player)
-            minecraft.gameRenderer.updateFovMultiplier()
-            minecraft.handleInputEvents()
-            minecraft.gameRenderer.firstPersonRenderer.updateHeldItems()
-        }
+        standaloneRenderTickCounter.beginRenderTick(timeMillis, tick)
     }
 
     fun onRenderTick() {

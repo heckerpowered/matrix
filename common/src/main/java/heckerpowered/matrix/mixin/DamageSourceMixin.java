@@ -25,4 +25,14 @@ class DamageSourceMixin implements MatrixDamageSource {
     public void matrix$setAdditionalDamage(boolean b) {
         isAdditionalDamage = b;
     }
+
+    @Override
+    public boolean isAdditionalDamage() {
+        return isAdditionalDamage;
+    }
+
+    @Override
+    public void setAdditionalDamage(boolean b) {
+        isAdditionalDamage = b;
+    }
 }

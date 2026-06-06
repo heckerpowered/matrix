@@ -5,16 +5,12 @@
 
 package heckerpowered.matrix.core
 
-import com.mojang.blaze3d.platform.GlStateManager
-import heckerpowered.matrix.client.render.OpenGLExtensions.clearGLError
-import heckerpowered.matrix.client.render.recommendMipLevel
 import net.minecraft.client.gl.Framebuffer
-import org.lwjgl.opengl.GL46.*
 
 interface FramebufferExtension {
     companion object {
         @JvmStatic
-        var framebufferColorFormat = GL_RGBA16F
+        var framebufferColorFormat = 0
 
         fun <T> changeColorFormat(colorFormat: Int, action: () -> T): T {
             val previousColorFormat = framebufferColorFormat
@@ -48,26 +44,8 @@ interface FramebufferExtension {
         /**
          *
          */
-        fun Framebuffer.beginWriteLod(mipLevel: Int, attachment: Int = GL_COLOR_ATTACHMENT0, setTextureSize: Boolean = true, setViewport: Boolean = true) {
-            clearGLError()
-
-            beginWrite(false)
-            glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, colorAttachment, mipLevel)
-            endWrite()
-
-            beginRead()
-            val textureWidth = glGetTexLevelParameteri(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_WIDTH)
-            val textureHeight = glGetTexLevelParameteri(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_HEIGHT)
-            endRead()
-
-            this.textureWidth = textureWidth
-            this.textureHeight = textureHeight
-
-            if (setViewport) {
-                viewportWidth = textureWidth
-                viewportHeight = textureHeight
-                GlStateManager._viewport(0, 0, textureWidth, textureHeight)
-            }
+        fun Framebuffer.beginWriteLod(mipLevel: Int, attachment: Int = 0, setTextureSize: Boolean = true, setViewport: Boolean = true) {
+            beginWrite(setViewport)
         }
 
         fun Framebuffer.endWriteLod() {
@@ -75,22 +53,9 @@ interface FramebufferExtension {
         }
 
         fun Framebuffer.beginReadLod(mipLevel: Int) {
-            beginRead()
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, mipLevel)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipLevel)
-            endRead()
         }
 
         fun Framebuffer.endReadLod() {
-            beginRead()
-            val textureWidth = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH)
-            val textureHeight = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT)
-
-            val maxMipLevel = recommendMipLevel(textureWidth, textureHeight)
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxMipLevel)
-            endRead()
         }
     }
 

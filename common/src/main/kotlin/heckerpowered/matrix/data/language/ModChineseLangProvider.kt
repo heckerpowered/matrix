@@ -188,6 +188,7 @@ class ModChineseLangProvider(
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "超频或降频魔法")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "超频或降频法力")
         translationBuilder.add(MatrixLanguage.switchClock.key, "切换超频或降频")
+        translationBuilder.add("matrix.hud.magic_list", "魔法选择")
         translationBuilder.add(MatrixLanguage.systemCrashing.key, "即将发生系统崩溃")
 
         translationBuilder.add(MatrixLanguage.magicAvailable.key, "就绪")
@@ -333,9 +334,12 @@ class ModChineseLangProvider(
         translationBuilder.add("item.minecraft.lingering_potion.effect.angered", "滞留型狂暴药水")
 
         translationBuilder.add("key.categories.matrix", "Matrix")
+        translationBuilder.add("key.categories.matrix.key_category", "Matrix")
         translationBuilder.add("key.matrix.use_magic", "引导魔法")
         translationBuilder.add("key.matrix.next_magic", "下一个魔法")
         translationBuilder.add("key.matrix.previous_magic", "上一个魔法")
+        translationBuilder.add("key.matrix.overclock_magic", "超频或降频魔法")
+        translationBuilder.add("key.matrix.overclock_mana", "超频或降频法力")
 
         translationBuilder.add(MatrixLanguage.manaCostReduced.key, "法力消耗降低")
         translationBuilder.add(MatrixLanguage.manaCostIncreased.key, "法力消耗增加")

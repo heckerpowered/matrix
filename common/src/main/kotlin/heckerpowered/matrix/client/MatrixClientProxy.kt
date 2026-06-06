@@ -5,14 +5,15 @@
 
 package heckerpowered.matrix.client
 
+import heckerpowered.matrix.MatrixCommonProxy
 import heckerpowered.matrix.common.magic.resource.Mana
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.world.entity.player.Player
+import net.minecraft.server.level.ServerPlayer
 
 class MatrixClientProxy : MatrixCommonProxy() {
-    override fun getPlayerMana(player: PlayerEntity): Mana {
-        if (player is ServerPlayerEntity) {
+    override fun getPlayerMana(player: Player): Mana {
+        if (player is ServerPlayer) {
             return super.getPlayerMana(player)
         }
         if (minecraft.player == null || player != ::player.get()) {
@@ -22,8 +23,8 @@ class MatrixClientProxy : MatrixCommonProxy() {
         return (MatrixHud.mana - MatrixHud.manaUsage).mana
     }
 
-    override fun getPlayerMaxMana(player: PlayerEntity): Mana {
-        if (player is ServerPlayerEntity) {
+    override fun getPlayerMaxMana(player: Player): Mana {
+        if (player is ServerPlayer) {
             return super.getPlayerMaxMana(player)
         }
         if (minecraft.player == null || player != ::player.get()) {
@@ -33,8 +34,8 @@ class MatrixClientProxy : MatrixCommonProxy() {
         return MatrixHud.maxMana.mana
     }
 
-    override fun isInfiniteMana(player: PlayerEntity): Boolean {
-        if (player is ServerPlayerEntity) {
+    override fun isInfiniteMana(player: Player): Boolean {
+        if (player is ServerPlayer) {
             return super.isInfiniteMana(player)
         }
         return false

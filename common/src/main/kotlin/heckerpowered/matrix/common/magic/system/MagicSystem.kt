@@ -16,6 +16,7 @@ object MagicSystem {
         ChannelQueuePersistenceRule.onInitialize()
         ChannelQueueTicker.onInitialize()
         ManaRegenerationTicker.onInitialize()
+        PlayerOverclockState.onInitialize()
     }
 
     @JvmStatic

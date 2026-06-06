@@ -6,9 +6,12 @@
 package heckerpowered.matrix.common.recipe
 
 import com.mojang.serialization.MapCodec
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.item.isRedstoneSuit
 import heckerpowered.matrix.common.item.redstoneSuitMaxPower
 import heckerpowered.matrix.common.item.redstoneSuitPower
+import net.minecraft.core.Registry
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.item.ItemStack
@@ -63,9 +66,13 @@ object RedstoneSuitChargeRecipe : CustomRecipe() {
 
     val mapCodec: MapCodec<RedstoneSuitChargeRecipe> = MapCodec.unit(RedstoneSuitChargeRecipe)
     val streamCodec: StreamCodec<RegistryFriendlyByteBuf, RedstoneSuitChargeRecipe> = StreamCodec.unit<RegistryFriendlyByteBuf, RedstoneSuitChargeRecipe>(RedstoneSuitChargeRecipe)
-    val serializer: RecipeSerializer<RedstoneSuitChargeRecipe> = RecipeSerializer<RedstoneSuitChargeRecipe>(mapCodec, streamCodec)
+    val recipeSerializer: RecipeSerializer<RedstoneSuitChargeRecipe> = RecipeSerializer<RedstoneSuitChargeRecipe>(mapCodec, streamCodec)
 
     override fun getSerializer(): RecipeSerializer<out CustomRecipe> {
-        return serializer
+        return recipeSerializer
+    }
+
+    fun onInitialize() {
+        Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, Matrix.identifier("redstone_suit_charger"), recipeSerializer)
     }
 }

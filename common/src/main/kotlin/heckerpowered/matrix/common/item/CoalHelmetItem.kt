@@ -9,5 +9,5 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object CoalHelmetItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.coal, ArmorType.HELMET)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.coalHelmet).humanoidArmor(ModArmorMaterials.coal, ArmorType.HELMET)
 )

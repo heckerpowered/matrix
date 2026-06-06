@@ -69,6 +69,22 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 
     implementation(project(":ledger"))
+    include(project(":ledger"))
+}
+
+sourceSets {
+    main {
+        java {
+            setIncludes(
+                listOf(
+                    "heckerpowered/matrix/mixin/DamageSourceMixin.java",
+                    "heckerpowered/matrix/mixin/EntityMixin.java",
+                    "heckerpowered/matrix/mixin/LevelMixin.java",
+                    "heckerpowered/matrix/mixin/LivingEntityMixin.java",
+                )
+            )
+        }
+    }
 }
 
 tasks.test {

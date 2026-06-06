@@ -23,7 +23,7 @@ import java.util.function.Consumer
 
 object RedstoneShovelItem : ShovelItem(
     ModToolMaterials.redstone, 1.5F, -3.0F,
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstoneShovel)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), RedstoneSuit, TooltipProvider {

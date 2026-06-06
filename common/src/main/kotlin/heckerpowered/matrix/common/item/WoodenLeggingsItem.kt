@@ -9,6 +9,6 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object WoodenLeggingsItem : Item(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.woodenLeggings)
         .humanoidArmor(ModArmorMaterials.wooden, ArmorType.LEGGINGS)
 )

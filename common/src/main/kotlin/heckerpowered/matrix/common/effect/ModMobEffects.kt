@@ -25,6 +25,12 @@ object ModMobEffects {
     val Absolvrift = register("absolvrift", AbsolvriftEffect)
     val HealthShrink = register("health_shrink", HealthShrinkEffect)
 
+    val IGNITE_EFFECT get() = Ignite
+    val WITHER_ARMOR_CHARGED_EFFECT get() = WitherArmorCharged
+    val WITHER_ARMOR_EFFECT get() = WitherArmor
+    val ANGERED_EFFECT get() = Angered
+    val BLOOD_PACT_EFFECT get() = BloodPact
+
     private fun register(name: String, effect: MobEffect): Holder<MobEffect> {
         return Registry.registerForHolder(BuiltInRegistries.MOB_EFFECT, Matrix.identifier(name), effect)
     }

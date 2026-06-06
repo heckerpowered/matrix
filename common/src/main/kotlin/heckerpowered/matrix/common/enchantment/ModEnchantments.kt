@@ -58,6 +58,9 @@ object ModEnchantments {
     val BloodPact = createId("blood_pact")
 
     @JvmField
+    val bloodPact = BloodPact
+
+    @JvmField
     val MagicShield = createId("magic_shield")
 
     @JvmField

@@ -5,22 +5,11 @@
 
 package heckerpowered.matrix.client.render
 
-import com.mojang.blaze3d.platform.GlConst
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.event.PostProcessCallback
-import heckerpowered.matrix.client.minecraft
-import heckerpowered.matrix.client.render.state.FramebufferState
-import heckerpowered.matrix.client.render.state.StateIsolation
-import heckerpowered.matrix.client.render.state.ViewportState
 import heckerpowered.matrix.client.shader.BlitProgram
-import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.gl.SimpleFramebuffer
-import org.lwjgl.opengl.GL31
-import org.lwjgl.opengl.GL46
 
 val framebufferProvider: UniformProvider
     get() = PostProcessRenderer.framebufferProvider
@@ -28,53 +17,11 @@ val framebufferProvider: UniformProvider
 object PostProcessRenderer {
     val postProcessShaders = mutableSetOf<BlitProgram>()
 
-    /**
-     * The source framebuffer to render the post process effects from.
-     */
-    var sourceFramebuffer = minecraft.framebuffer
-    private var boundFramebuffer = minecraft.framebuffer
-
-    val framebufferProvider = UniformProvider("framebuffer") { pointer ->
-        GL31.glActiveTexture(GlConst.GL_TEXTURE0)
-        GL31.glBindTexture(GlConst.GL_TEXTURE_2D, boundFramebuffer.colorAttachment)
-        RenderSystem.glUniform1i(pointer, 0)
-    }
-
+    var sourceFramebuffer: Framebuffer = createFramebuffer()
+    private var boundFramebuffer: Framebuffer = sourceFramebuffer
+    val framebufferProvider = UniformProvider("framebuffer")
     var useDepthAttachment = false
-    private val depthAttachmentProvider = UniformProvider("depthAttachment") { pointer ->
-        if (pointer == -1 || !boundFramebuffer.useDepthAttachment || !useDepthAttachment) {
-            return@UniformProvider
-        }
-
-        GL31.glActiveTexture(GlConst.GL_TEXTURE0 + 1)
-        GL31.glBindTexture(GlConst.GL_TEXTURE_2D, boundFramebuffer.depthAttachment)
-        RenderSystem.glUniform1i(pointer, 1)
-    }
-
     var levelOfDetail = .0F
-    private val levelOfDetailProvider = UniformProvider("lod") { pointer ->
-        if (pointer == -1) {
-            return@UniformProvider
-        }
-
-        GL46.glUniform1f(pointer, levelOfDetail)
-    }
-
-    private val blitShader by lazy {
-        BlitProgram(
-            ResourceShader("/assets/matrix/shaders/sobel.vert", GL46.GL_VERTEX_SHADER),
-            ResourceShader("/assets/matrix/shaders/blit/blit.fsh", GL46.GL_FRAGMENT_SHADER),
-            uniforms = arrayOf(framebufferProvider, depthAttachmentProvider, levelOfDetailProvider)
-        )
-    }
-
-    private val blitNoDepthShader by lazy {
-        BlitProgram(
-            ResourceShader("/assets/matrix/shaders/sobel.vert", GL46.GL_VERTEX_SHADER),
-            ResourceShader("/assets/matrix/shaders/blit/blit_no_depth.fsh", GL46.GL_FRAGMENT_SHADER),
-            uniforms = arrayOf(framebufferProvider, levelOfDetailProvider)
-        )
-    }
 
     private val managedFramebuffers = mutableListOf<Framebuffer>()
     private val framebuffers = mutableListOf(createFramebuffer(), createFramebuffer())
@@ -98,23 +45,11 @@ object PostProcessRenderer {
     }
 
     private fun createFramebuffer(): Framebuffer {
-        val framebuffer = SimpleFramebuffer(
-            minecraft.window.framebufferWidth,
-            minecraft.window.framebufferHeight,
-            true,
-            MinecraftClient.IS_SYSTEM_MAC
-        )
-        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
-        return framebuffer
+        return SimpleFramebuffer(1, 1, true, false)
     }
 
     fun createManagedFramebuffer(): Framebuffer {
-        val framebuffer = SimpleFramebuffer(
-            minecraft.window.framebufferWidth,
-            minecraft.window.framebufferHeight,
-            true,
-            MinecraftClient.IS_SYSTEM_MAC
-        )
+        val framebuffer = SimpleFramebuffer(1, 1, true, false)
         framebuffer.setClearColor(.0F, .0F, .0F, .0F)
         managedFramebuffers.add(framebuffer)
         return framebuffer
@@ -127,10 +62,10 @@ object PostProcessRenderer {
     @JvmStatic
     fun onResize(width: Int, height: Int) {
         for (framebuffer in framebuffers) {
-            framebuffer.resize(width, height, MinecraftClient.IS_SYSTEM_MAC)
+            framebuffer.resize(width, height, false)
         }
         for (framebuffer in managedFramebuffers) {
-            framebuffer.resize(width, height, MinecraftClient.IS_SYSTEM_MAC)
+            framebuffer.resize(width, height, false)
         }
     }
 
@@ -145,16 +80,10 @@ object PostProcessRenderer {
     }
 
     fun resetFramebuffers() {
-        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
-            currentFramebufferIndex = 0
-            framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
-        }
+        currentFramebufferIndex = 0
     }
 
     fun clearFramebuffers() {
-        StateIsolation.isolate(FramebufferState.captureSnapshot(), ViewportState.captureSnapshot()) {
-            framebuffers.forEach { it.clear(MinecraftClient.IS_SYSTEM_MAC) }
-        }
     }
 
     @JvmStatic
@@ -174,57 +103,26 @@ object PostProcessRenderer {
 
     @JvmStatic
     fun renderToMinecraftFramebuffer() {
-        renderToFramebuffer(minecraft.framebuffer)
         PostProcessCallback.EVENT.invoker().onPostProcess()
     }
 
     @JvmStatic
     fun renderFramebufferToScreen(framebuffer: Framebuffer, disableBlend: Boolean = false) {
-        val previousFramebuffer = GlStateManager.getBoundFramebuffer()
-
-        framebuffer.endWrite()
-        framebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, disableBlend)
-
-        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
     }
 
     @JvmStatic
     fun renderShaderToFramebuffer(shader: BlitProgram, framebuffer: Framebuffer, disableBlend: Boolean = true) {
-        val previousFramebuffer = GlStateManager.getBoundFramebuffer()
-
-        framebuffer.beginWrite(true)
-        if (disableBlend) {
-            shader.blit()
-        } else {
-            shader.enableShader()
-            BlitProgram.blit()
-            shader.disableShader()
-        }
-        framebuffer.endWrite()
-
-        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
+        boundFramebuffer = framebuffer
     }
 
     @JvmStatic
     fun renderShaders(shaders: Collection<BlitProgram>): Framebuffer {
-        val previousFramebuffer = GlStateManager.getBoundFramebuffer()
-
         resetFramebuffers()
-        copyFramebuffer(sourceFramebuffer, currentFramebuffer())
         boundFramebuffer = currentFramebuffer()
-
-        // Render post process effects
         for (shader in shaders) {
-            // Render shader to next framebuffer
             nextFramebuffer()
-            currentFramebuffer().beginWrite(false)
-            shader.blit()
-
-            // Bind the rendered framebuffer
             boundFramebuffer = currentFramebuffer()
         }
-
-        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
         return boundFramebuffer
     }
 
@@ -237,21 +135,12 @@ object PostProcessRenderer {
     @JvmStatic
     fun copyFramebuffer(from: Framebuffer, to: Framebuffer, disableBlend: Boolean = true, copyDepth: Boolean = false) {
         boundFramebuffer = from
-        val shader = if (copyDepth) blitShader else blitNoDepthShader
-        renderShaderToFramebuffer(shader, to, disableBlend)
     }
 
     fun useFramebuffer(framebuffer: Framebuffer, action: () -> Unit) {
         val previousFramebuffer = sourceFramebuffer
         sourceFramebuffer = framebuffer
-
-        val previousBoundFramebuffer = GlStateManager.getBoundFramebuffer()
-        currentFramebuffer().clear(false)
-        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousBoundFramebuffer)
-
-        copyFramebuffer(sourceFramebuffer, currentFramebuffer())
         boundFramebuffer = currentFramebuffer()
-
         action()
         sourceFramebuffer = previousFramebuffer
     }

@@ -15,7 +15,7 @@ import heckerpowered.matrix.client.render.particle.module.particle_update.DragMo
 import heckerpowered.matrix.client.render.particle.module.particle_update.KillParticleModule
 import heckerpowered.matrix.client.render.particle.module.particle_update.ParticleStateModule
 import heckerpowered.matrix.client.render.particle.module.particle_update.ScaleSpriteSizeBySpeedModule
-import net.minecraft.util.math.Vec3d
+import net.minecraft.world.phys.Vec3
 import org.joml.Vector3f
 
 object ExplosionParticle {
@@ -46,7 +46,7 @@ object ExplosionParticle {
         )
     }
 
-    fun spawnParticleAt(position: Vec3d) {
+    fun spawnParticleAt(position: Vec3) {
         val particleState = (particleSystem.particleSpawnModules.first { it is InitializeParticleModule } as InitializeParticleModule).particleState
         particleState.x = position.x.toFloat()
         particleState.y = position.y.toFloat()

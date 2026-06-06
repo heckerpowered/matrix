@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.state.BlockState
 import java.util.function.Consumer
 
 object RedstonePickaxeItem : Item(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstonePickaxe)
         .pickaxe(ModToolMaterials.redstone, 1.0F, -2.8F)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)

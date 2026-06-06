@@ -14,7 +14,7 @@
   "license": "CC0-1.0",
   "icon": "assets/matrix/icon.png",
   "environment": "*",
-  "accessWidener": "matrix.accesswidener",
+  "accessWidener": "matrix.classtweaker",
   "entrypoints": {
     "main": [
       {
@@ -30,7 +30,7 @@
     ],
     "fabric-datagen": [
       {
-        "value": "ModDataGenerator",
+        "value": "heckerpowered.matrix.ModDataGenerator",
         "adapter": "kotlin"
       }
     ]
@@ -40,7 +40,7 @@
   ],
   "depends": {
     "fabricloader": ">=0.15.7",
-    "minecraft": "~1.21",
+    "minecraft": ">=26.2-alpha.5",
     "java": ">=21",
     "fabric-api": "*",
     "fabric-language-kotlin": ">=1.9.22"

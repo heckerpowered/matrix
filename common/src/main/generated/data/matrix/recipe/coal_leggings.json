@@ -3,9 +3,7 @@
   "category": "equipment",
   "group": "matrix_coal_suit",
   "key": {
-    "#": {
-      "item": "minecraft:coal_block"
-    }
+    "#": "minecraft:coal_block"
   },
   "pattern": [
     "###",
@@ -13,7 +11,6 @@
     "# #"
   ],
   "result": {
-    "count": 1,
     "id": "matrix:coal_leggings"
   }
 }

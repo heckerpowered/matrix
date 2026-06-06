@@ -3,16 +3,13 @@
   "category": "equipment",
   "group": "matrix_redstone_suit",
   "key": {
-    "#": {
-      "item": "minecraft:redstone_block"
-    }
+    "#": "minecraft:redstone_block"
   },
   "pattern": [
     "# #",
     "# #"
   ],
   "result": {
-    "count": 1,
     "id": "matrix:redstone_boots"
   }
 }

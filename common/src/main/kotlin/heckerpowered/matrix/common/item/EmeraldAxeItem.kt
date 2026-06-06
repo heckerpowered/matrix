@@ -10,5 +10,5 @@ import net.minecraft.world.item.AxeItem
 object EmeraldAxeItem : AxeItem(
     ModToolMaterials.emerald,
     5.0F, -3.0F,
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.emeraldAxe)
 )

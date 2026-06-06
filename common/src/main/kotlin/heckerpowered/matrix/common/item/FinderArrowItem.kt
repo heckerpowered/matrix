@@ -12,7 +12,7 @@ import net.minecraft.world.item.ArrowItem
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 
-object FinderArrowItem : ArrowItem(Properties()) {
+object FinderArrowItem : ArrowItem(Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.finderArrow)) {
     override fun createArrow(level: Level, itemStack: ItemStack, owner: LivingEntity, firedFromWeapon: ItemStack?): AbstractArrow {
         return FinderArrowEntity(level, owner, itemStack.copyWithCount(1), firedFromWeapon)
     }

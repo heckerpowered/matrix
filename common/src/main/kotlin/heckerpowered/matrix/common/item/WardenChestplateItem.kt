@@ -28,7 +28,7 @@ import java.util.function.Consumer
 // TODO: EntityPolarity
 // TODO: Restrict negative effects
 object WardenChestplateItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.warden, ArmorType.CHESTPLATE)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.wardenChestplate).humanoidArmor(ModArmorMaterials.warden, ArmorType.CHESTPLATE)
         .fireResistant()
         .rarity(Rarity.EPIC)
 ), TooltipProvider, DamageComputationRule, KnockbackRule {

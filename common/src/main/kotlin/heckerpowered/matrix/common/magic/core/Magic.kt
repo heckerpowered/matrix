@@ -236,8 +236,9 @@ abstract class Magic(val definition: MagicDefinition) {
         // Cost = (BaseCost + MagicResistance) * (1.0 - CostReduction)
         val baseCost = getBaseCost(context).toDouble()
         val costReduction = sink.costReduction
+        val costMultiplier = sink.costMultiplier
         val magicResistance = sink.magicResistance
-        return ceil((baseCost + magicResistance) * (1.0 - costReduction)).toLong().coerceAtLeast(0)
+        return ceil((baseCost + magicResistance) * costMultiplier * (1.0 - costReduction)).toLong().coerceAtLeast(0)
     }
 
     /**

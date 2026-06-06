@@ -193,6 +193,7 @@ Untraceable.
         translationBuilder.add(MatrixLanguage.overclockMagic.key, "Overclock or Underclock Magic")
         translationBuilder.add(MatrixLanguage.overclockMana.key, "Overclock or Underclock Mana")
         translationBuilder.add(MatrixLanguage.switchClock.key, "Switch Overclock or Underclock")
+        translationBuilder.add("matrix.hud.magic_list", "Magic selection")
         translationBuilder.add(MatrixLanguage.systemCrashing.key, "System Crash Imminent")
 
         translationBuilder.add(MatrixLanguage.magicAvailable.key, "Ready")
@@ -338,9 +339,12 @@ Untraceable.
         translationBuilder.add("item.minecraft.lingering_potion.effect.angered", "Lingering Potion of Angered")
 
         translationBuilder.add("key.categories.matrix", "Matrix")
+        translationBuilder.add("key.categories.matrix.key_category", "Matrix")
         translationBuilder.add("key.matrix.use_magic", "Channel magic")
         translationBuilder.add("key.matrix.next_magic", "Next magic")
         translationBuilder.add("key.matrix.previous_magic", "Previous magic")
+        translationBuilder.add("key.matrix.overclock_magic", "Overclock or underclock magic")
+        translationBuilder.add("key.matrix.overclock_mana", "Overclock or underclock mana")
 
         translationBuilder.add(MatrixLanguage.manaCostReduced.key, "Mana cost reduced by")
         translationBuilder.add(MatrixLanguage.manaCostIncreased.key, "Mana cost increased by")

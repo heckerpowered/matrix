@@ -10,15 +10,14 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 
 object MatrixClientPlayNetworking {
     fun onInitialize() {
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncManaPayload.id, ClientboundSyncManaPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundSystemCrashPayload.id, ClientboundSystemCrashPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundChannelMagicPayload.id, ClientboundChannelMagicPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundBorrowedTimePayload.id, ClientboundBorrowedTimePayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncHealthPayload.id, ClientboundSyncHealthPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundWitherArmorTriggerPayload.id, ClientboundWitherArmorTriggerPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ImminentDangerPayload.id, ImminentDangerPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundTeleportPayload.type, ClientboundTeleportPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundExplosionPayload.id, ClientboundExplosionPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundDamageNumberPayload.id, ClientboundDamageNumberPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncManaPayload.type) { payload, context -> payload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundSystemCrashPayload.type) { payload, context -> payload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundChannelMagicPayload.type) { payload, context -> payload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundBorrowedTimePayload.type) { payload, context -> payload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncHealthPayload.type) { payload, context -> payload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundWitherArmorTriggerPayload.type) { payload, context -> payload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundTeleportPayload.type) { payload, context -> payload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundExplosionPayload.type) { payload, context -> payload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundDamageNumberPayload.type) { payload, context -> payload.handle(context) }
     }
 }

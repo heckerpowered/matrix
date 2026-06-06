@@ -10,5 +10,5 @@ import net.minecraft.world.item.ToolMaterial
 import net.minecraft.world.item.equipment.ArmorType
 
 object LapisLazuliChestplateItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.lapisLazuli, ArmorType.CHESTPLATE)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.lapisLazuliChestplate).humanoidArmor(ModArmorMaterials.lapisLazuli, ArmorType.CHESTPLATE)
 )

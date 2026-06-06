@@ -21,12 +21,14 @@ object MatrixCommands {
                 literal("matrix").then(
                     literal("mana")
                         .requires(hasPermission(PermissionCheck.Require(Permissions.COMMANDS_GAMEMASTER)))
-                        .then(literal("infinite"))
-                        .executes { context ->
-                            val player = context.source.playerOrException
-                            player.isInfiniteMana = !player.isInfiniteMana
-                            return@executes Command.SINGLE_SUCCESS
-                        }
+                        .then(
+                            literal("infinite")
+                                .executes { context ->
+                                    val player = context.source.playerOrException
+                                    player.isInfiniteMana = !player.isInfiniteMana
+                                    return@executes Command.SINGLE_SUCCESS
+                                }
+                        )
                 )
             )
         }

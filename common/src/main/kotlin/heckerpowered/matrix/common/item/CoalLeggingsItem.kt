@@ -10,5 +10,5 @@ import net.minecraft.world.item.ToolMaterial
 import net.minecraft.world.item.equipment.ArmorType
 
 object CoalLeggingsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.coal, ArmorType.LEGGINGS)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.coalLeggings).humanoidArmor(ModArmorMaterials.coal, ArmorType.LEGGINGS)
 )
