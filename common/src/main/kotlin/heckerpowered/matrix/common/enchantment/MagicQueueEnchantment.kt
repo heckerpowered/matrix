@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.enchantment.ModEnchantments.magicQueue
+import heckerpowered.matrix.common.enchantment.ModEnchantments.MagicQueue
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.CalculationContributor
@@ -24,7 +24,7 @@ object MagicQueueEnchantment : MagicCalculationContributor, CalculationContribut
         if (sink !is ChannelTimeCalculationSink) return
         val player = context.playerOrNull() ?: return
         val queue = context.queue ?: return
-        if (player.getEnchantmentLevel(magicQueue) <= 0) return
+        if (player.getEnchantmentLevel(MagicQueue) <= 0) return
 
         // Magic Queue: +30% channel speed for the second magic in a queue.
         if (queue.channelingMagicCount == 1) {
@@ -34,7 +34,7 @@ object MagicQueueEnchantment : MagicCalculationContributor, CalculationContribut
 
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         val caster = context.playerOrNull() ?: return
-        if (caster.getEnchantmentLevel(magicQueue) <= 0) return
+        if (caster.getEnchantmentLevel(MagicQueue) <= 0) return
 
         when (sink) {
             is ChannelQueueSizeCalculationSink -> sink.queueSize += 1

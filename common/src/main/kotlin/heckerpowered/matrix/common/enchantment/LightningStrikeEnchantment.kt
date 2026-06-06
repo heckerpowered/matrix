@@ -34,9 +34,9 @@ object LightningStrikeEnchantment : DamageOutcomeRule {
         val attacker = context.attackerAsLiving() ?: return
         val serverWorld = attacker.level() as? ServerLevel ?: return
 
-        val enchantmentLevel = attacker.getEnchantmentLevel(ModEnchantments.lightningStrike)
+        val enchantmentLevel = attacker.getEnchantmentLevel(ModEnchantments.LightningStrike)
         if (enchantmentLevel <= 0) return
-        
+
         val damageSource = context.source
         damageSource.isAdditionalDamage = true
         var previousEntity = attacker

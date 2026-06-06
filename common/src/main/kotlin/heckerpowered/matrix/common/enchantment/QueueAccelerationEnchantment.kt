@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.enchantment.ModEnchantments.queueAcceleration
+import heckerpowered.matrix.common.enchantment.ModEnchantments.QueueAcceleration
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.CalculationContributor
@@ -25,7 +25,7 @@ object QueueAccelerationEnchantment : MagicCalculationContributor, CalculationCo
         if (sink !is ChannelTimeCalculationSink) return
         val caster = context.playerOrNull() ?: return
         val queue = context.queue ?: return
-        if (caster.getEnchantmentLevel(queueAcceleration) <= 0) return
+        if (caster.getEnchantmentLevel(QueueAcceleration) <= 0) return
 
         // Queue Acceleration: +60% channel speed for magics third or later in the queue.
         if (queue.channelingMagicCount >= 2) {
@@ -35,7 +35,7 @@ object QueueAccelerationEnchantment : MagicCalculationContributor, CalculationCo
 
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         val caster = context.playerOrNull() ?: return
-        if (caster.wizardHelmetStack.getEnchantmentLevel(caster.level(), queueAcceleration) <= 0) return
+        if (caster.wizardHelmetStack.getEnchantmentLevel(caster.level(), QueueAcceleration) <= 0) return
 
         when (sink) {
             is ChannelQueueSizeCalculationSink -> sink.queueSize += 1

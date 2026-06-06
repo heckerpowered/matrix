@@ -125,17 +125,18 @@ abstract class Magic(val definition: MagicDefinition) {
     open fun availableStatus(context: MagicCalculationContext): MagicAvailability {
         val availability = MagicAvailability()
         if (context.target == null && !mayChannelWithoutTarget(context)) {
-            availability.add(MagicAvailableStatus.TargetMissing)
+            availability += MagicAvailableStatus.TargetMissing
         }
         if (!checkMana(context)) {
-            availability.add(MagicAvailableStatus.InsufficientMana)
+            availability += MagicAvailableStatus.InsufficientMana
         }
         if (checkChannelQueueIsFull(context)) {
-            availability.add(MagicAvailableStatus.ChannelQueueFull)
+            availability += MagicAvailableStatus.ChannelQueueFull
         }
         if (checkChannelQueueIsLocked(context)) {
-            availability.add(MagicAvailableStatus.ChannelQueueLocked)
+            availability += MagicAvailableStatus.ChannelQueueLocked
         }
+        return availability
     }
 
     /**

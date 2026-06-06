@@ -7,7 +7,7 @@ package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
-import heckerpowered.matrix.common.enchantment.ModEnchantments.queueMastery
+import heckerpowered.matrix.common.enchantment.ModEnchantments.QueueMastery
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.Magic
@@ -42,7 +42,7 @@ object QueueMasteryEnchantment : MagicCalculationContributor, CalculationContrib
     override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {
         if (sink !is CostCalculationSink) return
         val caster = context.playerOrNull() ?: return
-        if (caster.wizardHelmetStack.getEnchantmentLevel(caster.level(), queueMastery) <= 0) return
+        if (caster.wizardHelmetStack.getEnchantmentLevel(caster.level(), QueueMastery) <= 0) return
 
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.
@@ -58,14 +58,14 @@ object QueueMasteryEnchantment : MagicCalculationContributor, CalculationContrib
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         if (sink !is ChannelQueueSizeCalculationSink) return
         val caster = context.playerOrNull() ?: return
-        if (caster.getEnchantmentLevel(queueMastery) <= 0) return
+        if (caster.getEnchantmentLevel(QueueMastery) <= 0) return
 
         sink.queueSize += 1
     }
 
     override fun onChannel(magic: Magic, invocation: MagicInvocation) {
         val caster = invocation.caster.entityOrNull() as? Player ?: return
-        if (caster.getEnchantmentLevel(queueMastery) <= 0) return
+        if (caster.getEnchantmentLevel(QueueMastery) <= 0) return
 
         // Queue Mastery: The last magic to fill a queue has -50% mana cost and
         // locks the queue until all magics have channeled.

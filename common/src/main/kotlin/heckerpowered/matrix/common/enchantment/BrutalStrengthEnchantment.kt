@@ -21,7 +21,7 @@ object BrutalStrengthEnchantment : DamageComputationRule {
         val attacker = context.attackerAsLiving() ?: return
         val target = context.target
 
-        val enchantmentLevel = attacker.getEnchantmentLevel(ModEnchantments.brutalStrength)
+        val enchantmentLevel = attacker.getEnchantmentLevel(ModEnchantments.BrutalStrength)
         if (enchantmentLevel <= 0) return
 
         if (attacker.lastHurtMob != target &&

@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.enchantment
 
 import heckerpowered.matrix.common.effect.isBloodPactActive
-import heckerpowered.matrix.common.enchantment.ModEnchantments.manaOverflow
+import heckerpowered.matrix.common.enchantment.ModEnchantments.ManaOverflow
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
@@ -37,7 +37,7 @@ object ManaOverflowEnchantment : CalculationContributor, CastEffect {
         val payload = invocation.payload
 
         if (!caster.isBloodPactActive) return
-        if (caster.getEnchantmentLevel(manaOverflow) < 5) return
+        if (caster.getEnchantmentLevel(ManaOverflow) < 5) return
         if (payload.isSpread) return
         if (Random.nextBoolean()) return
 
@@ -60,7 +60,7 @@ object ManaOverflowEnchantment : CalculationContributor, CastEffect {
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         if (sink !is MaxManaCalculationSink) return
         val caster = context.playerOrNull() ?: return
-        val manaOverflowLevel = caster.getEnchantmentLevel(manaOverflow)
+        val manaOverflowLevel = caster.getEnchantmentLevel(ManaOverflow)
         if (manaOverflowLevel <= 0) return
 
         sink.multiplier += manaOverflowLevel * 0.2

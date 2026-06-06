@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
@@ -27,23 +27,25 @@ object CrippleMovementMagic : Magic(
 
         val target = invocation.target
         val duration = if (target is Player) 20 * 3 else 20 * 10
-        val effect = MobEffectInstance(CRIPPLE_MOVEMENT_EFFECT, duration, 0)
+        val effect = MobEffectInstance(ModMobEffects.CrippleMovement, duration, 0)
         target.addEffect(effect)
 
         val server = target.level().server ?: return
-        val statusEffectInstance = target.getEffect(CRIPPLE_MOVEMENT_EFFECT) ?: return
+        val statusEffectInstance = target.getEffect(ModMobEffects.CrippleMovement) ?: return
         for (serverPlayer in server.playerList.players) {
             serverPlayer.connection.send(ClientboundUpdateMobEffectPacket(target.id, statusEffectInstance, false))
         }
     }
 
-    override fun availableStatus(context: MagicCalculationContext): LMagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailability {
+        val availability = super.availableStatus(context)
+
         val target = context.target
-        if (target?.isInvulnerableToEffect(CRIPPLE_MOVEMENT_EFFECT) == true) {
-            return LMagicAvailableStatus.TARGET_IMMUNE
+        if (target?.isInvulnerableToEffect(ModMobEffects.CrippleMovement) == true) {
+            availability += MagicAvailableStatus.TargetImmune
         }
 
-        return super.availableStatus(context)
+        return availability
     }
 
     override fun getCost(context: MagicCalculationContext): Long {

@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.wipedMagicDamageSource
 import heckerpowered.matrix.common.magic.core.*
@@ -46,24 +46,26 @@ object ManaOverloadMagic : Magic(
 
     private val LivingEntity.manaOverloadLevel: Int
         get() {
-            val instance = getEffect(MANA_OVERLOAD_EFFECT) ?: return 0
+            val instance = getEffect(ModMobEffects.ManaOverload) ?: return 0
             return instance.amplifier + 1
         }
 
     private fun LivingEntity.applyManaOverload(level: Int) {
-        addEffect(MobEffectInstance(MANA_OVERLOAD_EFFECT, DURATION_TICKS, level - 1, true, false))
+        addEffect(MobEffectInstance(ModMobEffects.ManaOverload, DURATION_TICKS, level - 1, true, false))
     }
 
-    override fun availableStatus(context: MagicCalculationContext): LMagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailability {
+        val availability = super.availableStatus(context)
+
         val target = context.target
-        val effect = target?.getEffect(MANA_OVERLOAD_EFFECT)
-        if (target?.isInvulnerableToEffect(MANA_OVERLOAD_EFFECT) == true ||
+        val effect = target?.getEffect(ModMobEffects.ManaOverload)
+        if (target?.isInvulnerableToEffect(ModMobEffects.ManaOverload) == true ||
             (effect?.amplifier ?: 0) >= 7 && (effect?.duration != 0)
         ) {
-            return LMagicAvailableStatus.TARGET_IMMUNE
+            availability += MagicAvailableStatus.TargetImmune
         }
 
-        return super.availableStatus(context)
+        return availability
     }
 
     private fun LivingEntity.applyManaOverloadMilestone(invocation: MagicInvocation, previousLevel: Int, nextLevel: Int) {
@@ -89,7 +91,7 @@ object ManaOverloadMagic : Magic(
 
     private fun LivingEntity.syncManaOverloadEffect() {
         val server = level().server ?: return
-        val effect = getEffect(MANA_OVERLOAD_EFFECT) ?: return
+        val effect = getEffect(ModMobEffects.ManaOverload) ?: return
         for (player in server.playerList.players) {
             player.connection.send(ClientboundUpdateMobEffectPacket(id, effect, false))
         }

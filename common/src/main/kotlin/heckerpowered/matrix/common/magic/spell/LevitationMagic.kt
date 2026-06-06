@@ -29,13 +29,14 @@ object LevitationMagic : Magic(
         target.addEffect(MobEffectInstance(MobEffects.LEVITATION, 20 * 10, amplifier + 1))
     }
 
-    override fun availableStatus(context: MagicCalculationContext): LMagicAvailableStatus {
-        val target = context.target
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailability {
+        val availability = super.availableStatus(context)
 
+        val target = context.target
         if (target?.isInvulnerableToEffect(MobEffects.LEVITATION) == true) {
-            return LMagicAvailableStatus.TARGET_IMMUNE
+            availability += MagicAvailableStatus.TargetImmune
         }
 
-        return super.availableStatus(context)
+        return availability
     }
 }

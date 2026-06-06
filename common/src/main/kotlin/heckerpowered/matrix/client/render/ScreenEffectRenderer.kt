@@ -37,8 +37,8 @@ import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.ANGERED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.WITHER_ARMOR_EFFECT
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.magic.spell.SculkCatalystMagic
 import heckerpowered.matrix.core.approximatelyEqual

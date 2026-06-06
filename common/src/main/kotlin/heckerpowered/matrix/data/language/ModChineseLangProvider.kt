@@ -6,24 +6,7 @@
 package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
-import heckerpowered.matrix.common.enchantment.ModEnchantments.bloodPact
-import heckerpowered.matrix.common.enchantment.ModEnchantments.brutalStrength
-import heckerpowered.matrix.common.enchantment.ModEnchantments.guaranteed
-import heckerpowered.matrix.common.enchantment.ModEnchantments.kineticThrow
-import heckerpowered.matrix.common.enchantment.ModEnchantments.lastStand
-import heckerpowered.matrix.common.enchantment.ModEnchantments.lightningStrike
-import heckerpowered.matrix.common.enchantment.ModEnchantments.magicQueue
-import heckerpowered.matrix.common.enchantment.ModEnchantments.magicShield
-import heckerpowered.matrix.common.enchantment.ModEnchantments.manaOverflow
-import heckerpowered.matrix.common.enchantment.ModEnchantments.manaRegeneration
-import heckerpowered.matrix.common.enchantment.ModEnchantments.peakOverdrive
-import heckerpowered.matrix.common.enchantment.ModEnchantments.proximatePropagation
-import heckerpowered.matrix.common.enchantment.ModEnchantments.queueAcceleration
-import heckerpowered.matrix.common.enchantment.ModEnchantments.queueMastery
-import heckerpowered.matrix.common.enchantment.ModEnchantments.revival
-import heckerpowered.matrix.common.enchantment.ModEnchantments.secondWind
-import heckerpowered.matrix.common.enchantment.ModEnchantments.witherArmor
-import heckerpowered.matrix.common.enchantment.ModEnchantments.wizardForce
+import heckerpowered.matrix.common.enchantment.ModEnchantments
 import heckerpowered.matrix.common.item.*
 import heckerpowered.matrix.common.magic.spell.*
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput
@@ -225,24 +208,24 @@ class ModChineseLangProvider(
         translationBuilder.add(BloodPactEffect, "血之契约")
         translationBuilder.add(BorrowedTimeEffect, "时不我待")
 
-        translationBuilder.add(witherArmor, "凋灵护甲")
-        translationBuilder.add(guaranteed, "稳操胜券")
-        translationBuilder.add(lastStand, "绝处逢生")
-        translationBuilder.add(revival, "复苏")
-        translationBuilder.add(secondWind, "复苏之风")
-        translationBuilder.add(proximatePropagation, "抵近传播")
-        translationBuilder.add(magicQueue, "魔法队列")
-        translationBuilder.add(queueAcceleration, "队列加速")
-        translationBuilder.add(queueMastery, "队列精通")
-        translationBuilder.add(manaOverflow, "法力溢出")
-        translationBuilder.add(manaRegeneration, "法力再生")
-        translationBuilder.add(wizardForce, "巫师神力")
-        translationBuilder.add(bloodPact, "血之契约")
-        translationBuilder.add(magicShield, "法术护盾")
-        translationBuilder.add(brutalStrength, "所向无敌")
-        translationBuilder.add(peakOverdrive, "大力神超")
-        translationBuilder.add(lightningStrike, "闪电五连鞭")
-        translationBuilder.add(kineticThrow, "释放剑气")
+        translationBuilder.add(ModEnchantments.WitherArmor, "凋灵护甲")
+        translationBuilder.add(ModEnchantments.Guaranteed, "稳操胜券")
+        translationBuilder.add(ModEnchantments.LastStand, "绝处逢生")
+        translationBuilder.add(ModEnchantments.Revival, "复苏")
+        translationBuilder.add(ModEnchantments.SecondWind, "复苏之风")
+        translationBuilder.add(ModEnchantments.ProximatePropagation, "抵近传播")
+        translationBuilder.add(ModEnchantments.MagicQueue, "魔法队列")
+        translationBuilder.add(ModEnchantments.QueueAcceleration, "队列加速")
+        translationBuilder.add(ModEnchantments.QueueMastery, "队列精通")
+        translationBuilder.add(ModEnchantments.ManaOverflow, "法力溢出")
+        translationBuilder.add(ModEnchantments.ManaRegeneration, "法力再生")
+        translationBuilder.add(ModEnchantments.WizardForce, "巫师神力")
+        translationBuilder.add(ModEnchantments.BloodPact, "血之契约")
+        translationBuilder.add(ModEnchantments.MagicShield, "法术护盾")
+        translationBuilder.add(ModEnchantments.BrutalStrength, "所向无敌")
+        translationBuilder.add(ModEnchantments.PeakOverdrive, "大力神超")
+        translationBuilder.add(ModEnchantments.LightningStrike, "闪电五连鞭")
+        translationBuilder.add(ModEnchantments.KineticThrow, "释放剑气")
 
         translationBuilder.add(WardenChestplateItem, "幽匿“坚守”胸甲")
         translationBuilder.add(
@@ -257,7 +240,7 @@ class ModChineseLangProvider(
             """.trimIndent()
         )
 
-        translationBuilder.add(itemGroupKey, "Matrix")
+        translationBuilder.add(ModCreativeTab.creativeTabKey, "Matrix")
 
         translationBuilder.add(MatrixLanguage.redstoneSuitPower.key, "电力: ")
 

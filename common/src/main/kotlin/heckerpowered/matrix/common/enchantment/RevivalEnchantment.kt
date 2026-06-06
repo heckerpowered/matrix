@@ -22,7 +22,7 @@ object RevivalEnchantment : LivingHealRule {
         if (context.healAmount <= 0) return
 
         val entity = context.entity
-        val enchantmentLevel = entity.getEnchantmentLevel(ModEnchantments.revival).takeIf { it > 0 } ?: return
+        val enchantmentLevel = entity.getEnchantmentLevel(ModEnchantments.Revival).takeIf { it > 0 } ?: return
 
         if (entity.health < entity.maxHealth * 0.5) {
             context.multiplier += enchantmentLevel * 0.2F

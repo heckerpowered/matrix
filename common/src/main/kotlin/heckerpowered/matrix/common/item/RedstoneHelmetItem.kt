@@ -5,8 +5,12 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.entity.rule.EntityUpdateContext
+import heckerpowered.matrix.common.entity.rule.EntityUpdateRule
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitMaxPower
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitPower
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.data.language.MatrixLanguage
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
@@ -24,12 +28,13 @@ object RedstoneHelmetItem : Item(
     Properties().humanoidArmor(ModArmorMaterials.redstone, ArmorType.HELMET)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
-), RedstoneSuit, TooltipProvider {
+), EntityUpdateRule, RedstoneSuit, TooltipProvider {
     init {
-        EntityTickCallback.EVENT.register(this::onEntityTick)
+        RuleRegistry.register<EntityUpdateRule>(this)
     }
 
-    private fun onEntityTick(entity: LivingEntity) {
+    override fun onUpdate(context: EntityUpdateContext) {
+        val entity = context.entity as? LivingEntity ?: return
         val helmet = entity.getItemBySlot(EquipmentSlot.HEAD)
         if (!helmet.isRedstoneSuit()) {
             return

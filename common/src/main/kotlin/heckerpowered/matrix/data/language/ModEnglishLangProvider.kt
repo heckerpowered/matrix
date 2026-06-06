@@ -6,21 +6,7 @@
 package heckerpowered.matrix.data.language
 
 import heckerpowered.matrix.common.effect.*
-import heckerpowered.matrix.common.enchantment.ModEnchantments.bloodPact
-import heckerpowered.matrix.common.enchantment.ModEnchantments.brutalStrength
-import heckerpowered.matrix.common.enchantment.ModEnchantments.guaranteed
-import heckerpowered.matrix.common.enchantment.ModEnchantments.kineticThrow
-import heckerpowered.matrix.common.enchantment.ModEnchantments.lastStand
-import heckerpowered.matrix.common.enchantment.ModEnchantments.lightningStrike
-import heckerpowered.matrix.common.enchantment.ModEnchantments.magicShield
-import heckerpowered.matrix.common.enchantment.ModEnchantments.manaOverflow
-import heckerpowered.matrix.common.enchantment.ModEnchantments.manaRegeneration
-import heckerpowered.matrix.common.enchantment.ModEnchantments.peakOverdrive
-import heckerpowered.matrix.common.enchantment.ModEnchantments.proximatePropagation
-import heckerpowered.matrix.common.enchantment.ModEnchantments.revival
-import heckerpowered.matrix.common.enchantment.ModEnchantments.secondWind
-import heckerpowered.matrix.common.enchantment.ModEnchantments.witherArmor
-import heckerpowered.matrix.common.enchantment.ModEnchantments.wizardForce
+import heckerpowered.matrix.common.enchantment.ModEnchantments
 import heckerpowered.matrix.common.item.*
 import heckerpowered.matrix.common.magic.spell.*
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput
@@ -227,21 +213,21 @@ Untraceable.
         translationBuilder.add(BloodPactEffect, "Blood Pact")
         translationBuilder.add(BorrowedTimeEffect, "Borrowed Time")
 
-        translationBuilder.add(witherArmor, "Wither Armor")
-        translationBuilder.add(guaranteed, "Guaranteed")
-        translationBuilder.add(lastStand, "Last Stand")
-        translationBuilder.add(revival, "Revival")
-        translationBuilder.add(secondWind, "Second Wind")
-        translationBuilder.add(proximatePropagation, "Proximate Propagation")
-        translationBuilder.add(manaOverflow, "Mana Overflow")
-        translationBuilder.add(manaRegeneration, "Mana Regeneration")
-        translationBuilder.add(wizardForce, "Wizard Force")
-        translationBuilder.add(bloodPact, "Blood Pact")
-        translationBuilder.add(magicShield, "Magic Shield")
-        translationBuilder.add(brutalStrength, "Brutal Strength")
-        translationBuilder.add(peakOverdrive, "Peak Overdrive")
-        translationBuilder.add(lightningStrike, "Lightning Strike")
-        translationBuilder.add(kineticThrow, "Kinetic Throw")
+        translationBuilder.add(ModEnchantments.WitherArmor, "Wither Armor")
+        translationBuilder.add(ModEnchantments.Guaranteed, "Guaranteed")
+        translationBuilder.add(ModEnchantments.LastStand, "Last Stand")
+        translationBuilder.add(ModEnchantments.Revival, "Revival")
+        translationBuilder.add(ModEnchantments.SecondWind, "Second Wind")
+        translationBuilder.add(ModEnchantments.ProximatePropagation, "Proximate Propagation")
+        translationBuilder.add(ModEnchantments.ManaOverflow, "Mana Overflow")
+        translationBuilder.add(ModEnchantments.ManaRegeneration, "Mana Regeneration")
+        translationBuilder.add(ModEnchantments.WizardForce, "Wizard Force")
+        translationBuilder.add(ModEnchantments.BloodPact, "Blood Pact")
+        translationBuilder.add(ModEnchantments.MagicShield, "Magic Shield")
+        translationBuilder.add(ModEnchantments.BrutalStrength, "Brutal Strength")
+        translationBuilder.add(ModEnchantments.PeakOverdrive, "Peak Overdrive")
+        translationBuilder.add(ModEnchantments.LightningStrike, "Lightning Strike")
+        translationBuilder.add(ModEnchantments.KineticThrow, "Kinetic Throw")
 
         translationBuilder.add(WardenChestplateItem, "Sculk 'Warden' Chestplate")
         translationBuilder.add(
@@ -256,7 +242,7 @@ Untraceable.
             """.trimIndent()
         )
 
-        translationBuilder.add(itemGroupKey, "Matrix")
+        translationBuilder.add(ModCreativeTab.creativeTabKey, "Matrix")
 
         translationBuilder.add(MatrixLanguage.redstoneSuitPower.key, "Power: ")
 

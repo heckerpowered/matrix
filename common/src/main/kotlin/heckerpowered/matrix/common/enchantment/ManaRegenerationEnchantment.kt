@@ -25,7 +25,7 @@ object ManaRegenerationEnchantment : CalculationContributor {
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         if (sink !is ManaRegenerationCalculationSink) return
         val caster = context.caster?.entityOrNull() as? Player ?: return
-        val enchantmentLevel = caster.getEnchantmentLevel(ModEnchantments.manaRegeneration)
+        val enchantmentLevel = caster.getEnchantmentLevel(ModEnchantments.ManaRegeneration)
         if (enchantmentLevel <= 0) return
 
         sink.multiplier += enchantmentLevel * 0.3

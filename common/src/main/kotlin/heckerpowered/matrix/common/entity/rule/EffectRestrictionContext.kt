@@ -10,7 +10,7 @@ import net.minecraft.world.entity.LivingEntity
 
 data class EffectRestrictionContext(
     val entity: LivingEntity,
-    val effect: MobEffectInstance,
+    val effectInstance: MobEffectInstance,
 ) {
     var isAllowed: Boolean = true
         private set

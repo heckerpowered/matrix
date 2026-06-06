@@ -51,7 +51,7 @@ data class MagicInvocation(
     val caster: CasterContext,
     val target: LivingEntity,
     val queue: ChannelQueue,
-    val payload: ExecutionPolicy = ExecutionPolicy(),
+    val payload: ExecutionPayload = ExecutionPayload(),
 ) {
     companion object {
         /**
@@ -63,7 +63,7 @@ data class MagicInvocation(
          * This is the canonical entry point for server-side magic invocation
          * initiated by entities.
          */
-        fun fromEntity(caster: Player, target: LivingEntity, payload: ExecutionPolicy = ExecutionPolicy()): MagicInvocation {
+        fun fromEntity(caster: Player, target: LivingEntity, payload: ExecutionPayload = ExecutionPayload()): MagicInvocation {
             val casterContext = CasterContext.fromEntity(caster)
             val queue = target.getOrCreateChannelQueue(caster)
 

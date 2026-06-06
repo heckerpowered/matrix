@@ -6,43 +6,44 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.attribute.EntityAttributeModifier
-import net.minecraft.entity.attribute.EntityAttributes
-import net.minecraft.entity.effect.StatusEffect
-import net.minecraft.entity.effect.StatusEffectCategory
-import net.minecraft.sound.SoundEvents
+import heckerpowered.matrix.common.entity.rule.EntityUpdateContext
+import heckerpowered.matrix.common.entity.rule.EntityUpdateRule
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
+import net.minecraft.sounds.SoundEvents
+import net.minecraft.world.effect.MobEffect
+import net.minecraft.world.effect.MobEffectCategory
+import net.minecraft.world.effect.MobEffectInstance
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.ai.attributes.AttributeModifier
+import net.minecraft.world.entity.ai.attributes.Attributes
 
-object AngeredEffect : StatusEffect(
-    StatusEffectCategory.BENEFICIAL,
+object AngeredEffect : MobEffect(
+    MobEffectCategory.BENEFICIAL,
     0xFF4500
-) {
+), EntityUpdateRule {
     init {
-        EntityTickCallback.EVENT.register(::onEntityTick)
-
+        RuleRegistry.register<EntityUpdateRule>(this)
         addAttributeModifier(
-            EntityAttributes.GENERIC_MOVEMENT_SPEED, Matrix.identifier("angered"), 0.2, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
+            Attributes.MOVEMENT_SPEED, Matrix.identifier("angered"), 0.2, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
         )
     }
 
-    private fun onEntityTick(entity: LivingEntity) {
-        if (entity.hasStatusEffect(ANGERED_EFFECT) && entity.age % 10 == 0) {
-            entity.apply {
-                world.playSound(x, y, z, SoundEvents.ENTITY_WARDEN_HEARTBEAT, soundCategory, 5.0F, soundPitch, false)
-            }
+    override fun onUpdate(context: EntityUpdateContext) {
+        val entity = context.entity as? LivingEntity ?: return
+        if (entity.hasEffect(ModMobEffects.Angered) && entity.tickCount % 10 == 0) {
+            entity.level().playSound(null, entity.x, entity.y, entity.z, SoundEvents.WARDEN_HEARTBEAT, entity.soundSource, 5.0F, entity.voicePitch)
         }
     }
 
-    override fun onApplied(entity: LivingEntity?, amplifier: Int) {
-        super.onApplied(entity, amplifier)
-        if (entity == null) {
-            return
-        }
+    override fun onEffectStarted(effectInstance: MobEffectInstance, entity: LivingEntity) {
+        super.onEffectStarted(effectInstance, entity)
 
-        entity.activeStatusEffects
-            .filter { !it.value.effectType.value().isBeneficial }
+        entity.activeEffectsMap
+            .asSequence()
+            .filter { !it.value.effect.value().isBeneficial }
             .map { it.key }
-            .forEach { entity.removeStatusEffect(it) }
+            .toList()
+            .forEach { entity.removeEffect(it) }
     }
 }

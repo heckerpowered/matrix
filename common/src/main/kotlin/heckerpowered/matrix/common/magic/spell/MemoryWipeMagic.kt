@@ -32,7 +32,7 @@ object MemoryWipeMagic : Magic(
         RuleRegistry.register<ChannelEffect>(this)
     }
 
-    private val MEMORY_WIPE_PRESERVED_MEMORIES = setOf<MemoryModuleType<*>>(
+    private val MEMORY_WIPE_PRESERVED_MEMORIES = setOf(
         // Long-term identity / life data
         MemoryModuleType.HOME,
         MemoryModuleType.JOB_SITE,

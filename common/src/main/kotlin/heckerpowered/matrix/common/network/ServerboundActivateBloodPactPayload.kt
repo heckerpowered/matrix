@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.BLOOD_PACT_EFFECT
 import heckerpowered.matrix.common.enchantment.ModEnchantments.bloodPact
 import heckerpowered.matrix.common.enchantment.getEnchantmentLevel
 import heckerpowered.matrix.common.persistent.wizardHelmet

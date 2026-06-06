@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.enchantment.ModEnchantments.magicShield
+import heckerpowered.matrix.common.enchantment.ModEnchantments.MagicShield
 import heckerpowered.matrix.common.entity.rule.AttributeComputationContext
 import heckerpowered.matrix.common.entity.rule.AttributeComputationRule
 import heckerpowered.matrix.common.rule.RuleRegistry
@@ -25,7 +25,7 @@ object MagicShieldEnchantment : AttributeComputationRule {
 
     override fun onComputation(context: AttributeComputationContext) {
         val entity = context.entity as? Player ?: return
-        val magicShieldLevel = entity.getEnchantmentLevel(magicShield)
+        val magicShieldLevel = entity.getEnchantmentLevel(MagicShield)
         if (magicShieldLevel <= 0) return
 
         val mana = entity.mana.toDouble()

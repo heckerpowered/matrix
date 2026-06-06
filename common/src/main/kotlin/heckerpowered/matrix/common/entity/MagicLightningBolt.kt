@@ -6,9 +6,9 @@
 package heckerpowered.matrix.common.entity
 
 import heckerpowered.matrix.client.render.Color
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_EFFECT
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.CRIPPLE_MOVEMENT_EFFECT
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.ARMOR_PENETRATION_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.CRIPPLE_MOVEMENT_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.entity.MagicLightningBolt.LightningType.*
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ExecutionPolicy

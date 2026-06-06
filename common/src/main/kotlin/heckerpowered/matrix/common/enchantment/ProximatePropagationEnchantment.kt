@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.enchantment.ModEnchantments.proximatePropagation
+import heckerpowered.matrix.common.enchantment.ModEnchantments.ProximatePropagation
 import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.calculation.contributor.MagicCalculationContributor
@@ -25,7 +25,7 @@ object ProximatePropagationEnchantment : MagicCalculationContributor {
         if (sink !is CostCalculationSink) return
         val caster = context.playerOrNull() ?: return
         val target = context.target ?: return
-        if (caster.getEnchantmentLevel(proximatePropagation) <= 0) return
+        if (caster.getEnchantmentLevel(ProximatePropagation) <= 0) return
 
         val squaredDistance = caster.distanceToSqr(target)
         val maxDistanceSquare = 12.0 * 12.0

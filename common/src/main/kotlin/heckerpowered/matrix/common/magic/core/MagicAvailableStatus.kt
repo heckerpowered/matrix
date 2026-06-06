@@ -29,8 +29,15 @@ data class MagicAvailability(
 ) : Iterable<MagicAvailableStatus> {
     constructor(vararg statuses: MagicAvailableStatus) : this(linkedSetOf(*statuses))
 
+    val isAvailable
+        get() = none()
+
     fun add(status: MagicAvailableStatus) {
         statuses.add(status)
+    }
+
+    operator fun plusAssign(status: MagicAvailableStatus) {
+        return add(status)
     }
 
     override fun iterator(): Iterator<MagicAvailableStatus> {

@@ -7,9 +7,8 @@ package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.common.combat.damage.DamageSettlementContext
 import heckerpowered.matrix.common.combat.damage.DamageSettlementRule
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_EFFECT
-import heckerpowered.matrix.common.enchantment.ModEnchantments.witherArmor
+import heckerpowered.matrix.common.enchantment.ModEnchantments.WitherArmor
+import heckerpowered.matrix.common.enchantment.getEnchantmentLevel
 import heckerpowered.matrix.common.entity.rule.*
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
@@ -18,16 +17,13 @@ import heckerpowered.matrix.common.magic.rule.effect.ChannelEffect
 import heckerpowered.matrix.common.network.ClientboundSyncHealthPayload
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
+import heckerpowered.matrix.core.extension.addAbsorptionUpTo
+import heckerpowered.matrix.core.extension.healMeasured
 import heckerpowered.matrix.core.extension.healOverflow
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.enchantment.EnchantmentHelper
-import net.minecraft.entity.EquipmentSlot
-import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.sound.SoundCategory
-import net.minecraft.sound.SoundEvents
+import net.minecraft.sounds.SoundEvents
+import net.minecraft.sounds.SoundSource
 import net.minecraft.world.effect.MobEffect
 import net.minecraft.world.effect.MobEffectCategory
 import net.minecraft.world.effect.MobEffectInstance
@@ -55,10 +51,10 @@ object WitherArmorChargedEffect : MobEffect(
 
         // Status removed callback may be called in client, remember to check if the entity is client-side.
         if (entity.level().isClientSide) return
-        if (effect != WITHER_ARMOR_CHARGED_EFFECT) return
+        if (effect != ModMobEffects.WitherArmorCharged) return
         if (effectInstance.duration > 0) return
 
-        val level = getWitherArmorLevel(entity).takeIf { it > 0 } ?: return
+        val level = entity.getEnchantmentLevel(WitherArmor).takeIf { it > 0 } ?: return
 
         // Avoiding the next amplifier being less than the current, this restriction may result in a reduction
         // of wither armor charges when the player obtains more than maximum number of charges by other ways.
@@ -68,11 +64,11 @@ object WitherArmorChargedEffect : MobEffect(
         val nextAmplifier = (currentAmplifier + 1)
             .coerceAtMost(maxAmplifier)
             .coerceAtLeast(currentAmplifier)
-        entity.addEffect(MobEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, nextAmplifier, false, true))
+        entity.addEffect(MobEffectInstance(ModMobEffects.WitherArmorCharged, 200, nextAmplifier, false, true))
     }
 
-    fun onEntityUpdate(context: EntityUpdateContext) {
-        val entity = context.entity
+    override fun onUpdate(context: EntityUpdateContext) {
+        val entity = context.entity as? LivingEntity ?: return
         val context = buildContext(entity) ?: return
         if (!shouldTriggerOnTick(context)) return
 
@@ -82,18 +78,18 @@ object WitherArmorChargedEffect : MobEffect(
     override fun onLivingDeath(context: LivingDeathContext) {
         val attacker = context.damageSource.entity
         if (attacker !is ServerPlayer || !attacker.isBloodPactActive) return
-        if (getWitherArmorLevel(attacker) <= 0) return
+        if (attacker.getEnchantmentLevel(WitherArmor) <= 0) return
 
-        val statusEffect = attacker.getEffect(WITHER_ARMOR_CHARGED_EFFECT)
+        val statusEffect = attacker.getEffect(ModMobEffects.WitherArmorCharged)
         val amplifier = statusEffect?.amplifier ?: 0
         val duration = statusEffect?.duration ?: 200
-        attacker.addEffect(MobEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, duration, amplifier + 1, false, true), attacker)
+        attacker.addEffect(MobEffectInstance(ModMobEffects.WitherArmorCharged, duration, amplifier + 1, false, true), attacker)
     }
 
     override fun onChannel(magic: Magic, invocation: MagicInvocation) {
         val caster = invocation.caster.entityOrNull() as? Player ?: return
         if (!caster.isBloodPactActive) return
-        onEntityUpdate(EntityUpdateContext(caster))
+        onUpdate(EntityUpdateContext(caster))
     }
 
     override fun onSettlement(context: DamageSettlementContext) {
@@ -112,8 +108,8 @@ object WitherArmorChargedEffect : MobEffect(
     }
 
     private fun buildContext(entity: LivingEntity): CalculationContext? {
-        val level = getWitherArmorLevel(entity).takeIf { it > 0 } ?: return null
-        val charges = entity.getEffect(WITHER_ARMOR_CHARGED_EFFECT)?.amplifier ?: 0
+        val level = entity.getEnchantmentLevel(WitherArmor).takeIf { it > 0 } ?: return null
+        val charges = entity.getEffect(ModMobEffects.WitherArmorCharged)?.amplifier ?: 0
         if (charges <= 0) return null
         return CalculationContext(entity, level, charges)
     }
@@ -139,37 +135,28 @@ object WitherArmorChargedEffect : MobEffect(
 
         // Wither armor charges has no special effect when it is applied. Call onApplied() is not necessary.
         entity.forceAddEffect(
-            MobEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 200, remainingCharges, false, true),
+            MobEffectInstance(ModMobEffects.WitherArmorCharged, 200, remainingCharges, false, true),
             entity
         )
         notifyTriggered(entity)
     }
 
     private fun applyHealWithOverflow(entity: LivingEntity, healAmount: Float) {
-        if (entity.health + healAmount > entity.maxHealth) {
-            // Absorption amount gains by wither armor has a maximum limit, make sure it does not exceed the
-            // maximum absorption amount, and does not less than the current absorption amount, do not call
-            // .coerceIn() because the size relationship of two values are unknown.
-            val maxAbsorptionAmount = entity.maxHealth
-            val newAbsorptionAmount = (entity.absorptionAmount + entity.health + healAmount - entity.maxHealth)
-                .coerceAtMost(maxAbsorptionAmount)
-                .coerceAtLeast(entity.absorptionAmount)
-            entity.internalSetAbsorptionAmount(newAbsorptionAmount)
-        }
-        entity.heal(healAmount)
+        val healMeasurement = entity.healMeasured(healAmount)
+        entity.addAbsorptionUpTo(healMeasurement.overflowAmount, entity.maxHealth)
     }
 
     private fun applyWitherArmorEffect(entity: LivingEntity, level: Int) {
-        entity.setStatusEffect(StatusEffectInstance(WITHER_ARMOR_EFFECT, 200, level - 1, false, true).also {
+        entity.forceAddEffect(MobEffectInstance(ModMobEffects.WitherArmorCharged, 200, level - 1, false, true).also {
             // Cannot add a weaker status effect to an entity, when we set the status effect directly,
             // it is not considered as a new status effect, call onApplied() manually.
-            it.onApplied(entity)
+            it.onEffectStarted(entity)
         }, entity)
     }
 
     private fun notifyTriggered(entity: LivingEntity) {
-        if (entity is ServerPlayerEntity) {
-            entity.serverWorld.playSound(null, entity.x, entity.y, entity.z, SoundEvents.ENTITY_WITHER_BREAK_BLOCK, SoundCategory.PLAYERS, 3.0F, 1.0F)
+        if (entity is ServerPlayer) {
+            entity.level().playSound(null, entity.x, entity.y, entity.z, SoundEvents.WITHER_BREAK_BLOCK, SoundSource.PLAYERS, 3.0F, 1.0F)
 
             // When the wither armor is triggered when the time is slowed down, the health and absorption amount
             // may not be synchronized to the client just in time. Send a packet to synchronize the health and
@@ -177,11 +164,6 @@ object WitherArmorChargedEffect : MobEffect(
             ServerPlayNetworking.send(entity, ClientboundSyncHealthPayload(entity))
             // ServerPlayNetworking.send(entity, WitherArmorTriggerPayload())
         }
-    }
-
-    private fun getWitherArmorLevel(entity: LivingEntity): Int {
-        val witherArmorEnchantment = entity.world.registryManager.getWrapperOrThrow(RegistryKeys.ENCHANTMENT).getOrThrow(witherArmor)
-        return EnchantmentHelper.getLevel(witherArmorEnchantment, entity.getEquippedStack(EquipmentSlot.CHEST))
     }
 
     private data class CalculationContext(

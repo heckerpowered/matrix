@@ -7,7 +7,7 @@ package heckerpowered.matrix.mixin;
 
 import heckerpowered.matrix.Matrix;
 import heckerpowered.matrix.client.MatrixHud;
-import heckerpowered.matrix.common.effect.MatrixStatusEffects;
+import heckerpowered.matrix.common.effect.ModMobEffects;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
@@ -35,7 +35,7 @@ class MixinInGameHud {
     private Identifier getTexture(InGameHud.HeartType instance, boolean hardcore, boolean half, boolean blinking) {
         final var minecraft = MinecraftClient.getInstance();
         final var player = minecraft.player;
-        if (instance == InGameHud.HeartType.NORMAL && player != null && player.hasStatusEffect(MatrixStatusEffects.getBloodPactEffect())) {
+        if (instance == InGameHud.HeartType.NORMAL && player != null && player.hasStatusEffect(ModMobEffects.getBloodPactEffect())) {
             if (half) {
                 return blinking ? Matrix.identifier("hud/heart/half_blinking") : Matrix.identifier("hud/heart/half");
             } else {

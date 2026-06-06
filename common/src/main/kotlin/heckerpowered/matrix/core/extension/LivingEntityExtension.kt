@@ -7,6 +7,7 @@ package heckerpowered.matrix.core.extension
 
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.entity.ability.HealMeasurement
+import heckerpowered.matrix.common.entity.ability.HealMeasurementScope
 import heckerpowered.matrix.common.item.WizardHelmet13
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.persistent.wizardHelmetStack
@@ -29,7 +30,28 @@ fun LivingEntity.healOverflow(amount: Float) {
 }
 
 fun LivingEntity.healMeasured(amount: Float): HealMeasurement {
-    
+    return HealMeasurementScope.measure {
+        heal(amount)
+    }
+}
+
+/**
+ * Adds absorption amount up to [maximumAmount].
+ *
+ * This function never lowers the current absorption amount. If the current
+ * absorption amount is already greater than [maximumAmount], it is left unchanged.
+ *
+ * @return the actually added absorption amount.
+ */
+fun LivingEntity.addAbsorptionUpTo(amount: Float, maximumAmount: Float): Float {
+    if (amount <= 0.0F) return 0.0F
+
+    val currentAmount = absorptionAmount
+    if (currentAmount >= maximumAmount) return 0.0F
+
+    val addedAmount = amount.coerceAtMost(maximumAmount - currentAmount)
+    internalSetAbsorptionAmount(currentAmount + addedAmount)
+    return addedAmount
 }
 
 val LivingEntity.healingMultiplier: Double

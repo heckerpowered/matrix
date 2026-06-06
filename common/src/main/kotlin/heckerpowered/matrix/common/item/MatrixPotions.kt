@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.item
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.ANGERED_EFFECT
 import net.fabricmc.fabric.api.registry.FabricPotionBrewingBuilder
 import net.minecraft.core.Holder
 import net.minecraft.core.Registry

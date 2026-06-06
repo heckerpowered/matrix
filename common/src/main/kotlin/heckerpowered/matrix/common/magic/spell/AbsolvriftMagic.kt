@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.ABSOLVRIFT_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.defaultMagicDamageSource
 import heckerpowered.matrix.common.magic.channel.entityOrNull
@@ -55,6 +55,6 @@ object AbsolvriftMagic : Magic(
             addParticles()
         }
 
-        caster?.addEffect(MobEffectInstance(ABSOLVRIFT_EFFECT, 20 * 25, 0, false, false, true))
+        caster?.addEffect(MobEffectInstance(ModMobEffects.Absolvrift, 20 * 25, 0, false, false, true))
     }
 }

@@ -9,7 +9,7 @@ import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
 import heckerpowered.matrix.common.effect.isBloodPactActive
-import heckerpowered.matrix.common.enchantment.ModEnchantments.peakOverdrive
+import heckerpowered.matrix.common.enchantment.ModEnchantments.PeakOverdrive
 import heckerpowered.matrix.common.item.ModComponents
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
@@ -38,7 +38,7 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
     override fun onComputation(context: DamageComputationContext) {
         val attacker = context.attackerAsLiving() ?: return
         if (attacker !is Player || !attacker.isBloodPactActive) return
-        val enchantmentLevel = attacker.getEnchantmentLevel(peakOverdrive)
+        val enchantmentLevel = attacker.getEnchantmentLevel(PeakOverdrive)
         if (enchantmentLevel <= 0) return
 
         context.damageMultiplier += 0.5
@@ -47,7 +47,7 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
     override fun contribute(magic: Magic, context: MagicCalculationContext, sink: MagicCalculationSink) {
         val caster = context.playerOrNull() ?: return
         if (!caster.isBloodPactActive) return
-        if (caster.getEnchantmentLevel(peakOverdrive) <= 0) return
+        if (caster.getEnchantmentLevel(PeakOverdrive) <= 0) return
         if (sink !is ChannelTimeCalculationSink) return
 
         sink.channelSpeedBonus += 0.5
@@ -56,7 +56,7 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
     override fun onChannel(magic: Magic, invocation: MagicInvocation) {
         val caster = invocation.caster.entityOrNull() as Player
         if (!caster.isBloodPactActive) return
-        if (caster.getEnchantmentLevel(peakOverdrive) <= 0) return
+        if (caster.getEnchantmentLevel(PeakOverdrive) <= 0) return
 
         val currentLoad = caster.wizardHelmetStack.getOrDefault(ModComponents.load, .0)
         caster.wizardHelmetStack.set(ModComponents.load, currentLoad + 1)
@@ -65,7 +65,7 @@ object PeakOverdriveEnchantment : MagicCalculationContributor, CalculationContri
     override fun contribute(context: MagicCalculationContext, sink: CalculationSink) {
         val caster = context.playerOrNull() ?: return
         if (!caster.isBloodPactActive) return
-        if (caster.getEnchantmentLevel(peakOverdrive) <= 0) return
+        if (caster.getEnchantmentLevel(PeakOverdrive) <= 0) return
         if (sink !is BloodPactCalculationSink) return
 
         sink.exchangeRate += 1.0

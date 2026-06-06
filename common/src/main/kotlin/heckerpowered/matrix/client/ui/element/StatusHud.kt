@@ -16,7 +16,7 @@ import heckerpowered.matrix.client.render.state.capabilities.BlendState
 import heckerpowered.matrix.client.render.state.capabilities.CullFaceState
 import heckerpowered.matrix.client.render.state.capabilities.DepthTestState
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.WITHER_ARMOR_CHARGED_EFFECT
 import heckerpowered.matrix.common.item.ModComponents.borrowedTimeCharge
 import heckerpowered.matrix.common.item.ModComponents.borrowedTimeMaxCharge
 import heckerpowered.matrix.common.item.ModComponents.borrowedTimeState

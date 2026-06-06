@@ -7,14 +7,13 @@ package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
-import net.minecraft.entity.effect.StatusEffect
-import net.minecraft.entity.effect.StatusEffectCategory
+import net.minecraft.world.effect.MobEffect
+import net.minecraft.world.effect.MobEffectCategory
 
-object ExposedEffect : StatusEffect(
-    StatusEffectCategory.HARMFUL,
+object ExposedEffect : MobEffect(
+    MobEffectCategory.HARMFUL,
     0xFF0000
 ), DamageComputationRule {
     init {
@@ -23,7 +22,7 @@ object ExposedEffect : StatusEffect(
 
     override fun onComputation(context: DamageComputationContext) {
         val target = context.target
-        val statusEffect = target.getStatusEffect(EXPOSED_EFFECT) ?: return
+        val statusEffect = target.getEffect(ModMobEffects.Exposed) ?: return
         context.damageMultiplier += (statusEffect.amplifier + 1) * 0.4
     }
 }

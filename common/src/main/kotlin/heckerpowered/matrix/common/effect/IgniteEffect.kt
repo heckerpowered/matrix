@@ -6,64 +6,57 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.common.combat.damage.*
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.IGNITE_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.IGNITE_EFFECT
+import heckerpowered.matrix.common.entity.rule.AttributeComputationContext
+import heckerpowered.matrix.common.entity.rule.AttributeComputationRule
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
-import heckerpowered.matrix.core.Accumulator
 import heckerpowered.matrix.core.extension.damage
-import heckerpowered.matrix.core.extension.isAdditionalDamage
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.attribute.EntityAttribute
-import net.minecraft.entity.attribute.EntityAttributes
-import net.minecraft.entity.damage.DamageTypes
-import net.minecraft.entity.effect.StatusEffect
-import net.minecraft.entity.effect.StatusEffectCategory
-import net.minecraft.particle.ParticleTypes
-import net.minecraft.registry.entry.RegistryEntry
-import net.minecraft.registry.tag.DamageTypeTags
-import net.minecraft.server.world.ServerWorld
-import net.minecraft.util.math.Vec3d
-import kotlin.math.acos
+import net.minecraft.core.particles.ParticleTypes
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.tags.DamageTypeTags
+import net.minecraft.world.damagesource.DamageTypes
+import net.minecraft.world.effect.MobEffect
+import net.minecraft.world.effect.MobEffectCategory
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.ai.attributes.Attributes
+import net.minecraft.world.phys.Vec3
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
 
-object IgniteEffect : StatusEffect(
-    StatusEffectCategory.HARMFUL,
+object IgniteEffect : MobEffect(
+    MobEffectCategory.HARMFUL,
     0xD9471D
-), DamageComputationRule, DamageOutcomeRule {
+), AttributeComputationRule, DamageComputationRule, DamageOutcomeRule {
     init {
-        GetArmorCallback.EVENT.register(::getArmor)
-        AccumulateAttributeValueCallback.EVENT.register(::getAttributeValue)
+        RuleRegistry.register<AttributeComputationRule>(this)
         RuleRegistry.register<DamageComputationRule>(this)
         RuleRegistry.register<DamageOutcomeRule>(this)
     }
 
-    private fun getAttributeValue(entity: LivingEntity, attribute: RegistryEntry<EntityAttribute>, accumulator: Accumulator) {
-        if (attribute == EntityAttributes.GENERIC_ARMOR_TOUGHNESS && entity.hasStatusEffect(IGNITE_EFFECT)) {
-            accumulator.multiplier -= 0.4
+    override fun onComputation(context: AttributeComputationContext) {
+        val entity = context.entity
+        val attribute = context.attribute
+        if (attribute == Attributes.ARMOR_TOUGHNESS && entity.hasEffect(ModMobEffects.Ignite)) {
+            context.multiplier -= 0.4
         }
     }
 
-    private fun getArmor(entity: LivingEntity, accumulator: Accumulator) {
-        if (entity.hasStatusEffect(IGNITE_EFFECT)) {
-            accumulator.multiplier -= 0.4
-        }
-    }
+    private fun randomUnitVector(): Vec3 {
+        val theta = Random.nextDouble() * Math.PI * 2.0
+        val z = Random.nextDouble() * 2.0 - 1.0
+        val radius = sqrt(1.0 - z * z)
 
-    private fun randomUnitVector(): Vec3d {
-        val theta = Random.nextDouble() * Math.PI * 2
-        val phi = acos(2 * Random.nextDouble() - 1)
+        val x = radius * cos(theta)
+        val y = radius * sin(theta)
 
-        val x = sin(phi) * cos(theta)
-        val y = sin(phi) * sin(theta)
-        val z = cos(phi)
-
-        return Vec3d(x, y, z)
+        return Vec3(x, y, z)
     }
 
     private fun spawnIgniteFlameEffect(target: LivingEntity) {
-        val serverWorld = target.world as? ServerWorld ?: return
+        val serverLevel = target.level() as? ServerLevel ?: return
 
         val particleCount = 40
         val speed = 0.4
@@ -71,10 +64,10 @@ object IgniteEffect : StatusEffect(
         repeat(particleCount) {
             val direction = randomUnitVector()
 
-            serverWorld.spawnParticles(
+            serverLevel.sendParticles(
                 ParticleTypes.FLAME,
                 target.x,
-                target.y + target.height * 0.5,
+                target.y + target.bbHeight * 0.5,
                 target.z,
                 0,
                 direction.x * speed,
@@ -90,8 +83,8 @@ object IgniteEffect : StatusEffect(
         val target = context.target
 
         if (context.source.isAdditionalDamage) return
-        if (!target.hasStatusEffect(IGNITE_EFFECT)) return
-        if (!source.isIn(DamageTypeTags.IS_FIRE)) return
+        if (!target.hasEffect(IGNITE_EFFECT)) return
+        if (!source.`is`(DamageTypeTags.IS_FIRE)) return
 
         context.damageMultiplier += 0.2
     }
@@ -101,13 +94,13 @@ object IgniteEffect : StatusEffect(
         val target = context.target
 
         if (context.source.isAdditionalDamage) return
-        val igniteEffect = target.getStatusEffect(IGNITE_EFFECT) ?: return
-        if (source.isIn(DamageTypeTags.IS_FIRE)) return
+        val igniteEffect = target.getEffect(IGNITE_EFFECT) ?: return
+        if (source.`is`(DamageTypeTags.IS_FIRE)) return
 
         igniteEffect.mapDuration { it + 10 }
-        target.fireTicks += 10
+        target.remainingFireTicks += 10
 
-        val damageSource = target.world.damageSources.create(DamageTypes.ON_FIRE, context.attacker)
+        val damageSource = target.level().damageSources().source(DamageTypes.ON_FIRE, context.attacker)
         damageSource.isAdditionalDamage = true
         target.damage(context.rawDamage * 0.2F, damageSource)
         spawnIgniteFlameEffect(target)

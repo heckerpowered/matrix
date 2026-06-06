@@ -5,10 +5,10 @@
 
 package heckerpowered.matrix.common.effect
 
-import net.minecraft.entity.effect.StatusEffect
-import net.minecraft.entity.effect.StatusEffectCategory
+import net.minecraft.world.effect.MobEffect
+import net.minecraft.world.effect.MobEffectCategory
 
-object CrippleMovementEffect : StatusEffect(
-    StatusEffectCategory.HARMFUL,
+object CrippleMovementEffect : MobEffect(
+    MobEffectCategory.HARMFUL,
     0x5A89C0
 )

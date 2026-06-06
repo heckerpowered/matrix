@@ -7,7 +7,7 @@ package heckerpowered.matrix
 
 import heckerpowered.matrix.common.MatrixServerPlayNetworking
 import heckerpowered.matrix.common.command.MatrixCommands
-import heckerpowered.matrix.common.effect.MatrixStatusEffects
+import heckerpowered.matrix.common.effect.ModMobEffects
 import heckerpowered.matrix.common.enchantment.ModEnchantments
 import heckerpowered.matrix.common.entity.ModEntityTypes
 import heckerpowered.matrix.common.entity.attribute.MatrixEntityAttributes
@@ -30,7 +30,7 @@ object Matrix : ModInitializer {
     override fun onInitialize() {
         MatrixServerPlayNetworking.onInitialize()
         MagicSystem.onInitialize()
-        MatrixStatusEffects.onInitialize()
+        ModMobEffects.onInitialize()
         ModEnchantments.onInitialize()
         MatrixCommands.onInitialize()
         ModComponents.onInitialize()

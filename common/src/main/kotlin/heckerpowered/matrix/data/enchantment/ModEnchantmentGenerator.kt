@@ -6,8 +6,8 @@
 package heckerpowered.matrix.data.enchantment
 
 import heckerpowered.matrix.common.enchantment.ModEnchantments
+import heckerpowered.matrix.common.enchantment.ModEnchantments.KineticThrow
 import heckerpowered.matrix.common.enchantment.ModEnchantments.enchantmentKey
-import heckerpowered.matrix.common.enchantment.ModEnchantments.kineticThrow
 import heckerpowered.matrix.common.item.ModItemTags
 import heckerpowered.matrix.common.magic.system.Magics
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput
@@ -38,7 +38,7 @@ class ModEnchantmentGenerator(
         fun bootstrap(context: BootstrapContext<Enchantment>) {
             // Wither Armor
             register(
-                context, ModEnchantments.witherArmor,
+                context, ModEnchantments.WitherArmor,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ItemTags.CHEST_ARMOR_ENCHANTABLE),
@@ -54,7 +54,7 @@ class ModEnchantmentGenerator(
 
             // Guaranteed
             register(
-                context, ModEnchantments.guaranteed,
+                context, ModEnchantments.Guaranteed,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ItemTags.WEAPON_ENCHANTABLE),
@@ -70,7 +70,7 @@ class ModEnchantmentGenerator(
 
             // Last Stand
             register(
-                context, ModEnchantments.lastStand,
+                context, ModEnchantments.LastStand,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ItemTags.WEAPON_ENCHANTABLE),
@@ -86,7 +86,7 @@ class ModEnchantmentGenerator(
 
             // Revival
             register(
-                context, ModEnchantments.revival,
+                context, ModEnchantments.Revival,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ItemTags.ARMOR_ENCHANTABLE),
@@ -102,7 +102,7 @@ class ModEnchantmentGenerator(
 
             // Second Wind
             register(
-                context, ModEnchantments.secondWind,
+                context, ModEnchantments.SecondWind,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ItemTags.WEAPON_ENCHANTABLE),
@@ -136,7 +136,7 @@ class ModEnchantmentGenerator(
 
             // Proximate Propagation
             register(
-                context, ModEnchantments.proximatePropagation,
+                context, ModEnchantments.ProximatePropagation,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -152,7 +152,7 @@ class ModEnchantmentGenerator(
 
             // Magic Queue
             register(
-                context, ModEnchantments.magicQueue,
+                context, ModEnchantments.MagicQueue,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -168,7 +168,7 @@ class ModEnchantmentGenerator(
 
             // Queue Acceleration
             register(
-                context, ModEnchantments.queueAcceleration,
+                context, ModEnchantments.QueueAcceleration,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -184,7 +184,7 @@ class ModEnchantmentGenerator(
 
             // Queue Mastery
             register(
-                context, ModEnchantments.queueMastery,
+                context, ModEnchantments.QueueMastery,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -200,7 +200,7 @@ class ModEnchantmentGenerator(
 
             // Mana Overflow
             register(
-                context, ModEnchantments.manaOverflow,
+                context, ModEnchantments.ManaOverflow,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -216,7 +216,7 @@ class ModEnchantmentGenerator(
 
             // Mana Regeneration
             register(
-                context, ModEnchantments.manaRegeneration,
+                context, ModEnchantments.ManaRegeneration,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -232,7 +232,7 @@ class ModEnchantmentGenerator(
 
             // Wizard Force
             register(
-                context, ModEnchantments.wizardForce,
+                context, ModEnchantments.WizardForce,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -248,7 +248,7 @@ class ModEnchantmentGenerator(
 
             // Blood Pact
             register(
-                context, ModEnchantments.bloodPact,
+                context, ModEnchantments.BloodPact,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -264,7 +264,7 @@ class ModEnchantmentGenerator(
 
             // Magic Shield
             register(
-                context, ModEnchantments.magicShield,
+                context, ModEnchantments.MagicShield,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -280,7 +280,7 @@ class ModEnchantmentGenerator(
 
             // Brutal Strength
             register(
-                context, ModEnchantments.brutalStrength,
+                context, ModEnchantments.BrutalStrength,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -296,7 +296,7 @@ class ModEnchantmentGenerator(
 
             // Peak Overdrive
             register(
-                context, ModEnchantments.peakOverdrive,
+                context, ModEnchantments.PeakOverdrive,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ModItemTags.wizardHelmetTag),
@@ -312,7 +312,7 @@ class ModEnchantmentGenerator(
 
             // Lightning Strike
             register(
-                context, ModEnchantments.lightningStrike,
+                context, ModEnchantments.LightningStrike,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ItemTags.WEAPON_ENCHANTABLE),
@@ -328,7 +328,7 @@ class ModEnchantmentGenerator(
 
             // Kinetic Throw
             register(
-                context, kineticThrow,
+                context, KineticThrow,
                 Enchantment.enchantment(
                     Enchantment.definition(
                         context.lookup(Registries.ITEM).getOrThrow(ItemTags.WEAPON_ENCHANTABLE),

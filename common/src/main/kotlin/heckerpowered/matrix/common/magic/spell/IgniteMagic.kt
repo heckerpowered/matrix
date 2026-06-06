@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.IGNITE_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.channel.removeSourceIfSpoofed
@@ -31,22 +31,24 @@ object IgniteMagic : Magic(
         val target = invocation.target
         invocation.payload
 
-        val duration = if (target.hasEffect(IGNITE_EFFECT)) 5 else 8
+        val duration = if (target.hasEffect(ModMobEffects.Ignite)) 5 else 8
         target.igniteForSeconds(duration.toFloat())
-        target.addEffect(MobEffectInstance(IGNITE_EFFECT, duration * 20, 0, false, true))
+        target.addEffect(MobEffectInstance(ModMobEffects.Ignite, duration * 20, 0, false, true))
         if (target.hasEffect(MobEffects.POISON)) {
             val damageSource = invocation.removeSourceIfSpoofed { caster?.damageSources()?.explosion(target, caster) }
             target.level().explode(caster, damageSource, ExplosionMagic.damageCalculator, target.x, target.y, target.z, 4.0F, false, Level.ExplosionInteraction.MOB)
         }
     }
 
-    override fun availableStatus(context: MagicCalculationContext): LMagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailability {
+        val availability = super.availableStatus(context)
+
         val target = context.target
         if (target?.fireImmune() == true) {
-            return LMagicAvailableStatus.TARGET_IMMUNE
+            availability += MagicAvailableStatus.TargetImmune
         }
 
-        return super.availableStatus(context)
+        return availability
     }
 
     override fun getBaseCost(context: MagicCalculationContext): Long {

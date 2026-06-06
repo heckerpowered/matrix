@@ -5,9 +5,9 @@
 
 package heckerpowered.matrix.common.item
 
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.ANGERED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects
 import net.minecraft.world.entity.LivingEntity
 
 fun LivingEntity.isWardenArmorAngered(): Boolean {
-    return getEffect(ANGERED_EFFECT) != null
+    return getEffect(ModMobEffects.Angered) != null
 }

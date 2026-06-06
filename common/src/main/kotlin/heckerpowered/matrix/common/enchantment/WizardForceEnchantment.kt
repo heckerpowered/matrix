@@ -8,7 +8,7 @@ package heckerpowered.matrix.common.enchantment
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attacker
-import heckerpowered.matrix.common.enchantment.ModEnchantments.wizardForce
+import heckerpowered.matrix.common.enchantment.ModEnchantments.WizardForce
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
@@ -23,7 +23,7 @@ object WizardForceEnchantment : DamageComputationRule {
         val attacker = context.attacker as? ServerPlayer ?: return
         if (!context.source.`is`(MatrixDamageTypes.magic)) return
 
-        val level = attacker.getEnchantmentLevel(wizardForce).takeIf { it > 0 } ?: return
+        val level = attacker.getEnchantmentLevel(WizardForce).takeIf { it > 0 } ?: return
         context.damageMultiplier += level * 0.05
     }
 }

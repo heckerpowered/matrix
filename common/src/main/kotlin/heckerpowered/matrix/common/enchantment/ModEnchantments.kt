@@ -19,58 +19,58 @@ import kotlin.jvm.optionals.getOrNull
 
 object ModEnchantments {
     @JvmField
-    val witherArmor = createId("wither_armor")
+    val WitherArmor = createId("wither_armor")
 
     @JvmField
-    val guaranteed = createId("guaranteed")
+    val Guaranteed = createId("guaranteed")
 
     @JvmField
-    val lastStand = createId("last_stand")
+    val LastStand = createId("last_stand")
 
     @JvmField
-    val revival = createId("revival")
+    val Revival = createId("revival")
 
     @JvmField
-    val secondWind = createId("second_wind")
+    val SecondWind = createId("second_wind")
 
     @JvmField
-    val proximatePropagation = createId("proximate_propagation")
+    val ProximatePropagation = createId("proximate_propagation")
 
     @JvmField
-    val magicQueue = createId("magic_queue")
+    val MagicQueue = createId("magic_queue")
 
     @JvmField
-    val queueAcceleration = createId("queue_acceleration")
+    val QueueAcceleration = createId("queue_acceleration")
 
     @JvmField
-    val queueMastery = createId("queue_mastery")
+    val QueueMastery = createId("queue_mastery")
 
     @JvmField
-    val manaOverflow = createId("mana_overflow")
+    val ManaOverflow = createId("mana_overflow")
 
     @JvmField
-    val manaRegeneration = createId("mana_regeneration")
+    val ManaRegeneration = createId("mana_regeneration")
 
     @JvmField
-    val wizardForce = createId("wizard_force")
+    val WizardForce = createId("wizard_force")
 
     @JvmField
-    val bloodPact = createId("blood_pact")
+    val BloodPact = createId("blood_pact")
 
     @JvmField
-    val magicShield = createId("magic_shield")
+    val MagicShield = createId("magic_shield")
 
     @JvmField
-    val brutalStrength = createId("brutal_strength")
+    val BrutalStrength = createId("brutal_strength")
 
     @JvmField
-    val peakOverdrive = createId("peak_overdrive")
+    val PeakOverdrive = createId("peak_overdrive")
 
     @JvmField
-    val lightningStrike = createId("lightning_strike")
+    val LightningStrike = createId("lightning_strike")
 
     @JvmField
-    val kineticThrow = createId("kinetic_throw")
+    val KineticThrow = createId("kinetic_throw")
 
     fun createId(name: String): ResourceKey<Enchantment> {
         val identifier = Matrix.identifier(name)

@@ -21,9 +21,9 @@ object LastStandEnchantment : DamageComputationRule {
     override fun onComputation(context: DamageComputationContext) {
         val attacker = context.attackerAsLiving() ?: return
         if (attacker.level().isClientSide) return
-        val lastStandLevel = attacker.getEnchantmentLevel(ModEnchantments.lastStand)
+        val lastStandLevel = attacker.getEnchantmentLevel(ModEnchantments.LastStand)
         if (lastStandLevel <= 0) return
-        
+
         if (attacker.health > attacker.maxHealth * 0.5) return
 
         val minThreshold = attacker.maxHealth * 0.25

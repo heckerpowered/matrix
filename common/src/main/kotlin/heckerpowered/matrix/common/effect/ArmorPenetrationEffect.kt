@@ -5,37 +5,30 @@
 
 package heckerpowered.matrix.common.effect
 
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.ARMOR_PENETRATION_EFFECT
-import heckerpowered.matrix.core.Accumulator
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.attribute.EntityAttribute
-import net.minecraft.entity.attribute.EntityAttributes
-import net.minecraft.entity.effect.StatusEffect
-import net.minecraft.entity.effect.StatusEffectCategory
-import net.minecraft.registry.entry.RegistryEntry
+import heckerpowered.matrix.common.entity.rule.AttributeComputationContext
+import heckerpowered.matrix.common.entity.rule.AttributeComputationRule
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
+import net.minecraft.world.effect.MobEffect
+import net.minecraft.world.effect.MobEffectCategory
+import net.minecraft.world.entity.ai.attributes.Attributes
 
-object ArmorPenetrationEffect : StatusEffect(
-    StatusEffectCategory.HARMFUL,
+object ArmorPenetrationEffect : MobEffect(
+    MobEffectCategory.HARMFUL,
     0xFF4500
-) {
+), AttributeComputationRule {
     init {
-        GetArmorCallback.EVENT.register(::getArmor)
-        AccumulateAttributeValueCallback.EVENT.register(::getAttributeValue)
+        RuleRegistry.register<AttributeComputationRule>(this)
     }
 
-    private fun getAttributeValue(entity: LivingEntity, attribute: RegistryEntry<EntityAttribute>, accumulator: Accumulator) {
-        if (attribute != EntityAttributes.GENERIC_ARMOR_TOUGHNESS) {
-            return
-        }
+    override fun onComputation(context: AttributeComputationContext) {
+        val entity = context.entity
+        val attribute = context.attribute
 
-        val armorPenetrationInstance = entity.getStatusEffect(ARMOR_PENETRATION_EFFECT) ?: return
-        val amplifier = armorPenetrationInstance.amplifier + 1
-        accumulator.multiplier -= amplifier * 0.4
-    }
+        if (attribute != Attributes.ARMOR_TOUGHNESS) return
 
-    private fun getArmor(entity: LivingEntity, accumulator: Accumulator) {
-        val armorPenetrationInstance = entity.getStatusEffect(ARMOR_PENETRATION_EFFECT) ?: return
+        val armorPenetrationInstance = entity.getEffect(ModMobEffects.ArmorPenetration) ?: return
         val amplifier = armorPenetrationInstance.amplifier + 1
-        accumulator.multiplier -= amplifier * 0.4
+        context.multiplier -= amplifier * 0.4
     }
 }

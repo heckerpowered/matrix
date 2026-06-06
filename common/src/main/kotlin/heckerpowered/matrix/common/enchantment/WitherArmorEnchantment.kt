@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.WITHER_ARMOR_CHARGED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.WITHER_ARMOR_CHARGED_EFFECT
 import heckerpowered.matrix.common.entity.rule.EntityUpdateContext
 import heckerpowered.matrix.common.entity.rule.EntityUpdateRule
 import heckerpowered.matrix.common.rule.RuleRegistry
@@ -28,7 +28,7 @@ object WitherArmorEnchantment : EntityUpdateRule {
         if (level.isClientSide) return
         if (entity !is LivingEntity) return
 
-        val enchantmentLevel = entity.getEnchantmentLevel(ModEnchantments.witherArmor)
+        val enchantmentLevel = entity.getEnchantmentLevel(ModEnchantments.WitherArmor)
         if (enchantmentLevel <= 0) return
         if (entity.hasEffect(WITHER_ARMOR_CHARGED_EFFECT)) return
 

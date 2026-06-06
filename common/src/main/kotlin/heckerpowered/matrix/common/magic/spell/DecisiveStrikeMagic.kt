@@ -62,15 +62,17 @@ object DecisiveStrikeMagic : Magic(
         }
     }
 
-    override fun availableStatus(context: MagicCalculationContext): LMagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailability {
+        val availability = super.availableStatus(context)
+
         val target = context.target
         val damageSource = context.defaultMagicDamageSource()
 
         if (target?.isInvulnerable == true || target?.isInvulnerableToBase(damageSource) == true) {
-            return LMagicAvailableStatus.TARGET_IMMUNE
+            availability += MagicAvailableStatus.TargetImmune
         }
 
-        return super.availableStatus(context)
+        return availability
     }
 
     override fun getBaseCost(context: MagicCalculationContext): Long {

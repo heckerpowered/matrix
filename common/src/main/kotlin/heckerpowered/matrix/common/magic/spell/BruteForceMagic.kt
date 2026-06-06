@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.magic.spell
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.EXPOSED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.*
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
@@ -23,14 +23,16 @@ object BruteForceMagic : Magic(
     override fun cast(invocation: MagicInvocation) {
         super.cast(invocation)
         val target = invocation.target
-        target.addEffect(MobEffectInstance(EXPOSED_EFFECT, 200, 0, false, true))
+        target.addEffect(MobEffectInstance(ModMobEffects.Exposed, 200, 0, false, true))
     }
 
-    override fun availableStatus(context: MagicCalculationContext): LMagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailability {
+        val availability = super.availableStatus(context)
+
         val target = context.target
-        if (target?.isInvulnerableToEffect(EXPOSED_EFFECT) == true) {
-            return LMagicAvailableStatus.TARGET_IMMUNE
+        if (target?.isInvulnerableToEffect(ModMobEffects.Exposed) == true) {
+            availability += MagicAvailableStatus.TargetImmune
         }
-        return super.availableStatus(context)
+        return availability
     }
 }

@@ -63,21 +63,22 @@ object BreakingBadMagic : Magic(
             .consumeWhile(4) {
                 val spreadPayload = ExecutionPayload(isSpread = true)
                 val spreadInvocation = MagicInvocation.fromEntity(caster, it, spreadPayload)
-                val spreadAttempt = ExecutionPayload(costMana = false)
-                val result = ChannelExecutor.channel(BreakingBadMagic, spreadInvocation, spreadAttempt)
-                result == LMagicAvailableStatus.AVAILABLE
+                val spreadPolicy = ExecutionPolicy(costMana = false)
+                val result = ChannelExecutor.channel(BreakingBadMagic, spreadInvocation, spreadPolicy)
+                result.isAvailable
             }
             .drain()
     }
 
-    override fun availableStatus(context: MagicCalculationContext): LMagicAvailableStatus {
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailability {
+        val availability = super.availableStatus(context)
         val target = context.target
         if (target?.isInvulnerableToEffect(MobEffects.POISON) == true ||
             target?.isInvulnerableToEffect(MobEffects.BLINDNESS) == true
         ) {
-            return LMagicAvailableStatus.TARGET_IMMUNE
+            availability += MagicAvailableStatus.TargetImmune
         }
 
-        return super.availableStatus(context)
+        return availability
     }
 }

@@ -8,7 +8,6 @@ package heckerpowered.matrix.common.effect
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.BLOOD_PACT_EFFECT
 import heckerpowered.matrix.common.magic.channel.entityOrNull
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.CastingResource
@@ -19,13 +18,15 @@ import heckerpowered.matrix.common.magic.rule.calculation.sink.BloodPactCalculat
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
+import net.minecraft.world.effect.MobEffect
+import net.minecraft.world.effect.MobEffectCategory
 import net.minecraft.world.entity.player.Player
 
 val Player.isBloodPactActive: Boolean
-    get() = hasEffect(BLOOD_PACT_EFFECT)
+    get() = hasEffect(ModMobEffects.BloodPact)
 
-object BloodPactEffect : StatusEffect(
-    StatusEffectCategory.BENEFICIAL,
+object BloodPactEffect : MobEffect(
+    MobEffectCategory.BENEFICIAL,
     0xFF0000
 ), CastingResourceContributor, DamageComputationRule {
     const val DEFAULT_EXCHANGE_RATE = 2.0
@@ -38,8 +39,8 @@ object BloodPactEffect : StatusEffect(
     override fun onComputation(context: DamageComputationContext) {
         val attacker = context.attackerAsLiving() ?: return
         val source = context.source
-        if (!attacker.hasStatusEffect(BLOOD_PACT_EFFECT)) return
-        if (source.isOf(MatrixDamageTypes.magic)) return
+        if (!attacker.hasEffect(ModMobEffects.BloodPact)) return
+        if (source.`is`(MatrixDamageTypes.magic)) return
 
         context.damageMultiplier += 0.1
     }
@@ -50,7 +51,7 @@ object BloodPactEffect : StatusEffect(
      * The returned list may be empty.
      */
     override fun contribute(context: MagicCalculationContext, sink: MutableCollection<CastingResource>) {
-        val caster = context.caster?.entityOrNull() as? PlayerEntity ?: return
+        val caster = context.caster?.entityOrNull() as? Player ?: return
         if (!caster.isBloodPactActive) return
         sink += HealthReserve()
     }

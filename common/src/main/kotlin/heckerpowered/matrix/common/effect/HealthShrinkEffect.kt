@@ -5,27 +5,28 @@
 
 package heckerpowered.matrix.common.effect
 
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.HEALTH_SHRINK_EFFECT
-import heckerpowered.matrix.core.Accumulator
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.attribute.EntityAttribute
-import net.minecraft.entity.attribute.EntityAttributes
-import net.minecraft.entity.effect.StatusEffect
-import net.minecraft.entity.effect.StatusEffectCategory
-import net.minecraft.registry.entry.RegistryEntry
+import heckerpowered.matrix.common.entity.rule.AttributeComputationContext
+import heckerpowered.matrix.common.entity.rule.AttributeComputationRule
+import heckerpowered.matrix.common.rule.RuleRegistry
+import heckerpowered.matrix.common.rule.register
+import net.minecraft.world.effect.MobEffect
+import net.minecraft.world.effect.MobEffectCategory
+import net.minecraft.world.entity.ai.attributes.Attributes
 
-object HealthShrinkEffect : StatusEffect(
-    StatusEffectCategory.HARMFUL,
+object HealthShrinkEffect : MobEffect(
+    MobEffectCategory.HARMFUL,
     0x8B0000
-) {
+), AttributeComputationRule {
     init {
-        AccumulateAttributeValueCallback.EVENT.register(::getAttributeValue)
+        RuleRegistry.register<AttributeComputationRule>(this)
     }
 
-    private fun getAttributeValue(entity: LivingEntity, attribute: RegistryEntry<EntityAttribute>, accumulator: Accumulator) {
-        val effect = entity.getStatusEffect(HEALTH_SHRINK_EFFECT) ?: return
-        if (attribute == EntityAttributes.GENERIC_MAX_HEALTH) {
-            accumulator.multiplier -= (effect.amplifier * 0.025F).coerceAtMost(0.5F)
+    override fun onComputation(context: AttributeComputationContext) {
+        val entity = context.entity
+        val effect = entity.getEffect(ModMobEffects.HealthShrink) ?: return
+        val attribute = context.attribute
+        if (attribute == Attributes.MAX_HEALTH) {
+            context.multiplier -= (effect.amplifier * 0.025F).coerceAtMost(0.5F)
         }
     }
 }

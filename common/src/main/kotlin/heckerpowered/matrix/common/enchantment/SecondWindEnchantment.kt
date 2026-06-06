@@ -20,7 +20,7 @@ object SecondWindEnchantment : DamageOutcomeRule {
     override fun onOutcome(context: DamageOutcomeContext) {
         val target = context.target
 
-        val enchantmentLevel = target.getEnchantmentLevel(ModEnchantments.secondWind).takeIf { it > 0 } ?: return
+        val enchantmentLevel = target.getEnchantmentLevel(ModEnchantments.SecondWind).takeIf { it > 0 } ?: return
         target.addEffect(MobEffectInstance(MobEffects.REGENERATION, enchantmentLevel * 20 * 5, 0))
     }
 }

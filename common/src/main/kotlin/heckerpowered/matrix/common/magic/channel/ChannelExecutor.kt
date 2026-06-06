@@ -7,8 +7,9 @@ package heckerpowered.matrix.common.magic.channel
 
 import heckerpowered.matrix.client.render.ChannelAnimation
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
-import heckerpowered.matrix.common.magic.core.LMagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicAvailability
+import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.network.ClientboundChannelMagicPayload
@@ -20,25 +21,25 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.LivingEntity
 
 object ChannelExecutor {
-    fun channel(magic: Magic, invocation: MagicInvocation, attempt: ExecutionPolicy = ExecutionPolicy()): LMagicAvailableStatus {
+    fun channel(magic: Magic, invocation: MagicInvocation, attempt: ExecutionPolicy = ExecutionPolicy()): MagicAvailability {
         val caster = invocation.caster
         val target = invocation.target
         val queue = invocation.queue
 
-        val casterEntity = caster.entityOrNull() ?: return LMagicAvailableStatus.UNAVAILABLE
-        val player = casterEntity as? ServerPlayer ?: return LMagicAvailableStatus.UNAVAILABLE
+        val casterEntity = caster.entityOrNull() ?: return MagicAvailability(MagicAvailableStatus.Unavailable)
+        val player = casterEntity as? ServerPlayer ?: return MagicAvailability(MagicAvailableStatus.Unavailable)
         val calculationContext = MagicCalculationContext.fromInvocation(invocation)
 
         val available = magic.availableStatus(calculationContext)
         if (!attempt.isMagicAvailable(available)) {
-            val rejectedStatus = if (available == LMagicAvailableStatus.AVAILABLE)
-                LMagicAvailableStatus.UNAVAILABLE else available
+            val rejectedStatus = if (available.isAvailable)
+                MagicAvailability(MagicAvailableStatus.Unavailable) else available
             return rejectedStatus
         }
 
         val cost = magic.getCost(calculationContext)
         if (!attempt.payCost(magic, cost.mana, invocation)) {
-            return LMagicAvailableStatus.AVAILABLE_MANA_NOT_ENOUGH
+            return MagicAvailability(MagicAvailableStatus.InsufficientMana)
         }
 
         val channelTime = magic.getChannelTime(calculationContext)
@@ -55,7 +56,7 @@ object ChannelExecutor {
 
         val channelPayload = ClientboundChannelMagicPayload(magic.definition.uuid, target.id, channelTime)
         ServerPlayNetworking.send(player, channelPayload)
-        return LMagicAvailableStatus.AVAILABLE
+        return MagicAvailability()
     }
 
     @Environment(EnvType.CLIENT)

@@ -6,51 +6,51 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.common.combat.damage.*
-import heckerpowered.matrix.common.effect.MatrixStatusEffects.MANA_OVERLOAD_EFFECT
+import heckerpowered.matrix.common.entity.rule.EffectRestrictionContext
+import heckerpowered.matrix.common.entity.rule.EffectRestrictionRule
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.damage.DamageTypes
-import net.minecraft.entity.effect.StatusEffect
-import net.minecraft.entity.effect.StatusEffectCategory
-import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.util.ActionResult
+import net.minecraft.world.damagesource.DamageTypes
+import net.minecraft.world.effect.MobEffect
+import net.minecraft.world.effect.MobEffectCategory
+import net.minecraft.world.entity.LivingEntity
 
-object ManaOverloadEffect : StatusEffect(
-    StatusEffectCategory.HARMFUL,
+object ManaOverloadEffect : MobEffect(
+    MobEffectCategory.HARMFUL,
     0x98D982
-), DamageAttemptRule, DamageComputationRule {
+), EffectRestrictionRule, DamageAttemptRule, DamageComputationRule {
     init {
-        CanHaveStatusEffectCallback.EVENT.register(::canHaveStatusEffect)
+        RuleRegistry.register<EffectRestrictionRule>(this)
         RuleRegistry.register<DamageAttemptRule>(this)
         RuleRegistry.register<DamageComputationRule>(this)
     }
 
     fun isMagicAbilityDisabled(entity: LivingEntity): Boolean {
-        return entity.hasStatusEffect(MANA_OVERLOAD_EFFECT)
+        return entity.hasEffect(ModMobEffects.ManaOverload)
     }
 
-    private fun canHaveStatusEffect(entity: LivingEntity, effect: StatusEffectInstance): ActionResult {
-        val effectAmplifier = entity.getStatusEffect(MANA_OVERLOAD_EFFECT)?.amplifier ?: 0
-        if (effectAmplifier >= 1 && effect.effectType.value().isBeneficial) {
-            return ActionResult.FAIL
-        }
+    override fun canBeAffected(context: EffectRestrictionContext) {
+        val entity = context.entity
+        val effectInstance = context.effectInstance
 
-        return ActionResult.PASS
+        val effectAmplifier = entity.getEffect(ModMobEffects.ManaOverload)?.amplifier ?: 0
+        if (effectAmplifier >= 1 && effectInstance.effect.value().isBeneficial) {
+            context.reject()
+        }
     }
 
     override fun onAttempt(context: DamageAttemptContext) {
         val attacker = context.attackerAsLiving() ?: return
         val source = context.source
         if (!isMagicAbilityDisabled(attacker)) return
-        if (source.isOf(DamageTypes.MAGIC) || source.isOf(DamageTypes.INDIRECT_MAGIC)) {
+        if (source.`is`(DamageTypes.MAGIC) || source.`is`(DamageTypes.INDIRECT_MAGIC)) {
             context.cancel()
         }
     }
 
     override fun onComputation(context: DamageComputationContext) {
         val target = context.target
-        val effect = target.getStatusEffect(MANA_OVERLOAD_EFFECT) ?: return
+        val effect = target.getEffect(ModMobEffects.ManaOverload) ?: return
         context.damageMultiplier += 0.15
         if (effect.amplifier >= 2) {
             context.baseDamageBonus += target.health * 0.08F

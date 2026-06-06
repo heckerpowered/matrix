@@ -44,23 +44,13 @@ object SculkCatalystMagic : Magic(
         (9 * 20).ticks
     )
 ), MagicExecutionPayloadSpecification, MagicCalculationContributor, QueueLoadedRule {
-
     @Serializable
     private class SculkCatalystExecutionPayload(
         var bounces: Long = 0,
     ) : ExecutionPayload()
 
-    private class SculkCatalystChannelAttempt(
-        bypassLock: Boolean = false,
-        costMana: Boolean = true,
-    ) : ExecutionPayload(bypassLock, costMana) {
-        override fun isMagicAvailable(availableStatus: LMagicAvailableStatus): Boolean {
-            if (availableStatus == LMagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE) {
-                return true
-            }
-            return super.isMagicAvailable(availableStatus)
-        }
-    }
+    private val SculkCatalystIsAlreadyActive = MagicAvailableStatus(Matrix.identifier("sculk_catalyst_is_already_active"))
+    private val SculkCatalystExecutionPolicy = ExecutionPolicy(ignoredStatuses = setOf(SculkCatalystIsAlreadyActive))
 
     init {
         RuleRegistry.register<MagicCalculationContributor>(this)
@@ -131,8 +121,8 @@ object SculkCatalystMagic : Magic(
             .firstOrNull { it.getChannelQueue(caster)?.isEmpty ?: true }
         if (nearestEntity != null) {
             val spreadInvocation = MagicInvocation.fromEntity(caster, nearestEntity, spreadPayload)
-            val spreadAttempt = SculkCatalystChannelAttempt()
-            ChannelExecutor.channel(SculkCatalystMagic, spreadInvocation, spreadAttempt)
+            val spreadPolicy = SculkCatalystExecutionPolicy
+            ChannelExecutor.channel(SculkCatalystMagic, spreadInvocation, spreadPolicy)
         }
     }
 
@@ -183,10 +173,13 @@ object SculkCatalystMagic : Magic(
         } + additionChannelTime
     }
 
-    override fun availableStatus(context: MagicCalculationContext): LMagicAvailableStatus {
-        val caster = context.playerOrNull() ?: return super.availableStatus(context)
-        if (isSculkCatalystActive(caster)) return LMagicAvailableStatus.SCULK_CATALYST_IS_ALREADY_ACTIVE
-        return super.availableStatus(context)
+    override fun availableStatus(context: MagicCalculationContext): MagicAvailability {
+        val availability = super.availableStatus(context)
+
+        val caster = context.playerOrNull() ?: return availability
+        if (isSculkCatalystActive(caster)) availability += SculkCatalystIsAlreadyActive
+
+        return availability
     }
 
     fun isSculkCatalystActive(player: Player): Boolean {

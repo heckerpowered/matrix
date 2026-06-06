@@ -21,7 +21,7 @@ object GuaranteedEnchantment : DamageComputationRule {
         if (attacker.level().isClientSide) return
 
         val target = context.target
-        val guaranteedEnchantmentLevel = attacker.getEnchantmentLevel(ModEnchantments.guaranteed)
+        val guaranteedEnchantmentLevel = attacker.getEnchantmentLevel(ModEnchantments.Guaranteed)
         if (guaranteedEnchantmentLevel <= 0) return
 
         val percentage = target.maxHealth.toDouble() / attacker.maxHealth.toDouble()

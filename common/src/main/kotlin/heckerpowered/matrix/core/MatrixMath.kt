@@ -6,14 +6,12 @@
 package heckerpowered.matrix.core
 
 import heckerpowered.matrix.client.projectionMatrix
-import heckerpowered.matrix.core.math.Matrix4fExtensions.times
 import net.minecraft.client.Minecraft
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector2d
 import org.joml.Vector3d
-import org.joml.Vector3f
 import org.joml.Vector4d
 import org.joml.Vector4f
 import java.lang.Math
@@ -141,12 +139,12 @@ operator fun Matrix4f.times(other: Matrix4f): Matrix4f {
 
 fun worldToScreen(
     worldPosition: Vec3,
-    cameraPosition: Vec3 = Minecraft.getInstance().gameRenderer.mainCamera.position(),
-    cameraRotation: Quaternionf = Minecraft.getInstance().gameRenderer.mainCamera.rotation(),
+    cameraPosition: Vec3 = Minecraft.getInstance().gameRenderer.mainCamera().position(),
+    cameraRotation: Quaternionf = Minecraft.getInstance().gameRenderer.mainCamera().rotation(),
     viewportWidth: Int = Minecraft.getInstance().window.width,
     viewportHeight: Int = Minecraft.getInstance().window.height,
 ): Vector2d? {
-    Minecraft.getInstance().gameRenderer.mainCamera.position()
+    Minecraft.getInstance().gameRenderer.mainCamera().position()
     val viewMatrix = Matrix4f()
         .rotate(cameraRotation.conjugate(Quaternionf()))
         .translate(
