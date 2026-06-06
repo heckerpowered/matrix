@@ -1,0 +1,20 @@
+{
+  "anvil_cost": 5,
+  "description": {
+    "translate": "enchantment.matrix.last_stand"
+  },
+  "max_cost": {
+    "base": 1,
+    "per_level_above_first": 15
+  },
+  "max_level": 5,
+  "min_cost": {
+    "base": 1,
+    "per_level_above_first": 10
+  },
+  "slots": [
+    "hand"
+  ],
+  "supported_items": "#minecraft:enchantable/sword",
+  "weight": 10
+}

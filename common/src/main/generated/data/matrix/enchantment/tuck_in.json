@@ -1,0 +1,20 @@
+{
+  "anvil_cost": 5,
+  "description": {
+    "translate": "enchantment.matrix.tuck_in"
+  },
+  "max_cost": {
+    "base": 1,
+    "per_level_above_first": 15
+  },
+  "max_level": 1,
+  "min_cost": {
+    "base": 1,
+    "per_level_above_first": 10
+  },
+  "slots": [
+    "head"
+  ],
+  "supported_items": "#matrix:wizard_helmet",
+  "weight": 10
+}
