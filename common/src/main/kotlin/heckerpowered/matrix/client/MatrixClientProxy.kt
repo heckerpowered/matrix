@@ -8,6 +8,7 @@ package heckerpowered.matrix.client
 import heckerpowered.matrix.MatrixCommonProxy
 import heckerpowered.matrix.common.magic.resource.Mana
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
+import heckerpowered.matrix.core.isInfiniteMana
 import net.minecraft.world.entity.player.Player
 import net.minecraft.server.level.ServerPlayer
 
@@ -38,6 +39,9 @@ class MatrixClientProxy : MatrixCommonProxy() {
         if (player is ServerPlayer) {
             return super.isInfiniteMana(player)
         }
-        return false
+        if (minecraft.player != null && player == minecraft.player) {
+            return MatrixHud.isInfiniteMana || player.isInfiniteMana
+        }
+        return player.isInfiniteMana
     }
 }

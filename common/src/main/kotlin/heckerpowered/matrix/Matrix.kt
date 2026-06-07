@@ -18,6 +18,7 @@ import heckerpowered.matrix.common.item.ModItems
 import heckerpowered.matrix.common.magic.system.MagicSystem
 import heckerpowered.matrix.MatrixCommonProxy
 import heckerpowered.matrix.common.recipe.RedstoneSuitChargeRecipe
+import heckerpowered.matrix.common.network.syncher.ModEntityDataSerializers
 import net.fabricmc.api.ModInitializer
 import net.minecraft.resources.Identifier
 import org.slf4j.Logger
@@ -39,6 +40,7 @@ object Matrix : ModInitializer {
         ModEnchantments.onInitialize()
         MatrixCommands.onInitialize()
         ModComponents.onInitialize()
+        ModEntityDataSerializers.onInitialize()
         ModItems.onInitialize()
         ModCreativeTab.onInitialize()
         MatrixPotions.onInitialize()

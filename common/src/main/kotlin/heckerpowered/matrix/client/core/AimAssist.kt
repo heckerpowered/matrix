@@ -91,8 +91,8 @@ object AimAssist {
         val pitch = -toDegrees(atan2(direction.y, distance2D))
         val yaw = toDegrees(atan2(direction.z, direction.x)) - 90
 
-        val pitchDifference = wrapDegrees(pitch) - wrapDegrees(player.xRot.toDouble())
-        val yawDifference = wrapDegrees(yaw) - wrapDegrees(player.yRot.toDouble())
+        val pitchDifference = wrapDegrees(pitch - player.xRot.toDouble())
+        val yawDifference = wrapDegrees(yaw - player.yRot.toDouble())
         return sqrt(pitchDifference * pitchDifference + yawDifference * yawDifference)
     }
 

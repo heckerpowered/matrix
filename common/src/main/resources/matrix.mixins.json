@@ -6,9 +6,17 @@
     "DamageSourceMixin",
     "EntityMixin",
     "LevelMixin",
-    "LivingEntityMixin"
+    "LivingEntityMixin",
+    "MinecraftServerMixin"
   ],
-  "client": [],
+  "client": [
+    "CameraMixin",
+    "DeltaTrackerTimerMixin",
+    "GameRendererStandaloneMixin",
+    "KeyboardMixin",
+    "MinecraftMixin",
+    "MixinInGameHud"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

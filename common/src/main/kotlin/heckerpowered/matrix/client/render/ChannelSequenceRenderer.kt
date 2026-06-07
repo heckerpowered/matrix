@@ -12,17 +12,23 @@ import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.magic.spell.SculkCatalystMagic
 import heckerpowered.matrix.core.getLerpedPos
-import heckerpowered.matrix.core.worldToScreen
-import heckerpowered.matrix.extension.MatrixLivingEntity
+import heckerpowered.matrix.core.toDegrees
+import heckerpowered.matrix.core.wrapDegrees
 import heckerpowered.matrix.client.render.effect.SculkCatalystEffectRenderer
 import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
 import net.minecraft.client.DeltaTracker
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.world.entity.LivingEntity
+import org.joml.Vector2f
 import java.time.Duration
 import java.util.WeakHashMap
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.sqrt
+import kotlin.math.tan
 
 object ChannelSequenceRenderer {
     private val easingFunction = ElasticEase().also {
@@ -60,8 +66,8 @@ object ChannelSequenceRenderer {
         animation: List<ChannelAnimation>,
     ) {
         val tickDelta = tickCounter.getGameTimeDeltaPartialTick(false)
-        val lerpedPosition = entity.getLerpedPos(tickDelta).add(.0, entity.boundingBox.ysize, .0)
-        val entityScreenPosition = worldToScreen(lerpedPosition) ?: return
+        val lerpedPosition = entity.getLerpedPos(tickDelta).add(.0, entity.boundingBox.ysize + 0.25, .0)
+        val entityScreenPosition = lerpedPosition.toScreenPosition(tickDelta, drawContext.guiWidth(), drawContext.guiHeight()) ?: return
 
         animation.forEachIndexed { index, channelAnimation ->
             val alpha = channelAnimation.opacityAnimation.animatedValue
@@ -92,8 +98,38 @@ object ChannelSequenceRenderer {
         }
     }
 
+    private fun net.minecraft.world.phys.Vec3.toScreenPosition(tickDelta: Float, viewportWidth: Int, viewportHeight: Int): Vector2f? {
+        val minecraft = Minecraft.getInstance()
+        val player = minecraft.player ?: return null
+        val eyePosition = player.getEyePosition(tickDelta)
+        val direction = subtract(eyePosition)
+        val distance2D = sqrt(direction.x * direction.x + direction.z * direction.z)
+        if (distance2D <= 0.0001 && abs(direction.y) <= 0.0001) {
+            return null
+        }
+
+        val pitch = -toDegrees(atan2(direction.y, distance2D))
+        val yaw = toDegrees(atan2(direction.z, direction.x)) - 90.0
+        val yawDifference = wrapDegrees(yaw - player.getYRot(tickDelta).toDouble())
+        val pitchDifference = wrapDegrees(pitch - player.getXRot(tickDelta).toDouble())
+
+        val verticalFov = minecraft.options.fov().get().toDouble().coerceIn(30.0, 110.0)
+        val aspectRatio = viewportWidth.toDouble() / viewportHeight.toDouble().coerceAtLeast(1.0)
+        val horizontalFov = toDegrees(2.0 * atan2(tan(java.lang.Math.toRadians(verticalFov) / 2.0) * aspectRatio, 1.0))
+
+        val x = viewportWidth / 2.0 +
+            tan(java.lang.Math.toRadians(yawDifference)) / tan(java.lang.Math.toRadians(horizontalFov) / 2.0) * viewportWidth / 2.0
+        val y = viewportHeight / 2.0 +
+            tan(java.lang.Math.toRadians(pitchDifference)) / tan(java.lang.Math.toRadians(verticalFov) / 2.0) * viewportHeight / 2.0
+
+        return Vector2f(
+            x.coerceIn(0.0, viewportWidth.toDouble()).toFloat(),
+            y.coerceIn(0.0, viewportHeight.toDouble()).toFloat(),
+        )
+    }
+
     private fun onEntityTick(entity: LivingEntity) {
-        if (!entity.level().isClientSide || entity !is MatrixLivingEntity) {
+        if (!entity.level().isClientSide) {
             return
         }
         val channelAnimation = channelSequenceAnimationMap[entity] ?: return
@@ -103,6 +139,11 @@ object ChannelSequenceRenderer {
                 from = .0
                 to = .0
             }
+        }
+        if (channelAnimation.isEmpty()) {
+            channelSequenceAnimationMap.remove(entity)
+            offsetAnimationMap.remove(entity)
+            return
         }
         channelAnimation
             .firstOrNull { it.currentChannelTime <= it.channelTime }

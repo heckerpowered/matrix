@@ -63,6 +63,7 @@ object ManaRegenerationTicker {
             ClientboundSyncManaPayload(
                 player.mana.toDouble(),
                 player.maxMana.toDouble(),
+                player.isInfiniteMana,
             ),
         )
     }

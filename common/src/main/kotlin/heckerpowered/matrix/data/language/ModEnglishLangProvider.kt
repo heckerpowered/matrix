@@ -194,6 +194,8 @@ Untraceable.
         translationBuilder.add(MatrixLanguage.overclockMana.key, "Overclock or Underclock Mana")
         translationBuilder.add(MatrixLanguage.switchClock.key, "Switch Overclock or Underclock")
         translationBuilder.add("matrix.hud.magic_list", "Magic selection")
+        translationBuilder.add("matrix.hud.selected_magic", "Selected magic")
+        translationBuilder.add("matrix.hud.target", "Target")
         translationBuilder.add(MatrixLanguage.systemCrashing.key, "System Crash Imminent")
 
         translationBuilder.add(MatrixLanguage.magicAvailable.key, "Ready")
@@ -204,6 +206,10 @@ Untraceable.
         translationBuilder.add(MatrixLanguage.magicTargetMissing.key, "Target Missing")
         translationBuilder.add(MatrixLanguage.magicTargetImmune.key, "Target Immune")
         translationBuilder.add(MatrixLanguage.magicSculkCatalystIsAlreadyActive.key, "SCULK CATALYST IS ALREADY ACTIVE")
+        translationBuilder.add("matrix.magic.available_status.insufficient_mana", "Insufficient Mana")
+        translationBuilder.add("matrix.magic.available_status.channel_queue_full", "Queue Full")
+        translationBuilder.add("matrix.magic.available_status.channel_queue_locked", "Queue Locked")
+        translationBuilder.add("matrix.magic.available_status.target_missing", "Target Missing")
 
         translationBuilder.add(ArmorPenetrationEffect, "Armor Penetration")
         translationBuilder.add(ManaOverloadEffect, "Mana Overload")
@@ -340,6 +346,7 @@ Untraceable.
 
         translationBuilder.add("key.categories.matrix", "Matrix")
         translationBuilder.add("key.categories.matrix.key_category", "Matrix")
+        translationBuilder.add("key.category.matrix.key_category", "Matrix")
         translationBuilder.add("key.matrix.use_magic", "Channel magic")
         translationBuilder.add("key.matrix.next_magic", "Next magic")
         translationBuilder.add("key.matrix.previous_magic", "Previous magic")

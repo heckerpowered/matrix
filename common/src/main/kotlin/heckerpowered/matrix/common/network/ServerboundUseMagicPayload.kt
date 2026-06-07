@@ -9,6 +9,7 @@ import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.system.Magics
+import heckerpowered.matrix.common.persistent.isInfiniteMana
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.common.persistent.wizardHelmetStack
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
@@ -17,13 +18,17 @@ import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.world.entity.LivingEntity
-import java.util.*
+import java.util.UUID
+import java.util.WeakHashMap
 
 data class ServerboundUseMagicPayload(
     private val uuid: UUID,
     private val entityId: Int,
 ) : CustomPacketPayload {
     companion object {
+        private const val MIN_USE_INTERVAL_TICKS = 5
+        private val lastUseTickByPlayer = WeakHashMap<net.minecraft.server.level.ServerPlayer, Int>()
+
         val payloadId = Matrix.identifier("use_magic")
         val type = CustomPacketPayload.Type<ServerboundUseMagicPayload>(payloadId)
         val codec = StreamCodec.composite(
@@ -47,9 +52,16 @@ data class ServerboundUseMagicPayload(
 
         val wizardHelmetStack = player.wizardHelmetStack
         val magic = Magics[uuid] ?: return
-        if (player.wizardHelmet?.hasMagic(player, wizardHelmetStack, magic) != true) {
+        if (!player.isInfiniteMana && player.wizardHelmet?.hasMagic(player, wizardHelmetStack, magic) != true) {
             return
         }
+
+        val currentTick = player.tickCount
+        val lastUseTick = lastUseTickByPlayer[player]
+        if (lastUseTick != null && currentTick - lastUseTick < MIN_USE_INTERVAL_TICKS) {
+            return
+        }
+        lastUseTickByPlayer[player] = currentTick
 
         val invocation = MagicInvocation.fromEntity(player, targetedEntity)
         val result = ChannelExecutor.channel(magic, invocation)

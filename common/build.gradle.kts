@@ -77,10 +77,17 @@ sourceSets {
         java {
             setIncludes(
                 listOf(
+                    "heckerpowered/matrix/mixin/CameraMixin.java",
                     "heckerpowered/matrix/mixin/DamageSourceMixin.java",
+                    "heckerpowered/matrix/mixin/DeltaTrackerTimerMixin.java",
                     "heckerpowered/matrix/mixin/EntityMixin.java",
+                    "heckerpowered/matrix/mixin/GameRendererStandaloneMixin.java",
+                    "heckerpowered/matrix/mixin/KeyboardMixin.java",
                     "heckerpowered/matrix/mixin/LevelMixin.java",
                     "heckerpowered/matrix/mixin/LivingEntityMixin.java",
+                    "heckerpowered/matrix/mixin/MinecraftMixin.java",
+                    "heckerpowered/matrix/mixin/MinecraftServerMixin.java",
+                    "heckerpowered/matrix/mixin/MixinInGameHud.java",
                 )
             )
         }

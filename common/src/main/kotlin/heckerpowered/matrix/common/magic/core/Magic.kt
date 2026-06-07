@@ -17,6 +17,7 @@ import heckerpowered.matrix.common.magic.rule.effect.MagicCastPipeline
 import heckerpowered.matrix.common.magic.rule.effect.MagicChannelPipeline
 import heckerpowered.matrix.common.magic.rule.resource.CastingResourcePipeline
 import heckerpowered.matrix.common.persistent.queueSize
+import heckerpowered.matrix.core.isInfiniteMana
 import net.minecraft.core.Holder
 import net.minecraft.world.Difficulty
 import net.minecraft.world.effect.MobEffect
@@ -178,6 +179,9 @@ abstract class Magic(val definition: MagicDefinition) {
      * @return true if the required cost can be satisfied; false otherwise.
      */
     protected open fun checkMana(context: MagicCalculationContext): Boolean {
+        if (context.playerOrNull()?.isInfiniteMana == true) {
+            return true
+        }
         val requiredCost = getCost(context).mana
         val resourceSet = CastingResourcePipeline.collect(context)
         return resourceSet.canAfford(context, requiredCost)

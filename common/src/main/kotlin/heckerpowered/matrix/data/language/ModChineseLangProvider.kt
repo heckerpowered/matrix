@@ -189,6 +189,8 @@ class ModChineseLangProvider(
         translationBuilder.add(MatrixLanguage.overclockMana.key, "超频或降频法力")
         translationBuilder.add(MatrixLanguage.switchClock.key, "切换超频或降频")
         translationBuilder.add("matrix.hud.magic_list", "魔法选择")
+        translationBuilder.add("matrix.hud.selected_magic", "当前魔法")
+        translationBuilder.add("matrix.hud.target", "目标")
         translationBuilder.add(MatrixLanguage.systemCrashing.key, "即将发生系统崩溃")
 
         translationBuilder.add(MatrixLanguage.magicAvailable.key, "就绪")
@@ -199,6 +201,10 @@ class ModChineseLangProvider(
         translationBuilder.add(MatrixLanguage.magicTargetMissing.key, "目标缺失")
         translationBuilder.add(MatrixLanguage.magicTargetImmune.key, "目标免疫")
         translationBuilder.add(MatrixLanguage.magicSculkCatalystIsAlreadyActive.key, "幽匿催发已经激活")
+        translationBuilder.add("matrix.magic.available_status.insufficient_mana", "可用法力不足")
+        translationBuilder.add("matrix.magic.available_status.channel_queue_full", "队列已满")
+        translationBuilder.add("matrix.magic.available_status.channel_queue_locked", "队列已锁定")
+        translationBuilder.add("matrix.magic.available_status.target_missing", "目标缺失")
 
         translationBuilder.add(ArmorPenetrationEffect, "护甲穿透")
         translationBuilder.add(ManaOverloadEffect, "法力过载")
@@ -335,6 +341,7 @@ class ModChineseLangProvider(
 
         translationBuilder.add("key.categories.matrix", "Matrix")
         translationBuilder.add("key.categories.matrix.key_category", "Matrix")
+        translationBuilder.add("key.category.matrix.key_category", "Matrix")
         translationBuilder.add("key.matrix.use_magic", "引导魔法")
         translationBuilder.add("key.matrix.next_magic", "下一个魔法")
         translationBuilder.add("key.matrix.previous_magic", "上一个魔法")

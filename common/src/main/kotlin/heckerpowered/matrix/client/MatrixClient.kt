@@ -24,6 +24,8 @@ import heckerpowered.matrix.common.entity.FinderArrowEntity
 import heckerpowered.matrix.common.entity.MagicLightningBolt
 import heckerpowered.matrix.common.item.getMagics
 import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.system.Magics
+import heckerpowered.matrix.core.isInfiniteMana
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
 import org.joml.Matrix4f
@@ -83,7 +85,11 @@ class MatrixClient : ClientModInitializer {
 
         fun getPlayerMagics(): List<Magic> {
             val player = player ?: return lastNonEmptyMagicList ?: emptyList()
-            val magics = player.getMagics().toList()
+            val magics = if (MatrixHud.isInfiniteMana || player.isInfiniteMana) {
+                Magics.all.toList()
+            } else {
+                player.getMagics().toList()
+            }
             if (magics.isNotEmpty()) {
                 this.lastNonEmptyMagicList = magics
             }

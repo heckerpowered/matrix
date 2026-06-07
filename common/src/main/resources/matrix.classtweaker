@@ -3,8 +3,8 @@ classTweaker v1 official
 # ServerTimeRatio.kt
 accessible field net/minecraft/server/MinecraftServer waitingForNextTick Z
 accessible field net/minecraft/server/MinecraftServer nextTickTimeNanos J
+accessible field net/minecraft/server/MinecraftServer delayedTasksMaxNextTickTimeNanos J
 accessible field net/minecraft/world/TickRateManager nanosecondsPerTick J
-inject-interface net/minecraft/server/MinecraftServer heckerpowered/matrix/extension/MatrixMinecraftServer
 
 inject-interface net/minecraft/world/entity/LivingEntity heckerpowered/matrix/extension/MatrixLivingEntity
 inject-interface net/minecraft/world/level/Level heckerpowered/matrix/extension/MatrixLevel

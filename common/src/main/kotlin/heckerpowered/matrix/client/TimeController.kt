@@ -12,8 +12,13 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
 object TimeController {
+    private const val WARP_HEARTBEAT_NANOS = 500_000_000L
+    private const val STANDALONE_TICK_MILLIS = 50.0F
+
     private val timeControllers = mutableSetOf<SimpleDoubleAnimation>()
-    private var previousMinScale = .0
+    private var previousMinScale = 1.0
+    private var clientTimeScale = 1.0
+    private var lastWarpSyncNanos = 0L
 
     private var lastFrameTime = Duration.ZERO
     var deltaTime = Duration.ZERO
@@ -29,17 +34,57 @@ object TimeController {
     }
 
     class StandaloneRenderTickCounter {
-        fun beginRenderTick(timeMillis: Long, tick: Boolean): Int = if (tick) 1 else 0
-        fun tick(paused: Boolean) = Unit
-        fun setTickFrozen(frozen: Boolean) = Unit
-        fun getTickDelta(tick: Boolean): Float = 1.0F
+        private var deltaTicks = .0F
+        private var deltaTickResidual = .0F
+        private var pausedDeltaTickResidual = .0F
+        private var lastMillis = 0L
+        private var paused = false
+        private var frozen = false
+
+        fun beginRenderTick(timeMillis: Long, tick: Boolean): Int {
+            if (!tick) {
+                return 0
+            }
+            if (lastMillis == 0L) {
+                lastMillis = timeMillis
+                return 0
+            }
+
+            val elapsedMillis = (timeMillis - lastMillis).coerceAtLeast(0L)
+            lastMillis = timeMillis
+            deltaTicks = elapsedMillis / STANDALONE_TICK_MILLIS
+            deltaTickResidual += deltaTicks
+            val ticks = deltaTickResidual.toInt()
+            deltaTickResidual -= ticks.toFloat()
+            return ticks
+        }
+
+        fun tick(paused: Boolean) {
+            if (paused && !this.paused) {
+                pausedDeltaTickResidual = deltaTickResidual
+            } else if (!paused && this.paused) {
+                deltaTickResidual = pausedDeltaTickResidual
+            }
+            this.paused = paused
+        }
+
+        fun setTickFrozen(frozen: Boolean) {
+            this.frozen = frozen
+        }
+
+        fun getTickDelta(tick: Boolean): Float {
+            if (!tick && frozen) {
+                return 1.0F
+            }
+            return if (paused) pausedDeltaTickResidual else deltaTickResidual
+        }
     }
 
     @JvmField
     var standaloneRenderTickCounter = StandaloneRenderTickCounter()
 
     val isTimeScaled: Boolean
-        get() = previousMinScale != 1.0
+        get() = clientTimeScale < 0.999 || previousMinScale != 1.0
 
     @JvmStatic
     var playerImmuneTimeScale: Boolean = false
@@ -53,13 +98,37 @@ object TimeController {
     private var previousPlayerStandaloneTickState = false
 
     private fun setTimeScale(timeScale: Double) {
+        if (minecraft.connection == null) {
+            return
+        }
         ClientPlayNetworking.send(ServerboundWarpPayload(timeScale, playerStandaloneRenderTick))
+        lastWarpSyncNanos = System.nanoTime()
     }
 
     private fun setClientTimeScale(timeScale: Double) {
+        clientTimeScale = timeScale.coerceIn(0.01, 1.0)
     }
 
     fun setPlayerStandaloneTimeScale(timeScale: Double) {
+        setClientTimeScale(timeScale)
+    }
+
+    @JvmStatic
+    fun getClientGameTimeScale(): Float {
+        return clientTimeScale.coerceIn(0.01, 1.0).toFloat()
+    }
+
+    @JvmStatic
+    fun shouldScaleClientGameTime(): Boolean {
+        return getClientGameTimeScale() < 0.999F
+    }
+
+    @JvmStatic
+    fun scaleClientGameDelta(delta: Float): Float {
+        if (clientTimeScale >= 0.999) {
+            return delta
+        }
+        return (delta * clientTimeScale.toFloat()).coerceAtLeast(0.0F)
     }
 
     @JvmStatic
@@ -68,12 +137,24 @@ object TimeController {
             deltaTime = System.nanoTime().nanoseconds - lastFrameTime
         }
         lastFrameTime = System.nanoTime().nanoseconds
-        standaloneRenderTickCounter.beginRenderTick(timeMillis, tick)
+        val standaloneTicks = standaloneRenderTickCounter.beginRenderTick(timeMillis, tick)
+        val level = minecraft.level ?: return
+        val player = minecraft.player ?: return
+        if (!playerStandaloneRenderTick || minecraft.isPaused || standaloneTicks <= 0) {
+            return
+        }
+
+        repeat(standaloneTicks.coerceAtMost(10)) {
+            level.tickNonPassenger(player)
+            minecraft.gameRenderer.tick()
+        }
     }
 
     fun onRenderTick() {
         val minScale = timeControllers.minOf { it.value }
-        if (minScale != previousMinScale || previousPlayerStandaloneTickState != playerStandaloneRenderTick) {
+        val now = System.nanoTime()
+        val shouldRefreshWarp = minScale < 1.0 && now - lastWarpSyncNanos >= WARP_HEARTBEAT_NANOS
+        if (minScale != previousMinScale || previousPlayerStandaloneTickState != playerStandaloneRenderTick || shouldRefreshWarp) {
             setTimeScale(minScale)
         }
 

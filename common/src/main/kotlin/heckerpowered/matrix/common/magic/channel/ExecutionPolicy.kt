@@ -48,7 +48,7 @@ open class ExecutionPolicy(
         if (bypassLock) {
             ignoredStatuses += MagicAvailableStatus.ChannelQueueLocked
         }
-        if (costMana) {
+        if (!costMana) {
             ignoredStatuses += MagicAvailableStatus.InsufficientMana
         }
         return ignoredStatuses
