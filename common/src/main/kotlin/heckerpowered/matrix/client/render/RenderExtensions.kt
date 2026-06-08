@@ -7,13 +7,13 @@ package heckerpowered.matrix.client.render
 
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
+import net.minecraft.client.Screenshot
 import net.minecraft.client.gl.Framebuffer
 import org.joml.Vector4f
 import org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT
-import org.lwjgl.opengl.GL11.GL_LINEAR
-import org.lwjgl.opengl.GL11.GL_NEAREST
 import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
 import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
+import java.io.File
 
 var colorMultiplier = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
 private val colorFusionShader by lazy {
@@ -139,6 +139,13 @@ fun Framebuffer.dump(levelOfDetail: Int = 0, generateMipmap: Boolean = true) {
 }
 
 fun Framebuffer.dump(name: String, levelOfDetail: Int = 0, generateMipmap: Boolean = true) {
+    Screenshot.takeScreenshot(renderTarget) { nativeImage ->
+        val file = File("screenshots")
+        file.mkdir()
+
+        val filename = "framebuffer_dump_${name}.png"
+        nativeImage.writeToFile(File(file, filename))
+    }
 }
 
 /**

@@ -4,7 +4,7 @@ in vec2 fragTexCoord;
 
 uniform sampler2D framebuffer;
 
-layout(std140) uniform MatrixPostUniforms {
+layout (std140) uniform MatrixPostUniforms {
     vec4 MatrixPostData0;
     vec4 MatrixPostData1;
     vec4 MatrixPostData2;

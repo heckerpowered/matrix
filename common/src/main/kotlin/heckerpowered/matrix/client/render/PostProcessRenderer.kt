@@ -9,15 +9,16 @@ import com.mojang.blaze3d.pipeline.RenderPipeline
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.textures.FilterMode
 import com.mojang.blaze3d.textures.GpuTextureView
+import heckerpowered.matrix.client.MatrixHud
 import heckerpowered.matrix.client.event.PostProcessCallback
+import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.UniformProvider
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.gl.SimpleFramebuffer
 import net.minecraft.client.renderer.RenderPipelines
-import java.util.OptionalDouble
-import java.util.OptionalInt
+import java.util.*
 
 val framebufferProvider: UniformProvider
     get() = PostProcessRenderer.framebufferProvider
@@ -62,7 +63,9 @@ object PostProcessRenderer {
     }
 
     fun createManagedFramebuffer(): Framebuffer {
-        val framebuffer = SimpleFramebuffer(1, 1, true, false)
+        val width = minecraft.window.width
+        val height = minecraft.window.height
+        val framebuffer = SimpleFramebuffer(width, height, useDepth = true, getError = false)
         framebuffer.setClearColor(.0F, .0F, .0F, .0F)
         managedFramebuffers.add(framebuffer)
         return framebuffer
@@ -141,23 +144,20 @@ object PostProcessRenderer {
     }
 
     @JvmStatic
+
     fun renderShaderToFramebuffer(shader: BlitProgram, framebuffer: Framebuffer, disableBlend: Boolean = true) {
         renderShader(shader, boundFramebuffer, framebuffer)
         boundFramebuffer = framebuffer
     }
 
     @JvmStatic
-    fun renderShaderToFramebuffer(
-        shader: BlitProgram,
-        sourceFramebuffer: Framebuffer,
-        framebuffer: Framebuffer,
-        disableBlend: Boolean = true,
-    ) {
+    fun renderShaderToFramebuffer(shader: BlitProgram, sourceFramebuffer: Framebuffer, framebuffer: Framebuffer, disableBlend: Boolean = true) {
         renderShader(shader, sourceFramebuffer, framebuffer)
         boundFramebuffer = framebuffer
     }
 
     @JvmStatic
+
     fun renderShaderToFramebuffer(
         shader: BlitProgram,
         framebuffer: Framebuffer,
@@ -171,12 +171,29 @@ object PostProcessRenderer {
     @JvmStatic
     fun renderShaders(shaders: Collection<BlitProgram>): Framebuffer {
         resetFramebuffers()
-        var inputFramebuffer = sourceFramebuffer
+        // Keep external framebuffers out of the post-process chain.
+        // The chain must run on internal ping-pong framebuffers:
+        //
+        // sourceFramebuffer -> ping
+        // ping -> pong
+        // pong -> ping
+        // ping -> pong ...
+        //
+        // Sampling from the same color attachment currently being rendered to is
+        // undefined behavior and can cause partially stale or unprocessed output.
+        copyFramebuffer(sourceFramebuffer, currentFramebuffer())
+        var inputFramebuffer = currentFramebuffer()
         for (shader in shaders) {
-            val outputFramebuffer = currentFramebuffer()
-            renderShader(shader, inputFramebuffer, outputFramebuffer)
-            inputFramebuffer = outputFramebuffer
             nextFramebuffer()
+            val outputFramebuffer = currentFramebuffer()
+            requireDifferentFramebuffers(inputFramebuffer, outputFramebuffer)
+            renderShader(shader, inputFramebuffer, outputFramebuffer)
+            if (MatrixHud.takeScreenShot) {
+                MatrixHud.takeScreenShot = false
+                inputFramebuffer.dump("input")
+                outputFramebuffer.dump("output")
+            }
+            inputFramebuffer = outputFramebuffer
         }
         boundFramebuffer = inputFramebuffer
         return inputFramebuffer
@@ -188,9 +205,29 @@ object PostProcessRenderer {
         copyFramebuffer(renderedFramebuffer, framebuffer)
     }
 
+
     @JvmStatic
-    fun copyFramebuffer(from: Framebuffer, to: Framebuffer, disableBlend: Boolean = true, copyDepth: Boolean = false) {
-        blitFramebuffer(from, to, RenderPipelines.ENTITY_OUTLINE_BLIT, mapOf("InSampler" to from.colorTextureView))
+    fun copyFramebuffer(
+        from: Framebuffer,
+        to: Framebuffer,
+        disableBlend: Boolean = true,
+        copyDepth: Boolean = false,
+    ) {
+        requireDifferentFramebuffers(from, to)
+        RenderSystem.getDevice().createCommandEncoder()
+            .copyTextureToTexture(
+                from.colorTexture, to.colorTexture,
+                0, 0, 0, 0, 0,
+                to.textureWidth.coerceAtMost(from.textureWidth),
+                to.textureHeight.coerceAtMost(from.textureHeight),
+            )
+        // blitFramebuffer(
+        //     from,
+        //     to,
+        //     RenderPipelines.ENTITY_OUTLINE_BLIT,
+        //     mapOf("InSampler" to from.colorTextureView)
+        // )
+
         if (copyDepth) {
             copyDepthTexture(from, to)
         }
@@ -218,12 +255,18 @@ object PostProcessRenderer {
     }
 
     private fun renderShader(shader: BlitProgram, input: Framebuffer, output: Framebuffer) {
+        requireDifferentFramebuffers(input, output)
         val pass = shader.fragmentResourcePath()
             ?.toMatrixFragmentId()
             ?.let(::compiledSingleInputPass)
-
         if (pass == null) {
-            blitFramebuffer(input, output, RenderPipelines.ENTITY_OUTLINE_BLIT, mapOf("InSampler" to input.colorTextureView))
+            blitFramebuffer(
+                input,
+                output,
+                RenderPipelines.ENTITY_OUTLINE_BLIT,
+                mapOf("InSampler" to input.colorTextureView)
+            )
+
             return
         }
 
@@ -231,17 +274,27 @@ object PostProcessRenderer {
         blitFramebuffer(input, output, pass.pipeline, textureBindings, pass)
     }
 
-    private fun renderShader(shader: BlitProgram, output: Framebuffer, textureBindings: Map<String, Framebuffer>) {
+    private fun renderShader(
+        shader: BlitProgram,
+        output: Framebuffer,
+        textureBindings: Map<String, Framebuffer>,
+    ) {
+        requireNoReadWriteAlias(output, textureBindings)
         val fragmentShader = shader.fragmentResourcePath()?.toMatrixFragmentId()
         val pass = fragmentShader?.let(::compiledPostPass)
-
         if (pass == null || !pass.samplers.all(textureBindings::containsKey)) {
             val fallbackInput = textureBindings.values.firstOrNull() ?: boundFramebuffer
-            blitFramebuffer(fallbackInput, output, RenderPipelines.ENTITY_OUTLINE_BLIT, mapOf("InSampler" to fallbackInput.colorTextureView))
+            requireDifferentFramebuffers(fallbackInput, output)
+            blitFramebuffer(
+                fallbackInput,
+                output,
+                RenderPipelines.ENTITY_OUTLINE_BLIT,
+                mapOf("InSampler" to fallbackInput.colorTextureView)
+            )
             return
         }
-
         val firstInput = textureBindings.values.firstOrNull() ?: boundFramebuffer
+        requireDifferentFramebuffers(firstInput, output)
         val textureViews = pass.samplers.associateWith { sampler ->
             val framebuffer = textureBindings.getValue(sampler)
             if (sampler.equals("depthAttachment", ignoreCase = true)) {
@@ -330,5 +383,42 @@ object PostProcessRenderer {
             .removeSuffix(".fsh")
             .removeSuffix(".frag")
         return normalized.takeIf { it.startsWith("post/") }
+    }
+
+    private fun requireDifferentFramebuffers(input: Framebuffer, output: Framebuffer) {
+        check(input !== output) {
+            "Post-process pass cannot read and write the same framebuffer: input=$input, output=$output"
+        }
+        val inputColorTexture = input.colorTexture
+        val outputColorTexture = output.colorTexture
+        check(inputColorTexture !== outputColorTexture) {
+            "Post-process pass cannot read and write the same color texture: input=$input, output=$output"
+        }
+        val inputColorView = input.colorTextureView
+        val outputColorView = output.colorTextureView
+        check(inputColorView !== outputColorView) {
+            "Post-process pass cannot read and write the same color texture view: input=$input, output=$output"
+        }
+    }
+
+    private fun requireNoReadWriteAlias(
+        output: Framebuffer,
+        textureBindings: Map<String, Framebuffer>,
+    ) {
+        for ((sampler, input) in textureBindings) {
+            check(input !== output) {
+                "Post-process pass cannot read and write the same framebuffer: sampler=$sampler, framebuffer=$output"
+            }
+            val inputColorTexture = input.colorTexture
+            val outputColorTexture = output.colorTexture
+            check(inputColorTexture !== outputColorTexture) {
+                "Post-process pass cannot read and write the same color texture: sampler=$sampler, input=$input, output=$output"
+            }
+            val inputColorView = input.colorTextureView
+            val outputColorView = output.colorTextureView
+            check(inputColorView !== outputColorView) {
+                "Post-process pass cannot read and write the same color texture view: sampler=$sampler, input=$input, output=$output"
+            }
+        }
     }
 }

@@ -30,10 +30,9 @@ import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChann
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.Magic
-import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.MagicAvailability
+import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
-import heckerpowered.matrix.common.magic.core.description
 import heckerpowered.matrix.common.magic.system.Magics
 import heckerpowered.matrix.common.network.ServerboundActivateBloodPactPayload
 import heckerpowered.matrix.common.network.ServerboundBorrowedTimePayload
@@ -55,8 +54,8 @@ import net.minecraft.network.chat.Component
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.util.ARGB
-import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart
 import net.minecraft.world.entity.projectile.ProjectileUtil
@@ -467,7 +466,7 @@ object MatrixHud {
         if (!screenOpen && key == GLFW.GLFW_KEY_E && action != GLFW.GLFW_RELEASE) {
             val player = minecraft.player ?: return false
             val tabPressed = magicListKeyDown ||
-                GLFW.glfwGetKey(minecraft.window.handle(), GLFW.GLFW_KEY_TAB) == GLFW.GLFW_PRESS
+                    GLFW.glfwGetKey(minecraft.window.handle(), GLFW.GLFW_KEY_TAB) == GLFW.GLFW_PRESS
             if (tabPressed && player.getItemBySlot(EquipmentSlot.CHEST).item is LightningChestplate1) {
                 ClientPlayNetworking.send(ServerboundBorrowedTimePayload)
                 return true
@@ -654,6 +653,8 @@ object MatrixHud {
         AimAssist.resetAnimation()
     }
 
+    var takeScreenShot = false
+
     private fun onHudHide() {
         magicShownAnimation.value = -50.0
         magicShownOpacityAnimation.value = .0
@@ -666,6 +667,8 @@ object MatrixHud {
         entityDescriptionOpacityAnimation.value = .0
         descriptionYOffsetAnimation.value = -35.0
         fovAnimation.value = 1.0
+
+        takeScreenShot = true
     }
 
     private fun updateTargeting(tickDelta: Float, viewportWidth: Int, viewportHeight: Int, hudActive: Boolean) {
@@ -755,10 +758,10 @@ object MatrixHud {
         val basePredicate = { entity: Entity ->
             val target = entity.asLivingTarget()
             entity !== cameraEntity &&
-                !entity.isSpectator &&
-                target != null &&
-                target.isAlive &&
-                canChannelMagicOn(target, magic)
+                    !entity.isSpectator &&
+                    target != null &&
+                    target.isAlive &&
+                    canChannelMagicOn(target, magic)
         }
 
         return ProjectileUtil.getEntityHitResult(cameraEntity, min, max, box, basePredicate, range)?.entity
@@ -1488,9 +1491,9 @@ object MatrixHud {
     private fun shouldRenderMagicList(): Boolean {
         val player = minecraft.player ?: return false
         return player.isWizard &&
-            minecraft.gui.screen() == null &&
-            currentMagicList().isNotEmpty() &&
-            magicListKeyDown
+                minecraft.gui.screen() == null &&
+                currentMagicList().isNotEmpty() &&
+                magicListKeyDown
     }
 
     private fun hasHudContext(): Boolean {
