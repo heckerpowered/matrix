@@ -29,6 +29,7 @@ object TeleportMagic : Magic(
         val caster = invocation.caster.entityOrNull() ?: return
         val target = invocation.target
 
+        caster.teleportTo(target.x, target.y, target.z)
         caster.snapTo(target.x, target.y, target.z)
 
         target.getOtherEntities(6.0)

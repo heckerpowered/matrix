@@ -688,7 +688,7 @@ object MatrixHud {
         descriptionYOffsetAnimation.value = -35.0
         fovAnimation.value = 1.0
 
-        takeScreenShot = true
+        // takeScreenShot = true
         manaBar.onHudVisibilityChanged(false)
     }
 
