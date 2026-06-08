@@ -54,6 +54,7 @@ class ClientboundSyncManaPayload(
                 MatrixHud.mana += mana - currentMana
             }
             MatrixHud.onRemoteManaUpdate()
+            println("Sync mana to $currentMana")
 
             val player = context.player()
             (player.wizardHelmetStack.item as? WizardHelmet)?.onManaChanged(player, previousMana, mana)

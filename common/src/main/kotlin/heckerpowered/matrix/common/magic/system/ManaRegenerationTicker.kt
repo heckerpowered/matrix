@@ -7,12 +7,12 @@ package heckerpowered.matrix.common.magic.system
 
 import heckerpowered.ledger.account.coerceTransferUnits
 import heckerpowered.ledger.account.incomingRemainingUnits
+import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.rule.calculation.pipeline.CalculationPipeline
 import heckerpowered.matrix.common.magic.rule.calculation.sink.ManaRegenerationCalculationSink
 import heckerpowered.matrix.common.magic.system.ManaLedger.toLedgerUnits
-import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.network.ClientboundSyncManaPayload
 import heckerpowered.matrix.core.isInfiniteMana
 import heckerpowered.matrix.core.mana
@@ -28,6 +28,9 @@ object ManaRegenerationTicker {
     }
 
     private fun onServerTick(minecraftServer: MinecraftServer) {
+        for (player in minecraftServer.playerList.players) {
+            syncMana(player)
+        }
         if (minecraftServer.tickCount % 20 != 0) return
 
         for (player in minecraftServer.playerList.players) {

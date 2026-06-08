@@ -15,6 +15,7 @@ import heckerpowered.matrix.client.event.MouseButtonEvent
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
+import heckerpowered.matrix.client.ui.element.ManaBar
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
@@ -77,9 +78,25 @@ object MatrixHud {
     private const val MAGIC_HUD_TIME_SCALE = 0.01
     private const val BORROWED_TIME_SCALE = 0.15
 
-    var mana = .0
-    var maxMana = .0
-    var manaUsage = .0
+    var mana
+        get() = manaBar.mana.value
+        set(value) {
+            manaBar.mana.value = value.coerceIn(0.0..maxMana)
+        }
+
+    var maxMana
+        get() = manaBar.maxMana.value.coerceAtLeast(
+            .0
+        )
+        set(value) {
+            manaBar.maxMana.value = value
+        }
+
+    var manaUsage
+        get() = manaBar.manaUsage.value
+        set(value) {
+            manaBar.manaUsage.value = value
+        }
     var isInfiniteMana = false
 
     var renderHud = true
@@ -347,6 +364,7 @@ object MatrixHud {
     @JvmStatic
     fun onRemoteManaUpdate() {
         manaUsage = manaUsage.coerceAtMost(mana)
+        manaBar.onRemoteManaUpdate()
     }
 
     @JvmStatic
@@ -651,6 +669,8 @@ object MatrixHud {
         entityDescriptionOpacityAnimation.value = if (targetedEntity != null) 1.0 else .0
         descriptionYOffsetAnimation.value = if (targetedEntity != null) .0 else -35.0
         AimAssist.resetAnimation()
+
+        manaBar.onHudVisibilityChanged(true)
     }
 
     var takeScreenShot = false
@@ -669,6 +689,7 @@ object MatrixHud {
         fovAnimation.value = 1.0
 
         takeScreenShot = true
+        manaBar.onHudVisibilityChanged(false)
     }
 
     private fun updateTargeting(tickDelta: Float, viewportWidth: Int, viewportHeight: Int, hudActive: Boolean) {
@@ -767,59 +788,23 @@ object MatrixHud {
         return ProjectileUtil.getEntityHitResult(cameraEntity, min, max, box, basePredicate, range)?.entity
     }
 
+    private val manaBar = ManaBar()
     private fun renderLegacyManaBar(drawContext: GuiGraphicsExtractor) {
-        val width = drawContext.guiWidth()
         val player = minecraft.player
         val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
-        val currentMagicCost = selectedMagicOrNull()?.let { runCatching { it.getCost(calculationContext) }.getOrDefault(it.getNormalCost()) } ?: 0L
+        val currentMagicCost = selectedMagicOrNull()
+            ?.let { magic ->
+                runCatching { magic.getCost(calculationContext) }
+                    .getOrDefault(magic.getNormalCost())
+            }
+            ?: 0L
 
-        manaValueAnimation.value = mana.coerceAtLeast(.0)
-        maxManaValueAnimation.value = maxMana.coerceAtLeast(.0)
-        manaUsageAnimation.value = manaUsage.coerceAtLeast(.0)
-        manaCostAnimation.value = currentMagicCost.toDouble()
+        manaBar.maxMana.value = maxMana.coerceAtLeast(.0)
+        manaBar.mana.value = mana.coerceAtLeast(.0)
+        manaBar.manaUsage.value = manaUsage.coerceAtLeast(.0)
+        manaBar.manaCost.value = currentMagicCost.toDouble().coerceAtLeast(.0)
 
-        val opacity = manaOpacityAnimation.animatedValue
-        if (opacity <= 0.001) {
-            return
-        }
-
-        val maxManaValue = maxManaValueAnimation.animatedValue.coerceAtLeast(.0)
-        val visibleMana = manaValueAnimation.animatedValue.coerceAtLeast(.0)
-        val usage = manaUsageAnimation.animatedValue.coerceAtLeast(.0)
-        val manaPercentage = if (visibleMana.isInfinite() || maxManaValue <= .0) {
-            if (visibleMana.isInfinite()) 1.0 else .0
-        } else {
-            (visibleMana / maxManaValue).coerceIn(.0, 1.0)
-        }
-
-        val left = 50
-        val right = width - 50
-        val top = (10.0 + manaShownAnimation.animatedValue).roundToInt()
-        val bottom = (25.0 + manaShownAnimation.animatedValue).roundToInt()
-        val fillRight = lerp(manaPercentage, left.toDouble(), right.toDouble()).roundToInt()
-
-        drawContext.fill(left, top, fillRight, bottom, color((opacity * 64).roundToInt(), 25, 128, 255))
-
-        if (maxManaValue > .0) {
-            val usageWidth = usage / maxManaValue * (right - left)
-            val usageLeft = (fillRight - usageWidth).roundToInt().coerceAtLeast(left)
-            drawContext.fill(usageLeft, top, fillRight, bottom, color((opacity * 128).roundToInt(), 255, 25, 25))
-
-            val costWidth = manaCostAnimation.animatedValue / maxManaValue * (right - left)
-            val costLeft = (usageLeft - costWidth).roundToInt().coerceAtLeast(left)
-            drawContext.fill(costLeft, bottom, usageLeft, bottom + 3, color((opacity * 128).roundToInt(), 128, 25, 25))
-        }
-
-        val currentMana = ((visibleMana * 10).toLong() - (usage * 10).toLong()) / 10.0
-        val maxManaText = (maxManaValue * 10).toLong() / 10.0
-        val manaText = "${MatrixLanguage.mana.string} = ${formatDecimal(currentMana)}/${formatDecimal(maxManaText)}"
-        drawContext.text(
-            minecraft.font,
-            manaText,
-            55,
-            (12.5 + manaShownAnimation.animatedValue).roundToInt(),
-            color((opacity * 255).roundToInt(), 255, 255, 255),
-        )
+        manaBar.render(drawContext)
     }
 
     fun targetGuideChain(): List<LivingEntity> {
