@@ -9,5 +9,5 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object LapisLazuliLeggingsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.lapisLazuli, ArmorType.LEGGINGS)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.lapisLazuliLeggings).humanoidArmor(ModArmorMaterials.lapisLazuli, ArmorType.LEGGINGS)
 )

@@ -10,5 +10,5 @@ import net.minecraft.world.item.HoeItem
 object EmeraldHoeItem : HoeItem(
     ModToolMaterials.emerald,
     -3.5F, 0.0F,
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.emeraldHoe)
 )

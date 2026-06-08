@@ -24,3 +24,7 @@ fun Entity.damage(amount: Float, damageSource: DamageSource): Boolean {
     invulnerableTime = previous
     return result
 }
+
+fun Entity.damage(damageSource: DamageSource, amount: Float): Boolean {
+    return damage(amount, damageSource)
+}

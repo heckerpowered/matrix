@@ -17,6 +17,9 @@ htmlReport/
 *.ipr
 *.iws
 
+# vs
+/.vs
+
 # vscode
 
 .settings/
@@ -43,3 +46,4 @@ replay_*.log
 
 # kotlin
 .kotlin/
+

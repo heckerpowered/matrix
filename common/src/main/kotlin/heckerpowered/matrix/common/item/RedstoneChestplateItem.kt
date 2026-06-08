@@ -24,7 +24,7 @@ import java.util.function.Consumer
 import kotlin.math.ceil
 
 object RedstoneChestplateItem : Item(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstoneChestplate)
         .humanoidArmor(ModArmorMaterials.redstone, ArmorType.CHESTPLATE)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)

@@ -128,17 +128,19 @@ fun <T : Entity> Iterable<T>.withinDistance(origin: Entity, maxDistance: Double)
 fun Level.getEntities(searchBox: AABB): Sequence<Entity> = sequence {
     val entityGetter = entityGetter
     if (entityGetter !is LevelEntityGetterAdapter<*>) {
-        yieldAll(getEntities(null, searchBox) { true })
+        yieldAll(getEntities(null, searchBox) { true }.toList())
         return@sequence
     }
 
     val entities = entityGetter.sectionStorage
         .getEntities(searchBox)
         .mapNotNull { it as? Entity }
+        .toList()
 
     val dragonParts = dragonParts()
         .asSequence()
         .filter { searchBox.intersects(it.boundingBox) }
+        .toList()
 
     yieldAll(entities)
     yieldAll(dragonParts)
@@ -171,6 +173,7 @@ fun <T : EntityAccess> EntitySectionStorage<T>.getAccessibleNonEmptySections(
 
         val sections = sectionIds
             .subSet(minSectionKey, maxSectionKey + 1L)
+            .toList()
             .asSequence()
             .filter { sectionKey ->
                 val sectionY = SectionPos.y(sectionKey)
@@ -185,4 +188,4 @@ fun <T : EntityAccess> EntitySectionStorage<T>.getAccessibleNonEmptySections(
 }
 
 fun <T : EntityAccess> EntitySection<T>.getEntities(searchBox: AABB): Sequence<T> =
-    storage.asSequence().filter { it.boundingBox.intersects(searchBox) }
+    storage.toList().asSequence().filter { it.boundingBox.intersects(searchBox) }

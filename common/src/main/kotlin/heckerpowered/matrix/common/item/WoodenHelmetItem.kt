@@ -9,6 +9,6 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object WoodenHelmetItem : Item(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.woodenHelmet)
         .humanoidArmor(ModArmorMaterials.wooden, ArmorType.HELMET)
 )

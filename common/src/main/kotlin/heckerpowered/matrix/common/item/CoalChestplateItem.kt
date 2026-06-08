@@ -9,5 +9,5 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object CoalChestplateItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.coal, ArmorType.CHESTPLATE)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.coalChestplate).humanoidArmor(ModArmorMaterials.coal, ArmorType.CHESTPLATE)
 )

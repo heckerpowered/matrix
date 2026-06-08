@@ -12,6 +12,7 @@ import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.rule.calculation.pipeline.CalculationPipeline
 import heckerpowered.matrix.common.magic.rule.calculation.sink.ManaRegenerationCalculationSink
 import heckerpowered.matrix.common.magic.system.ManaLedger.toLedgerUnits
+import heckerpowered.matrix.common.item.WizardHelmet
 import heckerpowered.matrix.common.network.ClientboundSyncManaPayload
 import heckerpowered.matrix.core.isInfiniteMana
 import heckerpowered.matrix.core.mana
@@ -30,6 +31,7 @@ object ManaRegenerationTicker {
         if (minecraftServer.tickCount % 20 != 0) return
 
         for (player in minecraftServer.playerList.players) {
+            WizardHelmet.syncManaBounds(player)
             regenerateMana(player)
             syncMana(player)
         }
@@ -39,6 +41,7 @@ object ManaRegenerationTicker {
         val account = ManaLedger.account(player)
         if (player.isInfiniteMana) {
             val maximum = account.incomingRemainingUnits() ?: return
+            if (maximum <= 0L) return
             ManaLedger.Authority.postTransfer(account, maximum)
             return
         }
@@ -48,10 +51,10 @@ object ManaRegenerationTicker {
         CalculationPipeline.apply(context, sink)
 
         val regenerationAmount = (sink.regeneration * sink.multiplier).mana.toLedgerUnits()
-        ManaLedger.Authority.postTransfer(
-            account,
-            regenerationAmount.coerceTransferUnits(ManaLedger.Authority, account)
-        )
+        val transferAmount = regenerationAmount.coerceTransferUnits(ManaLedger.Authority, account)
+        if (transferAmount <= 0L) return
+
+        ManaLedger.Authority.postTransfer(account, transferAmount)
     }
 
     private fun syncMana(player: ServerPlayer) {
@@ -60,6 +63,7 @@ object ManaRegenerationTicker {
             ClientboundSyncManaPayload(
                 player.mana.toDouble(),
                 player.maxMana.toDouble(),
+                player.isInfiniteMana,
             ),
         )
     }

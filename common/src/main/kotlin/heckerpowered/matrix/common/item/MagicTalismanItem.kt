@@ -14,7 +14,7 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.Rarity
 
 object MagicTalismanItem : Item(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.magicTalisman)
         .fireResistant()
         .stacksTo(1)
         .rarity(Rarity.EPIC)

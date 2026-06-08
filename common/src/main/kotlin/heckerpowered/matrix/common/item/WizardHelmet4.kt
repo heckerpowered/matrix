@@ -19,7 +19,7 @@ import net.minecraft.world.item.Rarity
  * Wizard Helmet 4 'Might and Method'
  */
 object WizardHelmet4 : WizardHelmet(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.wizardHelmet4)
         .rarity(Rarity.RARE)
         .maxMana(11.0)
         .maxLoad(120.0)

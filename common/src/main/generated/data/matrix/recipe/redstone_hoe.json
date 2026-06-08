@@ -3,12 +3,8 @@
   "category": "equipment",
   "group": "matrix_redstone_suit",
   "key": {
-    "#": {
-      "item": "minecraft:redstone_block"
-    },
-    "|": {
-      "item": "minecraft:stick"
-    }
+    "#": "minecraft:redstone_block",
+    "|": "minecraft:stick"
   },
   "pattern": [
     "## ",
@@ -16,7 +12,6 @@
     " | "
   ],
   "result": {
-    "count": 1,
     "id": "matrix:redstone_hoe"
   }
 }

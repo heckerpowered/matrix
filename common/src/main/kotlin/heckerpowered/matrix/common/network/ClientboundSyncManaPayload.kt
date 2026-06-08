@@ -17,6 +17,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 class ClientboundSyncManaPayload(
     private val mana: Double,
     private val maxMana: Double,
+    private val infiniteMana: Boolean,
 ) : CustomPacketPayload {
     companion object {
         val payloadId = Matrix.identifier("sync_mana")
@@ -24,6 +25,7 @@ class ClientboundSyncManaPayload(
         val codec = StreamCodec.composite(
             ByteBufCodecs.DOUBLE, ClientboundSyncManaPayload::mana,
             ByteBufCodecs.DOUBLE, ClientboundSyncManaPayload::maxMana,
+            ByteBufCodecs.BOOL, ClientboundSyncManaPayload::infiniteMana,
             ::ClientboundSyncManaPayload
         )
     }
@@ -39,6 +41,7 @@ class ClientboundSyncManaPayload(
         context.client().execute {
             val previousMana = MatrixHud.mana
             MatrixHud.maxMana = maxMana
+            MatrixHud.isInfiniteMana = infiniteMana
             if (mana.isInfinite()) {
                 MatrixHud.mana = mana
                 return@execute

@@ -10,5 +10,5 @@ import net.minecraft.world.item.HoeItem
 object LapisLazuliHoeItem : HoeItem(
     ModToolMaterials.lapisLazuli,
     -2.0F, -1.0F,
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.lapisLazuliHoe)
 )

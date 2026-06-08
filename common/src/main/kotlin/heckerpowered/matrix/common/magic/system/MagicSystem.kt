@@ -13,9 +13,12 @@ import net.minecraft.world.entity.LivingEntity
 
 object MagicSystem {
     fun onInitialize() {
+        Magics.onInitialize()
         ChannelQueuePersistenceRule.onInitialize()
+        ManaPersistenceRule.onInitialize()
         ChannelQueueTicker.onInitialize()
         ManaRegenerationTicker.onInitialize()
+        PlayerOverclockState.onInitialize()
     }
 
     @JvmStatic

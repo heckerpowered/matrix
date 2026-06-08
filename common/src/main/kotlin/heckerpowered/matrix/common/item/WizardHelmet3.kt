@@ -19,7 +19,7 @@ import net.minecraft.world.item.Rarity
  * Wizard Helmet 3 'Blood-forged Ruin'
  */
 object WizardHelmet3 : WizardHelmet(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.wizardHelmet3)
         .rarity(Rarity.UNCOMMON)
         .maxMana(10.0)
         .maxLoad(200.0)

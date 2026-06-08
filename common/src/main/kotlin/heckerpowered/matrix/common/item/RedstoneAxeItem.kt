@@ -24,7 +24,7 @@ import java.util.function.Consumer
 object RedstoneAxeItem : AxeItem(
     ModToolMaterials.redstone,
     5.0F, -3.0F,
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstoneAxe)
         .component(redstoneSuitPower, 20)
         .component(redstoneSuitMaxPower, 0)
 ), RedstoneSuit, TooltipProvider {

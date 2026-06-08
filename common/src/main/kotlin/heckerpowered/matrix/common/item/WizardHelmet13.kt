@@ -41,7 +41,7 @@ import kotlin.math.floor
  * Wizard Helmet 13 'Overflux Crown'
  */
 object WizardHelmet13 : WizardHelmet(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.wizardHelmet13)
         .fireResistant()
         .rarity(Rarity.EPIC)
         .maxMana(12.0)

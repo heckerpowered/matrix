@@ -28,9 +28,9 @@ class ModDamageTypeProvider(
 
     override fun addTags(registries: HolderLookup.Provider) {
         getOrCreateTagBuilder(DamageTypeTags.BYPASSES_SHIELD)
-            .add(MatrixDamageTypes.magic)
+            .addOptional(MatrixDamageTypes.magic)
 
         getOrCreateTagBuilder(MatrixDamageTypeTags.magic)
-            .add(MatrixDamageTypes.magic)
+            .addOptional(MatrixDamageTypes.magic)
     }
 }

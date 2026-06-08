@@ -23,7 +23,7 @@ import java.util.function.Consumer
 
 object RedstoneHoeItem : HoeItem(
     ModToolMaterials.redstone, -2.0F, -1.0F,
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstoneHoe)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), RedstoneSuit, TooltipProvider {

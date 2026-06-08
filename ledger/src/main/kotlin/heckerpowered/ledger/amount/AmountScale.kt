@@ -18,7 +18,7 @@ import java.math.BigDecimal
 data class AmountScale(
     val decimalPlaces: Int,
 ) {
-    val scaleFactor = Math.powExact(10L, decimalPlaces)
+    val scaleFactor = checkedPowerOfTen(decimalPlaces)
 
     /**
      * Creates an [Amount] from whole units.
@@ -48,6 +48,18 @@ data class AmountScale(
 
         fun of(decimalPlaces: Int): AmountScale {
             return AmountScale(decimalPlaces)
+        }
+
+        private fun checkedPowerOfTen(exponent: Int): Long {
+            if (exponent < 0) {
+                throw ArithmeticException("Negative exponent: $exponent")
+            }
+
+            var result = 1L
+            repeat(exponent) {
+                result = Math.multiplyExact(result, 10L)
+            }
+            return result
         }
     }
 }

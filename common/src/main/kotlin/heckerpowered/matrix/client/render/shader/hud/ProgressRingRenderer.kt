@@ -5,12 +5,12 @@
 
 package heckerpowered.matrix.client.render.shader.hud
 
-import heckerpowered.matrix.client.shader.*
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import org.joml.Vector2f
 import org.joml.Vector4f
 import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
 import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
-import org.lwjgl.opengl.GL46
 
 object ProgressRingRenderer {
     /**
@@ -44,24 +44,5 @@ object ProgressRingRenderer {
     val progressRingShader = BlitProgram(
         ResourceShader("/assets/matrix/shaders/position_texture.fsh", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/hud/progress_ring.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            modelViewMatrixProvider,
-            projectionMatrixProvider,
-            UniformProvider("progress") { pointer ->
-                GL46.glUniform1f(pointer, progress)
-            },
-            UniformProvider("radius") { pointer ->
-                GL46.glUniform1f(pointer, radius)
-            },
-            UniformProvider("thickness") { pointer ->
-                GL46.glUniform1f(pointer, thickness)
-            },
-            UniformProvider("center") { pointer ->
-                GL46.glUniform2f(pointer, center.x, center.y)
-            },
-            UniformProvider("color") { pointer ->
-                GL46.glUniform4f(pointer, color.x, color.y, color.z, color.w)
-            }
-        )
     )
 }

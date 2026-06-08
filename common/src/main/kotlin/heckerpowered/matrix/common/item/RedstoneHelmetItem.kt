@@ -25,7 +25,7 @@ import net.minecraft.world.item.equipment.ArmorType
 import java.util.function.Consumer
 
 object RedstoneHelmetItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.redstone, ArmorType.HELMET)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstoneHelmet).humanoidArmor(ModArmorMaterials.redstone, ArmorType.HELMET)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), EntityUpdateRule, RedstoneSuit, TooltipProvider {

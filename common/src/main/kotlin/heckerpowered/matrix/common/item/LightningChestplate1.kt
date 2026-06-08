@@ -38,7 +38,7 @@ import java.util.function.Consumer
  * Lightning Chestplate 1 'Warp Dancer'
  */
 object LightningChestplate1 : Item(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.lightningChestplateBorrowedTime)
         .humanoidArmor(ModArmorMaterials.lightning, ArmorType.CHESTPLATE)
         .fireResistant()
         .rarity(Rarity.EPIC)

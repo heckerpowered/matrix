@@ -12,7 +12,7 @@ import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
-import heckerpowered.matrix.common.magic.system.MagicSystem
+import heckerpowered.matrix.common.magic.system.Magics
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.Context
 import net.minecraft.core.UUIDUtil
 import net.minecraft.network.codec.ByteBufCodecs
@@ -45,7 +45,7 @@ class ClientboundChannelMagicPayload(
 
     fun handle(context: Context) {
         context.client().execute {
-            val magic = MagicSystem.getMagicByUuid(magicUuid) ?: return@execute
+            val magic = Magics[magicUuid] ?: return@execute
             val player = context.player()
             val entity = player.level().getEntity(entityId) ?: return@execute
             if (entity !is LivingEntity) {
@@ -60,7 +60,16 @@ class ClientboundChannelMagicPayload(
             val cost = magic.getCost(calculationContext)
             val entry = ChannelEntry(magic, cost, channelTime, currentChannelTime)
 
-            calculationContext.queue!!.enqueue(entry)
+            val queue = calculationContext.queue!!
+            val predictedEntry = queue.channelingMagics()
+                .firstOrNull { it.clientPrediction && it.magic.definition.uuid == magic.definition.uuid }
+            if (predictedEntry != null) {
+                predictedEntry.clientPrediction = false
+                predictedEntry.currentChannelTime = maxOf(predictedEntry.currentChannelTime, currentChannelTime)
+                return@execute
+            }
+
+            queue.enqueue(entry)
             magic.channel(MagicInvocation.fromEntity(player, entity))
             ChannelExecutor.performChannelAnimation(entry, entity, channelTime, currentChannelTime)
         }

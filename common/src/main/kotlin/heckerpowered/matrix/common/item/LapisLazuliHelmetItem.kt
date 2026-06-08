@@ -9,5 +9,5 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object LapisLazuliHelmetItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.lapisLazuli, ArmorType.HELMET)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.lapisLazuliHelmet).humanoidArmor(ModArmorMaterials.lapisLazuli, ArmorType.HELMET)
 )

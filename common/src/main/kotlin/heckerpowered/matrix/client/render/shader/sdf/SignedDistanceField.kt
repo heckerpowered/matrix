@@ -5,110 +5,66 @@
 
 package heckerpowered.matrix.client.render.shader.sdf
 
-import com.mojang.blaze3d.platform.GlConst
-import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
-import heckerpowered.matrix.client.shader.UniformProvider
 import net.minecraft.client.gl.Framebuffer
-import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
 import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
-import org.lwjgl.opengl.GL46
 
 object SignedDistanceField {
-    var framebufferObject: Int = -1
-    var originFramebufferObject: Int = -1
-    var stepSize: Float = 1.0F
+    var stepSize = 1.0F
 
-    init {
-        RenderSystem.assertOnRenderThread()
-    }
-
-    val seedGenShader = BlitProgram(
+    private val seedGenShader = BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/sdf/seed_gen.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("framebuffer") { pointer ->
-                GL13.glActiveTexture(GlConst.GL_TEXTURE0)
-                GL11.glBindTexture(GlConst.GL_TEXTURE_2D, framebufferObject)
-                RenderSystem.glUniform1i(pointer, 0)
-            }
-        )
     )
 
-    val jumpFloodingShader = BlitProgram(
+    private val jumpFloodingShader = BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/sdf/jump_flooding.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("framebuffer") { pointer ->
-                GL13.glActiveTexture(GlConst.GL_TEXTURE0)
-                GL11.glBindTexture(GlConst.GL_TEXTURE_2D, framebufferObject)
-                RenderSystem.glUniform1i(pointer, 0)
-            },
-            UniformProvider("stepSize") { pointer ->
-                GL46.glUniform1f(pointer, stepSize)
-            }
-        )
     )
 
-    val sdfEvalShader = BlitProgram(
+    private val sdfEvalShader = BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/sdf/sdf_eval.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("framebuffer") { pointer ->
-                GL13.glActiveTexture(GlConst.GL_TEXTURE0)
-                GL11.glBindTexture(GlConst.GL_TEXTURE_2D, framebufferObject)
-                RenderSystem.glUniform1i(pointer, 0)
-            },
-            UniformProvider("originFramebuffer") { pointer ->
-                GL13.glActiveTexture(GlConst.GL_TEXTURE1)
-                GL11.glBindTexture(GlConst.GL_TEXTURE_2D, originFramebufferObject)
-                RenderSystem.glUniform1i(pointer, 1)
-            }
-        )
     )
 
     fun generateStepSizes(width: Int, height: Int): List<Int> {
-        val maxRes = maxOf(width, height)
+        val maxResolution = maxOf(width, height).coerceAtLeast(1)
         var step = 1
-        while (step * 2 <= maxRes) {
+        while (step * 2 <= maxResolution) {
             step *= 2
         }
+
         val steps = mutableListOf<Int>()
         while (step >= 1) {
-            steps.add(step)
+            steps += step
             step /= 2
         }
         return steps
     }
 
     fun computeSignedDistanceField(source: Framebuffer, pingFramebuffer: Framebuffer, pongFramebuffer: Framebuffer): Framebuffer {
-        framebufferObject = source.colorAttachment
-        originFramebufferObject = source.colorAttachment
-        PostProcessRenderer.renderShaderToFramebuffer(seedGenShader, pingFramebuffer)
-        this.framebufferObject = pingFramebuffer.colorAttachment
+        PostProcessRenderer.renderShaderToFramebuffer(seedGenShader, source, pingFramebuffer)
 
-        val resolutionX = source.textureWidth
-        val resolutionY = source.textureHeight
+        var input = pingFramebuffer
+        var output = pongFramebuffer
+        for (step in generateStepSizes(source.textureWidth, source.textureHeight)) {
+            stepSize = step.toFloat()
+            PostProcessRenderer.renderShaderToFramebuffer(jumpFloodingShader, input, output)
 
-        var ping = pingFramebuffer
-        var pong = pongFramebuffer
-        for (stepSize in generateStepSizes(resolutionX, resolutionY)) {
-            this.stepSize = stepSize.toFloat()
-            val swap = ping
-            ping = pong
-            pong = swap
-
-            framebufferObject = pong.colorAttachment
-            PostProcessRenderer.renderShaderToFramebuffer(jumpFloodingShader, ping)
+            val swap = input
+            input = output
+            output = swap
         }
 
-        framebufferObject = ping.colorAttachment
-        PostProcessRenderer.renderShaderToFramebuffer(sdfEvalShader, pong)
-        return pong
+        PostProcessRenderer.renderShaderToFramebuffer(
+            sdfEvalShader,
+            output,
+            mapOf("framebuffer" to input, "originFramebuffer" to source),
+        )
+        return output
     }
 
     fun computeSignedDistanceField(source: Framebuffer): Framebuffer {

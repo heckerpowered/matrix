@@ -1,5 +1,8 @@
 {
   "values": [
-    "matrix:magic"
+    {
+      "id": "matrix:magic",
+      "required": false
+    }
   ]
 }

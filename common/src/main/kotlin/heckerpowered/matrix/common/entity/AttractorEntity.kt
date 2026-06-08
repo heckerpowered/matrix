@@ -49,7 +49,7 @@ class AttractorEntity(entityType: EntityType<AttractorEntity>, level: Level) : E
         get() = entityData.get(AttractorEntity.ownerUuid).getOrNull()
         set(value) = entityData.set(AttractorEntity.ownerUuid, Optional.ofNullable(value))
 
-    var owner: LivingEntity?
+    var ownerEntity: LivingEntity?
         get() = super.getOwner()
         set(value) {
             ownerUuid = EntityReference.of(value)

@@ -5,978 +5,103 @@
 
 package heckerpowered.matrix.client
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.systems.VertexSorter
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.core.AimAssist
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistEnabled
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistFov
 import heckerpowered.matrix.client.core.ClientOptions.aimAssistMaxDistance
 import heckerpowered.matrix.client.event.KeyEvent
 import heckerpowered.matrix.client.event.MouseButtonEvent
-import heckerpowered.matrix.client.render.*
-import heckerpowered.matrix.client.render.post.BloomEffect
-import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
-import heckerpowered.matrix.client.render.shader.opacityMask
-import heckerpowered.matrix.client.render.state.*
-import heckerpowered.matrix.client.render.state.capabilities.BlendState
-import heckerpowered.matrix.client.render.state.capabilities.CapabilityState
-import heckerpowered.matrix.client.render.state.capabilities.CullFaceState
-import heckerpowered.matrix.client.render.state.capabilities.DepthTestState
-import heckerpowered.matrix.client.shader.*
-import heckerpowered.matrix.client.shader.component.TransformFeedback
-import heckerpowered.matrix.client.ui.element.*
-import heckerpowered.matrix.client.ui.foundation.animation.*
+import heckerpowered.matrix.client.render.PostProcessRenderer
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
+import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
+import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
+import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.effect.isBloodPactActive
 import heckerpowered.matrix.common.item.LightningChestplate1
 import heckerpowered.matrix.common.item.LightningChestplate1.isBorrowedTime
 import heckerpowered.matrix.common.item.LightningChestplate1.isPhaseWalking
 import heckerpowered.matrix.common.item.WizardHelmet5
-import heckerpowered.matrix.common.magic.core.LMagicAvailableStatus
+import heckerpowered.matrix.common.magic.channel.CasterContext
+import heckerpowered.matrix.common.magic.channel.ChannelEntry
+import heckerpowered.matrix.common.magic.channel.ChannelExecutor
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getChannelQueue
+import heckerpowered.matrix.common.magic.channel.ChannelQueue.Companion.getOrCreateChannelQueue
+import heckerpowered.matrix.common.magic.channel.MagicInvocation
 import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicAvailableStatus
+import heckerpowered.matrix.common.magic.core.MagicAvailability
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.core.description
+import heckerpowered.matrix.common.magic.system.Magics
 import heckerpowered.matrix.common.network.ServerboundActivateBloodPactPayload
+import heckerpowered.matrix.common.network.ServerboundBorrowedTimePayload
+import heckerpowered.matrix.common.network.ServerboundOverclockPayload
 import heckerpowered.matrix.common.network.ServerboundUseMagicPayload
 import heckerpowered.matrix.common.persistent.isWizard
+import heckerpowered.matrix.common.persistent.queueSize
 import heckerpowered.matrix.common.persistent.wizardHelmetStack
-import heckerpowered.matrix.core.approximatelyEqual
-import heckerpowered.matrix.core.inverseLerp
-import heckerpowered.matrix.core.lerp
+import heckerpowered.matrix.core.getLerpedPos
+import heckerpowered.matrix.core.utility.getEntitiesNearSight
 import heckerpowered.matrix.core.worldToScreen
+import heckerpowered.matrix.data.language.MatrixLanguage
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.*
-import net.minecraft.client.util.InputUtil
-import net.minecraft.entity.Entity
-import net.minecraft.entity.EquipmentSlot
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.boss.dragon.EnderDragonPart
-import net.minecraft.entity.projectile.ProjectileUtil
-import net.minecraft.sound.SoundCategory
-import net.minecraft.sound.SoundEvents
-import net.minecraft.text.Text
-import net.minecraft.util.Util
-import net.minecraft.util.math.Box
-import net.minecraft.util.math.ColorHelper
-import net.minecraft.util.math.MathHelper
-import net.minecraft.util.math.Vec3d
-import net.minecraft.world.RaycastContext
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
+import net.minecraft.client.DeltaTracker
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.network.chat.Component
+import net.minecraft.sounds.SoundEvents
+import net.minecraft.sounds.SoundSource
+import net.minecraft.util.ARGB
+import net.minecraft.world.entity.EquipmentSlot
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart
+import net.minecraft.world.entity.projectile.ProjectileUtil
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.Vec3
 import org.joml.Vector2f
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.opengl.GL15.glDeleteBuffers
-import org.lwjgl.opengl.GL30.glDeleteVertexArrays
-import org.lwjgl.opengl.GL46.*
-import org.lwjgl.system.MemoryUtil
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
 import kotlin.math.abs
 import kotlin.math.min
-import kotlin.math.round
-import kotlin.random.Random
+import kotlin.math.roundToInt
 
 object MatrixHud {
-    var mana
-        get() = manaBar.mana.value
-        set(value) {
-            manaBar.mana.value = value.coerceIn(0.0..maxMana)
-        }
-
-    var maxMana
-        get() = manaBar.maxMana.value.coerceAtLeast(.0)
-        set(value) {
-            manaBar.maxMana.value = value
-        }
-
-    var manaUsage
-        get() = manaBar.manaUsage.value
-        set(value) {
-            manaBar.manaUsage.value = value
-        }
-
-    var targetedEntity: LivingEntity? = null
-    private var usingRayCast = false
-    private var cachedTargetedEntity: LivingEntity? = null
-
-    private var lastNanos = 0L
-
-    private var selectedIndex = 1
-    private var usingMagicList = mutableMapOf<Int, Double>()
-
-    private var previousIndex = 1
-
-    private val manaBar = ManaBar()
-
-    private val easingFunction = ElasticEase()
-
-    private val manaOverclockAnimation = AnimationClock(Duration.ofMillis(300), 1.0, 1.0)
-    private val magicOverclockAnimation = AnimationClock(Duration.ofMillis(300), 1.0, 1.0)
-
-    private val magicShownAnimationClock = AnimationClock(
-        Duration.ofMillis(
-            300
-        ), -50.0, .0
-    )
-    private val magicShownOpacityAnimationClock = AnimationClock(
-        Duration.ofMillis(
-            300
-        ), .0, 1.0
-    )
-    private val magicShownAnimation = DoubleAnimation(
-        magicShownAnimationClock, easingFunction
-    )
-    val magicShownOpacityAnimation = DoubleAnimation(
-        magicShownOpacityAnimationClock, easingFunction
-    )
-
-    private val hudBloomThreshold = SimpleDoubleAnimation(from = 1.0, to = 1.0)
-
-    private val magicTimeScale = TimeController.allocateTimeController()
-    private val lightningTimeScale = TimeController.allocateTimeController()
-
-    private val healthPercentageAnimation = SimpleDoubleAnimation()
-    private val healthAnimation = SimpleDoubleAnimation()
-    private val maxHealthAnimation = SimpleDoubleAnimation()
-    private var previousDisplayEntityNameHashCode: Int = 0
-    private var displayEntityName: Text = Text.empty()
-    private var displayEntityNameOpacityAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150), initValue = 1.0)
-    private var previousCandidateEntities: Int = 0
-    private var displayCandidateEntities: Int = 0
-    private var displayCandidateCountOpacityAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150), initValue = 1.0)
-    private var candidateCountPadding = SimpleDoubleAnimation()
-
-    private val manaOverclock = DoubleAnimation(
-        manaOverclockAnimation, easingFunction
-    )
-    private val magicOverclock = DoubleAnimation(
-        magicOverclockAnimation, easingFunction
-    )
-
-    private val dissolveShader = DissolveShader()
-
-    private val dissolveAnimation = SimpleDoubleAnimation(from = 1.0)
-
-    private val magicDescriptionChangedAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
-    private var currentDescription: Text = Text.empty()
-    private var displayDescription: Text = Text.empty()
-
-    private val descriptionYOffsetAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(300))
-
-    private val entityDescriptionOpacityAnimation = SimpleDoubleAnimation(initValue = 1.0)
-    private var previousVisibility = false
-
-    private var aimEntity: Entity? = null
-    private var useAimAssist = false
-    private var firstShow = true
-
-    private val grayscaleIntensityAnimation = SimpleDoubleAnimation()
-    private val descriptionExtraHeightAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(450))
-
-    private var sizeScalingAnimation = true
-
-    @JvmField
-    val fovAnimation = SimpleDoubleAnimation(initValue = 1.0)
-
-    private var fovZoomRatio = .0
-    private val hudFramebuffer by lazy { PostProcessRenderer.createManagedFramebuffer() }
-    private val blurFramebuffer by lazy { PostProcessRenderer.createManagedFramebuffer() }
-    private val emissiveFramebuffer by lazy { PostProcessRenderer.createManagedFramebuffer() }
-
-    private class MagicDisplayData {
-        val statusChangedAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150))
-        val costChangedAnimation = SimpleDoubleAnimation(duration = Duration.ofMillis(150))
-        val costWidthAnimation = SimpleDoubleAnimation()
-
-        var displayCost = 0L
-        var previousCost = 0L
-        var displayStatus = LMagicAvailableStatus.AVAILABLE
-        var previousStatus = LMagicAvailableStatus.AVAILABLE
-    }
-
-    private var cachedMagicDisplayData = mutableListOf<MagicDisplayData>()
-    private val magicDisplayData: MutableList<MagicDisplayData>
-        get() {
-            val magics = MatrixClient.getPlayerMagics()
-            if (cachedMagicDisplayData.size != magics.size) {
-                val newCachedMagicDisplayData = mutableListOf<MagicDisplayData>()
-                for (i in magics.indices) {
-                    newCachedMagicDisplayData.add(MagicDisplayData())
-                }
-                cachedMagicDisplayData = newCachedMagicDisplayData
-            }
-            return cachedMagicDisplayData
-        }
-
-    private val theWorldShader by lazy {
-        BlitProgram(
-            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-            ResourceShader("/assets/matrix/shaders/post/the_world.fsh", GL_FRAGMENT_SHADER),
-            uniforms = arrayOf(
-                PostProcessRenderer.framebufferProvider,
-                UniformProvider("grayscaleIntensity") { pointer ->
-                    glUniform1f(pointer, grayscaleIntensityAnimation.animatedValue.toFloat())
-                }
-            )
-        )
-    }
-
-    private val pointSpriteProgram by lazy {
-        Program(
-            ResourceShader("/assets/matrix/shaders/point_sprite/point_sprite.vsh", GL_VERTEX_SHADER),
-            ResourceShader("/assets/matrix/shaders/point_sprite/point_sprite.fsh", GL_FRAGMENT_SHADER),
-            uniforms = arrayOf(UniformProvider("time") { pointer ->
-                val timeSeconds = System.nanoTime() / 1_000_000_000.0
-                glUniform1f(pointer, timeSeconds.toFloat())
-            }),
-            components = arrayOf(
-                TransformFeedback(
-                    arrayOf("OutPosition"),
-                    (points.size / 2),
-                    bufferSize = (points.size / 2).toLong() * 4 * 2
-                )
-            )
-        )
-    }
-
-    init {
-        easingFunction.easingMode = EasingMode.OUT
-        easingFunction.oscillations = 0
-
-        magicOverclock.currentValue = 1.0
-        manaOverclock.currentValue = 1.0
-
-        entityDescriptionOpacityAnimation.start()
-        descriptionYOffsetAnimation.start()
-        grayscaleIntensityAnimation.start()
-        descriptionExtraHeightAnimation.start()
-    }
-
-    private class ColorAnimation {
-        val redClock = AnimationClock(
-            Duration.ofMillis(
-                300
-            ), .0, 1.0
-        )
-        val red = DoubleAnimation(
-            redClock, easingFunction
-        )
-
-        val greenClock = AnimationClock(
-            Duration.ofMillis(
-                300
-            ), .0, 1.0
-        )
-        val green = DoubleAnimation(
-            greenClock, easingFunction
-        )
-
-        val blueClock = AnimationClock(
-            Duration.ofMillis(
-                300
-            ), .0, 1.0
-        )
-        val blue = DoubleAnimation(
-            blueClock, easingFunction
-        )
-
-        fun setColor(
-            red: Double,
-            green: Double,
-            blue: Double,
-        ) {
-            this.red.currentValue = red
-            this.green.currentValue = green
-            this.blue.currentValue = blue
-        }
-
-        fun setColorWithoutAnimation(
-            red: Double,
-            green: Double,
-            blue: Double,
-        ) {
-            redClock.from = red
-            redClock.to = red
-            this.red.currentValue = red
-
-            greenClock.from = green
-            greenClock.to = green
-            this.green.currentValue = green
-
-            blueClock.from = blue
-            blueClock.to = blue
-            this.blue.currentValue = blue
-        }
-    }
-
-    private val magicColorAnimations = mutableListOf<ColorAnimation>()
-    private val magicExtraWidthAnimations = mutableListOf<PackedAnimation>()
-
-    private var candidateAimAssistEntities = emptyList<LivingEntity>()
-
-    @JvmStatic
-    fun onDoAttack() {
-        if (!shouldRenderHud() || shouldSlowTime()) {
-            useAimAssist = false
-            return
-        }
-        useAimAssist = !useAimAssist
-        if (!useAimAssist) {
-            aimEntity = null
-        }
-    }
-
-    private fun processKeyInput() {
-        if (MatrixKeyBindings.useMagic.wasPressed()) {
-            useCurrentMagic()
-        }
-        while (MatrixKeyBindings.useMagic.wasPressed()) {
-            useCurrentMagic()
-        }
-
-        while (MatrixKeyBindings.nextMagic.wasPressed()) {
-            nextMagic()
-        }
-
-        while (MatrixKeyBindings.previousMagic.wasPressed()) {
-            previousMagic()
-        }
-
-        while (MatrixKeyBindings.overclockMagic.wasPressed()) {
-            val difference = if (player.isSneaking) {
-                -0.5
-            } else {
-                0.5
-            }
-            val newOverclock = (magicOverclock.currentValue + difference).coerceIn(
-                1.0..10.0
-            )
-            magicOverclock.currentValue = newOverclock
-            ClientPlayNetworking.send(OverclockPayload(manaOverclock.currentValue, magicOverclock.currentValue))
-        }
-
-        while (MatrixKeyBindings.overclockMana.wasPressed()) {
-            val difference = if (player.isSneaking) {
-                -0.5
-            } else {
-                0.5
-            }
-            val newOverclock = (manaOverclock.currentValue + difference).coerceIn(
-                1.0..10.0
-            )
-            manaOverclock.currentValue = newOverclock
-            ClientPlayNetworking.send(
-                OverclockPayload(
-                    manaOverclock.currentValue, magicOverclock.currentValue
-                )
-            )
-        }
-    }
-
-    fun onInitialize() {
-        HudRenderCallback.EVENT.register(this::onHudRender)
-        SystemCrashBar.onInitialize()
-        StatusHud.onInitialize()
-        DamageNumberHud.onInitialize()
-    }
-
-    @JvmStatic
-    fun overclockMana() {
-        val newOverclock = (manaOverclock.currentValue + 0.5).coerceIn(
-            1.0..10.0
-        )
-        manaOverclock.currentValue = newOverclock
-        ClientPlayNetworking.send(
-            OverclockPayload(
-                manaOverclock.currentValue, magicOverclock.currentValue
-            )
-        )
-    }
-
-    @JvmStatic
-    fun underclockMana() {
-        val newOverclock = (manaOverclock.currentValue - 0.5).coerceIn(
-            1.0..10.0
-        )
-        manaOverclock.currentValue = newOverclock
-        ClientPlayNetworking.send(
-            OverclockPayload(
-                manaOverclock.currentValue, magicOverclock.currentValue
-            )
-        )
-    }
-
-    @JvmStatic
-    fun overclockMagic() {
-        val newOverclock = (magicOverclock.currentValue + 0.5).coerceIn(
-            1.0..10.0
-        )
-        magicOverclock.currentValue = newOverclock
-        ClientPlayNetworking.send(
-            OverclockPayload(
-                manaOverclock.currentValue, magicOverclock.currentValue
-            )
-        )
-    }
-
-    @JvmStatic
-    fun underclockMagic() {
-        val newOverclock = (magicOverclock.currentValue - 0.5).coerceIn(
-            1.0..10.0
-        )
-        magicOverclock.currentValue = newOverclock
-        ClientPlayNetworking.send(
-            OverclockPayload(
-                manaOverclock.currentValue, magicOverclock.currentValue
-            )
-        )
-    }
-
-    @JvmStatic
-    fun nextMagic() {
-        previousIndex = selectedIndex
-        ++selectedIndex
-        if (selectedIndex > MatrixClient.getPlayerMagics().size) {
-            selectedIndex = 1
-        }
-        onSelectionChanged()
-    }
-
-    @JvmStatic
-    fun previousMagic() {
-        previousIndex = selectedIndex
-        --selectedIndex
-        if (selectedIndex < 1) {
-            selectedIndex = MatrixClient.getPlayerMagics().size
-        }
-        onSelectionChanged()
-    }
-
-
-    private fun onSelectionChanged() {
-        if (selectedIndex - 1 !in MatrixClient.getPlayerMagics().indices) {
-            return
-        }
-
-        val magic = selectedMagic
-        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
-        manaBar.manaCost.value = magic.getCost(calculationContext).toDouble()
-    }
-
-    val selectedMagic: Magic
-        get() {
-            var index = selectedIndex - 1
-            val magics = MatrixClient.getPlayerMagics()
-            if (index !in magics.indices) {
-                index = 0
-            }
-
-            return magics[index]
-        }
-
-    private fun useCurrentMagic() {
-        if (!shouldRenderHud()) {
-            return
-        }
-
-        useMagicIndexed(selectedIndex - 1)
-    }
-
-    private fun useMagicIndexed(index: Int) {
-        val magic = MatrixClient.getPlayerMagics()[index]
-        val target = this.targetedEntity ?: return
-        val calculationContext = MagicCalculationContext.fromEntity(player, target)
-        if (magic.availableStatus(calculationContext) != LMagicAvailableStatus.AVAILABLE) {
-            return
-        }
-
-        magicColorAnimations[index].setColorWithoutAnimation(.0, 255.0, .0)
-
-        // Reset use magic animation
-        usingMagicList[index + 1] = 0.0
-
-        val cost = magic.getCost(calculationContext)
-        val mana = mana - manaUsage
-        if (player.isBloodPactActive && mana < cost) {
-            minecraft.world!!.playSound(player, player.x, player.y, player.z, SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, 1.0f, 1f)
-            minecraft.world!!.playSound(player, player.x, player.y, player.z, SoundEvents.ENTITY_WARDEN_HEARTBEAT, SoundCategory.PLAYERS, 1.0f, 1f)
-        } else {
-            minecraft.world!!.playSound(player, player.x, player.y, player.z, SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, 1.0f, 1f)
-        }
-
-        channelMagic(magic, target)
-    }
-
-    private fun channelMagic(magic: Magic, target: LivingEntity) {
-        ClientPlayNetworking.send(ServerboundUseMagicPayload(magic.definition.uuid, target.id))
-    }
-
-    private fun checkVisibilityChanges() {
-        val shouldRenderHud = shouldRenderHud()
-        if (shouldRenderHud != previousVisibility) {
-            onHudVisibilityChanged(shouldRenderHud)
-        }
-        previousVisibility = shouldRenderHud
-    }
-
-    private fun warp() {
-        if (TimeController.minTimeScale != 1.0 || player.isPhaseWalking) {
-            grayscaleIntensityAnimation.value = 1.0
-        } else {
-            grayscaleIntensityAnimation.value = .0
-        }
-
-        if (!shouldSlowTime()) {
-            return
-        }
-        val hasLightningEffect = player.isBorrowedTime
-        TimeController.playerStandaloneRenderTick = hasLightningEffect && !shouldRenderHud() && !minecraft.isPaused
-        if (hasLightningEffect) {
-            lightningTimeScale.value = 0.15
-        } else {
-            lightningTimeScale.value = 1.0
-        }
-        TimeController.onRenderTick()
-        PostProcessRenderer.postProcessShaders.add(theWorldShader)
-    }
-
-    private fun checkMagicAvailableStatus() {
-        val magics = MatrixClient.getPlayerMagics()
-        fillColorAnimationList(magics)
-
-        magics.forEachIndexed { index, magic ->
-            if (index == selectedIndex - 1) {
-                val color = magicColorAnimations[index]
-                // when green = 255, magic is used, perform animation
-                // when green = 128, animation is in progress
-                if (color.green.currentValue == 255.0 || color.green.currentValue == 128.0) {
-                    color.setColor(
-                        .0, 128.0, .0
-                    )
-                } else {
-                    color.setColorWithoutAnimation(
-                        .0, 128.0, .0
-                    )
-                }
-
-                return@forEachIndexed
-            }
-
-            val status = getMagicAvailableStatus(
-                magic
-            )
-            when (status) {
-                LMagicAvailableStatus.TARGET_MISSING -> magicColorAnimations[index].setColor(
-                    .0, .0, .0
-                )
-
-                LMagicAvailableStatus.AVAILABLE -> magicColorAnimations[index].setColor(
-                    .0, .0, .0
-                )
-
-                else -> {
-                    magicColorAnimations[index].setColor(128.0, 0.0, 0.0)
-                }
-            }
-        }
-    }
-
-    private fun fillColorAnimationList(
-        magics: List<Magic>,
-    ) {
-        if (magicColorAnimations.size >= magics.size) {
-            return
-        }
-
-        for (i in magicColorAnimations.size..magics.size) {
-            magicColorAnimations.add(
-                ColorAnimation()
-            )
-        }
-    }
-
-    private fun fillExtraWidthAnimationList(
-        magics: List<Magic>,
-    ) {
-        if (magicExtraWidthAnimations.size >= magics.size) {
-            return
-        }
-
-        for (i in magicExtraWidthAnimations.size..magics.size) {
-            val animationClock = AnimationClock(
-                Duration.ofMillis(
-                    300
-                ), 0.0, 1.0
-            )
-            val animation = DoubleAnimation(
-                animationClock, easingFunction
-            )
-            magicExtraWidthAnimations.add(
-                PackedAnimation(
-                    animationClock, animation
-                )
-            )
-        }
-    }
-
-    private fun getMagicAvailableStatus(magic: Magic): LMagicAvailableStatus {
-        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
-        return magic.availableStatus(calculationContext)
-    }
-
-    private fun renderMagicAvailableStatus(
-        drawContext: DrawContext,
-        renderer: LegacyMatrixUIRenderer,
-    ) {
-        val status = getMagicAvailableStatus(selectedMagic)
-        if (status == LMagicAvailableStatus.AVAILABLE || status == LMagicAvailableStatus.TARGET_MISSING || !shouldRenderHud()) {
-            AvailableStatusTooltip.hide()
-        } else {
-            AvailableStatusTooltip.show()
-        }
-
-        AvailableStatusTooltip.render(drawContext, renderer, status)
-    }
-
-    private fun updateAimAssist(
-        updateRotation: Boolean,
-        tickCounter: RenderTickCounter,
-    ) {
-        targetedEntity?.apply {
-            if (aimEntity == null) {
-                AimAssist.resetAnimation()
-                aimEntity = targetedEntity
-            }
-        }
-
-        if (!updateRotation) {
-            return
-        }
-
-        aimEntity?.apply {
-            val tickDelta = tickCounter.getTickDelta(
-                true
-            )
-            val x = lerp(
-                tickDelta.toDouble(), prevX, x
-            )
-            val y = lerp(
-                tickDelta.toDouble(), prevY, y
-            )
-            val z = lerp(
-                tickDelta.toDouble(), prevZ, z
-            )
-            AimAssist.lookAt(
-                Vec3d(
-                    x, y - 0.5, z
-                ), tickDelta.toDouble()
-            )
-            AimAssist.applyRotation()
-        }
-    }
-
-    private val isHudVisible
-        get() = magicShownOpacityAnimation.animatedValue != .0
-
-    private val isHudInvisible
-        get() = magicShownOpacityAnimation.animatedValue == .0
-
+    private const val USE_MAGIC_REPEAT_INTERVAL_TICKS = 5
+    private const val MAGIC_HUD_TIME_SCALE = 0.01
+    private const val BORROWED_TIME_SCALE = 0.15
+
+    var mana = .0
+    var maxMana = .0
+    var manaUsage = .0
+    var isInfiniteMana = false
+
+    var renderHud = true
     var useBloom = false
-    var renderHud = false
     var useBlur = false
 
-    private fun renderOtherHuds(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        renderWitherArmorHud(drawContext, tickCounter)
-    }
+    var targetedEntity: LivingEntity? = null
+    private var candidateTargets: List<LivingEntity> = emptyList()
+    private var usingRayCast = false
+    private var manaOverclock = 1.0
+    private var magicOverclock = 1.0
+    private var previousMagicListVisible = false
+    private var magicListKeyDown = false
+    private var cachedTargetedEntity: LivingEntity? = null
+    private var lastFrameNanos = System.nanoTime()
 
-    private fun onBeginHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        renderOtherHuds(drawContext, tickCounter)
+    val manaOverclockValue: Double
+        get() = manaOverclock
 
-        if (!isHudInvisible) {
-            useBlur = true
-            renderHud = true
-
-            useBloom = !hudBloomThreshold.animatedValue.approximatelyEqual(1.0) &&
-                    !magicShownOpacityAnimation.animatedValue.approximatelyEqual(.0)
-        }
-
-        val bloodPact = player.isBloodPactActive
-        hudBloomThreshold.value = if (bloodPact) {
-            .0
-        } else {
-            1.0
-        }
-    }
-
-    private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        StateIsolation.isolate(
-            FramebufferState(hudFramebuffer), ViewportState(hudFramebuffer),
-            BlendState.captureSnapshot(), BlendFuncSeparateState.captureSnapshot()
-        ) {
-            onBeginHudRender(drawContext, tickCounter)
-            renderHud(drawContext, tickCounter)
-            onEndHudRender(drawContext, tickCounter)
-        }
-    }
-
-    private fun renderCandidateEntities(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        if (!shouldRenderHud()) {
-            return
-        }
-        val tickDelta = tickCounter.getTickDelta(true)
-
-        val tessellator = Tessellator.getInstance()
-        val buffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR)
-
-        val modelViewStack = RenderSystem.getModelViewStack()
-        modelViewStack.pushMatrix()
-        modelViewStack.set(viewMatrix)
-        RenderSystem.applyModelViewMatrix()
-        RenderSystem.backupProjectionMatrix()
-        RenderSystem.setProjectionMatrix(projectionMatrix, VertexSorter.BY_DISTANCE)
-
-        var from = player.getLerpedPos(tickDelta).add(.0, player.boundingBox.lengthY / 2, .0)// Vector2d(crosshairX.animatedValue + 7.5, crosshairY.animatedValue + 7.5)
-        val targetedEntity = this.targetedEntity
-        if (targetedEntity != null) {
-            val to = targetedEntity.getLerpedPos(tickDelta).add(.0, targetedEntity.boundingBox.lengthY / 2, .0)
-            val color = ColorHelper.Argb.getArgb(255, 25, 255, 25)
-            buffer.vertex(from.x.toFloat(), from.y.toFloat(), from.z.toFloat())
-                .color(color)
-            buffer.vertex(to.x.toFloat(), to.y.toFloat(), to.z.toFloat())
-                .color(color)
-            from = to
-        }
-        for (candidateEntity in candidateAimAssistEntities) {
-            val targetPosition = candidateEntity.getLerpedPos(tickDelta).add(.0, candidateEntity.boundingBox.lengthY / 2, .0)
-
-            val color = ColorHelper.Argb.getArgb(255, 255, 25, 25)
-            buffer.vertex(from.x.toFloat(), from.y.toFloat(), from.z.toFloat())
-                .color(color)
-            buffer.vertex(targetPosition.x.toFloat(), targetPosition.y.toFloat(), targetPosition.z.toFloat())
-                .color(color)
-            from = targetPosition
-        }
-
-        StateIsolation.isolate(
-            LineWidthState(1.0F),
-            BlendState(false),
-            BlendFuncSeparateState(),
-            DepthTestState(false),
-            CullFaceState(false),
-            ShaderProgramState(GameRenderer::getPositionColorProgram),
-            CapabilityState(GL_MULTISAMPLE, true)
-        ) {
-            val mul = 8.0F
-            RenderSystem.setShaderColor(mul, mul, mul, 1.0F)
-            buffer.endNullable()?.let {
-                BufferRenderer.drawWithGlobalProgram(it)
-            }
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
-        }
-
-        RenderSystem.restoreProjectionMatrix()
-        modelViewStack.popMatrix()
-        RenderSystem.applyModelViewMatrix()
-    }
-
-    private fun renderWitherArmorHud(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        StatusHud.onHudRender(drawContext, tickCounter)
-    }
-
-    private fun renderHud(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        if (selectedIndex - 1 !in MatrixClient.getPlayerMagics().indices ||
-            previousIndex - 1 !in MatrixClient.getPlayerMagics().indices
-        ) {
-            selectedIndex = 1
-            previousIndex = 1
-        }
-
-        val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
-        renderCandidateEntities(drawContext, tickCounter)
-        checkVisibilityChanges()
-        warp()
-        processKeyInput()
-        checkMagicAvailableStatus()
-
-        performChannelMagicAnimation()
-        if (!shouldRenderHud()) {
-            fovZoomRatio = .0
-            targetedEntity = null
-        }
-        fovAnimation.value = 1.0 - fovZoomRatio
-        lastNanos = Util.getMeasuringTimeNano()
-
-        // magicShownAnimationClock.let {
-        //     it.from = magicShownAnimation.animatedValue
-        //     it.to = .0
-        // }
-
-        // magicShownOpacityAnimationClock.let {
-        //     it.from = magicShownOpacityAnimation.animatedValue
-        //     it.to = 1.0
-        // }
-        if (magicShownOpacityAnimation.animatedValue == .0) {
-            for (animation in magicExtraWidthAnimations) {
-                animation.animation.currentValue = .0
-            }
-
-            return
-        }
-
-        ManaCostTooltip.render(drawContext, tickCounter)
-        renderLeftPart(drawContext, tickCounter)
-        renderRightPart(drawContext, tickCounter)
-        renderManaBar(drawContext, tickCounter)
-        renderMagicAvailableStatus(drawContext, renderer)
-
-        if (!shouldRenderHud()) {
-            return
-        }
-        selectTargetEntity(tickCounter)
-        renderOverclock(drawContext, tickCounter)
-
-        updateAimAssist(false, tickCounter)
-    }
-
-    val points = FloatArray(1000 * 2) {
-        if (it % 2 == 0) {
-            Random.nextFloat() * 3f - 1f - 3F
-        } else {
-            1f - Random.nextFloat() * 0.2f
-        }
-    }
-
-    private fun onEndHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        if (!renderHud) {
-            return
-        }
-
-        if (useBlur) {
-            val strength = magicShownOpacityAnimation.animatedValue.toFloat()
-            GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(strength, maxSigma = 8F)
-            BlurRenderer.renderGaussianBlur(minecraft.framebuffer)
-
-            dropHudShadow()
-
-            StateIsolation.isolate(
-                FramebufferState(minecraft.framebuffer), ViewportState(minecraft.framebuffer),
-                BlendState(true), BlendFuncState(GL_ONE, GL_ONE_MINUS_SRC_ALPHA),
-            ) {
-                renderHudBlur()
-            }
-        } else {
-            StateIsolation.isolate(
-                FramebufferState(blurFramebuffer), ViewportState(blurFramebuffer),
-                BlendState(true), BlendFuncState(GL_ONE, GL_ONE_MINUS_SRC_ALPHA),
-            ) {
-                PostProcessRenderer.copyFramebuffer(hudFramebuffer, blurFramebuffer, false)
-                PostProcessRenderer.copyFramebuffer(hudFramebuffer, minecraft.framebuffer, false)
-            }
-        }
-
-        BloomEffect.brightnessPassFramebuffer = blurFramebuffer
-        BloomEffect.brightnessThreshold = 1F
-
-        StateIsolation.isolate(BlendState(true), BlendFuncState(GL_ONE, GL_ONE)) {
-            BloomEffect.renderBloom()
-            PostProcessRenderer.copyFramebuffer(BloomEffect.bloomUpFramebuffer, minecraft.framebuffer, false)
-        }
-
-        hudFramebuffer.clear(true)
-        blurFramebuffer.clear(true)
-
-        renderHud = false
-        useBlur = false
-        useBloom = false
-    }
-
-    private fun dropHudShadow() {
-        GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(1.0F, maxSigma = 20F)
-        BlurRenderer.renderGaussianBlur(hudFramebuffer, blurFramebuffer)
-
-        StateIsolation.isolate(
-            FramebufferState(blurFramebuffer),
-            ViewportState(blurFramebuffer),
-            BlendState(true),
-            BlendFuncState(GL_ONE, GL_ONE_MINUS_SRC_ALPHA),
-        ) {
-            // Render the blurred hud background to blurFramebuffer
-            hudFramebuffer opacityMask BlurRenderer.blurFramebuffer
-
-            // Render half-transparent hud on the blurred hud background
-            hudFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-        }
-    }
-
-    private fun renderHudBlur() {
-        val strength = 1.0F - magicShownOpacityAnimation.animatedValue.toFloat()
-        if (strength == .0F) {
-            blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-            return
-        }
-
-        GaussianBlurRenderer.gaussianKernel = GaussianBlurRenderer.generateSymmetricGaussianKernel(strength, maxSigma = 20F)
-        BlurRenderer.renderGaussianBlurFullResolution(blurFramebuffer)
-        BlurRenderer.blurFramebuffer.draw(minecraft.window.framebufferWidth, minecraft.window.framebufferHeight, false)
-    }
-
-    private fun renderPoints() {
-        val result = IntArray(1)
-        glGenVertexArrays(result)
-
-        val vertexArray = result[0]
-        val vertexBuffer = glGenBuffers()
-
-        glBindVertexArray(vertexArray)
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer)
-
-        val buffer = MemoryUtil.memAllocFloat(points.size).put(points).flip()
-        glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW)
-        MemoryUtil.memFree(buffer)
-        glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * 4, 0L)
-        glEnableVertexAttribArray(0)
-
-        pointSpriteProgram.enableShader()
-        glBindVertexArray(vertexArray)
-        glEnable(GL_PROGRAM_POINT_SIZE)
-        glDrawArrays(GL_POINTS, 0, points.size / 2)
-        pointSpriteProgram.disableShader()
-
-        glBindVertexArray(0)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glDisableVertexAttribArray(0)
-        glDisable(GL_PROGRAM_POINT_SIZE)
-
-        glDeleteBuffers(vertexBuffer)
-        glDeleteVertexArrays(vertexArray)
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
-        glDisable(GL_BLEND)
-    }
-
-    private fun performChannelMagicAnimation() {
-        val delta = Util.getMeasuringTimeNano() - lastNanos
-        for (magic in usingMagicList) {
-            magic.setValue(
-                magic.value + delta / 2000000
-            ) // 2000000
-        }
-    }
-
-    @JvmStatic
-    fun shouldRenderHud(): Boolean {
-        if (minecraft.player == null) {
-            return false
-        }
-        if (MatrixClient.getPlayerMagics().isEmpty() || !player.isWizard) {
-            return false
-        }
-        return MinecraftClient.getInstance().options.playerListKey.isPressed
-    }
-
-    private val isPressingTab
-        get() = MinecraftClient.getInstance().options.playerListKey.isPressed
+    val magicOverclockValue: Double
+        get() = magicOverclock
 
     @JvmField
     var isPressingRightMouseButton = false
@@ -984,884 +109,374 @@ object MatrixHud {
     @JvmField
     var isPressingLeftMouseButton = false
 
-    fun shouldSlowTime(): Boolean {
-        val minecraft = MinecraftClient.getInstance()
-        val server = minecraft.server
-        return minecraft.isIntegratedServerRunning && (server != null && !server.isRemote)
-    }
+    @JvmField
+    val fovAnimation = SimpleDoubleAnimation(initValue = 1.0)
 
-    private fun onHudVisibilityChanged(visibility: Boolean) {
-        manaBar.onHudVisibilityChanged(visibility)
-        ManaCostTooltip.onHudVisibilityChanged(visibility)
-        if (visibility) {
-            onHudShown()
-        } else {
-            onHudHide()
-        }
-    }
+    @JvmField
+    val magicShownOpacityAnimation = SimpleDoubleAnimation(initValue = .0)
 
-    private fun onHudHide() {
-        if (shouldSlowTime()) {
-            magicTimeScale.value = 1.0
-        }
+    private val magicShownAnimation = SimpleDoubleAnimation(initValue = -50.0)
+    private val manaShownAnimation = SimpleDoubleAnimation(initValue = -50.0)
+    private val manaOpacityAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaValueAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val maxManaValueAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaUsageAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaCostAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaCostTooltipShownAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaCostTooltipOpacityAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaCostTooltipRedAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaCostTooltipGreenAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaCostTooltipBlueAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val availableStatusShownAnimation = SimpleDoubleAnimation(initValue = -50.0)
+    private val availableStatusOpacityAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val healthPercentageAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val healthAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val maxHealthAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val entityDescriptionOpacityAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val descriptionYOffsetAnimation = SimpleDoubleAnimation(initValue = -35.0)
+    private val descriptionExtraHeightAnimation = SimpleDoubleAnimation(initValue = .0, duration = Duration.ofMillis(450))
+    private val magicDescriptionChangedAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
+    private val displayEntityNameOpacityAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
+    private val displayCandidateCountOpacityAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
+    private val candidateCountPaddingAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val manaOverclockAnimation = SimpleDoubleAnimation(initValue = 1.0)
+    private val magicOverclockAnimation = SimpleDoubleAnimation(initValue = 1.0)
+    private val grayscaleIntensityAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val crosshairX = SimpleDoubleAnimation(initValue = .0)
+    private val crosshairY = SimpleDoubleAnimation(initValue = .0)
+    private val magicHudTimeScale = TimeController.allocateTimeController()
+    private val lightningTimeScale = TimeController.allocateTimeController()
 
-        magicShownAnimationClock.let {
-            it.from = magicShownAnimation.animatedValue
-            it.to = -50.0
-        }
-
-        magicShownOpacityAnimationClock.let {
-            it.from = magicShownOpacityAnimation.animatedValue
-            it.to = .0
-        }
-
-        dissolveAnimation.value = 1.0
-        dissolveAnimation.duration = Duration.ofMillis(300)
-        dissolveAnimation.start()
-
-        magicShownAnimationClock.start()
-        magicShownOpacityAnimationClock.start()
-        ManaCostTooltip.hide()
-
-        fovAnimation.value = 1.0
-    }
-
-    private fun onHudShown() {
-        // println(glGenProgramPipelines())
-        if (shouldSlowTime()) {
-            magicTimeScale.value = 0.01
-        }
-
-        magicShownAnimationClock.let {
-            it.from = magicShownAnimation.animatedValue
-            it.to = .0
-        }
-
-        magicShownOpacityAnimationClock.let {
-            it.from = magicShownOpacityAnimation.animatedValue
-            it.to = 1.0
-        }
-
-        dissolveAnimation.value = .0
-        dissolveAnimation.duration = Duration.ofMillis(1000)
-        dissolveAnimation.startTime = Duration.ofMillis(0)
-        dissolveAnimation.start()
-
-        magicShownAnimationClock.start()
-        magicShownOpacityAnimationClock.start()
-
-        ManaCostTooltip.show()
-        AimAssist.resetAnimation()
-        if (firstShow) {
-            firstShow = false
-            selectTargetEntity(RenderTickCounter.ZERO)
-            if (targetedEntity == null) {
-                descriptionYOffsetAnimation.animatedValue = -35.0
-            }
-        }
-    }
-
-    private fun renderManaBar(
-        drawContext: DrawContext,
-        tickCounter: RenderTickCounter,
-    ) {
-        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
-        val magicCost = selectedMagic.getCost(calculationContext).toDouble()
-        manaBar.manaCost.value = magicCost
-
-        val renderer = LegacyMatrixUIRenderer(drawContext.vertexConsumers)
-        manaBar.render(drawContext, renderer)
-    }
-
-    private fun renderLeftPart(
-        drawContext: DrawContext,
-        tickCounter: RenderTickCounter,
-    ) {
-        val magics = MatrixClient.getPlayerMagics()
-        val indentList = generateIndentList(magics.size)
-        fillExtraWidthAnimationList(
-            magics
-        )
-        repeat(
-            magics.size
-        ) {
-            renderMagic(drawContext, tickCounter, it + 1, magics[it], indentList)
-        }
-    }
-
-    private fun restrictedSizedString(
-        string: String,
-        width: Double,
-    ): String {
-        val textRenderer = MinecraftClient.getInstance().textRenderer
-        var length = 0
-        var index = 0
-        for (character in string) {
-            length += textRenderer.getWidth(
-                character.toString()
-            )
-            if (length > width) {
-                return string.take(index)
-            }
-            ++index
-        }
-
-        return string
-    }
-
-    private fun renderMagic(
-        drawContext: DrawContext,
-        tickCounter: RenderTickCounter,
-        index: Int,
-        magic: Magic,
-        indentList: List<Double>,
-    ) {
-        val displayData = magicDisplayData[index - 1]
-        val xIndent = indentList[index - 1].toInt()
-
-        val animatedColor = magicColorAnimations.getOrNull(
-            index - 1
-        )
-        val color = ColorHelper.Argb.getArgb(
-            (magicShownOpacityAnimation.animatedValue * 127.5).toInt(), animatedColor?.red?.animatedValue?.toInt() ?: 0, animatedColor?.green?.animatedValue?.toInt() ?: 0, animatedColor?.blue?.animatedValue?.toInt() ?: 0
-        )
-
-        val height = 20.0
-        val margin = 5.0
-
-        val startY = (index * (height + margin) + drawContext.scaledWindowHeight / 2 - (indentList.size + 1) * (height + margin) / 2).toInt()
-        val endY = (startY + height).toInt()
-
-        val status = getMagicAvailableStatus(
-            magic
-        ).let {
-            if (it == LMagicAvailableStatus.TARGET_MISSING) {
-                LMagicAvailableStatus.AVAILABLE
-            } else {
-                it
-            }
-        }
-
-        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
-        val normalCost = magic.getNormalCost()
-        val cost = magic.getCost(calculationContext)
-        if (displayData.previousCost != cost) {
-            displayData.costChangedAnimation.value = .0
-            displayData.previousCost = cost
-        }
-        if (displayData.costChangedAnimation.animatedValue == .0) {
-            displayData.displayCost = cost
-            displayData.costChangedAnimation.value = 1.0
-        }
-        if (displayData.previousStatus != status) {
-            displayData.statusChangedAnimation.value = .0
-            displayData.previousStatus = status
-        }
-        if (displayData.statusChangedAnimation.animatedValue == .0) {
-            displayData.displayStatus = status
-            displayData.statusChangedAnimation.value = 1.0
-        }
-        val costString =
-            if (displayData.displayCost > normalCost) {
-                "§c↑§r" + displayData.displayCost.toString()
-            } else if (displayData.displayCost < normalCost) {
-                "§a↓§r" + displayData.displayCost.toString()
-            } else {
-                displayData.displayCost.toString()
-            }
-        val statusString = displayData.displayStatus.description
-
-        val textRenderer = MinecraftClient.getInstance().textRenderer
-        displayData.costWidthAnimation.value = textRenderer.getWidth(costString).toDouble()
-
-        val magicNameWidth = textRenderer.getWidth(magic.definition.name)
-        val costStringWidth = displayData.costWidthAnimation.animatedValue
-        val statusStringWidth = textRenderer.getWidth(status.description)
-        val extraWidth = magicNameWidth + costStringWidth + statusStringWidth + 30 /* padding */
-        val extraWidthAnimation = magicExtraWidthAnimations[index - 1].animation
-        extraWidthAnimation.currentValue = extraWidth
-
-        drawContext.enableScissor(
-            xIndent + 50 + magicShownAnimation.animatedValue.toInt(), startY, xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(), endY
-        )
-
-        val transformationMatrix = drawContext.matrices.peek().positionMatrix
-        val tessellator = Tessellator.getInstance()
-
-        val blurBackgroundStartX = xIndent + 50 + magicShownAnimation.animatedValue.toInt()
-        val blurBackgroundEndX = xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt()
-
-        val builder = Tessellator.getInstance()
-        var buffer = builder.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR)
-        buffer.vertex(transformationMatrix, blurBackgroundEndX.toFloat(), endY.toFloat(), 0f).color(color).texture(1.0F, 1.0F)
-        buffer.vertex(transformationMatrix, blurBackgroundEndX.toFloat(), startY.toFloat(), 0f).color(color).texture(1.0F, .0F)
-        buffer.vertex(transformationMatrix, blurBackgroundStartX.toFloat(), startY.toFloat(), 0f).color(color).texture(.0F, .0F)
-        buffer.vertex(transformationMatrix, blurBackgroundStartX.toFloat(), endY.toFloat(), 0f).color(color).texture(.0F, 1.0F)
-
-        StateIsolation.isolate(
-            BlendState(true),
-            ShaderProgramState(GameRenderer::getPositionColorProgram)
-        ) {
-            BufferRenderer.drawWithGlobalProgram(buffer.end())
-        }
-        // dissolveShader.disableShader()
-
-        // drawContext.fill(xIndent + 50 + magicShownAnimation.animatedValue.toInt(), startY, xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(), endY, 0, color)
-
-        val alpha = magicShownOpacityAnimation.animatedValue * 255
-        val foregroundColor = ColorHelper.Argb.getArgb(alpha.toInt(), 255, 255, 255)
-        if (alpha > 4) {
-            val multiplier = 1.0F
-            RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
-            drawContext.drawText(textRenderer, magic.definition.name, xIndent + 55 + magicShownAnimation.animatedValue.toInt(), startY + 5, foregroundColor, false)
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
-        }
-
-        val costAlpha = min(alpha, displayData.costChangedAnimation.animatedValue * 255)
-        // println((displayData.costChangedAnimation.animatedValue * 255).toInt())
-        if (costAlpha > 4) {
-            val multiplier = 1.0F
-            val costForegroundColor = ColorHelper.Argb.getArgb(costAlpha.toInt(), 255, 255, 255)
-            RenderSystem.setShaderColor(1.0F, multiplier, 1.0F, 1.0F)
-            drawContext.drawText(textRenderer, Text.literal(costString), xIndent + 65 + magicNameWidth + magicShownAnimation.animatedValue.toInt(), startY + 5, costForegroundColor, false)
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
-        }
-
-        val statusAlpha = min(alpha, displayData.statusChangedAnimation.animatedValue * 255)
-        if (statusAlpha > 4) {
-            val statusForegroundColor = ColorHelper.Argb.getArgb(statusAlpha.toInt(), 255, 255, 255)
-            drawContext.drawText(textRenderer, statusString, xIndent + 75 + magicNameWidth + costStringWidth.toInt() + magicShownAnimation.animatedValue.toInt(), startY + 5, statusForegroundColor, false)
-        }
-        drawContext.disableScissor()
-
-        if (usingMagicList.containsKey(
-                index
-            )
-        ) {
-            val deltaTime = usingMagicList[index]!!
-
-            val maxX = xIndent + 55 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt()
-
-            val startX = (xIndent + deltaTime) + magicShownAnimation.animatedValue.toInt()
-            val endX = startX + height
-
-            if (startX > maxX) {
-                usingMagicList.remove(
-                    index
-                )
-                return
-            }
-
-            val animationProgress = (startX - xIndent - 50) / extraWidth
-            val progressColor = Color(
-                25, 192, 25, (magicShownOpacityAnimation.animatedValue * 128).toInt()
-            )
-            val brightProgressColor = Color(
-                25, 255, 25, (magicShownOpacityAnimation.animatedValue * 255).toInt().coerceAtMost(
-                    255
-                )
-            )
-            val transparentColor = Color(
-                0, 0, 0, 0
-            )
-
-            RenderSystem.enableBlend()
-            RenderSystem.setShader(GameRenderer::getPositionColorProgram)
-
-            // We're drawing in triangle strip mode, the first 3 vertices form the first triangle.
-            // Each added vertex forms a new triangle with the first vertex and the last vertex.
-            //
-            // We need to draw a parallelogram, we split the parallelogram into two triangles to render
-            // in this mode, first we draw the left triangle by the following order:
-            // 1. lower left corner (startX, endY)
-            // 2. lower right corner (endX, endY)
-            // 3. upper right corner (endX, startY)
-            // Then we draw the right triangle, in this mode we only need to draw a new vertex that will
-            // form a new triangle with the first two vertices, so we only need to draw the upper right
-            // of the right triangle (endX + width, startY)
-            drawContext.enableScissor(
-                xIndent + 50 + magicShownAnimation.animatedValue.toInt(), startY, xIndent + 50 + extraWidthAnimation.animatedValue.toInt() + magicShownAnimation.animatedValue.toInt(), endY
-            )
-
-            val halfTransparentColor = Color(0, 255, 0, (magicShownOpacityAnimation.animatedValue * 255 * (1.0 - animationProgress)).toInt())
-            buffer = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR)
-            buffer.vertex(
-                transformationMatrix, startX.toFloat(), endY.toFloat(), 0f
-            ).color(
-                transparentColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, endX.toFloat(), endY.toFloat(), 0f
-            ).color(
-                halfTransparentColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, endX.toFloat(), startY.toFloat(), 0f
-            ).color(
-                transparentColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, (endX + height).toFloat(), startY.toFloat(), 0f
-            ).color(
-                halfTransparentColor.toInt()
-            )
-            BufferRenderer.drawWithGlobalProgram(buffer.end())
-
-            val multiplier = 4.0F
-            RenderSystem.setShaderColor(multiplier, multiplier, multiplier, (0.7F - animationProgress).toFloat())
-            buffer = tessellator.begin(
-                VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR
-            )
-            buffer.vertex(
-                transformationMatrix, startX.toFloat(), endY.toFloat(), 0f
-            ).color(
-                progressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, endX.toFloat(), endY.toFloat(), 0f
-            ).color(
-                progressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, endX.toFloat(), startY.toFloat(), 0f
-            ).color(
-                progressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, (endX + height).toFloat(), startY.toFloat(), 0f
-            ).color(
-                progressColor.toInt()
-            )
-            BufferRenderer.drawWithGlobalProgram(
-                buffer.end()
-            )
-
-            buffer = tessellator.begin(
-                VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR
-            )
-            buffer.vertex(
-                transformationMatrix, (startX + 20).toFloat(), endY.toFloat(), 0f
-            ).color(
-                progressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, (endX + 20).toFloat(), endY.toFloat(), 0f
-            ).color(
-                progressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, (endX + 20).toFloat(), startY.toFloat(), 0f
-            ).color(
-                progressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, (endX + 20 + height).toFloat(), startY.toFloat(), 0f
-            ).color(
-                progressColor.toInt()
-            )
-            BufferRenderer.drawWithGlobalProgram(
-                buffer.end()
-            )
-
-            buffer = tessellator.begin(
-                VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR
-            )
-            buffer.vertex(
-                transformationMatrix, (startX + 10).toFloat(), endY.toFloat(), 0f
-            ).color(
-                brightProgressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, (endX + 10).toFloat(), endY.toFloat(), 0f
-            ).color(
-                brightProgressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, (endX + 10).toFloat(), startY.toFloat(), 0f
-            ).color(
-                brightProgressColor.toInt()
-            )
-            buffer.vertex(
-                transformationMatrix, (endX + 10 + height).toFloat(), startY.toFloat(), 0f
-            ).color(
-                brightProgressColor.toInt()
-            )
-
-            RenderSystem.enableBlend()
-            BufferRenderer.drawWithGlobalProgram(buffer.end())
-            RenderSystem.defaultBlendFunc()
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
-
-            // val renderer = MatrixUIRenderer(drawContext.vertexConsumers)
-            // renderer.renderRectangle(
-            //     Rectangle(
-            //         Point(startX, startY.toDouble()),
-            //         Point(endX, endY.toDouble())
-            //     ),
-            //     Color(0, 0, 128, magicShownOpacityAnimation.animatedValue.toInt())
-            // )
-            drawContext.disableScissor()
-        }
-    }
-
-    private fun renderOverclock(
-        drawContext: DrawContext,
-        tickCounter: RenderTickCounter,
-    ) {
-        val renderer = LegacyMatrixUIRenderer(
-            drawContext.vertexConsumers
-        )
-        val manaOverclockMinPoint = Point(
-            renderer.scaledWindowWidth - 5.0, renderer.scaledWindowHeight.toDouble() - 25.0
-        )
-        val manaOverclockMaxPoint = Point(
-            renderer.scaledWindowWidth - 10.0, MathHelper.lerp(
-                manaOverclock.animatedValue / 10, renderer.scaledWindowHeight.toDouble() - 25.0, 25.0
-            )
-        )
-
-        val magicOverclockMinPoint = Point(
-            renderer.scaledWindowWidth - 15.0, renderer.scaledWindowHeight.toDouble() - 25.0
-        )
-
-        val magicOverclockMaxPoint = Point(
-            renderer.scaledWindowWidth - 20.0, MathHelper.lerp(
-                magicOverclock.animatedValue / 10, renderer.scaledWindowHeight.toDouble() - 25.0, 25.0
-            )
-        )
-
-        val magicOverclockColor = Color(
-            MathHelper.lerp(
-                magicOverclock.animatedValue / 10.0, 0.0, 255.0
-            ).toInt(), MathHelper.lerp(
-                magicOverclock.animatedValue / 10.0, 255.0, 0.0
-            ).toInt(), 0, 128
-        )
-
-        val manaOverclockColor = Color(
-            MathHelper.lerp(
-                manaOverclock.animatedValue / 10.0, 0.0, 255.0
-            ).toInt(), MathHelper.lerp(
-                manaOverclock.animatedValue / 10.0, 255.0, 0.0
-            ).toInt(), 0, 128
-        )
-
-        renderer.renderRectangle(
-            Rectangle(
-                manaOverclockMinPoint, manaOverclockMaxPoint
-            ), manaOverclockColor
-        )
-        renderer.renderRectangle(
-            Rectangle(
-                magicOverclockMinPoint, magicOverclockMaxPoint
-            ), magicOverclockColor
+    private var selectedMagicIndex = 0
+    private var crosshairTargetPosition: Vector2f? = null
+    private var crosshairAnimationInitialized = false
+    private var lastUseMagicTick = Int.MIN_VALUE
+    private var useMagicHoldArmed = false
+    private var fovZoomRatio = .0
+    private var currentDescription: Component = Component.empty()
+    private var displayDescription: Component = Component.empty()
+    private var previousDisplayEntityNameKey = ""
+    private var displayEntityName: Component = Component.empty()
+    private var previousCandidateEntityCount = 0
+    private var displayCandidateEntityCount = 0
+    private var currentAvailableStatusKey = "available"
+    private var displayAvailableStatus: Component = MatrixLanguage.magicAvailable
+    private val availableStatusChangedAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
+    private var lastManaCostTooltipState = false
+    private var displayManaCostTooltipState = false
+    private var lastManaCostTooltipDifference = 0L
+    private var displayManaCostTooltipDifference = 0L
+    private val manaCostTooltipStateChangedAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
+    private val manaCostTooltipDifferenceChangedAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
+    private val usingMagicList = mutableMapOf<Int, Double>()
+    private var cachedMagicDisplayData = mutableListOf<MagicDisplayData>()
+    private val magicColorAnimations = mutableListOf<HudColorAnimation>()
+    private val magicExtraWidthAnimations = mutableListOf<SimpleDoubleAnimation>()
+    private val theWorldShader by lazy {
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/the_world.fsh", GL_FRAGMENT_SHADER),
         )
     }
 
-    private fun selectTargetEntity(tickCounter: RenderTickCounter) {
-        var targetedEntity = getTargetedEntity(tickCounter.getTickDelta(true))
-        if (targetedEntity is EnderDragonPart) {
-            targetedEntity = targetedEntity.owner
+    val grayscaleIntensity: Float
+        get() = grayscaleIntensityAnimation.animatedValue.toFloat().coerceIn(.0F, 1.0F)
+
+    private class HudColorAnimation {
+        val red = SimpleDoubleAnimation(initValue = .0)
+        val green = SimpleDoubleAnimation(initValue = .0)
+        val blue = SimpleDoubleAnimation(initValue = .0)
+
+        fun setColor(red: Double, green: Double, blue: Double) {
+            this.red.value = red
+            this.green.value = green
+            this.blue.value = blue
         }
-        if (targetedEntity != this.targetedEntity) {
-            if (targetedEntity == null) {
-                entityDescriptionOpacityAnimation.value = .0
-                descriptionYOffsetAnimation.value = -35.0
-            } else {
-                entityDescriptionOpacityAnimation.value = 1.0
-                descriptionYOffsetAnimation.value = .0
-            }
+
+        fun setColorWithoutAnimation(red: Double, green: Double, blue: Double) {
+            this.red.animatedValue = red
+            this.green.animatedValue = green
+            this.blue.animatedValue = blue
         }
-        if (targetedEntity is LivingEntity) {
-            cachedTargetedEntity = targetedEntity
-        }
-        this.targetedEntity = targetedEntity as? LivingEntity?
     }
 
-    private fun renderRightPart(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val backgroundColor = ColorHelper.Argb.getArgb((magicShownOpacityAnimation.animatedValue * 127.5).toInt(), 255, 255, 255)
-        val alpha = (magicShownOpacityAnimation.animatedValue * 255).coerceIn(.0..255.0).toInt()
+    private class MagicDisplayData {
+        val statusChangedAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
+        val costChangedAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(150))
+        val costWidthAnimation = SimpleDoubleAnimation(initValue = .0)
 
-        val builder = Tessellator.getInstance()
-        val buffer = builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR)
-        val offsetX = magicShownAnimation.animatedValue.toFloat()
-        val offsetY = descriptionExtraHeightAnimation.animatedValue.toFloat()
+        var displayCost = 0L
+        var previousCost = Long.MIN_VALUE
+        var displayStatus: Component = MatrixLanguage.magicAvailable
+        var previousStatusKey = ""
+    }
 
-        val windowWidth = drawContext.scaledWindowWidth
-        val windowHeight = drawContext.scaledWindowHeight
+    private data class MagicStatusDisplay(
+        val key: String,
+        val text: Component,
+        val available: Boolean,
+        val targetMissing: Boolean,
+    )
 
-        val leftX = windowWidth - 200 - offsetX
-        val rightX = windowWidth - 25 - offsetX
-        val topY = windowHeight / 2 - 100F - offsetY / 2F
-        val bottomY = windowHeight / 2 + 100F + offsetY / 2F
-
-        val width = rightX - leftX
-        val height = bottomY - topY
-
-        buffer.vertex(rightX, topY, 0F).texture(0F, 0F).color(backgroundColor)
-        buffer.vertex(leftX, topY, 0F).texture(1F, 0F).color(backgroundColor)
-        buffer.vertex(leftX, bottomY, 0F).texture(1F, 1F).color(backgroundColor)
-        buffer.vertex(rightX, bottomY, 0F).texture(0F, 1F).color(backgroundColor)
-
-        dissolveShader.dissolveFactor = dissolveAnimation.animatedValue.toFloat()
-        dissolveShader.resolutionX = width
-        dissolveShader.resolutionY = height
-        dissolveShader.enableShader()
-
-        StateIsolation.isolate(BlendState(true)) {
-            BufferRenderer.draw(buffer.end())
+    val selectedMagic: Magic
+        get() {
+            val magics = currentMagicList()
+            selectedMagicIndex = selectedMagicIndex.coerceIn(0, (magics.size - 1).coerceAtLeast(0))
+            return magics.getOrNull(selectedMagicIndex) ?: Magics.all.first()
         }
 
-        dissolveShader.disableShader()
-        dissolveShader.resolutionX = 1.0F
-        dissolveShader.resolutionY = 1.0F
-
-        val descriptionAlpha = min(magicShownOpacityAnimation.animatedValue * 255, entityDescriptionOpacityAnimation.animatedValue * 255).toInt()
-        val cachedTargetedEntity = this.cachedTargetedEntity
-
-        val textRenderer = MinecraftClient.getInstance().textRenderer
-        if (cachedTargetedEntity != null) {
-            val red = ColorHelper.Argb.getArgb(descriptionAlpha, 255, 25, 25)
-            val green = ColorHelper.Argb.getArgb(descriptionAlpha, 25, 255, 25)
-
-            val health = cachedTargetedEntity.health.toDouble()
-            val maxHealth = cachedTargetedEntity.maxHealth.toDouble()
-
-            if (health.isFinite()) {
-                healthAnimation.value = health
-            }
-            if (maxHealth.isFinite()) {
-                maxHealthAnimation.value = maxHealth
-            }
-            healthPercentageAnimation.value = (health / maxHealth).coerceIn(.0..1.0)
-
-            val percentage = healthPercentageAnimation.animatedValue
-            val lerpedColor = ColorHelper.Argb.lerp(percentage.toFloat(), red, green)
-
-            val sizeReduced = if (sizeScalingAnimation) {
-                10 - (entityDescriptionOpacityAnimation.animatedValue * 10).toInt()
-            } else {
-                0
-            }
-
-            val progressBarX = MathHelper.lerp(percentage.toFloat(), 190, 35)
-            val x1 = drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt() + sizeReduced
-            val x2 = drawContext.scaledWindowWidth - progressBarX - magicShownAnimation.animatedValue.toInt() - sizeReduced
-
-            val multiplier = lerp(1.0 - percentage, 1.0, 5.0).toFloat()
-            RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
-            drawContext.fill(
-                x1.coerceAtMost(x2),
-                drawContext.scaledWindowHeight / 2 - 80 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt() - sizeReduced,
-                x2,
-                drawContext.scaledWindowHeight / 2 - 75 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt() - sizeReduced,
-                lerpedColor
-            )
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
-
-            val fontSizeReduced = if (sizeScalingAnimation) {
-                entityDescriptionOpacityAnimation.animatedValue.toFloat()
-            } else {
-                1F
-            }
-            val descriptionForegroundColor = ColorHelper.Argb.getArgb(descriptionAlpha, 255, 255, 255)
-            if (descriptionAlpha > 3) {
-                val currentHealth = BigDecimal.valueOf(healthAnimation.animatedValue)
-                    .setScale(2, RoundingMode.HALF_UP)
-                    .toPlainString()
-                val maxHealth = BigDecimal.valueOf(maxHealthAnimation.animatedValue)
-                    .setScale(2, RoundingMode.HALF_UP)
-                    .toPlainString()
-                val healthText = StringBuilder()
-                    .append(currentHealth)
-                    .append("/")
-                    .append(maxHealth)
-                    .toString()
-
-                val textX = drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt()
-                val textY = drawContext.scaledWindowHeight / 2 - 70 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt()
-
-                val textWidth = textRenderer.getWidth(healthText)
-                val textCenterX = textX + textWidth / 2.0
-                val textCenterY = textY.toDouble() - 15
-
-                drawContext.matrices.push()
-
-                drawContext.matrices.translate(textCenterX, textCenterY, 0.0)
-                drawContext.matrices.scale(fontSizeReduced, fontSizeReduced, fontSizeReduced)
-                drawContext.matrices.translate(-textCenterX, -textCenterY, 0.0)
-
-                drawContext.drawText(
-                    textRenderer,
-                    healthText,
-                    textX,
-                    textY,
-                    descriptionForegroundColor,
-                    false
-                )
-                drawContext.matrices.pop()
-            }
-
-            val hashCode = cachedTargetedEntity.name.hashCode()
-            if (hashCode != previousDisplayEntityNameHashCode) {
-                displayEntityNameOpacityAnimation.value = .0
-                previousDisplayEntityNameHashCode = hashCode
-            }
-            if (displayEntityNameOpacityAnimation.animatedValue == .0) {
-                displayEntityNameOpacityAnimation.value = 1.0
-                displayEntityName = cachedTargetedEntity.name
-            }
-            val entityNameAlpha = min(descriptionAlpha, (displayEntityNameOpacityAnimation.animatedValue * 255).toInt())
-            val entityNameForegroundColor = ColorHelper.Argb.getArgb(entityNameAlpha, 255, 255, 255)
-            if (entityNameAlpha > 3) {
-                val textX = drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt()
-                val textY = drawContext.scaledWindowHeight / 2 - 90 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt()
-
-                val textWidth = textRenderer.getWidth(displayEntityName)
-                val textCenterX = textX + textWidth / 2.0
-                val textCenterY = textY + textRenderer.fontHeight / 2.0
-
-                drawContext.matrices.push()
-
-                drawContext.matrices.translate(textCenterX, textCenterY, 0.0)
-                drawContext.matrices.scale(fontSizeReduced, fontSizeReduced, fontSizeReduced)
-                drawContext.matrices.translate(-textCenterX, -textCenterY, 0.0)
-
-                drawContext.drawText(textRenderer, displayEntityName, textX, textY, entityNameForegroundColor, true)
-
-                drawContext.matrices.pop()
-            }
-
-            if (candidateAimAssistEntities.size != previousCandidateEntities) {
-                displayCandidateCountOpacityAnimation.value = .0
-                previousCandidateEntities = candidateAimAssistEntities.size
-            } else if (displayCandidateCountOpacityAnimation.animatedValue == .0) {
-                displayCandidateCountOpacityAnimation.value = 1.0
-                displayCandidateEntities = candidateAimAssistEntities.size
-            }
-
-            val candidateCountAlpha = min(descriptionAlpha, (displayCandidateCountOpacityAnimation.animatedValue * 255).toInt())
-            val candidateCountColor = ColorHelper.Argb.getArgb(candidateCountAlpha, 255, 255, 255)
-            if (candidateCountAlpha > 3) {
-                candidateCountPadding.value = (textRenderer.getWidth(displayEntityName) + textRenderer.getWidth(" ")).toDouble()
-                val padding = candidateCountPadding.animatedValue
-                val textX = drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt() + padding
-                val textY = drawContext.scaledWindowHeight / 2 - 90 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt()
-
-                val text = "+$displayCandidateEntities"
-                val textWidth = textRenderer.getWidth(text)
-                val textCenterX = textX + textWidth / 2.0
-                val textCenterY = textY + textRenderer.fontHeight / 2.0
-
-                drawContext.matrices.push()
-
-                drawContext.matrices.translate(textCenterX, textCenterY, 0.0)
-                drawContext.matrices.scale(fontSizeReduced, fontSizeReduced, fontSizeReduced)
-                drawContext.matrices.translate(-textCenterX, -textCenterY, 0.0)
-
-                drawContext.drawText(textRenderer, text, round(textX).toInt(), textY, candidateCountColor, true)
-
-                drawContext.matrices.pop()
-            }
+    fun onInitialize() {
+        AimAssist.autoApplyRotation = false
+        HudElementRegistry.addLast(Matrix.identifier("matrix_hud")) { drawContext, tickCounter ->
+            onHudRender(drawContext, tickCounter)
         }
+        ClientTickEvents.END_CLIENT_TICK.register {
+            handleKeyBindings()
+        }
+    }
 
-        if (alpha <= 3) {
+    private fun handleKeyBindings() {
+        val player = minecraft.player
+        if (player == null || minecraft.level == null) {
+            forceCloseMagicList(instant = true)
             return
         }
 
-        drawContext.enableScissor(
-            drawContext.scaledWindowWidth - 200 - magicShownAnimation.animatedValue.toInt(),
-            drawContext.scaledWindowHeight / 2 - 100 - (descriptionExtraHeightAnimation.animatedValue / 2).toInt(),
-            drawContext.scaledWindowWidth - 25 - magicShownAnimation.animatedValue.toInt(),
-            drawContext.scaledWindowHeight / 2 + 100 + (descriptionExtraHeightAnimation.animatedValue / 2).toInt()
-        )
-        val currentMagic = MatrixClient.getPlayerMagics()[selectedIndex - 1]
-
-        if (currentMagic.definition.description != currentDescription) {
-            currentDescription = currentMagic.definition.description
-            magicDescriptionChangedAnimation.value = .0
-        }
-        if (magicDescriptionChangedAnimation.animatedValue == .0) {
-            magicDescriptionChangedAnimation.value = 1.0
-            displayDescription = currentDescription
+        if (minecraft.gui.screen() != null && magicListKeyDown) {
+            forceCloseMagicList(instant = true)
+            return
         }
 
-        val descriptionY = drawContext.scaledWindowHeight / 2 - 55 + descriptionYOffsetAnimation.animatedValue.toInt() - (descriptionExtraHeightAnimation.animatedValue / 2).toInt() // + magicSwitchAnimation.animatedValue
+        val hudActive = shouldRenderMagicList()
+        updateMagicListVisibility(hudActive)
 
-        val lines = textRenderer.wrapLines(currentDescription, 150)
-        val extraHeight = textRenderer.fontHeight * lines.size - 180.0
-        descriptionExtraHeightAnimation.value = extraHeight.coerceAtLeast(.0)
-
-        val magicDescriptionAlpha = (min(magicShownOpacityAnimation.animatedValue, magicDescriptionChangedAnimation.animatedValue) * 255).toInt()
-        if (magicDescriptionAlpha > 3) {
-            drawContext.drawTextWrapped(textRenderer, displayDescription, drawContext.scaledWindowWidth - 190 - magicShownAnimation.animatedValue.toInt(), descriptionY, 150, ColorHelper.Argb.getArgb(magicDescriptionAlpha, 255, 255, 255))
+        while (MatrixKeyBindings.nextMagic.consumeClick()) {
+            nextMagic()
         }
-        drawContext.disableScissor()
-    }
-
-    private fun getTargetedEntity(tickDelta: Float): Entity? {
-        val candidateEntities = getAssistTargetEntity(tickDelta)//.filter { entity ->
-        //    val rotationVector = player.getRotationVec(tickDelta)
-        //    val from = player.getCameraPosVec(tickDelta)
-        //    val to = player.getCameraPosVec(tickDelta).add(rotationVector.multiply(aimAssistMaxDistance))
-        //    val blockHit = player.world.raycast(RaycastContext(from, to, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.ANY, player))
-        //    val blockHitDistance = player.squaredDistanceTo(blockHit.pos)
-        //    blockHitDistance >= entity.squaredDistanceTo(player)
-        //}
-        candidateAimAssistEntities = candidateEntities
-
-        val rayCastTarget = getRayCastTargetEntity(tickDelta)
-        if (rayCastTarget != null) {
-            usingRayCast = true
-            return rayCastTarget
+        while (MatrixKeyBindings.previousMagic.consumeClick()) {
+            previousMagic()
         }
-        usingRayCast = false
-        return candidateEntities.firstOrNull()
-    }
-
-    private fun getAssistTargetEntity(tickDelta: Float): List<LivingEntity> {
-        val entities = minecraft.cameraEntity?.getEntitiesNearSight(
-            aimAssistMaxDistance,
-            aimAssistFov,
-            tickDelta
-        ) // TODO: Sort by distance
-        if (entities == null) {
-            return emptyList()
-        }
-
-        return entities
-            .filter { it is LivingEntity && !it.isSpectator && it.isAlive }
-            .map { it as LivingEntity }
-            .filter {
-                val calculationContext = MagicCalculationContext.fromEntity(player, it)
-                selectedMagic.availableStatus(calculationContext) == LMagicAvailableStatus.AVAILABLE
+        var useMagicPressedWhileHudActive = false
+        while (MatrixKeyBindings.useMagic.consumeClick()) {
+            if (hudActive) {
+                useMagicPressedWhileHudActive = true
             }
-    }
-
-    private fun getRayCastTargetEntity(tickDelta: Float): Entity? {
-        val range = 10000.0
-
-        val minecraftClient = MinecraftClient.getInstance()!!
-        val camera = minecraftClient.cameraEntity!!
-
-        val location = camera.getCameraPosVec(tickDelta)
-        val rotation = camera.getRotationVec(tickDelta)
-        val min = location.add(rotation)
-        val max = location.add(rotation.multiply(range))
-        val box = Box(min, max)
-
-        // Wrap Dancer: Select entities through walls
-        if (player.wizardHelmetStack.item is WizardHelmet5) {
-            val result = ProjectileUtil.raycast(camera, min, max, box, { entity ->
-                if (entity.isSpectator) {
-                    return@raycast false
-                }
-                true
-            }, range)
-            return result?.entity
         }
 
-        val blockHit = player.world.raycast(RaycastContext(min, max, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.ANY, player))
-        val blockHitDistance = player.squaredDistanceTo(blockHit.pos)
-        val result = ProjectileUtil.raycast(camera, min, max, box, { entity ->
-            if (entity.isSpectator) {
-                return@raycast false
+        if (!MatrixKeyBindings.useMagic.isDown) {
+            useMagicHoldArmed = false
+        }
+        if (useMagicPressedWhileHudActive) {
+            useMagicHoldArmed = true
+            lastUseMagicTick = player.tickCount - USE_MAGIC_REPEAT_INTERVAL_TICKS
+        }
+
+        if (hudActive && MatrixKeyBindings.useMagic.isDown && useMagicHoldArmed) {
+            val currentTick = player.tickCount
+            if (currentTick - lastUseMagicTick >= USE_MAGIC_REPEAT_INTERVAL_TICKS && useSelectedMagic()) {
+                lastUseMagicTick = currentTick
             }
-
-            blockHitDistance > entity.squaredDistanceTo(player)
-        }, range)
-
-        return result?.entity
+        } else {
+            lastUseMagicTick = Int.MIN_VALUE
+            if (!hudActive) {
+                useMagicHoldArmed = false
+            }
+        }
+        while (MatrixKeyBindings.overclockMagic.consumeClick()) {
+            if (minecraft.player?.isShiftKeyDown == true) {
+                underclockMagic()
+            } else {
+                overclockMagic()
+            }
+        }
+        while (MatrixKeyBindings.overclockMana.consumeClick()) {
+            if (minecraft.player?.isShiftKeyDown == true) {
+                underclockMana()
+            } else {
+                overclockMana()
+            }
+        }
     }
 
-    private val crosshairX = SimpleDoubleAnimation()
-    private val crosshairY = SimpleDoubleAnimation()
+    private fun onHudRender(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
+        if (!hasHudContext() || !renderHud) {
+            forceCloseMagicList(instant = true)
+            return
+        }
+        if (minecraft.gui.screen() != null) {
+            forceCloseMagicList(instant = true)
+            return
+        }
+        syncMagicListKeyStateFromWindow()
+        val hudActive = shouldRenderMagicList()
+        updateMagicListVisibility(hudActive)
+        if (!hudActive) {
+            useMagicHoldArmed = false
+            lastUseMagicTick = Int.MIN_VALUE
+        }
+
+        val tickDelta = tickCounter.getGameTimeDeltaPartialTick(false)
+        updateTargeting(tickDelta, drawContext.guiWidth(), drawContext.guiHeight(), hudActive)
+        if (hudActive) {
+            handleKeyBindings()
+        }
+
+        updateTimeScale(hudActive)
+        updateTheWorldPostEffect()
+        checkMagicAvailableStatus()
+        performChannelMagicAnimation()
+
+        val alpha = magicShownOpacityAnimation.animatedValue
+        if (alpha <= 0.001) {
+            magicExtraWidthAnimations.forEach { it.animatedValue = .0 }
+            lastFrameNanos = System.nanoTime()
+            return
+        }
+
+        renderManaCostTooltip(drawContext)
+        renderLeftPart(drawContext)
+        renderRightPart(drawContext)
+        renderLegacyManaBar(drawContext)
+        renderMagicAvailableStatus(drawContext, hudActive)
+
+        if (hudActive) {
+            renderOverclock(drawContext)
+        }
+        lastFrameNanos = System.nanoTime()
+    }
+
+    @JvmStatic
+    fun onRemoteManaUpdate() {
+        manaUsage = manaUsage.coerceAtMost(mana)
+    }
+
+    @JvmStatic
+    fun shouldRenderHud(): Boolean {
+        return shouldRenderMagicList()
+    }
+
+    fun currentMagicList(): List<Magic> {
+        return MatrixClient.getPlayerMagics()
+    }
+
+    fun shouldSlowTime(): Boolean {
+        val server = minecraft.singleplayerServer ?: return false
+        return minecraft.isLocalServer && !server.isPublished
+    }
+
+    @JvmStatic
+    fun onDoAttack() {
+        if (isPressingRightMouseButton && shouldRenderMagicList()) {
+            useSelectedMagic()
+        }
+    }
+
+    @JvmStatic
+    fun nextMagic() {
+        val size = currentMagicList().size
+        if (size > 0) selectedMagicIndex = (selectedMagicIndex + 1).floorMod(size)
+    }
+
+    @JvmStatic
+    fun previousMagic() {
+        val size = currentMagicList().size
+        if (size > 0) selectedMagicIndex = (selectedMagicIndex - 1).floorMod(size)
+    }
+
+    @JvmStatic
+    fun nextZoomLevel() {
+        fovZoomRatio = (fovZoomRatio + 0.2).coerceAtMost(0.95)
+        fovAnimation.value = 1.0 - fovZoomRatio
+    }
+
+    @JvmStatic
+    fun previousZoomLevel() {
+        fovZoomRatio = (fovZoomRatio - 0.2).coerceAtLeast(.0)
+        fovAnimation.value = 1.0 - fovZoomRatio
+    }
+
+    @JvmStatic
+    fun overclockMana() {
+        manaOverclock = (manaOverclock + 0.5).coerceIn(1.0, 10.0)
+        syncOverclock()
+    }
+
+    @JvmStatic
+    fun underclockMana() {
+        manaOverclock = (manaOverclock - 0.5).coerceIn(1.0, 10.0)
+        syncOverclock()
+    }
+
+    @JvmStatic
+    fun overclockMagic() {
+        magicOverclock = (magicOverclock + 0.5).coerceIn(1.0, 10.0)
+        syncOverclock()
+    }
+
+    @JvmStatic
+    fun underclockMagic() {
+        magicOverclock = (magicOverclock - 0.5).coerceIn(1.0, 10.0)
+        syncOverclock()
+    }
 
     @JvmStatic
     fun translateCrosshairPosition(x: Float, y: Float): Vector2f {
-        if (!aimAssistEnabled) {
-            return Vector2f(x, y)
-        }
-
-        if (crosshairX.from == .0) {
-            crosshairX.from = x.toDouble()
-        }
-        if (crosshairY.from == .0) {
-            crosshairY.from = y.toDouble()
-        }
-        val targetedEntity = targetedEntity
-        if (targetedEntity == null) {
-            crosshairX.value = x.toDouble()
-            crosshairY.value = y.toDouble()
-        } else {
-            val tickDelta = minecraft.renderTickCounter.getTickDelta(true)
-            val lerpedPosition = targetedEntity.getLerpedPos(tickDelta).add(
-                .0,
-                targetedEntity.boundingBox.lengthY / 2,
-                .0
-            )
-            val screenPosition = worldToScreen(lerpedPosition)
-            if (screenPosition != null) {
-                crosshairX.value = screenPosition.x
-                crosshairY.value = screenPosition.y
+        val targetPosition = crosshairTargetPosition
+        if (targetPosition == null || !aimAssistEnabled) {
+            if (!crosshairAnimationInitialized) {
+                crosshairX.animatedValue = x.toDouble()
+                crosshairY.animatedValue = y.toDouble()
+            } else {
+                crosshairX.value = x.toDouble()
+                crosshairY.value = y.toDouble()
             }
+            return Vector2f(crosshairX.animatedValue.toFloat(), crosshairY.animatedValue.toFloat())
         }
 
+        if (!crosshairAnimationInitialized) {
+            crosshairX.animatedValue = x.toDouble()
+            crosshairY.animatedValue = y.toDouble()
+            crosshairAnimationInitialized = true
+        }
+
+        crosshairX.value = targetPosition.x.toDouble()
+        crosshairY.value = targetPosition.y.toDouble()
         return Vector2f(crosshairX.animatedValue.toFloat(), crosshairY.animatedValue.toFloat())
-    }
-
-    private fun generateIndentList(size: Int): List<Double> {
-        val result = mutableListOf<Double>()
-
-        val ease = ElasticEase()
-        ease.apply {
-            oscillations = 0
-            springiness = 1.0
-            easingMode = EasingMode.OUT
-        }
-
-        // var current = 0
-        val center = size / 2.0
-        for (i in 0 until size) {
-            val distance = abs(center - i)
-            val current = 1 - ease.transform(1 - distance.inverseLerp(.00..center))
-
-            result.add(current * 50 - 25)
-
-            // if (size % 2 == 0 && i == size / 2 - 1) {
-            //     continue
-            // }
-//
-            // if (i >= size / 2) {
-            //     current += 5
-            // } else {
-            //     current -= 5
-            // }
-        }
-
-        return result
-    }
-
-    fun onRemoteManaUpdate() {
-        manaBar.onRemoteManaUpdate()
     }
 
     @JvmStatic
     fun onKey(window: Long, key: Int, scancode: Int, action: Int, mods: Int): Boolean {
-        if (window != minecraft.window.handle) {
+        if (window != minecraft.window.handle() || minecraft.player == null) {
             return false
         }
 
-        if (isPressingTab && InputUtil.isKeyPressed(minecraft.window.handle, GLFW.GLFW_KEY_E) &&
-            player.getEquippedStack(EquipmentSlot.CHEST).item is LightningChestplate1
-        ) {
-            ClientPlayNetworking.send(BorrowedTimePayload())
+        val screenOpen = minecraft.gui.screen() != null
+        if (key == GLFW.GLFW_KEY_TAB) {
+            if (screenOpen) {
+                magicListKeyDown = false
+                return false
+            }
+
+            val pressed = action != GLFW.GLFW_RELEASE
+            if (pressed != magicListKeyDown) {
+                magicListKeyDown = pressed
+            }
             return true
         }
 
-        if (InputUtil.isKeyPressed(minecraft.window.handle, GLFW.GLFW_KEY_E) && shouldRenderHud()) {
-            ClientPlayNetworking.send(ServerboundActivateBloodPactPayload())
-            return true
+        if (!screenOpen && key == GLFW.GLFW_KEY_E && action != GLFW.GLFW_RELEASE) {
+            val player = minecraft.player ?: return false
+            val tabPressed = magicListKeyDown ||
+                GLFW.glfwGetKey(minecraft.window.handle(), GLFW.GLFW_KEY_TAB) == GLFW.GLFW_PRESS
+            if (tabPressed && player.getItemBySlot(EquipmentSlot.CHEST).item is LightningChestplate1) {
+                ClientPlayNetworking.send(ServerboundBorrowedTimePayload)
+                return true
+            }
+
+            if (shouldRenderHud()) {
+                ClientPlayNetworking.send(ServerboundActivateBloodPactPayload)
+                return true
+            }
         }
 
         if (!KeyEvent.EVENT.invoker().onKey(key, scancode, action, mods)) {
@@ -1870,41 +485,1032 @@ object MatrixHud {
         return false
     }
 
-    private var debug = false
-
     @JvmStatic
     fun onMouseButton(window: Long, button: Int, action: Int, mods: Int): Boolean {
-        if (window != minecraft.window.handle) {
+        if (window != minecraft.window.handle()) {
             return false
         }
 
-        if (shouldRenderHud() && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-            if (action == GLFW.GLFW_PRESS) {
-                debug = true
-
-                fovZoomRatio += 0.2
-                isPressingRightMouseButton = true
-                return true
+        if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            isPressingRightMouseButton = action != GLFW.GLFW_RELEASE
+            if (shouldRenderHud()) {
+                if (action == GLFW.GLFW_PRESS) {
+                    fovZoomRatio = (fovZoomRatio + 0.2).coerceAtMost(0.95)
+                    fovAnimation.value = 1.0 - fovZoomRatio
+                    return true
+                }
+                if (action == GLFW.GLFW_RELEASE) {
+                    fovZoomRatio = .0
+                    fovAnimation.value = 1.0
+                    return true
+                }
             } else if (action == GLFW.GLFW_RELEASE) {
                 fovZoomRatio = .0
-                isPressingRightMouseButton = false
-                return true
+                fovAnimation.value = 1.0
             }
         }
-
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            isPressingLeftMouseButton = action != GLFW.GLFW_RELEASE
+        }
         if (!MouseButtonEvent.EVENT.invoker().onMouseButton(button, action, mods)) {
             return true
         }
         return false
     }
 
-    @JvmStatic
-    fun nextZoomLevel() {
-        fovZoomRatio = (fovZoomRatio + 0.2).coerceAtMost(0.95)
+    private fun useSelectedMagic(): Boolean {
+        if (!shouldRenderMagicList()) {
+            return false
+        }
+        val usedMagicIndex = selectedMagicIndex
+        val magic = selectedMagicOrNull() ?: return false
+        val target = bestUsableTarget(magic) ?: return false
+        val player = minecraft.player ?: return false
+        val queue = target.getOrCreateChannelQueue(player)
+        val calculationContext = MagicCalculationContext(
+            caster = CasterContext.fromEntity(player),
+            target = target,
+            queue = queue,
+        )
+        if (!magic.availableStatus(calculationContext).isAvailable) {
+            return false
+        }
+        val cost = runCatching { magic.getCost(calculationContext) }.getOrDefault(magic.getNormalCost())
+        val channelTime = runCatching { magic.getChannelTime(calculationContext) }.getOrDefault(magic.getNormalChannelTime())
+        val availableMana = mana - manaUsage
+        val level = minecraft.level
+        if (player.isBloodPactActive && availableMana < cost) {
+            level?.playSound(player, player.x, player.y, player.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0F, 1.0F)
+            level?.playSound(player, player.x, player.y, player.z, SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1.0F, 1.0F)
+        } else {
+            level?.playSound(player, player.x, player.y, player.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0F, 1.0F)
+        }
+        val predictedEntry = ChannelEntry(magic, cost, channelTime).also {
+            it.clientPrediction = true
+        }
+        queue.enqueue(predictedEntry)
+        magic.channel(MagicInvocation.fromEntity(player, target))
+        ChannelExecutor.performChannelAnimation(predictedEntry, target, channelTime)
+        ClientPlayNetworking.send(ServerboundUseMagicPayload(magic.definition.uuid, target.id))
+        magicColorAnimations.getOrNull(usedMagicIndex)?.setColorWithoutAnimation(.0, 255.0, .0)
+        usingMagicList[usedMagicIndex] = .0
+        return true
     }
 
-    @JvmStatic
-    fun previousZoomLevel() {
-        fovZoomRatio = (fovZoomRatio - 0.2).coerceAtLeast(.0)
+    private fun updateTimeScale(active: Boolean) {
+        val canSlowTime = shouldSlowTime()
+        magicHudTimeScale.value = if (active && canSlowTime) {
+            MAGIC_HUD_TIME_SCALE
+        } else {
+            1.0
+        }
+        val hasBorrowedTime = minecraft.player?.isBorrowedTime == true
+        lightningTimeScale.value = if (canSlowTime && hasBorrowedTime) {
+            BORROWED_TIME_SCALE
+        } else {
+            1.0
+        }
+        TimeController.playerStandaloneRenderTick = canSlowTime && hasBorrowedTime && !active && !minecraft.isPaused
+        TimeController.onRenderTick()
     }
+
+    private fun resetTimeScale() {
+        magicHudTimeScale.animatedValue = 1.0
+        lightningTimeScale.animatedValue = 1.0
+        TimeController.playerStandaloneRenderTick = false
+        TimeController.onRenderTick()
+        grayscaleIntensityAnimation.animatedValue = .0
+        PostProcessRenderer.postProcessShaders.remove(theWorldShader)
+    }
+
+    private fun updateTheWorldPostEffect() {
+        val player = minecraft.player
+        val targetIntensity = when {
+            player?.isPhaseWalking == true -> 1.0
+            shouldSlowTime() -> magicShownOpacityAnimation.animatedValue.coerceIn(.0, 1.0)
+            else -> .0
+        }
+        grayscaleIntensityAnimation.animatedValue = targetIntensity
+
+        if (targetIntensity > 0.001) {
+            PostProcessRenderer.postProcessShaders.add(theWorldShader)
+        } else {
+            PostProcessRenderer.postProcessShaders.remove(theWorldShader)
+        }
+    }
+
+    private fun syncMagicListKeyStateFromWindow() {
+        if (!magicListKeyDown) {
+            return
+        }
+        val tabDown = GLFW.glfwGetKey(minecraft.window.handle(), GLFW.GLFW_KEY_TAB) == GLFW.GLFW_PRESS
+        if (!tabDown) {
+            magicListKeyDown = false
+        }
+    }
+
+    private fun updateMagicListVisibility(visible: Boolean) {
+        if (visible != previousMagicListVisible) {
+            onHudVisibilityChanged(visible)
+            previousMagicListVisible = visible
+        }
+    }
+
+    private fun forceCloseMagicList(instant: Boolean) {
+        magicListKeyDown = false
+        previousMagicListVisible = false
+        if (instant) {
+            magicShownOpacityAnimation.animatedValue = .0
+            magicShownAnimation.animatedValue = -50.0
+            manaOpacityAnimation.animatedValue = .0
+            manaShownAnimation.animatedValue = -50.0
+            manaCostTooltipOpacityAnimation.animatedValue = .0
+            manaCostTooltipShownAnimation.animatedValue = .0
+            availableStatusOpacityAnimation.animatedValue = .0
+            availableStatusShownAnimation.animatedValue = -50.0
+            entityDescriptionOpacityAnimation.animatedValue = .0
+            descriptionYOffsetAnimation.animatedValue = -35.0
+        } else {
+            onHudHide()
+        }
+        resetTimeScale()
+    }
+
+    private fun onHudVisibilityChanged(visible: Boolean) {
+        if (visible) {
+            onHudShown()
+        } else {
+            onHudHide()
+        }
+    }
+
+    private fun onHudShown() {
+        magicShownAnimation.value = .0
+        magicShownOpacityAnimation.value = 1.0
+        manaShownAnimation.value = .0
+        manaOpacityAnimation.value = 1.0
+        entityDescriptionOpacityAnimation.value = if (targetedEntity != null) 1.0 else .0
+        descriptionYOffsetAnimation.value = if (targetedEntity != null) .0 else -35.0
+        AimAssist.resetAnimation()
+    }
+
+    private fun onHudHide() {
+        magicShownAnimation.value = -50.0
+        magicShownOpacityAnimation.value = .0
+        manaShownAnimation.value = -50.0
+        manaOpacityAnimation.value = .0
+        manaCostTooltipOpacityAnimation.value = .0
+        manaCostTooltipShownAnimation.value = .0
+        availableStatusOpacityAnimation.value = .0
+        availableStatusShownAnimation.value = -50.0
+        entityDescriptionOpacityAnimation.value = .0
+        descriptionYOffsetAnimation.value = -35.0
+        fovAnimation.value = 1.0
+    }
+
+    private fun updateTargeting(tickDelta: Float, viewportWidth: Int, viewportHeight: Int, hudActive: Boolean) {
+        val player = minecraft.player
+        if (player == null || minecraft.level == null || !hudActive) {
+            candidateTargets = emptyList()
+            targetedEntity = null
+            crosshairTargetPosition = null
+            usingRayCast = false
+            return
+        }
+
+        val previousTarget = targetedEntity
+        val magic = selectedMagicOrNull()
+        val directTarget = getDirectTargetEntity(tickDelta, magic)
+        val candidates = if (aimAssistEnabled && magic != null) {
+            getAssistTargetEntities(tickDelta, magic)
+        } else {
+            emptyList()
+        }
+        candidateTargets = candidates
+        usingRayCast = directTarget != null && directTarget !== minecraft.crosshairPickEntity.asLivingTarget()
+        targetedEntity = when {
+            magic != null && directTarget != null && canChannelMagicOn(directTarget, magic) -> directTarget
+            magic != null -> candidates.firstOrNull()
+            else -> directTarget ?: candidates.firstOrNull()
+        }
+
+        if (targetedEntity != previousTarget) {
+            if (targetedEntity == null) {
+                entityDescriptionOpacityAnimation.value = .0
+                descriptionYOffsetAnimation.value = -35.0
+            } else {
+                entityDescriptionOpacityAnimation.value = 1.0
+                descriptionYOffsetAnimation.value = .0
+            }
+        }
+        if (targetedEntity != null) {
+            cachedTargetedEntity = targetedEntity
+        }
+
+        val target = targetedEntity
+        crosshairTargetPosition = if (aimAssistEnabled && target != null) {
+            val targetPosition = target.getLerpedPos(tickDelta).add(.0, target.boundingBox.ysize * 0.5, .0)
+            targetPosition.toGuiScreenPosition(tickDelta, viewportWidth, viewportHeight)
+        } else {
+            null
+        }
+    }
+
+    private fun getDirectTargetEntity(tickDelta: Float, magic: Magic?): LivingEntity? {
+        val player = minecraft.player ?: return null
+        val vanillaTarget = minecraft.crosshairPickEntity.asLivingTarget()
+        if (magic == null || player.wizardHelmetStack.item !is WizardHelmet5) {
+            return vanillaTarget
+        }
+
+        return getRayCastTargetEntity(tickDelta, magic)?.asLivingTarget() ?: vanillaTarget
+    }
+
+    private fun getAssistTargetEntities(tickDelta: Float, magic: Magic): List<LivingEntity> {
+        val player = minecraft.player ?: return emptyList()
+        val entities = minecraft.cameraEntity?.getEntitiesNearSight(
+            aimAssistMaxDistance,
+            aimAssistFov,
+            tickDelta,
+        ) ?: return emptyList()
+
+        return entities
+            .mapNotNull { it as? LivingEntity }
+            .filter { it !== player && it.isAlive && !it.isSpectator }
+            .filter { canChannelMagicOn(it, magic) }
+            .toList()
+    }
+
+    private fun getRayCastTargetEntity(tickDelta: Float, magic: Magic): Entity? {
+        val player = minecraft.player ?: return null
+        val cameraEntity = minecraft.cameraEntity ?: return null
+        val range = aimAssistMaxDistance
+
+        val location = minecraft.gameRenderer.mainCamera().position()
+        val rotation = cameraEntity.getViewVector(tickDelta).normalize()
+        val min = location.add(rotation)
+        val max = location.add(rotation.scale(range))
+        val box = AABB(min, max)
+
+        val basePredicate = { entity: Entity ->
+            val target = entity.asLivingTarget()
+            entity !== cameraEntity &&
+                !entity.isSpectator &&
+                target != null &&
+                target.isAlive &&
+                canChannelMagicOn(target, magic)
+        }
+
+        return ProjectileUtil.getEntityHitResult(cameraEntity, min, max, box, basePredicate, range)?.entity
+    }
+
+    private fun renderLegacyManaBar(drawContext: GuiGraphicsExtractor) {
+        val width = drawContext.guiWidth()
+        val player = minecraft.player
+        val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
+        val currentMagicCost = selectedMagicOrNull()?.let { runCatching { it.getCost(calculationContext) }.getOrDefault(it.getNormalCost()) } ?: 0L
+
+        manaValueAnimation.value = mana.coerceAtLeast(.0)
+        maxManaValueAnimation.value = maxMana.coerceAtLeast(.0)
+        manaUsageAnimation.value = manaUsage.coerceAtLeast(.0)
+        manaCostAnimation.value = currentMagicCost.toDouble()
+
+        val opacity = manaOpacityAnimation.animatedValue
+        if (opacity <= 0.001) {
+            return
+        }
+
+        val maxManaValue = maxManaValueAnimation.animatedValue.coerceAtLeast(.0)
+        val visibleMana = manaValueAnimation.animatedValue.coerceAtLeast(.0)
+        val usage = manaUsageAnimation.animatedValue.coerceAtLeast(.0)
+        val manaPercentage = if (visibleMana.isInfinite() || maxManaValue <= .0) {
+            if (visibleMana.isInfinite()) 1.0 else .0
+        } else {
+            (visibleMana / maxManaValue).coerceIn(.0, 1.0)
+        }
+
+        val left = 50
+        val right = width - 50
+        val top = (10.0 + manaShownAnimation.animatedValue).roundToInt()
+        val bottom = (25.0 + manaShownAnimation.animatedValue).roundToInt()
+        val fillRight = lerp(manaPercentage, left.toDouble(), right.toDouble()).roundToInt()
+
+        drawContext.fill(left, top, fillRight, bottom, color((opacity * 64).roundToInt(), 25, 128, 255))
+
+        if (maxManaValue > .0) {
+            val usageWidth = usage / maxManaValue * (right - left)
+            val usageLeft = (fillRight - usageWidth).roundToInt().coerceAtLeast(left)
+            drawContext.fill(usageLeft, top, fillRight, bottom, color((opacity * 128).roundToInt(), 255, 25, 25))
+
+            val costWidth = manaCostAnimation.animatedValue / maxManaValue * (right - left)
+            val costLeft = (usageLeft - costWidth).roundToInt().coerceAtLeast(left)
+            drawContext.fill(costLeft, bottom, usageLeft, bottom + 3, color((opacity * 128).roundToInt(), 128, 25, 25))
+        }
+
+        val currentMana = ((visibleMana * 10).toLong() - (usage * 10).toLong()) / 10.0
+        val maxManaText = (maxManaValue * 10).toLong() / 10.0
+        val manaText = "${MatrixLanguage.mana.string} = ${formatDecimal(currentMana)}/${formatDecimal(maxManaText)}"
+        drawContext.text(
+            minecraft.font,
+            manaText,
+            55,
+            (12.5 + manaShownAnimation.animatedValue).roundToInt(),
+            color((opacity * 255).roundToInt(), 255, 255, 255),
+        )
+    }
+
+    fun targetGuideChain(): List<LivingEntity> {
+        val result = mutableListOf<LivingEntity>()
+        val seen = mutableSetOf<Int>()
+
+        fun addTarget(entity: LivingEntity?) {
+            if (entity == null || !entity.isAlive || !seen.add(entity.id)) {
+                return
+            }
+            result.add(entity)
+        }
+
+        addTarget(targetedEntity)
+        candidateTargets.forEach(::addTarget)
+        return result
+    }
+
+    private fun renderLeftPart(drawContext: GuiGraphicsExtractor) {
+        val magics = currentMagicList()
+        if (magics.isEmpty()) {
+            return
+        }
+
+        fillColorAnimationList(magics)
+        fillExtraWidthAnimationList(magics)
+        ensureMagicDisplayData(magics)
+
+        val indentList = generateIndentList(magics.size)
+        magics.forEachIndexed { index, magic ->
+            renderMagic(drawContext, index, magic, indentList)
+        }
+    }
+
+    private fun renderMagic(
+        drawContext: GuiGraphicsExtractor,
+        index: Int,
+        magic: Magic,
+        indentList: List<Double>,
+    ) {
+        val displayData = magicDisplayData[index]
+        val xIndent = indentList[index].roundToInt()
+        val animatedColor = magicColorAnimations.getOrNull(index)
+        val alpha = magicShownOpacityAnimation.animatedValue
+        val backgroundColor = color(
+            (alpha * 127.5).roundToInt(),
+            animatedColor?.red?.animatedValue?.roundToInt() ?: 0,
+            animatedColor?.green?.animatedValue?.roundToInt() ?: 0,
+            animatedColor?.blue?.animatedValue?.roundToInt() ?: 0,
+        )
+
+        val rowHeight = 20.0
+        val margin = 5.0
+        val startY = (index + 1) * (rowHeight + margin) + drawContext.guiHeight() / 2.0 - (indentList.size + 1) * (rowHeight + margin) / 2.0
+        val top = startY.roundToInt()
+        val bottom = (startY + rowHeight).roundToInt()
+
+        val status = getMagicStatusDisplay(magic, targetMissingAsAvailable = true)
+        val calculationContext = MagicCalculationContext.fromEntity(minecraft.player, targetedEntity)
+        val normalCost = runCatching { magic.getNormalCost() }.getOrDefault(magic.definition.baseCost.toDouble().toLong())
+        val cost = runCatching { magic.getCost(calculationContext) }.getOrDefault(normalCost)
+
+        if (displayData.previousCost != cost) {
+            displayData.previousCost = cost
+            displayData.displayCost = cost
+            displayData.costChangedAnimation.animatedValue = .0
+            displayData.costChangedAnimation.value = 1.0
+        }
+        if (displayData.previousStatusKey != status.key) {
+            displayData.previousStatusKey = status.key
+            displayData.displayStatus = status.text
+            displayData.statusChangedAnimation.animatedValue = .0
+            displayData.statusChangedAnimation.value = 1.0
+        }
+
+        val costString = when {
+            displayData.displayCost > normalCost -> "§c↑§r${displayData.displayCost}"
+            displayData.displayCost < normalCost -> "§a↓§r${displayData.displayCost}"
+            else -> displayData.displayCost.toString()
+        }
+
+        val magicNameWidth = minecraft.font.width(magic.definition.name)
+        displayData.costWidthAnimation.value = minecraft.font.width(costString).toDouble()
+        val costStringWidth = displayData.costWidthAnimation.animatedValue
+        val statusStringWidth = minecraft.font.width(displayData.displayStatus)
+        val extraWidth = magicNameWidth + costStringWidth + statusStringWidth + 30.0
+        val extraWidthAnimation = magicExtraWidthAnimations[index]
+        extraWidthAnimation.value = extraWidth
+
+        val offsetX = magicShownAnimation.animatedValue.roundToInt()
+        val left = xIndent + 50 + offsetX
+        val right = xIndent + 50 + extraWidthAnimation.animatedValue.roundToInt() + offsetX
+
+        drawContext.enableScissor(left, top, right, bottom)
+        drawContext.fill(left, top, right, bottom, backgroundColor)
+
+        val foregroundColor = color((alpha * 255).roundToInt(), 255, 255, 255)
+        if (alpha > 0.016) {
+            drawContext.text(minecraft.font, magic.definition.name, xIndent + 55 + offsetX, top + 5, foregroundColor)
+        }
+
+        val costAlpha = min(alpha, displayData.costChangedAnimation.animatedValue)
+        if (costAlpha > 0.016) {
+            drawContext.text(
+                minecraft.font,
+                costString,
+                xIndent + 65 + magicNameWidth + offsetX,
+                top + 5,
+                color((costAlpha * 255).roundToInt(), 255, 255, 255),
+            )
+        }
+
+        val statusAlpha = min(alpha, displayData.statusChangedAnimation.animatedValue)
+        if (statusAlpha > 0.016) {
+            drawContext.text(
+                minecraft.font,
+                displayData.displayStatus,
+                xIndent + 75 + magicNameWidth + costStringWidth.roundToInt() + offsetX,
+                top + 5,
+                color((statusAlpha * 255).roundToInt(), 255, 255, 255),
+            )
+        }
+        drawContext.disableScissor()
+
+        val useAnimation = usingMagicList[index] ?: return
+        val maxX = xIndent + 55 + extraWidthAnimation.animatedValue + offsetX
+        val startX = xIndent + useAnimation + offsetX
+        val endX = startX + rowHeight
+        if (startX > maxX) {
+            usingMagicList.remove(index)
+            return
+        }
+
+        val animationProgress = ((startX - xIndent - 50.0) / extraWidth).coerceIn(.0, 1.0)
+        drawContext.enableScissor(left, top, right, bottom)
+        drawSlantedBand(
+            drawContext,
+            startX,
+            top,
+            rowHeight,
+            rowHeight,
+            rowHeight,
+            color((alpha * 255 * (1.0 - animationProgress)).roundToInt(), 0, 255, 0),
+        )
+        drawSlantedBand(
+            drawContext,
+            startX,
+            top,
+            rowHeight,
+            rowHeight,
+            rowHeight,
+            color((alpha * 128).roundToInt(), 25, 192, 25),
+        )
+        drawSlantedBand(
+            drawContext,
+            startX + 10.0,
+            top,
+            rowHeight,
+            rowHeight,
+            rowHeight,
+            color((alpha * 255).roundToInt(), 25, 255, 25),
+        )
+        drawSlantedBand(
+            drawContext,
+            startX + 20.0,
+            top,
+            rowHeight,
+            rowHeight,
+            rowHeight,
+            color((alpha * 128).roundToInt(), 25, 192, 25),
+        )
+        drawContext.disableScissor()
+    }
+
+    private fun renderRightPart(drawContext: GuiGraphicsExtractor) {
+        val alpha = magicShownOpacityAnimation.animatedValue
+        val width = drawContext.guiWidth()
+        val height = drawContext.guiHeight()
+        val offsetX = magicShownAnimation.animatedValue
+        val offsetY = descriptionExtraHeightAnimation.animatedValue
+        val left = (width - 200 - offsetX).roundToInt()
+        val right = (width - 25 - offsetX).roundToInt()
+        val top = (height / 2.0 - 100.0 - offsetY / 2.0).roundToInt()
+        val bottom = (height / 2.0 + 100.0 + offsetY / 2.0).roundToInt()
+
+        drawContext.fill(left, top, right, bottom, color((alpha * 127.5).roundToInt(), 255, 255, 255))
+
+        val target = cachedTargetedEntity
+        val descriptionAlpha = min(alpha, entityDescriptionOpacityAnimation.animatedValue)
+        if (target != null) {
+            renderTargetDescription(drawContext, target, descriptionAlpha, offsetX, offsetY)
+        }
+
+        if (alpha <= 0.016) {
+            return
+        }
+
+        val selectedMagic = selectedMagicOrNull() ?: return
+        if (selectedMagic.definition.description != currentDescription) {
+            currentDescription = selectedMagic.definition.description
+            displayDescription = currentDescription
+            magicDescriptionChangedAnimation.animatedValue = .0
+            magicDescriptionChangedAnimation.value = 1.0
+        }
+
+        val lines = minecraft.font.split(currentDescription, 150)
+        val extraHeight = minecraft.font.lineHeight * lines.size - 180.0
+        descriptionExtraHeightAnimation.value = extraHeight.coerceAtLeast(.0)
+
+        drawContext.enableScissor(left, top, right, bottom)
+        val descriptionY = (height / 2.0 - 55.0 + descriptionYOffsetAnimation.animatedValue - descriptionExtraHeightAnimation.animatedValue / 2.0).roundToInt()
+        val textAlpha = min(alpha, magicDescriptionChangedAnimation.animatedValue)
+        if (textAlpha > 0.016) {
+            drawContext.textWithWordWrap(
+                minecraft.font,
+                displayDescription,
+                width - 190 - offsetX.roundToInt(),
+                descriptionY,
+                150,
+                color((textAlpha * 255).roundToInt(), 255, 255, 255),
+            )
+        }
+        drawContext.disableScissor()
+    }
+
+    private fun renderTargetDescription(
+        drawContext: GuiGraphicsExtractor,
+        target: LivingEntity,
+        descriptionAlpha: Double,
+        offsetX: Double,
+        offsetY: Double,
+    ) {
+        if (descriptionAlpha <= 0.016) {
+            return
+        }
+
+        val width = drawContext.guiWidth()
+        val height = drawContext.guiHeight()
+        val health = target.health.toDouble()
+        val maxHealth = target.maxHealth.toDouble()
+        if (health.isFinite()) {
+            healthAnimation.value = health
+        }
+        if (maxHealth.isFinite()) {
+            maxHealthAnimation.value = maxHealth
+        }
+        healthPercentageAnimation.value = if (maxHealth > .0) (health / maxHealth).coerceIn(.0, 1.0) else .0
+
+        val percentage = healthPercentageAnimation.animatedValue
+        val barLeft = width - 190 - offsetX.roundToInt()
+        val barRight = (width - lerp(percentage, 190.0, 35.0) - offsetX).roundToInt()
+        val barTop = (height / 2.0 - 80.0 - offsetY / 2.0).roundToInt()
+        val barBottom = (height / 2.0 - 75.0 - offsetY / 2.0).roundToInt()
+        val red = (lerp(percentage, 255.0, 25.0)).roundToInt()
+        val green = (lerp(percentage, 25.0, 255.0)).roundToInt()
+        drawContext.fill(barLeft.coerceAtMost(barRight), barTop, barRight, barBottom, color((descriptionAlpha * 255).roundToInt(), red, green, 25))
+
+        val textColor = color((descriptionAlpha * 255).roundToInt(), 255, 255, 255)
+        val entityNameKey = target.displayName.string
+        if (entityNameKey != previousDisplayEntityNameKey) {
+            previousDisplayEntityNameKey = entityNameKey
+            displayEntityName = target.displayName
+            displayEntityNameOpacityAnimation.animatedValue = .0
+            displayEntityNameOpacityAnimation.value = 1.0
+        }
+
+        val nameAlpha = min(descriptionAlpha, displayEntityNameOpacityAnimation.animatedValue)
+        if (nameAlpha > 0.016) {
+            drawContext.text(
+                minecraft.font,
+                displayEntityName,
+                barLeft,
+                (height / 2.0 - 90.0 - offsetY / 2.0).roundToInt(),
+                color((nameAlpha * 255).roundToInt(), 255, 255, 255),
+            )
+        }
+
+        if (candidateTargets.size != previousCandidateEntityCount) {
+            previousCandidateEntityCount = candidateTargets.size
+            displayCandidateEntityCount = candidateTargets.size
+            displayCandidateCountOpacityAnimation.animatedValue = .0
+            displayCandidateCountOpacityAnimation.value = 1.0
+        }
+
+        val candidateAlpha = min(descriptionAlpha, displayCandidateCountOpacityAnimation.animatedValue)
+        if (candidateAlpha > 0.016) {
+            candidateCountPaddingAnimation.value = (minecraft.font.width(displayEntityName) + minecraft.font.width(" ")).toDouble()
+            drawContext.text(
+                minecraft.font,
+                "+$displayCandidateEntityCount",
+                (barLeft + candidateCountPaddingAnimation.animatedValue).roundToInt(),
+                (height / 2.0 - 90.0 - offsetY / 2.0).roundToInt(),
+                color((candidateAlpha * 255).roundToInt(), 255, 255, 255),
+            )
+        }
+
+        val healthText = "${formatDecimal(healthAnimation.animatedValue, scale = 2)}/${formatDecimal(maxHealthAnimation.animatedValue, scale = 2)}"
+        drawContext.text(
+            minecraft.font,
+            healthText,
+            barLeft,
+            (height / 2.0 - 70.0 - offsetY / 2.0).roundToInt(),
+            textColor,
+        )
+    }
+
+    private fun renderManaCostTooltip(drawContext: GuiGraphicsExtractor) {
+        val magic = selectedMagicOrNull() ?: return
+        val calculationContext = MagicCalculationContext.fromEntity(minecraft.player, targetedEntity)
+        val normalCost = runCatching { magic.getNormalCost() }.getOrDefault(magic.definition.baseCost.toDouble().toLong())
+        val cost = runCatching { magic.getCost(calculationContext) }.getOrDefault(normalCost)
+
+        if (cost == normalCost || magicShownOpacityAnimation.animatedValue <= 0.001) {
+            manaCostTooltipShownAnimation.value = .0
+            manaCostTooltipOpacityAnimation.value = .0
+        } else {
+            manaCostTooltipShownAnimation.value = 70.0
+            manaCostTooltipOpacityAnimation.value = 1.0
+            if (cost > normalCost) {
+                manaCostTooltipRedAnimation.value = .5
+                manaCostTooltipGreenAnimation.value = .0
+                manaCostTooltipBlueAnimation.value = .0
+            } else {
+                manaCostTooltipRedAnimation.value = .0
+                manaCostTooltipGreenAnimation.value = .5
+                manaCostTooltipBlueAnimation.value = .0
+            }
+        }
+
+        val opacity = manaCostTooltipOpacityAnimation.animatedValue
+        if (opacity <= 0.001) {
+            return
+        }
+
+        val left = drawContext.guiWidth() / 2 - 125
+        val top = (drawContext.guiHeight() - manaCostTooltipShownAnimation.animatedValue).roundToInt()
+        val right = drawContext.guiWidth() / 2 + 125
+        val bottom = top + 15
+        drawContext.fill(
+            left,
+            top,
+            right,
+            bottom,
+            color(
+                (opacity * 128).roundToInt(),
+                (manaCostTooltipRedAnimation.animatedValue * 255).roundToInt(),
+                (manaCostTooltipGreenAnimation.animatedValue * 255).roundToInt(),
+                (manaCostTooltipBlueAnimation.animatedValue * 255).roundToInt(),
+            ),
+        )
+
+        val difference = abs(normalCost - cost)
+        if (difference != lastManaCostTooltipDifference) {
+            lastManaCostTooltipDifference = difference
+            displayManaCostTooltipDifference = difference
+            manaCostTooltipDifferenceChangedAnimation.animatedValue = .0
+            manaCostTooltipDifferenceChangedAnimation.value = 1.0
+        }
+        val state = cost > normalCost
+        if (state != lastManaCostTooltipState) {
+            lastManaCostTooltipState = state
+            displayManaCostTooltipState = state
+            manaCostTooltipStateChangedAnimation.animatedValue = .0
+            manaCostTooltipStateChangedAnimation.value = 1.0
+        }
+
+        val stateAlpha = min(opacity, manaCostTooltipStateChangedAnimation.animatedValue)
+        if (stateAlpha > 0.016) {
+            drawContext.text(
+                minecraft.font,
+                if (displayManaCostTooltipState) MatrixLanguage.manaCostIncreased else MatrixLanguage.manaCostReduced,
+                left + 5,
+                top + 3,
+                color((stateAlpha * 255).roundToInt(), 255, 255, 255),
+            )
+        }
+        val differenceAlpha = min(opacity, manaCostTooltipDifferenceChangedAnimation.animatedValue)
+        if (differenceAlpha > 0.016) {
+            val differenceText = displayManaCostTooltipDifference.toString()
+            drawContext.text(
+                minecraft.font,
+                differenceText,
+                right - 5 - minecraft.font.width(differenceText),
+                top + 3,
+                color((differenceAlpha * 255).roundToInt(), 255, 255, 255),
+            )
+        }
+    }
+
+    private fun renderMagicAvailableStatus(drawContext: GuiGraphicsExtractor, hudActive: Boolean) {
+        val magic = selectedMagicOrNull() ?: return
+        val status = getMagicStatusDisplay(magic)
+        if (!hudActive || status.available || status.targetMissing) {
+            availableStatusShownAnimation.value = -50.0
+            availableStatusOpacityAnimation.value = .0
+        } else {
+            availableStatusShownAnimation.value = .0
+            availableStatusOpacityAnimation.value = 1.0
+        }
+
+        if (status.key != currentAvailableStatusKey && !status.available) {
+            currentAvailableStatusKey = status.key
+            displayAvailableStatus = status.text
+            availableStatusChangedAnimation.animatedValue = .0
+            availableStatusChangedAnimation.value = 1.0
+        }
+
+        val opacity = availableStatusOpacityAnimation.animatedValue
+        if (opacity <= 0.001) {
+            return
+        }
+
+        val left = drawContext.guiWidth() / 2 - 125
+        val top = (30.0 + availableStatusShownAnimation.animatedValue).roundToInt()
+        val right = drawContext.guiWidth() / 2 + 125
+        val bottom = (45.0 + availableStatusShownAnimation.animatedValue).roundToInt()
+        drawContext.fill(left, top, right, bottom, color((opacity * 128).roundToInt(), 128, 0, 0))
+
+        val textAlpha = min(opacity, availableStatusChangedAnimation.animatedValue)
+        if (textAlpha > 0.016) {
+            drawContext.text(
+                minecraft.font,
+                displayAvailableStatus,
+                left + 5,
+                top + 3,
+                color((textAlpha * 255).roundToInt(), 255, 255, 255),
+            )
+        }
+    }
+
+    private fun renderOverclock(drawContext: GuiGraphicsExtractor) {
+        val alpha = magicShownOpacityAnimation.animatedValue
+        if (alpha <= 0.001) {
+            return
+        }
+        manaOverclockAnimation.value = manaOverclock
+        magicOverclockAnimation.value = magicOverclock
+
+        val width = drawContext.guiWidth()
+        val height = drawContext.guiHeight()
+        val manaTop = lerp((manaOverclockAnimation.animatedValue / 10.0).coerceIn(.0, 1.0), height - 25.0, 25.0).roundToInt()
+        val magicTop = lerp((magicOverclockAnimation.animatedValue / 10.0).coerceIn(.0, 1.0), height - 25.0, 25.0).roundToInt()
+        val manaColor = overclockColor(manaOverclockAnimation.animatedValue, alpha)
+        val magicColor = overclockColor(magicOverclockAnimation.animatedValue, alpha)
+
+        drawContext.fill(width - 10, manaTop, width - 5, height - 25, manaColor)
+        drawContext.fill(width - 20, magicTop, width - 15, height - 25, magicColor)
+    }
+
+    private fun checkMagicAvailableStatus() {
+        val magics = currentMagicList()
+        fillColorAnimationList(magics)
+
+        magics.forEachIndexed { index, magic ->
+            val color = magicColorAnimations[index]
+            if (index == selectedMagicIndex) {
+                if (color.green.value == 255.0 || color.green.value == 128.0) {
+                    color.setColor(.0, 128.0, .0)
+                } else {
+                    color.setColorWithoutAnimation(.0, 128.0, .0)
+                }
+                return@forEachIndexed
+            }
+
+            val status = getMagicStatusDisplay(magic)
+            if (status.available || status.targetMissing) {
+                color.setColor(.0, .0, .0)
+            } else {
+                color.setColor(128.0, .0, .0)
+            }
+        }
+    }
+
+    private fun performChannelMagicAnimation() {
+        val now = System.nanoTime()
+        val delta = now - lastFrameNanos
+        usingMagicList.keys.toList().forEach { index ->
+            usingMagicList[index] = (usingMagicList[index] ?: .0) + delta / 2_000_000.0
+        }
+    }
+
+    private val magicDisplayData: MutableList<MagicDisplayData>
+        get() = cachedMagicDisplayData
+
+    private fun ensureMagicDisplayData(magics: List<Magic>) {
+        if (cachedMagicDisplayData.size == magics.size) {
+            return
+        }
+        cachedMagicDisplayData = MutableList(magics.size) { MagicDisplayData() }
+    }
+
+    private fun fillColorAnimationList(magics: List<Magic>) {
+        while (magicColorAnimations.size < magics.size) {
+            magicColorAnimations.add(HudColorAnimation())
+        }
+    }
+
+    private fun fillExtraWidthAnimationList(magics: List<Magic>) {
+        while (magicExtraWidthAnimations.size < magics.size) {
+            magicExtraWidthAnimations.add(SimpleDoubleAnimation(initValue = .0))
+        }
+    }
+
+    private fun getMagicStatusDisplay(
+        magic: Magic,
+        targetMissingAsAvailable: Boolean = false,
+    ): MagicStatusDisplay {
+        val status = getMagicAvailability(magic).firstOrNull()
+        if (status == null) {
+            return MagicStatusDisplay("available", MatrixLanguage.magicAvailable, available = true, targetMissing = false)
+        }
+
+        val targetMissing = status.identifier.path == MagicAvailableStatus.TargetMissing.identifier.path
+        if (targetMissingAsAvailable && targetMissing) {
+            return MagicStatusDisplay("available", MatrixLanguage.magicAvailable, available = true, targetMissing = true)
+        }
+
+        return MagicStatusDisplay(
+            key = status.identifier.toString(),
+            text = legacyStatusText(status),
+            available = false,
+            targetMissing = targetMissing,
+        )
+    }
+
+    private fun getMagicAvailability(magic: Magic): MagicAvailability {
+        val context = MagicCalculationContext.fromEntity(minecraft.player, targetedEntity)
+        return runCatching { magic.availableStatus(context) }
+            .getOrDefault(MagicAvailability(MagicAvailableStatus.Unavailable))
+    }
+
+    private fun legacyStatusText(status: MagicAvailableStatus): Component {
+        return when (status.identifier.path) {
+            MagicAvailableStatus.InsufficientMana.identifier.path -> MatrixLanguage.magicAvailableManaNotEnough
+            MagicAvailableStatus.TargetImmune.identifier.path -> MatrixLanguage.magicTargetImmune
+            MagicAvailableStatus.Unavailable.identifier.path -> MatrixLanguage.magicUnavailable
+            MagicAvailableStatus.ChannelQueueFull.identifier.path -> MatrixLanguage.magicChannelQueueFull
+            MagicAvailableStatus.ChannelQueueLocked.identifier.path -> MatrixLanguage.magicChannelQueueLocked
+            MagicAvailableStatus.TargetMissing.identifier.path -> MatrixLanguage.magicTargetMissing
+            "sculk_catalyst_is_already_active" -> MatrixLanguage.magicSculkCatalystIsAlreadyActive
+            else -> status.description
+        }
+    }
+
+    private fun generateIndentList(size: Int): List<Double> {
+        if (size <= 0) {
+            return emptyList()
+        }
+        val ease = ElasticEase().also {
+            it.oscillations = 0
+            it.springiness = 1.0
+            it.easingMode = EasingMode.OUT
+        }
+        val center = size / 2.0
+        return List(size) { index ->
+            val distance = abs(center - index)
+            val current = 1.0 - ease.transform(1.0 - (distance / center).coerceIn(.0, 1.0))
+            current * 50.0 - 25.0
+        }
+    }
+
+    private fun drawSlantedBand(
+        drawContext: GuiGraphicsExtractor,
+        startX: Double,
+        top: Int,
+        width: Double,
+        height: Double,
+        slant: Double,
+        color: Int,
+    ) {
+        val rows = height.roundToInt().coerceAtLeast(1)
+        for (row in 0 until rows) {
+            val t = row / rows.toDouble()
+            val left = startX + slant * (1.0 - t)
+            val right = left + width
+            drawContext.fill(left.roundToInt(), top + row, right.roundToInt().coerceAtLeast(left.roundToInt() + 1), top + row + 1, color)
+        }
+    }
+
+    private fun overclockColor(value: Double, alpha: Double): Int {
+        val ratio = (value / 10.0).coerceIn(.0, 1.0)
+        return color(
+            (alpha * 128).roundToInt(),
+            lerp(ratio, .0, 255.0).roundToInt(),
+            lerp(ratio, 255.0, .0).roundToInt(),
+            0,
+        )
+    }
+
+    private fun formatDecimal(value: Double, scale: Int = 1): String {
+        if (!value.isFinite()) {
+            return "∞"
+        }
+        return BigDecimal.valueOf(value)
+            .setScale(scale, RoundingMode.HALF_UP)
+            .toPlainString()
+    }
+
+    private fun lerp(delta: Double, from: Double, to: Double): Double {
+        return from + (to - from) * delta
+    }
+
+    private fun selectedMagicOrNull(): Magic? {
+        val magics = currentMagicList()
+        selectedMagicIndex = selectedMagicIndex.coerceIn(0, (magics.size - 1).coerceAtLeast(0))
+        return magics.getOrNull(selectedMagicIndex)
+    }
+
+    private fun bestUsableTarget(magic: Magic): LivingEntity? {
+        val target = targetedEntity
+        if (target != null && canChannelMagicOn(target, magic)) {
+            return target
+        }
+        return candidateTargets.firstOrNull { canChannelMagicOn(it, magic) }
+    }
+
+    private fun canChannelMagicOn(target: LivingEntity?, magic: Magic): Boolean {
+        val player = minecraft.player ?: return false
+        target ?: return false
+        val queue = target.getChannelQueue(player)
+        if (queue?.isLocked == true) {
+            return false
+        }
+        if (queue?.isChanneling == true && queue.queuedMagicCount >= player.queueSize) {
+            return false
+        }
+
+        val context = MagicCalculationContext(
+            caster = CasterContext.fromEntity(player),
+            target = target,
+            queue = queue,
+        )
+        return magic.availableStatus(context).isAvailable
+    }
+
+    private fun Vec3.toGuiScreenPosition(
+        tickDelta: Float,
+        viewportWidth: Int,
+        viewportHeight: Int,
+        centered: Boolean = false,
+    ): Vector2f? {
+        val screenPosition = worldToScreen(
+            this,
+            viewportWidth = viewportWidth,
+            viewportHeight = viewportHeight,
+        ) ?: return null
+
+        val halfSize = if (centered) 0.0 else 7.5
+        val maxX = viewportWidth - if (centered) 0.0 else 15.0
+        val maxY = viewportHeight - if (centered) 0.0 else 15.0
+        return Vector2f(
+            (screenPosition.x - halfSize).coerceIn(0.0, maxX).toFloat(),
+            (screenPosition.y - halfSize).coerceIn(0.0, maxY).toFloat(),
+        )
+    }
+
+    private fun LivingEntity.guidePosition(tickDelta: Float): Vec3 {
+        return getLerpedPos(tickDelta).add(.0, boundingBox.ysize * 0.5, .0)
+    }
+
+    private fun Entity?.asLivingTarget(): LivingEntity? {
+        return when (this) {
+            is LivingEntity -> this
+            is EnderDragonPart -> parentMob
+            else -> null
+        }
+    }
+
+    private fun shouldRenderMagicList(): Boolean {
+        val player = minecraft.player ?: return false
+        return player.isWizard &&
+            minecraft.gui.screen() == null &&
+            currentMagicList().isNotEmpty() &&
+            magicListKeyDown
+    }
+
+    private fun hasHudContext(): Boolean {
+        val player = minecraft.player ?: return false
+        return player.isWizard && currentMagicList().isNotEmpty()
+    }
+
+    private fun Int.floorMod(modulo: Int): Int {
+        return ((this % modulo) + modulo) % modulo
+    }
+
+    private fun syncOverclock() {
+        if (minecraft.player == null || minecraft.connection == null) {
+            return
+        }
+        ClientPlayNetworking.send(ServerboundOverclockPayload(manaOverclock, magicOverclock))
+    }
+
+}
+
+private fun color(alpha: Int, red: Int, green: Int, blue: Int): Int {
+    return ARGB.color(alpha.coerceIn(0, 255), red.coerceIn(0, 255), green.coerceIn(0, 255), blue.coerceIn(0, 255))
 }

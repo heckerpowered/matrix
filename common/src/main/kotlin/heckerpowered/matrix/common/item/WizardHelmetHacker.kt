@@ -13,7 +13,7 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Rarity
 
 object WizardHelmetHacker : WizardHelmet(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.wizardHelmetHacker)
         .rarity(Rarity.EPIC)
 ) {
 

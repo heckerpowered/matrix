@@ -5,55 +5,21 @@
 
 package heckerpowered.matrix.client.render
 
-import com.mojang.blaze3d.platform.GlConst
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.platform.GlStateManager.Viewport
-import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
-import heckerpowered.matrix.client.shader.UniformProvider
 import net.minecraft.client.gl.Framebuffer
-import net.minecraft.client.texture.NativeImage
 import org.joml.Vector4f
-import org.lwjgl.opengl.GL46.*
-import java.io.File
+import org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT
+import org.lwjgl.opengl.GL11.GL_LINEAR
+import org.lwjgl.opengl.GL11.GL_NEAREST
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 
-fun Framebuffer.blit(target: Framebuffer, mask: Int, filter: Int) {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo)
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target.fbo)
-    glBlitFramebuffer(
-        0, 0, textureWidth, textureHeight,
-        0, 0, target.textureWidth, target.textureHeight,
-        mask, filter
-    )
-}
-
-private var primaryFramebuffer: Framebuffer? = null
-private var secondaryFramebuffer: Framebuffer? = null
 var colorMultiplier = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
 private val colorFusionShader by lazy {
     BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/color_fusion.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("primaryFramebuffer") { pointer ->
-                val framebuffer = primaryFramebuffer ?: return@UniformProvider
-
-                glActiveTexture(GlConst.GL_TEXTURE0)
-                glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("secondaryFramebuffer") { pointer ->
-                val framebuffer = secondaryFramebuffer ?: return@UniformProvider
-
-                glActiveTexture(GlConst.GL_TEXTURE0 + 1)
-                glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                glUniform1i(pointer, 1)
-            },
-            UniformProvider("colorMultiplier") { pointer ->
-                glUniform4f(pointer, colorMultiplier.x, colorMultiplier.y, colorMultiplier.z, colorMultiplier.w)
-            }
-        )
     )
 }
 
@@ -61,66 +27,54 @@ private val blendScreenShader by lazy {
     BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/blend_screen.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("primaryFramebuffer") { pointer ->
-                val framebuffer = primaryFramebuffer ?: return@UniformProvider
-
-                glActiveTexture(GlConst.GL_TEXTURE0)
-                glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("secondaryFramebuffer") { pointer ->
-                val framebuffer = secondaryFramebuffer ?: return@UniformProvider
-
-                glActiveTexture(GlConst.GL_TEXTURE0 + 1)
-                glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                glUniform1i(pointer, 1)
-            }
-        )
     )
 }
 
 val tentBlurShader = BlitProgram(
     ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
     ResourceShader("/assets/matrix/shaders/post/blur/tent.fsh", GL_FRAGMENT_SHADER),
-    uniforms = arrayOf(UniformProvider("framebuffer") { pointer ->
-        val framebuffer = primaryFramebuffer ?: return@UniformProvider
-
-        glActiveTexture(GlConst.GL_TEXTURE0)
-        glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-        RenderSystem.glUniform1i(pointer, 0)
-    })
 )
 
-/**
- *
- */
+fun Framebuffer.blit(target: Framebuffer, mask: Int, filter: Int) {
+    if ((mask and GL_DEPTH_BUFFER_BIT) != 0) {
+        PostProcessRenderer.copyDepthFramebuffer(this, target)
+    } else {
+        PostProcessRenderer.copyFramebuffer(this, target)
+    }
+}
+
 infix fun Framebuffer.blend(other: Framebuffer) {
-    primaryFramebuffer = this
-    secondaryFramebuffer = other
-    colorFusionShader.blit()
+    PostProcessRenderer.renderShaderToFramebuffer(
+        colorFusionShader,
+        PostProcessRenderer.currentFramebuffer(),
+        mapOf("primaryFramebuffer" to this, "secondaryFramebuffer" to other),
+    )
+    PostProcessRenderer.nextFramebuffer()
 }
 
 infix fun Framebuffer.blendScreen(other: Framebuffer) {
-    primaryFramebuffer = this
-    secondaryFramebuffer = other
-    blendScreenShader.blit()
+    PostProcessRenderer.renderShaderToFramebuffer(
+        blendScreenShader,
+        PostProcessRenderer.currentFramebuffer(),
+        mapOf("primaryFramebuffer" to this, "secondaryFramebuffer" to other),
+    )
+    PostProcessRenderer.nextFramebuffer()
 }
 
 infix fun Framebuffer.copyTo(other: Framebuffer) {
-    blit(other, GL_COLOR_BUFFER_BIT, GL_LINEAR)
+    PostProcessRenderer.copyFramebuffer(this, other)
 }
 
 infix fun Framebuffer.copyDepthTo(other: Framebuffer) {
-    blit(other, GL_DEPTH_BUFFER_BIT, GL_LINEAR)
+    PostProcessRenderer.copyDepthFramebuffer(this, other)
 }
 
 infix fun Framebuffer.linearCopyTo(other: Framebuffer) {
-    blit(other, GL_COLOR_BUFFER_BIT, GL_LINEAR)
+    PostProcessRenderer.copyFramebuffer(this, other)
 }
 
 infix fun Framebuffer.nearestCopyTo(other: Framebuffer) {
-    blit(other, GL_COLOR_BUFFER_BIT, GL_NEAREST)
+    PostProcessRenderer.copyFramebuffer(this, other)
 }
 
 /**
@@ -185,29 +139,6 @@ fun Framebuffer.dump(levelOfDetail: Int = 0, generateMipmap: Boolean = true) {
 }
 
 fun Framebuffer.dump(name: String, levelOfDetail: Int = 0, generateMipmap: Boolean = true) {
-    RenderSystem.bindTexture(colorAttachment)
-
-    if (generateMipmap) {
-        glGenerateMipmap(GL_TEXTURE_2D)
-    }
-    val width = glGetTexLevelParameteri(GL_TEXTURE_2D, levelOfDetail, GL_TEXTURE_WIDTH)
-    val height = glGetTexLevelParameteri(GL_TEXTURE_2D, levelOfDetail, GL_TEXTURE_HEIGHT)
-
-    if (width <= 0 || height <= 0) {
-        OpenGLExtensions.fastCheck("Framebuffer dump: invalid texture size")
-        return
-    }
-
-    NativeImage(width, height, false).use { nativeImage ->
-        nativeImage.loadFromTextureImage(levelOfDetail, false)
-        nativeImage.mirrorVertically()
-
-        val file = File("screenshots")
-        file.mkdir()
-
-        val filename = "framebuffer_dump_${name}.png"
-        nativeImage.writeTo(File(file, filename))
-    }
 }
 
 /**
@@ -235,14 +166,5 @@ fun Framebuffer.dump(name: String, levelOfDetail: Int = 0, generateMipmap: Boole
  */
 @Deprecated("Use StateIsolation.isolate(FramebufferState(this)) { action() } instead")
 fun framebufferGuard(action: () -> Unit) {
-    val previousBindingFramebuffer = glGetInteger(GL_FRAMEBUFFER_BINDING)
-    val previousViewportX = Viewport.getX()
-    val previousViewportY = Viewport.getY()
-    val previousViewportWidth = Viewport.getWidth()
-    val previousViewportHeight = Viewport.getHeight()
-
     action()
-
-    glBindFramebuffer(GL_FRAMEBUFFER, previousBindingFramebuffer)
-    GlStateManager._viewport(previousViewportX, previousViewportY, previousViewportWidth, previousViewportHeight)
 }

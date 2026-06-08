@@ -2,15 +2,21 @@
 
 in vec2 fragTexCoord;
 
+uniform sampler2D framebuffer;
 uniform sampler2D depthAttachment;
-uniform mat4 inverseViewMatrix;
-uniform mat4 inverseProjectionMatrix;
 
-// User uniforms
-uniform vec3 wavePosition;
-uniform vec4 waveColor;
-uniform float waveSize;
-uniform float waveRadius;
+layout(std140) uniform MatrixPostUniforms {
+    mat4 inverseProjectionMatrix;
+    mat4 inverseViewMatrix;
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+};
+
+#define wavePosition MatrixPostData0.xyz
+#define waveRadius MatrixPostData0.w
+#define waveColor MatrixPostData1
+#define waveSize MatrixPostData2.x
 
 out vec4 fragColor;
 
@@ -42,11 +48,12 @@ vec3 worldAbsolutePosition(vec2 uv, float depth) {
 }
 
 void main() {
+    vec4 sceneColor = texture(framebuffer, fragTexCoord);
     float depth = texture(depthAttachment, fragTexCoord).r;
     vec3 worldPosition = worldAbsolutePosition(fragTexCoord, depth);
     float dist = length(worldPosition - wavePosition);
 
     // dist > waveRadius && dist < (waveRadius + waveSize)
     float insideWave = step(waveRadius, dist) * step(dist, waveRadius + waveSize);
-    fragColor = mix(vec4(0.0), waveColor, insideWave);
+    fragColor = sceneColor + waveColor * insideWave;
 }

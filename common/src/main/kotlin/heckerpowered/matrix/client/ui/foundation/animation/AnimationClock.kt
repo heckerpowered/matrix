@@ -6,7 +6,7 @@
 package heckerpowered.matrix.client.ui.foundation.animation
 
 import heckerpowered.matrix.core.lerp
-import net.minecraft.util.math.MathHelper
+import net.minecraft.util.Mth
 import org.apache.commons.lang3.time.StopWatch
 import java.time.Duration
 import kotlin.math.max
@@ -50,7 +50,7 @@ class AnimationClock(var duration: Duration, var from: Double, var to: Double, v
 
     private fun getValueAt(timeNanos: Long): Double {
         val progress = (timeNanos.toDouble() / duration.toNanos().toDouble()).coerceIn(.0..1.0)
-        return MathHelper.lerp(progress, 0.0, 1.0)
+        return Mth.lerp(progress, 0.0, 1.0)
     }
 
     val progress: Double

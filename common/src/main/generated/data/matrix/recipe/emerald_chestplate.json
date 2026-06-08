@@ -3,9 +3,7 @@
   "category": "equipment",
   "group": "matrix_emerald_suit",
   "key": {
-    "#": {
-      "item": "minecraft:emerald"
-    }
+    "#": "minecraft:emerald"
   },
   "pattern": [
     "# #",
@@ -13,7 +11,6 @@
     "###"
   ],
   "result": {
-    "count": 1,
     "id": "matrix:emerald_chestplate"
   }
 }

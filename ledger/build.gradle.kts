@@ -3,6 +3,8 @@
  * Copyright (c) 2026 heckerpowered
  */
 
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     kotlin("jvm")
 }
@@ -19,7 +21,18 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(25)
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_25
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.release = 25
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 tasks.test {

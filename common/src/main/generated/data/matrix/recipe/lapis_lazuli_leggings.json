@@ -3,9 +3,7 @@
   "category": "equipment",
   "group": "matrix_lapis_lazuli_suit",
   "key": {
-    "#": {
-      "item": "minecraft:lapis_block"
-    }
+    "#": "minecraft:lapis_block"
   },
   "pattern": [
     "###",
@@ -13,7 +11,6 @@
     "# #"
   ],
   "result": {
-    "count": 1,
     "id": "matrix:lapis_lazuli_leggings"
   }
 }

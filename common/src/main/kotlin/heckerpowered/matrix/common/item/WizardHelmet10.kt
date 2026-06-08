@@ -22,7 +22,7 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Rarity
 
 object WizardHelmet10 : WizardHelmet(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.wizardHelmet10)
         .fireResistant()
         .rarity(Rarity.EPIC)
         .maxMana(12.0)

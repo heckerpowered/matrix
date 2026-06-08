@@ -5,8 +5,13 @@
 
 package heckerpowered.matrix.core
 
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
+
+fun Entity.getLerpedPos(tickDelta: Float): Vec3 {
+    return getPosition(tickDelta)
+}
 
 fun Vec3.toAABB(): AABB {
     return AABB(this, this)

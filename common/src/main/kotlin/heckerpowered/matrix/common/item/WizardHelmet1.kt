@@ -11,7 +11,7 @@ import net.minecraft.world.item.Rarity
  * Wizard Helmet 1 'Basic'
  */
 object WizardHelmet1 : WizardHelmet(
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.wizardHelmet1)
         .rarity(Rarity.COMMON)
         .maxMana(8.0)
         .maxLoad(105.0)

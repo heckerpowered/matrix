@@ -2,16 +2,19 @@
 
 in vec2 fragTexCoord;
 
+uniform sampler2D framebuffer;
 uniform sampler2D depthAttachment;
-uniform mat4 inverseViewMatrix;
-uniform mat4 inverseProjectionMatrix;
-uniform vec2 resolution;
 
-uniform vec3 playerPosition;
+layout(std140) uniform MatrixPostUniforms {
+    mat4 inverseProjectionMatrix;
+    mat4 inverseViewMatrix;
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+};
 
-uniform sampler2D noiseTexture;
-
-uniform float dissolveFactor = 1.0;
+#define playerPosition MatrixPostData0.xyz
+#define dissolveFactor MatrixPostData0.w
+#define resolution MatrixPostData1.xy
 
 out vec4 fragColor;
 
@@ -59,27 +62,44 @@ vec3 reconstructWorldNormal(vec2 uv, vec2 texelSize) {
     return worldNormal;
 }
 
-vec4 triplanarMapping(vec3 worldPosition, vec3 worldNormal, sampler2D textureSampler, float scale) {
-    vec3 blendingWeights = abs(worldNormal);
-    blendingWeights = max(blendingWeights, 0.0001);
-    blendingWeights /= (blendingWeights.x + blendingWeights.y + blendingWeights.z);
+float hash13(vec3 p) {
+    p = fract(p * 0.1031);
+    p += dot(p, p.yzx + 33.33);
+    return fract((p.x + p.y) * p.z);
+}
 
-    vec4 colorX = texture(textureSampler, worldPosition.yz * scale);
-    vec4 colorY = texture(textureSampler, worldPosition.xz * scale);
-    vec4 colorZ = texture(textureSampler, worldPosition.xy * scale);
+float valueNoise(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
 
-    return colorX * blendingWeights.x +
-    colorY * blendingWeights.y +
-    colorZ * blendingWeights.z;
+    float n000 = hash13(i + vec3(0.0, 0.0, 0.0));
+    float n100 = hash13(i + vec3(1.0, 0.0, 0.0));
+    float n010 = hash13(i + vec3(0.0, 1.0, 0.0));
+    float n110 = hash13(i + vec3(1.0, 1.0, 0.0));
+    float n001 = hash13(i + vec3(0.0, 0.0, 1.0));
+    float n101 = hash13(i + vec3(1.0, 0.0, 1.0));
+    float n011 = hash13(i + vec3(0.0, 1.0, 1.0));
+    float n111 = hash13(i + vec3(1.0, 1.0, 1.0));
+
+    float nx00 = mix(n000, n100, f.x);
+    float nx10 = mix(n010, n110, f.x);
+    float nx01 = mix(n001, n101, f.x);
+    float nx11 = mix(n011, n111, f.x);
+    float nxy0 = mix(nx00, nx10, f.y);
+    float nxy1 = mix(nx01, nx11, f.y);
+    return mix(nxy0, nxy1, f.z);
 }
 
 void main() {
+    vec4 sceneColor = texture(framebuffer, fragTexCoord);
     float nonLinearDepth = texture(depthAttachment, fragTexCoord).r;
     vec3 worldPosition = worldAbsolutePosition(fragTexCoord, nonLinearDepth);
     float dist = length(worldPosition - playerPosition);
 
     if (dist > 768.0) {
-        discard;
+        fragColor = sceneColor;
+        return;
     }
 
     vec3 worldNormal = reconstructWorldNormal(fragTexCoord, 1.0 / resolution);
@@ -87,7 +107,8 @@ void main() {
     if (dot(worldNormal, cameraToPixel) > 0.0) {
         worldNormal = -worldNormal;
     }
-    vec4 noise = triplanarMapping(worldPosition, worldNormal, noiseTexture, 1.0F / 128.0F);
-    float alpha = step(noise.r, dissolveFactor);
-    fragColor = vec4(vec3(0.1, 0.5, 1.0) * 4, alpha);
+    float noise = valueNoise(worldPosition / 16.0 + worldNormal * 2.0);
+    float alpha = step(noise, dissolveFactor);
+    vec3 collapseColor = vec3(0.1, 0.5, 1.0) * 4.0;
+    fragColor = sceneColor + vec4(collapseColor * alpha, 0.0);
 }

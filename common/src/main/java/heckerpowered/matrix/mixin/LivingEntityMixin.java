@@ -5,18 +5,10 @@
 
 package heckerpowered.matrix.mixin;
 
-import com.llamalad7.mixinextras.expression.Definition;
-import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.Share;
-import com.llamalad7.mixinextras.sugar.ref.LocalDoubleRef;
-import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.serialization.Codec;
-import heckerpowered.matrix.Matrix;
 import heckerpowered.matrix.common.combat.damage.*;
 import heckerpowered.matrix.common.entity.EntityPolarity;
 import heckerpowered.matrix.common.entity.ability.HealMeasurementScope;
@@ -46,7 +38,6 @@ import org.jspecify.annotations.NonNull;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -81,29 +72,29 @@ abstract class LivingEntityMixin extends Entity {
     @Shadow
     public abstract ItemStack getItemBySlot(EquipmentSlot slot);
 
-    @Intrinsic(displace = true)
-    private LivingEntity self() {
+    @Unique
+    private LivingEntity livingSelf() {
         return (LivingEntity) (Object) this;
     }
 
-    @Inject(method = "die", at = @At("HEAD"), cancellable = true)
-    private void die(DamageSource source, CallbackInfo ci, @Local(argsOnly = true, name = "source") LocalRef<DamageSource> sourceReference) {
-        if (self() instanceof Player) return;
+    @WrapMethod(method = "die")
+    private void wrapDie(DamageSource source, Operation<Void> original) {
+        if (livingSelf() instanceof Player) {
+            original.call(source);
+            return;
+        }
         if ((polarity & EntityPolarity.SUPPRESS_DEATH) != 0) {
-            ci.cancel();
             return;
         }
 
-        final var context = new LivingDeathContext(self(), source);
+        final var context = new LivingDeathContext(livingSelf(), source);
         EntityRulePipeline.onLivingDeath(context);
         if (!context.getAllow()) {
             context.applyDecision();
-            ci.cancel();
             return;
         }
-        if (context.getDamageSource() != source) {
-            sourceReference.set(context.getDamageSource());
-        }
+
+        original.call(context.getDamageSource());
     }
 
     @WrapOperation(method = "hurtServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;die(Lnet/minecraft/world/damagesource/DamageSource;)V"))
@@ -149,80 +140,50 @@ abstract class LivingEntityMixin extends Entity {
         }
     }
 
-    @Inject(method = "hurtServer", at = @At("HEAD"), cancellable = true)
-    private void hurtServer(
-            ServerLevel level, DamageSource source, float damage, CallbackInfoReturnable<Boolean> cir,
-            @Local(argsOnly = true, name = "damage") LocalFloatRef amountReference,
-            @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference
-    ) {
+    @WrapMethod(method = "hurtServer")
+    private boolean wrapHurtServer(ServerLevel level, DamageSource source, float damage, Operation<Boolean> original) {
         if ((polarity & EntityPolarity.REJECT_DAMAGE) != 0L) {
-            cir.setReturnValue(false);
-            return;
+            return false;
         }
 
         final var self = (LivingEntity) (Object) this;
         final var attemptContext = new DamageAttemptContext(self, source, damage);
         DamagePipeline.attempt(attemptContext);
         if (attemptContext.isCancelled()) {
-            cir.setReturnValue(false);
-            return;
+            return false;
         }
 
-        rawDamageReference.set(damage);
         final var computationContext = new DamageComputationContext(self, source, damage);
         DamagePipeline.computation(computationContext);
         if (computationContext.isCancelled()) {
-            cir.setReturnValue(false);
-            return;
+            return false;
         }
 
-        amountReference.set(computationContext.computeDamage());
+        return original.call(level, new DamageSourceEnvelope(source, damage), computationContext.computeDamage());
     }
 
-    @ModifyArg(
-            method = "hurtServer",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;actuallyHurt(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)V"),
-            index = 1
-    )
-    private DamageSource wrapSource(
-            DamageSource source,
-            @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference
-    ) {
-        return new DamageSourceEnvelope(source, rawDamageReference.get());
-    }
-
-    @ModifyVariable(method = "actuallyHurt", at = @At("HEAD"), argsOnly = true, name = "source")
-    private DamageSource unwrapSource(DamageSource source, @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference) {
-        if (source instanceof final DamageSourceEnvelope envelope) {
-            rawDamageReference.set(envelope.getRawDamage());
-            return envelope.getOrigin();
-        }
-        rawDamageReference.set(Float.NaN);
-        return source;
-    }
-
-    @Definition(id = "getDamageAfterMagicAbsorb", method = "Lnet/minecraft/world/entity/LivingEntity;getDamageAfterMagicAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F")
-    @Expression("? = ?.getDamageAfterMagicAbsorb(?, ?)")
     @ModifyVariable(
             method = "actuallyHurt",
-            at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), argsOnly = true, name = "dmg")
+            at = @At(value = "STORE"),
+            ordinal = 1)
     private float actuallyHurt(
             float dmg,
-            @Local(argsOnly = true, name = "source") DamageSource source,
-            @Share(value = "rawDamage", namespace = Matrix.MOD_ID) LocalFloatRef rawDamageReference) {
+            ServerLevel level,
+            DamageSource source,
+            float originalDamage) {
         final var self = (LivingEntity) (Object) this;
-        final float referencedRawDamage = rawDamageReference.get();
-        final float rawDamage = Float.isFinite(referencedRawDamage) ? referencedRawDamage : dmg;
+        final var originSource = source instanceof final DamageSourceEnvelope envelope ? envelope.getOrigin() : source;
+        final float rawDamage = source instanceof final DamageSourceEnvelope envelope ? envelope.getRawDamage() : originalDamage;
 
-        final var realizationContext = new DamageRealizationContext(self, source, rawDamage, dmg);
+        final var realizationContext = new DamageRealizationContext(self, originSource, rawDamage, dmg);
         DamagePipeline.realization(realizationContext);
 
         final var retention = realizationContext.getRetention();
         final var realizedDamage = realizationContext.getRealizedDamage();
-        final var outcomeContext = new DamageOutcomeContext(self, source, rawDamage, dmg, retention);
+        final var outcomeContext = new DamageOutcomeContext(self, originSource, rawDamage, dmg, retention);
         DamagePipeline.outcome(outcomeContext);
 
-        final var settlementContext = new DamageSettlementContext(self, source, rawDamage, dmg, realizedDamage);
+        final var settlementContext = new DamageSettlementContext(self, originSource, rawDamage, dmg, realizedDamage);
         DamagePipeline.settlement(settlementContext);
 
         return settlementContext.getRemainingDamage();
@@ -231,7 +192,7 @@ abstract class LivingEntityMixin extends Entity {
     /**
      * &#064;Inject(method  = "die", at = @At("HEAD"), cancellable = true)
      * private void onDeath(DamageSource damageSource, CallbackInfo info) {
-     * if (LivingDeathCallback.EVENT.invoker().onDeath(self(), damageSource) == ActionResult.FAIL) {
+     * if (LivingDeathCallback.EVENT.invoker().onDeath(livingSelf(), damageSource) == ActionResult.FAIL) {
      * info.cancel();
      * return;
      * }
@@ -241,7 +202,7 @@ abstract class LivingEntityMixin extends Entity {
      * <p>
      * // TODO: Consider to move this logic to the event.
      * var restoreAmount = 0;
-     * final var self = self();
+     * final var self = livingSelf();
      * final var manaOverload = MatrixStatusEffects.getManaOverloadEffect();
      * final var effect = self.getStatusEffect(manaOverload);
      * if (effect != null) {
@@ -256,14 +217,14 @@ abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "addAdditionalSaveData", at = @At("HEAD"))
     private void addAdditionalSaveData(ValueOutput output, CallbackInfo ci) {
-        LivingPersistencePipeline.save(new LivingSaveContext(self(), output));
+        LivingPersistencePipeline.save(new LivingSaveContext(livingSelf(), output));
         output.putLong("matrix_polarity", polarity);
-        output.putFloat("health_spoof_value", healthSpoofValue);
+        output.putFloat("matrix_health_spoof_value", healthSpoofValue);
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     private void readAdditionalSaveData(ValueInput input, CallbackInfo ci) {
-        LivingPersistencePipeline.load(new LivingLoadContext(self(), input));
+        LivingPersistencePipeline.load(new LivingLoadContext(livingSelf(), input));
         input.read("matrix_polarity", Codec.LONG).ifPresent(this::matrix$setPolarity);
         input.read("matrix_health_spoof_value", Codec.FLOAT).ifPresent(this::matrix$setHealthSpoofValue);
     }
@@ -271,14 +232,14 @@ abstract class LivingEntityMixin extends Entity {
     @Inject(method = "getAttributeValue", at = @At("RETURN"), cancellable = true)
     public void getAttributeValue(Holder<Attribute> attribute, CallbackInfoReturnable<Double> cir) {
         final var attributeValue = cir.getReturnValueD();
-        final var context = new AttributeComputationContext(self(), attribute, attributeValue);
+        final var context = new AttributeComputationContext(livingSelf(), attribute, attributeValue);
         EntityRulePipeline.onComputation(context);
         cir.setReturnValue(context.getFinalValue());
     }
 
     @Inject(method = "removeEffect", at = @At(value = "HEAD"), cancellable = true)
     private void removeEffect(Holder<MobEffect> effect, CallbackInfoReturnable<Boolean> cir) {
-        final var context = new EffectRemovalContext(self(), effect);
+        final var context = new EffectRemovalContext(livingSelf(), effect);
         EntityRulePipeline.onEffectRemoval(context);
         if (!context.isAllowed()) {
             cir.cancel();
@@ -288,37 +249,27 @@ abstract class LivingEntityMixin extends Entity {
     @Inject(method = "onEffectsRemoved", at = @At(value = "RETURN"))
     private void onEffectsRemoved(Collection<MobEffectInstance> effects, CallbackInfo ci) {
         for (final MobEffectInstance effect : effects) {
-            final var context = new EffectRemovedContext(self(), effect);
+            final var context = new EffectRemovedContext(livingSelf(), effect);
             EntityRulePipeline.onEffectRemoved(context);
         }
     }
 
     @Inject(method = "onEquipItem", at = @At("HEAD"))
     private void onEquipStack(EquipmentSlot slot, ItemStack oldStack, ItemStack stack, CallbackInfo ci) {
-        final var context = new EquipItemContext(self(), slot, oldStack, stack);
+        final var context = new EquipItemContext(livingSelf(), slot, oldStack, stack);
         EntityRulePipeline.onEquipItem(context);
     }
 
-    @Inject(method = "knockback", at = @At("HEAD"), cancellable = true)
-    private void knockback(
-            double power, double x, double z, CallbackInfo ci,
-            @Local(argsOnly = true, name = "power") LocalDoubleRef powerReference,
-            @Local(argsOnly = true, name = "xd") LocalDoubleRef xReference,
-            @Local(argsOnly = true, name = "zd") LocalDoubleRef zReference) {
-        final var context = new KnockbackContext(self(), power, x, z);
+    @WrapMethod(method = "knockback")
+    private void wrapKnockback(double power, double x, double z, Operation<Void> original) {
+        final var context = new KnockbackContext(livingSelf(), power, x, z);
         EntityRulePipeline.onKnockback(context);
 
         if (context.isCancelled()) {
-            ci.cancel();
             return;
         }
 
-        final var newPower = context.getPower();
-        final var newX = context.getX();
-        final var newZ = context.getZ();
-        if (power != newPower) powerReference.set(newPower);
-        if (x != newX) xReference.set(newX);
-        if (z != newZ) zReference.set(newZ);
+        original.call(context.getPower(), context.getX(), context.getZ());
     }
 
     @Inject(method = "canStandOnFluid", at = @At("HEAD"), cancellable = true)
@@ -333,14 +284,14 @@ abstract class LivingEntityMixin extends Entity {
         // stand on, then stepping back down to the walkable fluid surface. Air blocks use
         // Fluids.EMPTY as their fluid state. If EMPTY is also treated as walkable, the
         // search may keep moving upward through air forever and cause an infinite loop.
-        if (WardenSuitKt.isWardenArmorAngered(self()) && fluid != Fluids.EMPTY.defaultFluidState()) {
+        if (WardenSuitKt.isWardenArmorAngered(livingSelf()) && fluid != Fluids.EMPTY.defaultFluidState()) {
             cir.setReturnValue(true);
         }
     }
 
     @Inject(method = "canBeAffected", at = @At("RETURN"), cancellable = true)
     private void canBeAffected(MobEffectInstance newEffect, CallbackInfoReturnable<Boolean> cir) {
-        final var context = new EffectRestrictionContext(self(), newEffect);
+        final var context = new EffectRestrictionContext(livingSelf(), newEffect);
         EntityRulePipeline.canBeAffected(context);
         if (!context.isAllowed()) {
             cir.setReturnValue(false);
@@ -361,9 +312,9 @@ abstract class LivingEntityMixin extends Entity {
 
     @WrapMethod(method = "heal")
     private void heal(float heal, Operation<Void> original) {
-        final var previousHealth = self().getHealth();
+        final var previousHealth = livingSelf().getHealth();
 
-        final var context = new LivingHealContext(self(), heal);
+        final var context = new LivingHealContext(livingSelf(), heal);
         EntityRulePipeline.onHeal(context);
 
         final var resolvedAmount = (float) (context.getHealAmount() * context.getMultiplier());
@@ -375,7 +326,7 @@ abstract class LivingEntityMixin extends Entity {
         if (stack != null) {
             stack.setResolvedAmount(resolvedAmount);
 
-            final var restoredHealth = self().getHealth() - previousHealth;
+            final var restoredHealth = livingSelf().getHealth() - previousHealth;
             stack.setRestoredHealth(Math.max(restoredHealth, 0));
         }
     }
@@ -403,13 +354,14 @@ abstract class LivingEntityMixin extends Entity {
         }
     }
 
-    @Inject(method = "setHealth", at = @At("HEAD"))
-    private void setHealth(float health, CallbackInfo ci, @Local(argsOnly = true, name = "health") LocalFloatRef healthReference) {
+    @ModifyVariable(method = "setHealth", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private float setHealth(float health) {
         if ((polarity & EntityPolarity.HEALTH_SPOOF) != 0L) {
-            healthReference.set(Math.max(health, getSpoofedHealth()));
+            return Math.max(health, getSpoofedHealth());
         } else if ((polarity & EntityPolarity.ZERO_HEALTH_SPOOF) != 0) {
-            healthReference.set(0F);
+            return 0F;
         }
+        return health;
     }
 
     @Inject(method = "attackable", at = @At("HEAD"), cancellable = true)

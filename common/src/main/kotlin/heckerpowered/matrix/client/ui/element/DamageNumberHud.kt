@@ -5,33 +5,40 @@
 
 package heckerpowered.matrix.client.ui.element
 
-import heckerpowered.foundation.ui.animation.core.AnimationScope
-import heckerpowered.foundation.ui.animation.tween.TweenSpec
 import heckerpowered.foundation.ui.color.Argb8
-import heckerpowered.matrix.client.easingFunction
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.minecraft
+import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.core.worldToScreen
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
-import net.minecraft.client.font.TextRenderer
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.RenderTickCounter
-import net.minecraft.util.math.Vec3d
-import kotlin.math.roundToLong
-import kotlin.time.Duration.Companion.milliseconds
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
+import net.minecraft.client.DeltaTracker
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.util.ARGB
+import net.minecraft.world.phys.Vec3
+import org.joml.Vector3f
+import java.time.Duration
+import kotlin.math.round
+import kotlin.math.roundToInt
 
 object DamageNumberHud {
-    private val scope = AnimationScope()
-
-    private class DamageNumber(val text: String, val color: Argb8, val position: Vec3d, scope: AnimationScope, val uid: Long) {
-        var size by scope.doubleAnimation(20.0)
-        var yOffset by scope.doubleAnimation(.0)
-        var opacity by scope.doubleAnimation(.0)
-
-        var isFading = false
-    }
+    private data class DamageNumber(
+        val damage: Float,
+        val color: Int,
+        val position: Vec3,
+        val size: SimpleDoubleAnimation,
+        val yOffset: SimpleDoubleAnimation,
+        val opacity: SimpleDoubleAnimation,
+        val uid: Long,
+    )
 
     private val damageNumbers = mutableListOf<DamageNumber>()
     private var counter = 0L
+
+    fun onInitialize() {
+        HudElementRegistry.addLast(Matrix.identifier("damage_numbers")) { drawContext, tickCounter ->
+            onHudRender(drawContext, tickCounter)
+        }
+    }
 
     fun nextInstantKillMessage(uid: Long): String {
         return when (uid % 5) {
@@ -44,107 +51,104 @@ object DamageNumberHud {
         }
     }
 
-    fun onInitialize() {
-        HudRenderCallback.EVENT.register(this::onHudRender)
+    fun addDamageNumber(damage: Float, color: Any, position: Vec3) {
+        val size = SimpleDoubleAnimation().apply {
+            from = 20.0
+            to = 4.0
+            duration = Duration.ofMillis(300)
+            start()
+        }
+        val yOffset = SimpleDoubleAnimation().apply {
+            from = .0
+            to = .5
+            duration = Duration.ofMillis(900)
+            start()
+        }
+        val opacity = SimpleDoubleAnimation(initValue = 255.0).apply {
+            from = 255.0
+            to = .0
+            duration = Duration.ofMillis(900)
+            startTime = Duration.ofMillis(300)
+            start()
+        }
+
+        damageNumbers += DamageNumber(
+            damage = damage,
+            color = toPackedColor(color),
+            position = position,
+            size = size,
+            yOffset = yOffset,
+            opacity = opacity,
+            uid = counter++,
+        )
     }
 
-    private fun formatDamage(value: Float): String {
-        if (value.isInfinite()) return "9999"
-
-        if (value >= 1.0) {
-            return value.roundToLong().toString()
+    private fun onHudRender(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
+        if (damageNumbers.isEmpty()) {
+            return
         }
 
-        val truncated = (value * 10.0).toInt() / 10.0
-        return truncated.toString()
+        damageNumbers.forEach { damageNumber ->
+            renderDamageNumber(drawContext, damageNumber)
+        }
+        damageNumbers.removeIf { it.opacity.animatedValue <= .0 }
     }
 
-    fun addDamageNumber(damage: Float, color: Argb8, position: Vec3d) {
-        val formattedDamage = formatDamage(damage)
-        addDamageNumber(formattedDamage, color, position)
-    }
-
-    private var createdThisSecond = 0
-    private var lastSecondMarkNanos = System.nanoTime()
-
-    fun addDamageNumber(text: String, color: Argb8, position: Vec3d) {
-        createdThisSecond++
-
-        val damageNumber = DamageNumber(text, color, position, scope, ++counter)
-        scope.withAnimation(TweenSpec(300.milliseconds, easingFunction)) {
-            damageNumber.size = 4.0
-        }
-        scope.withAnimation(TweenSpec(900.milliseconds, easingFunction)) {
-            damageNumber.yOffset = .5
-        }
-        scope.withAnimation(TweenSpec(300.milliseconds, easingFunction)) {
-            damageNumber.opacity = 255.0
-        }
-        damageNumbers.add(damageNumber)
-    }
-
-    private fun renderDamageNumber(damageNumber: DamageNumber, drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        if (damageNumber.opacity <= 4.0) return
-        if (!damageNumber.isFading && damageNumber.opacity >= 255.0) {
-            damageNumber.isFading = true
-            scope.withAnimation(TweenSpec(300.milliseconds, easingFunction, 0.milliseconds)) {
-                damageNumber.opacity = .0
-            }
+    private fun renderDamageNumber(drawContext: GuiGraphicsExtractor, damageNumber: DamageNumber) {
+        val opacity = damageNumber.opacity.animatedValue
+        if (opacity < 4.0) {
+            return
         }
 
-        val base = damageNumber.position
         val screenPosition = worldToScreen(
-            Vec3d(base.x, base.y + damageNumber.yOffset, base.z)
+            damageNumber.position.add(.0, damageNumber.yOffset.animatedValue, .0),
+            viewportWidth = drawContext.guiWidth(),
+            viewportHeight = drawContext.guiHeight(),
         ) ?: return
 
-        val text = damageNumber.text
-        val textRenderer = minecraft.textRenderer
-
-        val width = textRenderer.getWidth(text)
-        val height = textRenderer.fontHeight
-
-        val centerX = screenPosition.x + width / 2
-        val centerY = screenPosition.y + height / 2
-
-        val matrices = drawContext.matrices
-        matrices.push()
-        matrices.translate(centerX, centerY, 0.0)
-        matrices.scale(
-            damageNumber.size.toFloat(),
-            damageNumber.size.toFloat(),
-            1.0f
-        )
-        matrices.translate(-centerX, -centerY, 0.0)
-
-        val argb = damageNumber.color
-            .withAlpha(damageNumber.opacity.toInt())
-            .packed
-
-        textRenderer.draw(
-            text,
-            screenPosition.x.toFloat(),
-            screenPosition.y.toFloat(),
-            argb,
-            true,
-            matrices.peek().positionMatrix,
-            drawContext.vertexConsumers,
-            TextRenderer.TextLayerType.SEE_THROUGH,
-            0,
-            15728880
+        val text = damageNumber.text()
+        val textWidth = minecraft.font.width(text)
+        val textHeight = minecraft.font.lineHeight
+        val textX = screenPosition.x.roundToInt()
+        val textY = screenPosition.y.roundToInt()
+        val centerX = textX + textWidth / 2.0F
+        val centerY = textY + textHeight / 2.0F
+        val scale = damageNumber.size.animatedValue.toFloat()
+        val color = ARGB.color(
+            opacity.roundToInt().coerceIn(0, 255),
+            ARGB.red(damageNumber.color),
+            ARGB.green(damageNumber.color),
+            ARGB.blue(damageNumber.color),
         )
 
-        matrices.pop()
+        val pose = drawContext.pose()
+        pose.pushMatrix()
+        pose.translate(centerX, centerY)
+        pose.scale(scale, scale)
+        pose.translate(-centerX, -centerY)
+        drawContext.text(minecraft.font, text, textX, textY, color, true)
+        pose.popMatrix()
     }
 
-    fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        for (damageNumber in damageNumbers) {
-            renderDamageNumber(damageNumber, drawContext, tickCounter)
+    private fun DamageNumber.text(): String {
+        return when {
+            damage.isInfinite() -> "9999"
+            damage >= 1 -> round(damage).toULong().toString()
+            else -> ((damage * 10.0).toULong().toDouble() / 10.0).toString()
         }
+    }
 
-        for (i in damageNumbers.lastIndex downTo 0) {
-            if (damageNumbers[i].opacity <= 0.0 && damageNumbers[i].isFading) {
-                damageNumbers.removeAt(i)
-            }
+    private fun toPackedColor(color: Any): Int {
+        return when (color) {
+            is Argb8 -> color.packed
+            is Int -> color
+            is Vector3f -> ARGB.color(
+                255,
+                color.x.toInt().coerceIn(0, 255),
+                color.y.toInt().coerceIn(0, 255),
+                color.z.toInt().coerceIn(0, 255),
+            )
+            else -> ARGB.white(255)
         }
     }
 }

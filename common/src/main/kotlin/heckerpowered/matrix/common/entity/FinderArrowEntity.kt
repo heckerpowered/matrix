@@ -7,51 +7,44 @@ package heckerpowered.matrix.common.entity
 
 import heckerpowered.matrix.common.entity.ModEntityTypes.FINDER_ARROW_ENTITY
 import heckerpowered.matrix.common.item.FinderArrowItem
-import heckerpowered.matrix.core.squaredDistanceTo
-import net.minecraft.core.SectionPos.y
-import net.minecraft.core.SectionPos.z
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.entity.effect.StatusEffects
-import net.minecraft.entity.projectile.PersistentProjectileEntity
-import net.minecraft.item.ItemStack
-import net.minecraft.particle.ParticleTypes
-import net.minecraft.util.math.BlockPos
-import net.minecraft.util.math.Box
-import net.minecraft.util.math.Vec3d
-import net.minecraft.world.World
-import net.minecraft.world.entity.ai.behavior.SetWalkTargetAwayFrom.pos
+import net.minecraft.core.BlockPos
+import net.minecraft.world.effect.MobEffectInstance
+import net.minecraft.world.effect.MobEffects
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.Level
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.Vec3
 
-class FinderArrowEntity : PersistentProjectileEntity {
-    constructor(world: World, owner: LivingEntity, stack: ItemStack, shotFrom: ItemStack?) : super(FINDER_ARROW_ENTITY, owner, world, stack, shotFrom)
-    constructor(world: World) : super(FINDER_ARROW_ENTITY, world)
+class FinderArrowEntity : AbstractArrow {
+    constructor(level: Level, owner: LivingEntity, stack: ItemStack, shotFrom: ItemStack?) : super(FINDER_ARROW_ENTITY, owner, level, stack, shotFrom)
+    constructor(level: Level) : super(FINDER_ARROW_ENTITY, level)
+    constructor(entityType: EntityType<out FinderArrowEntity>, level: Level) : super(entityType, level)
 
     override fun tick() {
         super.tick()
-        if (world.isClient && !inGround) {
-            world.addParticle(ParticleTypes.INSTANT_EFFECT, x, y, z, 0.0, 0.0, 0.0)
-        }
-
-        if (inGround) {
+        if (isInGround) {
             return
         }
-        val previousPosition = Vec3d(prevX, prevY, prevZ)
-        val currentPosition = pos
-        val searchBox = Box(previousPosition, currentPosition).expand(12.0, 9999.0, 12.0)
-        world.getOtherEntities(owner, searchBox)
+        val previousPosition = Vec3(xo, yo, zo)
+        val currentPosition = position()
+        val searchBox = AABB(previousPosition, currentPosition).inflate(12.0, 9999.0, 12.0)
+        level().getEntities(getOwner(), searchBox) { true }
             .filterIsInstance<LivingEntity>()
             .filter {
-                val blockPos = BlockPos.ofFloored(it.x, it.y, it.z)
-                this squaredDistanceTo it <= 144 // 144 = 12 * 12 (radius)
-                        || it.world.isSkyVisible(blockPos)
+                val blockPos = BlockPos.containing(it.position())
+                distanceToSqr(it) <= 144 // 144 = 12 * 12 (radius)
+                        || level().canSeeSky(blockPos)
             }
             .forEach {
-                val statusEffectInstance = StatusEffectInstance(StatusEffects.GLOWING, 20 * 5, 0)
-                it.addStatusEffect(statusEffectInstance, effectCause)
+                val statusEffectInstance = MobEffectInstance(MobEffects.GLOWING, 20 * 5, 0)
+                it.addEffect(statusEffectInstance, this)
             }
     }
 
-    override fun getDefaultItemStack(): ItemStack {
+    override fun getDefaultPickupItem(): ItemStack {
         return ItemStack(FinderArrowItem)
     }
 }

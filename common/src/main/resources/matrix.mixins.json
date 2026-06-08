@@ -3,37 +3,19 @@
   "package": "heckerpowered.matrix.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "CastSpellGoalMixin",
     "DamageSourceMixin",
-    "ElderGuardianEntityMixin",
-    "EndermanEntityMixin",
     "EntityMixin",
-    "EntityTrackerEntryMixin",
-    "FireBeamGoalMixin",
-    "ItemStackMixin",
     "LevelMixin",
     "LivingEntityMixin",
-    "MinecraftServerMixin",
-    "PlayerEntityMixin",
-    "PlayerMixin",
-    "ServerCommonNetworkHandlerMixin",
-    "ServerPlayerEntityMixin",
-    "ServerPlayNetworkHandlerMixin",
-    "SonicBoomTaskMixin",
-    "TargetPredicateMixin",
-    "TridentEntityMixin",
-    "TridentItemMixin",
-    "WitchEntityMixin",
-    "WorldMixin"
+    "MinecraftServerMixin"
   ],
   "client": [
-    "FramebufferMixin",
-    "GameRendererMixin",
+    "CameraMixin",
+    "DeltaTrackerTimerMixin",
+    "GameRendererStandaloneMixin",
     "KeyboardMixin",
-    "MinecraftClientMixin",
-    "MixinInGameHud",
-    "MouseMixin",
-    "WorldRendererMixin"
+    "MinecraftMixin",
+    "MixinInGameHud"
   ],
   "injectors": {
     "defaultRequire": 1

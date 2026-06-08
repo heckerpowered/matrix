@@ -10,5 +10,5 @@ import net.minecraft.world.item.ShovelItem
 object LapisLazuliShovelItem : ShovelItem(
     ModToolMaterials.lapisLazuli,
     1.5F, -3.0F,
-    Properties()
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.lapisLazuliShovel)
 )

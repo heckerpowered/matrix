@@ -18,7 +18,7 @@ import net.minecraft.world.item.equipment.ArmorType
 import java.util.function.Consumer
 
 object RedstoneBootsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.redstone, ArmorType.BOOTS)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.redstoneBoots).humanoidArmor(ModArmorMaterials.redstone, ArmorType.BOOTS)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), RedstoneSuit, TooltipProvider {

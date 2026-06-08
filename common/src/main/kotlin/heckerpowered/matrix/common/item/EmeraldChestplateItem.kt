@@ -9,5 +9,5 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object EmeraldChestplateItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.emerald, ArmorType.CHESTPLATE)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.emeraldChestplate).humanoidArmor(ModArmorMaterials.emerald, ArmorType.CHESTPLATE)
 )

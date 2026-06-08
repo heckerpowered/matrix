@@ -34,6 +34,17 @@ object ManaLedger {
         return transferMana(account, Authority, amount)
     }
 
+    fun setMana(target: LivingEntity, amount: Mana) {
+        val clampedAmount = amount.toDouble().coerceAtLeast(.0).mana
+        val currentMana = mana(target)
+        val difference = clampedAmount.toDouble() - currentMana.toDouble()
+        if (difference > .0) {
+            issueMana(target, difference.mana)
+        } else if (difference < .0) {
+            extinguishMana(target, (-difference).mana)
+        }
+    }
+
     private fun transferMana(from: LedgerAccount, to: LedgerAccount, amount: Mana): TransactionResult {
         val ledgerAmount = amount.toLedgerUnits()
         return from.postTransfer(to, ledgerAmount)

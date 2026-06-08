@@ -9,5 +9,5 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object EmeraldBootsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.emerald, ArmorType.BOOTS)
+    Properties().setId(heckerpowered.matrix.common.reference.ModItemIds.emeraldBoots).humanoidArmor(ModArmorMaterials.emerald, ArmorType.BOOTS)
 )
