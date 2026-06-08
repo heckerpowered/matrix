@@ -5,9 +5,10 @@
 
 package heckerpowered.matrix.common.network.syncher
 
+import heckerpowered.matrix.Matrix
+import net.fabricmc.fabric.api.`object`.builder.v1.entity.FabricEntityDataRegistry
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.syncher.EntityDataSerializer
-import net.minecraft.network.syncher.EntityDataSerializers
 
 object ModEntityDataSerializers {
     val double = EntityDataSerializer.forValueType(ByteBufCodecs.DOUBLE)
@@ -18,7 +19,7 @@ object ModEntityDataSerializers {
         if (initialized) {
             return
         }
-        EntityDataSerializers.registerSerializer(double)
+        FabricEntityDataRegistry.register(Matrix.identifier("double"), double)
         initialized = true
     }
 }

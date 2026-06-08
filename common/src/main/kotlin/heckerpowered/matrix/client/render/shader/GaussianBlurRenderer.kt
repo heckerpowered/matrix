@@ -9,12 +9,11 @@ import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.render.post.ScaleSampling
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
-import heckerpowered.matrix.client.shader.UniformProvider
 import org.joml.Vector2f
-import org.lwjgl.opengl.GL46.*
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 
 object GaussianBlurRenderer {
-    var colorAttachment: Int = 0
     var gaussianKernel: FloatArray = FloatArray(0)
     var direction: Vector2f = Vector2f(1F, 0F)
 
@@ -27,22 +26,6 @@ object GaussianBlurRenderer {
     val gaussianBlurShader = BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/blur/gaussian_blur.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("framebuffer") { pointer ->
-                glActiveTexture(GL_TEXTURE0)
-                glBindTexture(GL_TEXTURE_2D, colorAttachment)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("kernel") { pointer ->
-                glUniform1fv(pointer, gaussianKernel)
-            },
-            UniformProvider("kernelSize") { pointer ->
-                glUniform1i(pointer, (gaussianKernel.size - 1).coerceAtLeast(0))
-            },
-            UniformProvider("direction") { pointer ->
-                glUniform2f(pointer, direction.x, direction.y)
-            }
-        )
     )
 
     /**

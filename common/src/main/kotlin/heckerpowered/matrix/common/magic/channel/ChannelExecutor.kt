@@ -64,9 +64,9 @@ object ChannelExecutor {
         ChannelSequenceRenderer
             .channelSequenceAnimationMap
             .computeIfAbsent(target) { mutableListOf() }
-            .add(ChannelAnimation(magic.magic).also {
+            .add(ChannelAnimation(magic.magic, magic).also {
                 it.channelTime = channelTime
-                it.currentChannelTime = currentChannelTime
+                it.currentChannelTime = currentChannelTime.toDouble()
                 it.initialProgressOffset = Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(true)
             })
         ChannelSequenceRenderer.offsetAnimationMap

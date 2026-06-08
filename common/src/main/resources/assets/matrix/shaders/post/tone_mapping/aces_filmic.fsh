@@ -3,8 +3,16 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D hdrScene;
-uniform float exposure = 1.0;          // Set from application. Interpreted as linear scale.
-uniform float exposureEv = 0;          // Optional: exposure in EV. If unused, set to 0.
+
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define exposure MatrixPostData0.x
+#define exposureEv MatrixPostData0.y
 
 out vec4 fragColor;
 

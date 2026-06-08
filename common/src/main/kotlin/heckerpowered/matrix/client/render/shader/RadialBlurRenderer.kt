@@ -7,8 +7,8 @@ package heckerpowered.matrix.client.render.shader
 
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
-import heckerpowered.matrix.client.shader.UniformProvider
-import org.lwjgl.opengl.GL46.*
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 
 /**
  * A singleton object responsible for applying a radial blur post-processing effect.
@@ -26,7 +26,7 @@ import org.lwjgl.opengl.GL46.*
  */
 object RadialBlurRenderer : PostProcessEffect {
 
-    /** The OpenGL texture ID of the framebuffer's color attachment to be blurred. */
+    /** Retained for callers that still set the old OpenGL texture id; RenderPipeline uses framebuffer views instead. */
     override var colorAttachment = 0
 
     /** Controls how strong the radial blur effect appears. */
@@ -44,19 +44,6 @@ object RadialBlurRenderer : PostProcessEffect {
     val radialBlurShader = BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/blur/radial_blur.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("framebuffer") { pointer ->
-                glActiveTexture(GL_TEXTURE0)
-                glBindTexture(GL_TEXTURE_2D, colorAttachment)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("strength") { pointer ->
-                glUniform1f(pointer, strength)
-            },
-            UniformProvider("samples") { pointer ->
-                glUniform1i(pointer, samples)
-            }
-        )
     )
 
     override fun blit() {

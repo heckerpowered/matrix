@@ -9,12 +9,15 @@ import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
 import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
+import heckerpowered.matrix.common.magic.channel.ChannelEntry
 import heckerpowered.matrix.common.magic.core.Magic
 import net.minecraft.world.entity.LivingEntity
 import java.time.Duration
+import kotlin.math.max
 
 class ChannelAnimation(
     val magic: Magic,
+    val sourceEntry: ChannelEntry? = null,
 ) {
     companion object {
         private val easingFunction = ElasticEase().also {
@@ -29,16 +32,51 @@ class ChannelAnimation(
     var opacityAnimation = DoubleAnimation(opacityAnimationClock, easingFunction)
 
     var channelTime = 0L
-    var currentChannelTime = 0L
+    var currentChannelTime = .0
     var initialProgressOffset = 0F
+    private var completionAnimationStarted = false
 
     init {
         shownAnimationClock.start()
         opacityAnimationClock.start()
     }
 
-    fun tick(entity: LivingEntity) {
-        if (currentChannelTime++ == channelTime) {
+    fun tick(entity: LivingEntity, tickAmount: Double = 1.0) {
+        sourceEntry?.let {
+            currentChannelTime = max(currentChannelTime, it.currentChannelTime.toDouble())
+        }
+
+        if (completionAnimationStarted) {
+            currentChannelTime = max(currentChannelTime, channelTime + 1.0)
+            return
+        }
+
+        currentChannelTime += tickAmount.coerceAtLeast(.0)
+        if (currentChannelTime >= channelTime) {
+            currentChannelTime = channelTime + 1.0
+            completionAnimationStarted = true
+            opacityAnimationClock.from = opacityAnimation.animatedValue
+            opacityAnimationClock.to = 0.0
+            opacityAnimationClock.start()
+
+            ChannelSequenceRenderer.offsetAnimationMap[entity]?.let {
+                it.xOffsetAnimationClock.from = .0
+                it.xOffsetAnimationClock.to = -24.0
+                it.xOffsetAnimationClock.start()
+            }
+        }
+    }
+
+    fun syncProgress(entity: LivingEntity, currentTime: Double) {
+        if (completionAnimationStarted) {
+            currentChannelTime = max(currentChannelTime, channelTime + 1.0)
+            return
+        }
+
+        currentChannelTime = currentTime.coerceAtLeast(.0)
+        if (currentChannelTime >= channelTime) {
+            currentChannelTime = channelTime + 1.0
+            completionAnimationStarted = true
             opacityAnimationClock.from = opacityAnimation.animatedValue
             opacityAnimationClock.to = 0.0
             opacityAnimationClock.start()

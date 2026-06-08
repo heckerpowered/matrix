@@ -3,8 +3,16 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D framebuffer;
-uniform float edgeThreshold = 0.5;
-uniform vec4 edgeColor = vec4(1.0, 1.0, .0, 1.0);
+
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define edgeThreshold MatrixPostData0.x
+#define edgeColor MatrixPostData1
 
 out vec4 fragColor;
 

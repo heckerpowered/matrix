@@ -14,6 +14,12 @@ open class Program(
     private val uniformBuffers: Array<UniformBufferProvider> = emptyArray(),
     val components: Array<ShaderComponent> = emptyArray(),
 ) : Closeable {
+    companion object {
+        internal var activeProgram: Program? = null
+    }
+
+    protected val shaderStages: List<Shader> = shaders.toList()
+
     @Volatile
     var program = 0
 
@@ -24,9 +30,13 @@ open class Program(
     }
 
     override fun close() {
+        if (activeProgram == this) {
+            activeProgram = null
+        }
     }
 
     fun enableShader() {
+        activeProgram = this
     }
 
     fun uploadUniforms() {
@@ -36,5 +46,8 @@ open class Program(
     }
 
     fun disableShader() {
+        if (activeProgram == this) {
+            activeProgram = null
+        }
     }
 }

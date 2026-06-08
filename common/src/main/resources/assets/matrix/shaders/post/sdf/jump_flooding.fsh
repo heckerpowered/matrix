@@ -3,7 +3,15 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D framebuffer;
-uniform float stepSize;
+
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define stepSize MatrixPostData0.x
 
 out vec4 fragColor;
 

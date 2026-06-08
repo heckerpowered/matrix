@@ -1,8 +1,16 @@
 #version 150 core
 
 uniform sampler2D framebuffer;// Input texture from the previous pass
-uniform float threshold;// Brightness threshold (e.g., 0.7)
-uniform float intensity = 1.0;
+
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define threshold MatrixPostData0.x
+#define intensity MatrixPostData0.y
 
 in vec2 fragTexCoord;// Texture coordinates from vertex shader
 

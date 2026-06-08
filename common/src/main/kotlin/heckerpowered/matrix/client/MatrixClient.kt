@@ -10,11 +10,14 @@ import heckerpowered.matrix.client.network.MatrixClientPlayNetworking
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
 import heckerpowered.matrix.client.render.MatrixRenderSystem
 import heckerpowered.matrix.client.render.ScreenEffectRenderer
+import heckerpowered.matrix.client.render.TargetGuideRenderer
 import heckerpowered.matrix.client.render.entity.DevEntityRenderer
 import heckerpowered.matrix.client.render.entity.EmptyRenderer
 import heckerpowered.matrix.client.render.entity.FinderArrowEntityRenderer
 import heckerpowered.matrix.client.render.entity.MagicLightningEntityRenderer
+import heckerpowered.matrix.client.render.post.ShockwaveRenderer
 import heckerpowered.matrix.client.shader.ShaderStageStore
+import heckerpowered.matrix.client.ui.element.DamageNumberHud
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.entity.ModEntityTypes
@@ -67,10 +70,14 @@ class MatrixClient : ClientModInitializer {
 
         MatrixHud.onInitialize()
         MatrixClientPlayNetworking.onInitialize()
+        DamageNumberHud.onInitialize()
         ScreenEffectRenderer.onInitialize()
         ChannelSequenceRenderer.onInitialize()
+        TargetGuideRenderer.onInitialize()
+        ShockwaveRenderer.onInitialize()
         MatrixKeyBindings.onInitialize()
         registerEntityRenderers()
+        onWindowInitialization()
     }
 
     private fun registerEntityRenderers() {
@@ -82,6 +89,7 @@ class MatrixClient : ClientModInitializer {
 
     companion object {
         private var lastNonEmptyMagicList: List<Magic>? = null
+        private var shaderPipelinesInitialized = false
 
         fun getPlayerMagics(): List<Magic> {
             val player = player ?: return lastNonEmptyMagicList ?: emptyList()
@@ -98,6 +106,10 @@ class MatrixClient : ClientModInitializer {
 
         @JvmStatic
         fun onWindowInitialization() {
+            if (shaderPipelinesInitialized) {
+                return
+            }
+            shaderPipelinesInitialized = true
             ShaderStageStore.Default.discoverFiles()
             ShaderStageStore.Default.precompileAll()
         }

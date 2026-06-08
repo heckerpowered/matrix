@@ -5,8 +5,10 @@
 
 package heckerpowered.matrix.client.render
 
+import net.minecraft.client.Camera
 import org.joml.Matrix4f
 import org.joml.Matrix4fc
+import org.joml.Quaternionf
 
 object MatrixRenderSystem {
     var projectionMatrix = Matrix4f()
@@ -18,10 +20,21 @@ object MatrixRenderSystem {
     @JvmStatic
     fun setupMatrix(camera: Any?, projectionMatrix: Matrix4fc) {
         this.projectionMatrix.set(projectionMatrix)
-        viewMatrix.identity()
-        viewProjectionMatrix.set(projectionMatrix)
-        inverseViewMatrix.identity()
-        viewProjectionMatrix.invert(inverseViewProjectionMatrix)
+        viewMatrix.setView(camera)
+        viewProjectionMatrix.set(projectionMatrix).mul(viewMatrix)
+        inverseViewMatrix.set(viewMatrix).invert()
+        inverseViewProjectionMatrix.set(viewProjectionMatrix).invert()
+    }
+
+    private fun Matrix4f.setView(camera: Any?) {
+        identity()
+        if (camera !is Camera) {
+            return
+        }
+
+        rotate(camera.rotation().conjugate(Quaternionf()))
+        val position = camera.position()
+        translate(-position.x.toFloat(), -position.y.toFloat(), -position.z.toFloat())
     }
 
     fun createShader(shaderType: Int): Int = 0

@@ -60,7 +60,16 @@ class ClientboundChannelMagicPayload(
             val cost = magic.getCost(calculationContext)
             val entry = ChannelEntry(magic, cost, channelTime, currentChannelTime)
 
-            calculationContext.queue!!.enqueue(entry)
+            val queue = calculationContext.queue!!
+            val predictedEntry = queue.channelingMagics()
+                .firstOrNull { it.clientPrediction && it.magic.definition.uuid == magic.definition.uuid }
+            if (predictedEntry != null) {
+                predictedEntry.clientPrediction = false
+                predictedEntry.currentChannelTime = maxOf(predictedEntry.currentChannelTime, currentChannelTime)
+                return@execute
+            }
+
+            queue.enqueue(entry)
             magic.channel(MagicInvocation.fromEntity(player, entity))
             ChannelExecutor.performChannelAnimation(entry, entity, channelTime, currentChannelTime)
         }

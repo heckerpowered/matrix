@@ -19,16 +19,12 @@ import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.world.entity.LivingEntity
 import java.util.UUID
-import java.util.WeakHashMap
 
 data class ServerboundUseMagicPayload(
     private val uuid: UUID,
     private val entityId: Int,
 ) : CustomPacketPayload {
     companion object {
-        private const val MIN_USE_INTERVAL_TICKS = 5
-        private val lastUseTickByPlayer = WeakHashMap<net.minecraft.server.level.ServerPlayer, Int>()
-
         val payloadId = Matrix.identifier("use_magic")
         val type = CustomPacketPayload.Type<ServerboundUseMagicPayload>(payloadId)
         val codec = StreamCodec.composite(
@@ -55,13 +51,6 @@ data class ServerboundUseMagicPayload(
         if (!player.isInfiniteMana && player.wizardHelmet?.hasMagic(player, wizardHelmetStack, magic) != true) {
             return
         }
-
-        val currentTick = player.tickCount
-        val lastUseTick = lastUseTickByPlayer[player]
-        if (lastUseTick != null && currentTick - lastUseTick < MIN_USE_INTERVAL_TICKS) {
-            return
-        }
-        lastUseTickByPlayer[player] = currentTick
 
         val invocation = MagicInvocation.fromEntity(player, targetedEntity)
         val result = ChannelExecutor.channel(magic, invocation)

@@ -10,6 +10,7 @@ import heckerpowered.matrix.common.magic.core.Magic
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class ChannelEntry(
@@ -18,4 +19,7 @@ data class ChannelEntry(
     val channelTime: Long,
     var currentChannelTime: Long = 0,
     @Polymorphic val payload: ExecutionPayload = ExecutionPayload(),
-)
+) {
+    @Transient
+    var clientPrediction: Boolean = false
+}

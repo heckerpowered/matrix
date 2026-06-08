@@ -2,11 +2,18 @@
 
 in vec2 fragTexCoord;
 
-uniform float progress = 1.0;
-uniform float radius = 0.5;
-uniform float thickness = 0.1;
-uniform vec2 center = vec2(0.5, 0.5);
-uniform vec4 color = vec4(1.0);
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define progress MatrixPostData0.x
+#define radius MatrixPostData0.y
+#define thickness MatrixPostData0.z
+#define center MatrixPostData1.xy
+#define color MatrixPostData2
 
 out vec4 fragColor;
 

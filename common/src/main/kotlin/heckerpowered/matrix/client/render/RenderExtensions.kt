@@ -6,19 +6,76 @@
 package heckerpowered.matrix.client.render
 
 import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import net.minecraft.client.gl.Framebuffer
 import org.joml.Vector4f
+import org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT
+import org.lwjgl.opengl.GL11.GL_LINEAR
+import org.lwjgl.opengl.GL11.GL_NEAREST
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 
 var colorMultiplier = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
-val tentBlurShader = BlitProgram()
+private val colorFusionShader by lazy {
+    BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/color_fusion.fsh", GL_FRAGMENT_SHADER),
+    )
+}
 
-fun Framebuffer.blit(target: Framebuffer, mask: Int, filter: Int) = Unit
-infix fun Framebuffer.blend(other: Framebuffer) = Unit
-infix fun Framebuffer.blendScreen(other: Framebuffer) = Unit
-infix fun Framebuffer.copyTo(other: Framebuffer) = Unit
-infix fun Framebuffer.copyDepthTo(other: Framebuffer) = Unit
-infix fun Framebuffer.linearCopyTo(other: Framebuffer) = Unit
-infix fun Framebuffer.nearestCopyTo(other: Framebuffer) = Unit
+private val blendScreenShader by lazy {
+    BlitProgram(
+        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+        ResourceShader("/assets/matrix/shaders/post/blend_screen.fsh", GL_FRAGMENT_SHADER),
+    )
+}
+
+val tentBlurShader = BlitProgram(
+    ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+    ResourceShader("/assets/matrix/shaders/post/blur/tent.fsh", GL_FRAGMENT_SHADER),
+)
+
+fun Framebuffer.blit(target: Framebuffer, mask: Int, filter: Int) {
+    if ((mask and GL_DEPTH_BUFFER_BIT) != 0) {
+        PostProcessRenderer.copyDepthFramebuffer(this, target)
+    } else {
+        PostProcessRenderer.copyFramebuffer(this, target)
+    }
+}
+
+infix fun Framebuffer.blend(other: Framebuffer) {
+    PostProcessRenderer.renderShaderToFramebuffer(
+        colorFusionShader,
+        PostProcessRenderer.currentFramebuffer(),
+        mapOf("primaryFramebuffer" to this, "secondaryFramebuffer" to other),
+    )
+    PostProcessRenderer.nextFramebuffer()
+}
+
+infix fun Framebuffer.blendScreen(other: Framebuffer) {
+    PostProcessRenderer.renderShaderToFramebuffer(
+        blendScreenShader,
+        PostProcessRenderer.currentFramebuffer(),
+        mapOf("primaryFramebuffer" to this, "secondaryFramebuffer" to other),
+    )
+    PostProcessRenderer.nextFramebuffer()
+}
+
+infix fun Framebuffer.copyTo(other: Framebuffer) {
+    PostProcessRenderer.copyFramebuffer(this, other)
+}
+
+infix fun Framebuffer.copyDepthTo(other: Framebuffer) {
+    PostProcessRenderer.copyDepthFramebuffer(this, other)
+}
+
+infix fun Framebuffer.linearCopyTo(other: Framebuffer) {
+    PostProcessRenderer.copyFramebuffer(this, other)
+}
+
+infix fun Framebuffer.nearestCopyTo(other: Framebuffer) {
+    PostProcessRenderer.copyFramebuffer(this, other)
+}
 
 /**
  * Calculates the recommend number of mipmap levels for a given texture size.

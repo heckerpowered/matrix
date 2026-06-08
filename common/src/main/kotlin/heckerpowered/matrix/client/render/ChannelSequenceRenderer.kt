@@ -76,10 +76,11 @@ object ChannelSequenceRenderer {
             val animatedX = offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: .0
 
             val isChanneling = index == 0 || animation[index - 1].currentChannelTime >= animation[index - 1].channelTime
-            val partialProgress = if (isChanneling) tickDelta else .0f
+            val currentChannelTime = if (isChanneling) channelAnimation.currentChannelTime else .0
+            val channelDuration = channelAnimation.channelTime.toDouble().coerceAtLeast(1.0)
             val channelProgress = (
-                (channelAnimation.currentChannelTime + partialProgress - channelAnimation.initialProgressOffset) /
-                    channelAnimation.channelTime.toDouble()
+                currentChannelTime /
+                    channelDuration
                 ).coerceAtMost(1.0)
 
             val minX = (entityScreenPosition.x - 8.0 + index * 24 + animatedX).toInt()
