@@ -9,7 +9,9 @@ import com.mojang.blaze3d.pipeline.BindGroupLayout
 import com.mojang.blaze3d.pipeline.CompiledRenderPipeline
 import com.mojang.blaze3d.pipeline.BlendFunction
 import com.mojang.blaze3d.pipeline.ColorTargetState
+import com.mojang.blaze3d.pipeline.DepthStencilState
 import com.mojang.blaze3d.pipeline.RenderPipeline
+import com.mojang.blaze3d.platform.CompareOp
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.VertexFormat
@@ -43,12 +45,16 @@ object MatrixShaderPipelines {
     private val postProcessPipelines = linkedMapOf<String, PostProcessPass>()
     private val compiledPipelines = linkedMapOf<String, CompiledRenderPipeline>()
     private var pointSpritePipeline: RenderPipeline? = null
+    private var worldPointSpritePipeline: RenderPipeline? = null
+    @Volatile
+    private var precompileRequested = false
 
     private val fallbackPostFragments = listOf(
-        "post/dissolve/dissolve",
         "post/dissolve/texture_dissolve",
+        "post/dissolve/texture_pixel_dissolve",
         "post/aura",
         "post/blend_screen",
+        "post/blur/blur_mask",
         "post/blur/gaussian_blur",
         "post/blur/kawase_blur",
         "post/blur/radial_blur",
@@ -78,10 +84,14 @@ object MatrixShaderPipelines {
         "post/shockwave",
         "post/the_world",
         "post/tone_mapping/aces_filmic",
-        "post/velocity_map/velocity_map",
         "post/the_world",
+        "post/volume_distortion",
         "post/vortex/vortex",
         "post/vortex/inverse_vortex",
+    )
+    private val nonPostProcessFragments = setOf(
+        "post/dissolve/dissolve",
+        "post/velocity_map/velocity_map",
     )
 
     fun postProcessPipeline(fragmentShader: String): RenderPipeline {
@@ -109,15 +119,38 @@ object MatrixShaderPipelines {
     }
 
     fun precompileKnownPostPipelines() {
+        compiledPipelines.clear()
         val postFragments = discoverPostFragments()
         val compiledPostPipelines = postFragments.count(::precompilePostPipeline)
         val compiledPointSprite = precompilePointSpritePipeline()
+        val compiledWorldPointSprite = precompileWorldPointSpritePipeline()
         Matrix.LOGGER.info(
-            "Matrix shader pipelines precompiled: {}/{} post effects, point sprite={}",
+            "Matrix shader pipelines precompiled: {}/{} post effects, point sprite={}, world point sprite={}",
             compiledPostPipelines,
             postFragments.size,
             compiledPointSprite,
+            compiledWorldPointSprite,
         )
+    }
+
+    fun requestPostPipelinePrecompile() {
+        precompileRequested = true
+    }
+
+    fun runRequestedPrecompileIfPossible() {
+        if (!precompileRequested || RenderSystem.tryGetDevice() == null || !RenderSystem.isOnRenderThread()) {
+            return
+        }
+        precompileRequested = false
+        precompileKnownPostPipelines()
+    }
+
+    fun registerKnownPostPipelines() {
+        val postFragments = discoverPostFragments()
+        postFragments.forEach(::postProcessPass)
+        pointSpritePipeline()
+        worldPointSpritePipeline()
+        Matrix.LOGGER.info("Matrix shader pipelines registered: {} post effects, point sprite=true, world point sprite=true", postFragments.size)
     }
 
     fun precompilePostPipeline(fragmentShader: String): Boolean {
@@ -159,11 +192,32 @@ object MatrixShaderPipelines {
                 .withVertexShader(Matrix.identifier("point_sprite/point_sprite"))
                 .withFragmentShader(Matrix.identifier("point_sprite/point_sprite"))
                 .withVertexFormat(DefaultVertexFormat.POSITION, VertexFormat.Mode.POINTS)
+                .withBindGroupLayout(
+                    BindGroupLayout.builder()
+                        .withUniform("MatrixPointSpriteUniforms", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER)
+                        .build()
+                )
                 .withCull(false)
                 .withColorTargetState(ColorTargetState(BlendFunction.ADDITIVE))
                 .build()
         ).also {
             pointSpritePipeline = it
+        }
+    }
+
+    fun worldPointSpritePipeline(): RenderPipeline {
+        return worldPointSpritePipeline ?: RenderPipelines.register(
+            RenderPipeline.builder()
+                .withLocation(Matrix.identifier("pipeline/world_point_sprite"))
+                .withVertexShader(Matrix.identifier("particle/particle_render/world_point_sprite"))
+                .withFragmentShader(Matrix.identifier("particle/particle_render/world_point_sprite"))
+                .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.POINTS)
+                .withBindGroupLayout(BindGroupLayouts.MATRICES_PROJECTION)
+                .withCull(false)
+                .withDepthStencilState(DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
+                .build()
+        ).also {
+            worldPointSpritePipeline = it
         }
     }
 
@@ -181,6 +235,24 @@ object MatrixShaderPipelines {
         val valid = result.getOrDefault(false)
         if (!valid && result.exceptionOrNull() == null) {
             Matrix.LOGGER.warn("Matrix point sprite pipeline is invalid after precompile")
+        }
+        return valid
+    }
+
+    fun precompileWorldPointSpritePipeline(): Boolean {
+        val pipeline = worldPointSpritePipeline()
+        val device = RenderSystem.tryGetDevice() ?: return false
+        val result = runCatching {
+            val compiled = device.precompilePipeline(pipeline)
+            compiledPipelines["particle/particle_render/world_point_sprite"] = compiled
+            compiled.isValid
+        }
+        result.exceptionOrNull()?.let {
+            Matrix.LOGGER.warn("Matrix world point sprite pipeline failed to precompile", it)
+        }
+        val valid = result.getOrDefault(false)
+        if (!valid && result.exceptionOrNull() == null) {
+            Matrix.LOGGER.warn("Matrix world point sprite pipeline is invalid after precompile")
         }
         return valid
     }
@@ -203,7 +275,9 @@ object MatrixShaderPipelines {
                 .map(::normalizeShaderId)
                 .toList()
         }.getOrDefault(emptyList())
-        return (fallbackPostFragments + discovered).distinct()
+        return (fallbackPostFragments + discovered)
+            .distinct()
+            .filterNot(nonPostProcessFragments::contains)
     }
 
     private fun parseSamplerNames(fragmentShader: String): List<String> {
@@ -248,5 +322,11 @@ object MatrixShaderPipelines {
         "framebuffer",
         "colorAttachment",
         "hdrScene",
+        "depthAttachment",
+        "noiseTexture",
+        "noiseColorAttachment",
+        "normalTexture",
+        "opacityMask",
+        "sceneColorTexture",
     )
 }

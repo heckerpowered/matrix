@@ -84,6 +84,7 @@ sourceSets {
                     "heckerpowered/matrix/mixin/GameRendererStandaloneMixin.java",
                     "heckerpowered/matrix/mixin/KeyboardMixin.java",
                     "heckerpowered/matrix/mixin/LevelMixin.java",
+                    "heckerpowered/matrix/mixin/LevelRendererStandaloneMixin.java",
                     "heckerpowered/matrix/mixin/LivingEntityMixin.java",
                     "heckerpowered/matrix/mixin/MinecraftMixin.java",
                     "heckerpowered/matrix/mixin/MinecraftServerMixin.java",

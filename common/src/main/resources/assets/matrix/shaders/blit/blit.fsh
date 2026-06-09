@@ -3,7 +3,7 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D framebuffer;
-uniform float lod = .0;
+uniform float lod = 0.0;
 uniform sampler2D depthAttachment;
 
 out vec4 fragColor;

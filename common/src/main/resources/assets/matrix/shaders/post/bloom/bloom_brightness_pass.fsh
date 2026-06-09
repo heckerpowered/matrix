@@ -9,8 +9,8 @@ layout(std140) uniform MatrixPostUniforms {
     vec4 MatrixPostData3;
 };
 
-#define threshold MatrixPostData0.x
-#define intensity MatrixPostData0.y
+#define bloomThreshold MatrixPostData0.x
+#define bloomIntensity MatrixPostData0.y
 
 in vec2 fragTexCoord;// Texture coordinates from vertex shader
 
@@ -46,14 +46,14 @@ void main() {
 
     // Determine the factor based on the threshold
     // step(edge, x) returns 0.0 if x < edge, and 1.0 if x >= edge
-    float factor = step(threshold, brightness);
+    float factor = step(bloomThreshold, brightness);
 
     // Output the final color:
     // If brightness is above threshold (factor = 1.0), keep the original color.
     // If brightness is below threshold (factor = 0.0), output black.
-    if (brightness < threshold) {
-        fragColor = vec4(0.0, 0.0, 0.0, .0);
+    if (brightness < bloomThreshold) {
+        fragColor = vec4(0.0, 0.0, 0.0, 0.0);
     } else {
-        fragColor = vec4(extractBloomSoft(color.rgb, threshold, 1.0), color.a);
+        fragColor = vec4(extractBloomSoft(color.rgb, bloomThreshold, 1.0), color.a);
     }
 }

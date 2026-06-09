@@ -12,8 +12,8 @@ void main() {
     vec3 result = texture(framebuffer, fragTexCoord).rgb * weight[0];
 
     for (int i = 1; i < 5; ++i) {
-        result += texture(framebuffer, fragTexCoord + vec2(tex_offset.x * i, .0)).rgb * weight[i];
-        result += texture(framebuffer, fragTexCoord - vec2(tex_offset.x * i, .0)).rgb * weight[i];
+        result += texture(framebuffer, fragTexCoord + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+        result += texture(framebuffer, fragTexCoord - vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
     }
 
     fragColor = vec4(result, 1.0);

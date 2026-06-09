@@ -13,11 +13,14 @@ import heckerpowered.matrix.client.MatrixHud
 import heckerpowered.matrix.client.event.PostProcessCallback
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gl.Framebuffer
 import net.minecraft.client.gl.SimpleFramebuffer
 import net.minecraft.client.renderer.RenderPipelines
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 import java.util.*
 
 val framebufferProvider: UniformProvider
@@ -40,6 +43,12 @@ object PostProcessRenderer {
     private val managedFramebuffers = mutableListOf<Framebuffer>()
     private val framebuffers = mutableListOf(createFramebuffer(), createFramebuffer())
     private var currentFramebufferIndex = 0
+    private val additiveBlendShader by lazy {
+        BlitProgram(
+            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
+            ResourceShader("/assets/matrix/shaders/post/color_fusion.fsh", GL_FRAGMENT_SHADER),
+        )
+    }
 
     fun currentFramebuffer(): Framebuffer {
         return framebuffers[currentFramebufferIndex]
@@ -128,7 +137,9 @@ object PostProcessRenderer {
         } else {
             renderToFramebuffer(sourceFramebuffer)
         }
-        PostProcessCallback.EVENT.invoker().onPostProcess()
+        if (minecraft.level != null || postProcessShaders.isNotEmpty()) {
+            PostProcessCallback.EVENT.invoker().onPostProcess()
+        }
     }
 
     private fun syncMinecraftFramebufferSize() {
@@ -239,6 +250,20 @@ object PostProcessRenderer {
         copyDepthTexture(from, to)
     }
 
+    @JvmStatic
+    fun blendAdditiveFramebuffer(overlay: Framebuffer, target: Framebuffer) {
+        val output = temporaryFramebufferExcluding(overlay, target)
+        renderShaderToFramebuffer(
+            additiveBlendShader,
+            output,
+            linkedMapOf(
+                "primaryFramebuffer" to target,
+                "secondaryFramebuffer" to overlay,
+            ),
+        )
+        copyFramebuffer(output, target)
+    }
+
     fun useFramebuffer(framebuffer: Framebuffer, action: () -> Unit) {
         val previousFramebuffer = sourceFramebuffer
         val previousBoundFramebuffer = boundFramebuffer
@@ -260,17 +285,17 @@ object PostProcessRenderer {
             ?.toMatrixFragmentId()
             ?.let(::compiledSingleInputPass)
         if (pass == null) {
-            blitFramebuffer(
-                input,
-                output,
-                RenderPipelines.ENTITY_OUTLINE_BLIT,
-                mapOf("InSampler" to input.colorTextureView)
-            )
-
+            copyFramebuffer(input, output)
             return
         }
 
-        val textureBindings = pass.samplers.associateWith { input.colorTextureView }
+        val textureBindings = pass.samplers.mapNotNull { sampler ->
+            defaultTextureView(sampler, input)?.let { sampler to it }
+        }.toMap()
+        if (textureBindings.keys != pass.samplers.toSet()) {
+            copyFramebuffer(input, output)
+            return
+        }
         blitFramebuffer(input, output, pass.pipeline, textureBindings, pass)
     }
 
@@ -282,28 +307,43 @@ object PostProcessRenderer {
         requireNoReadWriteAlias(output, textureBindings)
         val fragmentShader = shader.fragmentResourcePath()?.toMatrixFragmentId()
         val pass = fragmentShader?.let(::compiledPostPass)
-        if (pass == null || !pass.samplers.all(textureBindings::containsKey)) {
+        if (pass == null || !pass.samplers.all { textureBindings.containsKey(it) || defaultTextureView(it, textureBindings.values.firstOrNull() ?: boundFramebuffer) != null }) {
             val fallbackInput = textureBindings.values.firstOrNull() ?: boundFramebuffer
             requireDifferentFramebuffers(fallbackInput, output)
-            blitFramebuffer(
-                fallbackInput,
-                output,
-                RenderPipelines.ENTITY_OUTLINE_BLIT,
-                mapOf("InSampler" to fallbackInput.colorTextureView)
-            )
+            copyFramebuffer(fallbackInput, output)
             return
         }
         val firstInput = textureBindings.values.firstOrNull() ?: boundFramebuffer
         requireDifferentFramebuffers(firstInput, output)
         val textureViews = pass.samplers.associateWith { sampler ->
-            val framebuffer = textureBindings.getValue(sampler)
-            if (sampler.equals("depthAttachment", ignoreCase = true)) {
-                framebuffer.depthTextureView ?: framebuffer.colorTextureView
+            val framebuffer = textureBindings[sampler]
+            if (framebuffer != null) {
+                framebufferTextureView(sampler, framebuffer)
             } else {
-                framebuffer.colorTextureView
+                defaultTextureView(sampler, firstInput) ?: firstInput.colorTextureView
             }
         }
         blitFramebuffer(firstInput, output, pass.pipeline, textureViews, pass)
+    }
+
+    private fun framebufferTextureView(sampler: String, framebuffer: Framebuffer): GpuTextureView {
+        return if (sampler.equals("depthAttachment", ignoreCase = true) ||
+            sampler.endsWith("DepthAttachment", ignoreCase = true)
+        ) {
+            framebuffer.depthTextureView ?: framebuffer.colorTextureView
+        } else {
+            framebuffer.colorTextureView
+        }
+    }
+
+    private fun defaultTextureView(sampler: String, input: Framebuffer): GpuTextureView? {
+        return when {
+            sampler.equals("noiseTexture", ignoreCase = true) -> MatrixShaderTextures.perlinNoiseTextureView()
+            sampler.equals("noiseColorAttachment", ignoreCase = true) -> MatrixShaderTextures.perlinNoiseTextureView()
+            sampler.equals("depthAttachment", ignoreCase = true) -> input.depthTextureView ?: input.colorTextureView
+            sampler.endsWith("DepthAttachment", ignoreCase = true) -> input.depthTextureView ?: input.colorTextureView
+            else -> input.colorTextureView
+        }
     }
 
     private fun compiledPostPass(fragmentShader: String): MatrixShaderPipelines.PostProcessPass? {
@@ -375,6 +415,16 @@ object PostProcessRenderer {
             to.textureWidth.coerceAtMost(from.textureWidth),
             to.textureHeight.coerceAtMost(from.textureHeight),
         )
+    }
+
+    private fun temporaryFramebufferExcluding(vararg excluded: Framebuffer): Framebuffer {
+        return framebuffers.firstOrNull { candidate ->
+            excluded.none { excludedFramebuffer ->
+                candidate === excludedFramebuffer ||
+                    candidate.colorTexture === excludedFramebuffer.colorTexture ||
+                    candidate.colorTextureView === excludedFramebuffer.colorTextureView
+            }
+        } ?: createManagedFramebuffer()
     }
 
     private fun String.toMatrixFragmentId(): String? {

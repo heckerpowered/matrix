@@ -1,9 +1,9 @@
-#version 410 core
+#version 330 core
 
-layout (location = 0) in vec2 fragTexCoord;
+in vec2 fragTexCoord;
 
 uniform sampler2D noiseTexture;
-uniform sampler2D colorAttachment;
+uniform sampler2D normalTexture;
 
 layout(std140) uniform MatrixPostUniforms {
     vec4 dissolveParams0;
@@ -29,7 +29,7 @@ float pixelColor() {
 
 float pixelAnimation() {
     float pixelNoise = ceil(texCoord().x * pixelStrength) / pixelStrength;
-    return pixelNoise - mix(-1.5, 1.5F, 1.0F - dissolveFactor);
+    return pixelNoise - mix(-1.5, 1.5, 1.0 - dissolveFactor);
 }
 
 float border() {
@@ -43,9 +43,12 @@ float clampRange(float minValue, float maxValue, float value) {
 }
 
 void main() {
-    fragColor = texture(colorAttachment, texCoord());
+    fragColor = texture(normalTexture, fragTexCoord);
+    if (fragColor.a < 0.1) {
+        discard;
+    }
 
     float opacityMask = clampRange(0.0, 1.0, (pixelColor() + border()) - pixelAnimation());
     fragColor.a *= ceil(opacityMask);
-    fragColor.rgb = pow(1 - opacityMask, 10) * emissiveColor.rgb;
+    fragColor.rgb = pow(1.0 - opacityMask, 10.0) * emissiveColor.rgb;
 }

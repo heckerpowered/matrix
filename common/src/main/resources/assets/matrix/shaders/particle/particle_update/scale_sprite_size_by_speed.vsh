@@ -11,7 +11,7 @@ layout (location = 7) in vec4 InColor;
 layout (location = 8) in vec4 InOrientation;
 layout (location = 9) in vec3 InAngularVelocity;
 
-uniform float MinScaleFactor = .0;
+uniform float MinScaleFactor = 0.0;
 uniform float MaxScaleFactor = 2.0;
 uniform float VelocityThreshold = 1.0;
 

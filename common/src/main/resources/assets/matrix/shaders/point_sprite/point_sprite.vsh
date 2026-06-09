@@ -2,9 +2,14 @@
 
 layout (location = 0) in vec2 Position;
 
-uniform float time;
+layout(std140) uniform MatrixPointSpriteUniforms {
+    vec4 pointSpriteParams;
+};
+
+#define time pointSpriteParams.x
 
 out vec2 OutPosition;
+out vec4 InColor;
 
 vec3 mod289(vec3 x) {
     return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -124,12 +129,13 @@ void main()
     vec3 windForce = vec3(0.01, 0.0, 0.0);
 
     float r = snoise3(vec3(Position * 3.0, time)) * 0.01;
-    vec3 velocity = curlNoise(position + vec3(.0, .0, time * 0.2)) * 0.001 + windForce;
+    vec3 velocity = curlNoise(position + vec3(0.0, 0.0, time * 0.2)) * 0.001 + windForce;
 
     OutPosition = (position + velocity).xy;
     if (OutPosition.x > 1 || OutPosition.y < -1 || OutPosition.y > 1){
         OutPosition = vec2(-1.0, OutPosition.y);
     }
-    gl_Position = vec4(OutPosition, .0, 1.0);
+    gl_Position = vec4(OutPosition, 0.0, 1.0);
     gl_PointSize = 6.0;
+    InColor = vec4(1.0, 0.5, 1.0, 1.0);
 }

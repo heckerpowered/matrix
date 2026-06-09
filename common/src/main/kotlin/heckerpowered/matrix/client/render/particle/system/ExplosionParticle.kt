@@ -5,7 +5,8 @@
 
 package heckerpowered.matrix.client.render.particle.system
 
-import heckerpowered.matrix.client.minecraft
+import heckerpowered.matrix.client.render.MatrixGraphicsBackend
+import heckerpowered.matrix.client.render.MatrixPointSpriteParticles
 import heckerpowered.matrix.client.render.particle.ParticleSystem
 import heckerpowered.matrix.client.render.particle.memory.MemoryLayout
 import heckerpowered.matrix.client.render.particle.module.particle_render.ParticleSpriteRendererModule
@@ -16,12 +17,12 @@ import heckerpowered.matrix.client.render.particle.module.particle_update.DragMo
 import heckerpowered.matrix.client.render.particle.module.particle_update.KillParticleModule
 import heckerpowered.matrix.client.render.particle.module.particle_update.ParticleStateModule
 import heckerpowered.matrix.client.render.particle.module.particle_update.ScaleSpriteSizeBySpeedModule
-import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.world.phys.Vec3
 import org.joml.Vector3f
-import kotlin.random.Random
 
 object ExplosionParticle {
+    private const val ENABLE_LEGACY_OPENGL_PARTICLES = false
+
     val randomVelocityModule = RandomVelocityModule()
 
     init {
@@ -50,8 +51,24 @@ object ExplosionParticle {
     }
 
     fun spawnParticleAt(position: Vec3) {
-        spawnVanillaFallback(position)
+        MatrixPointSpriteParticles.spawnExplosionParticles(
+            position,
+            randomVelocityModule.speedRange,
+            randomVelocityModule.multiplier,
+        )
+        if (!ENABLE_LEGACY_OPENGL_PARTICLES || !MatrixGraphicsBackend.isOpenGl()) {
+            return
+        }
 
+        // The legacy GPU particle path is OpenGL transform-feedback based. It is
+        // kept for OpenGL only until the point-sprite renderer is fully rebuilt
+        // on Minecraft's cross-backend RenderPipeline API.
+        runCatching {
+            spawnLegacyGpuParticles(position)
+        }
+    }
+
+    private fun spawnLegacyGpuParticles(position: Vec3) {
         val particleState = (particleSystem.particleSpawnModules.first { it is InitializeParticleModule } as InitializeParticleModule).particleState
         particleState.x = position.x.toFloat()
         particleState.y = position.y.toFloat()
@@ -68,25 +85,5 @@ object ExplosionParticle {
         particleState.scale = 1F
 
         particleSystem.spawnParticles()
-    }
-
-    private fun spawnVanillaFallback(position: Vec3) {
-        val level = minecraft.level ?: return
-        repeat(80) {
-            val velocity = Vec3(
-                (Random.nextDouble() - 0.5) * 0.7,
-                Random.nextDouble() * 0.7,
-                (Random.nextDouble() - 0.5) * 0.7,
-            )
-            level.addParticle(
-                ParticleTypes.END_ROD,
-                position.x,
-                position.y,
-                position.z,
-                velocity.x,
-                velocity.y,
-                velocity.z,
-            )
-        }
     }
 }

@@ -20,9 +20,12 @@ import heckerpowered.matrix.client.render.post.ToneMapping
 import heckerpowered.matrix.client.render.shader.GaussianBlurRenderer
 import heckerpowered.matrix.client.render.shader.RadialBlurRenderer
 import heckerpowered.matrix.client.render.shader.TentShader
+import heckerpowered.matrix.client.render.shader.VolumeDistortion
 import heckerpowered.matrix.client.render.shader.hud.ProgressRingRenderer
 import heckerpowered.matrix.client.render.shader.sdf.DropShadowRenderer
 import heckerpowered.matrix.client.render.shader.sdf.SignedDistanceField
+import heckerpowered.matrix.client.render.post.TextureDissolveShader
+import heckerpowered.matrix.client.shader.TexturePixelDissolveProgram
 import heckerpowered.matrix.client.viewMatrix
 import net.minecraft.client.gl.Framebuffer
 import org.joml.Matrix4f
@@ -37,6 +40,9 @@ object MatrixPostUniforms {
     var colorFilterColor = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
     var edgeHighlightThreshold = 1.0F
     var edgeHighlightColor = Vector4f(0.7F, 0.1F, 0.1F, 1.0F)
+    var auraAlpha = .0F
+    var auraColor = Vector4f(.0F, .0F, .0F, .0F)
+    var grainStrength = 0.05F
 
     private val buffers = mutableMapOf<String, GpuBuffer>()
 
@@ -167,6 +173,28 @@ object MatrixPostUniforms {
                 }
             }
 
+            "post/dissolve/dissolve" -> {
+                val dissolveFactor = TexturePixelDissolveProgram.dissolveFactor.takeIf { it != .0F } ?: 0.5F
+                data.putVec4(0, dissolveFactor, 0.05F, 15.0F, 16.0F)
+                data.putVec4(1, 1.0F, currentTimeSeconds(), input.textureWidth.toFloat(), input.textureHeight.toFloat())
+                data.putVec4(2, 0.1F, 0.5F, 1.0F, 1.0F)
+            }
+
+            "post/dissolve/texture_dissolve" -> {
+                val dissolveFactor = TextureDissolveShader.dissolveFactor
+                    .takeIf { it != .0F }
+                    ?: TexturePixelDissolveProgram.dissolveFactor.takeIf { it != .0F }
+                    ?: 0.5F
+                data.putVec4(0, dissolveFactor, 0.05F, 16.0F, 1.0F)
+                data.putVec4(1, .0F, 0.5F, 1.0F, 1.0F)
+            }
+
+            "post/dissolve/texture_pixel_dissolve" -> {
+                val dissolveFactor = TexturePixelDissolveProgram.dissolveFactor.takeIf { it != .0F } ?: 0.5F
+                data.putVec4(0, dissolveFactor, 0.05F, 100.0F, 1.0F)
+                data.putVec4(1, .0F, 0.5F, 1.0F, 1.0F)
+            }
+
             "post/color_fusion" -> {
                 data.putVec4(0, colorMultiplier.x, colorMultiplier.y, colorMultiplier.z, colorMultiplier.w)
             }
@@ -178,12 +206,37 @@ object MatrixPostUniforms {
                 }
             }
 
+            "post/aura" -> {
+                data.putVec4(0, currentTimeSeconds(), auraAlpha, .0F, .0F)
+                auraColor.also { color -> data.putVec4(1, color.x, color.y, color.z, color.w) }
+            }
+
+            "post/circle" -> {
+                data.putMatrix4f(0, viewMatrix)
+                data.putMatrix4f(64, projectionMatrix)
+                data.putVec4(8, 600.0F, 600.0F, 600.0F, 300.0F)
+                data.putVec4(9, input.textureWidth.toFloat(), input.textureHeight.toFloat(), 1.0F, .0F)
+            }
+
             "post/ghost" -> {
                 data.putVec4(0, 1.0F, .0F, .0F, .0F)
             }
 
+            "post/grain/background_grain" -> {
+                data.putVec4(0, grainStrength, .0F, .0F, .0F)
+            }
+
             "post/the_world" -> {
                 data.putVec4(0, MatrixHud.grayscaleIntensity, .0F, .0F, .0F)
+            }
+
+            "post/volume_distortion" -> {
+                data.putMatrix4f(0, viewMatrix.invert(Matrix4f()))
+                data.putMatrix4f(64, projectionMatrix.invert(Matrix4f()))
+                VolumeDistortion.volumePosition.also { position ->
+                    data.putVec4(8, position.x, position.y, position.z, VolumeDistortion.volumeRadius)
+                }
+                data.putVec4(9, VolumeDistortion.grayscaleIntensity, VolumeDistortion.emissiveStrength, .0F, .0F)
             }
 
             "post/shockwave" -> {
@@ -211,7 +264,19 @@ object MatrixPostUniforms {
                 )
                 data.putVec4(9, input.textureWidth.toFloat(), input.textureHeight.toFloat(), .0F, .0F)
             }
+
+            "post/vortex/vortex" -> {
+                data.putVec4(0, currentTimeSeconds(), 0.4F, 0.5F, .0F)
+            }
+
+            "post/vortex/inverse_vortex" -> {
+                data.putVec4(0, currentTimeSeconds(), 1.0F, 1.0F, 0.1F)
+            }
         }
+    }
+
+    private fun currentTimeSeconds(): Float {
+        return (System.currentTimeMillis().toDouble() / 1000.0 % 1000.0).toFloat()
     }
 
     private fun ByteBuffer.putMatrix4f(offset: Int, matrix: Matrix4f) {

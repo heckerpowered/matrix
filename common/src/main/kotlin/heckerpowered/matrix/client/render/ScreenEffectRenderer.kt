@@ -11,6 +11,8 @@ import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.render.effect.SculkCatalystEffectRenderer
 import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
 import heckerpowered.matrix.client.render.post.ShockwaveRenderer
+import heckerpowered.matrix.client.render.post.BloomEffect
+import heckerpowered.matrix.client.render.shader.RadialBlurRenderer
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
@@ -19,13 +21,11 @@ import heckerpowered.matrix.common.effect.ModMobEffects.ANGERED_EFFECT
 import heckerpowered.matrix.common.effect.ModMobEffects.WITHER_ARMOR_EFFECT
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.minecraft.client.Minecraft
-import net.minecraft.core.particles.ParticleTypes
 import org.joml.Vector4f
 import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
 import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 import java.time.Duration
 import kotlin.math.abs
-import kotlin.random.Random
 import net.minecraft.world.phys.Vec3
 
 object ScreenEffectRenderer {
@@ -40,6 +40,7 @@ object ScreenEffectRenderer {
         blue = SimpleDoubleAnimation(from = 1.0, to = 1.0, initValue = 1.0, duration = Duration.ofMillis(1000)),
     )
     private val edgeThresholdAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(1000))
+    private val ghostStrengthAnimation = SimpleDoubleAnimation(initValue = .0, duration = Duration.ofMillis(1000))
     val bloomThresholdAnimation = SimpleDoubleAnimation(initValue = 1.0, duration = Duration.ofMillis(1000))
 
     private val colorFilterShader by lazy {
@@ -56,6 +57,10 @@ object ScreenEffectRenderer {
         )
     }
 
+    private val radialBlurShader by lazy {
+        RadialBlurRenderer.radialBlurShader
+    }
+
     fun onInitialize() {
         if (initialized) {
             return
@@ -68,13 +73,16 @@ object ScreenEffectRenderer {
         colorAnimation.green.start()
         colorAnimation.blue.start()
         edgeThresholdAnimation.start()
+        ghostStrengthAnimation.start()
         bloomThresholdAnimation.start()
     }
 
+    @JvmStatic
     fun beginRenderEntity() {
         // Entity post effects are currently driven by the 26.2 post-process and tick paths.
     }
 
+    @JvmStatic
     fun endRenderEntity() {
         if (SculkCatalystEffectRenderer.entity?.isAlive == false) {
             SculkCatalystEffectRenderer.entity = null
@@ -82,25 +90,22 @@ object ScreenEffectRenderer {
     }
 
     fun spawnParticleAt(position: Vec3, count: Int = 1) {
-        val level = minecraft.level ?: return
-        repeat(count.coerceAtLeast(0)) {
-            val velocity = randomVelocity(0.045)
-            level.addParticle(
-                ParticleTypes.WITCH,
-                position.x,
-                position.y,
-                position.z,
-                velocity.x,
-                velocity.y,
-                velocity.z,
-            )
-        }
+        MatrixPointSpriteParticles.spawnTrailParticles(position, count)
     }
 
     fun onWitherArmorEffectApplied() {
         val player = player ?: return
         previousWitherArmorState = true
         previousWitherArmorDuration = player.getEffect(WITHER_ARMOR_EFFECT)?.duration ?: 0
+
+        PostProcessRenderer.postProcessShaders.add(colorFilterShader)
+        PostProcessRenderer.postProcessShaders.add(edgeHighlightShader)
+        PostProcessRenderer.postProcessShaders.add(radialBlurShader)
+
+        ghostStrengthAnimation.from = 5.0
+        ghostStrengthAnimation.to = ghostStrengthAnimation.value
+        ghostStrengthAnimation.duration = Duration.ofMillis(1000)
+        ghostStrengthAnimation.start()
 
         colorAnimation.red.from = 2.0
         colorAnimation.red.to = if (previousAngryState) 2.0 else 1.0
@@ -170,6 +175,12 @@ object ScreenEffectRenderer {
     }
 
     private fun onPostProcess() {
+        bloomThresholdAnimation.animatedValue = 1.0
+        BloomEffect.brightnessThreshold = bloomThresholdAnimation.animatedValue.toFloat()
+        BloomEffect.brightnessPassFramebuffer = PostProcessRenderer.sourceFramebuffer
+        BloomEffect.renderBloom()
+        PostProcessRenderer.blendAdditiveFramebuffer(BloomEffect.bloomUpFramebuffer, PostProcessRenderer.sourceFramebuffer)
+
         if (!CollapseEffectRenderer.dissolveFactor.isAnimating &&
             CollapseEffectRenderer.dissolveFactor.animatedValue <= 0.001
         ) {
@@ -187,12 +198,19 @@ object ScreenEffectRenderer {
     }
 
     private fun onAngeredEffectApplied() {
+        PostProcessRenderer.postProcessShaders.add(colorFilterShader)
+        PostProcessRenderer.postProcessShaders.add(edgeHighlightShader)
+        PostProcessRenderer.postProcessShaders.add(radialBlurShader)
+
         colorAnimation.red.value = 2.0
         colorAnimation.red.duration = Duration.ofMillis(1000)
         colorAnimation.green.value = 1.0
         colorAnimation.green.duration = Duration.ofMillis(1000)
         colorAnimation.blue.value = 1.0
         edgeThresholdAnimation.value = 0.3
+        edgeThresholdAnimation.duration = Duration.ofMillis(1000)
+        ghostStrengthAnimation.duration = Duration.ofMillis(1000)
+        ghostStrengthAnimation.value = 1.0
     }
 
     private fun onAngeredEffectRemoved() {
@@ -200,6 +218,7 @@ object ScreenEffectRenderer {
         colorAnimation.green.value = 1.0
         colorAnimation.blue.value = 1.0
         edgeThresholdAnimation.value = 1.0
+        ghostStrengthAnimation.value = .0
     }
 
     private fun applyPostProcessState() {
@@ -211,6 +230,7 @@ object ScreenEffectRenderer {
         )
         MatrixPostUniforms.edgeHighlightThreshold = edgeThresholdAnimation.animatedValue.toFloat()
         MatrixPostUniforms.edgeHighlightColor = Vector4f(0.7F, 0.1F, 0.1F, 1.0F)
+        RadialBlurRenderer.strength = ghostStrengthAnimation.animatedValue.toFloat()
 
         if (isColorFilterActive()) {
             PostProcessRenderer.postProcessShaders.add(colorFilterShader)
@@ -223,6 +243,12 @@ object ScreenEffectRenderer {
         } else {
             PostProcessRenderer.postProcessShaders.remove(edgeHighlightShader)
         }
+
+        if (isRadialBlurActive()) {
+            PostProcessRenderer.postProcessShaders.add(radialBlurShader)
+        } else {
+            PostProcessRenderer.postProcessShaders.remove(radialBlurShader)
+        }
     }
 
     private fun resetPostProcessState() {
@@ -230,6 +256,7 @@ object ScreenEffectRenderer {
         colorAnimation.green.animatedValue = 1.0
         colorAnimation.blue.animatedValue = 1.0
         edgeThresholdAnimation.animatedValue = 1.0
+        ghostStrengthAnimation.animatedValue = .0
         applyPostProcessState()
     }
 
@@ -246,11 +273,7 @@ object ScreenEffectRenderer {
         return edgeThresholdAnimation.isAnimating || edgeThresholdAnimation.animatedValue < 0.999
     }
 
-    private fun randomVelocity(scale: Double): Vec3 {
-        return Vec3(
-            (Random.nextDouble() - 0.5) * scale,
-            Random.nextDouble() * scale,
-            (Random.nextDouble() - 0.5) * scale,
-        )
+    private fun isRadialBlurActive(): Boolean {
+        return ghostStrengthAnimation.isAnimating || ghostStrengthAnimation.animatedValue > 0.001
     }
 }

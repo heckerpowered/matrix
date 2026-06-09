@@ -9,7 +9,7 @@ out vec4 fragColor;
 
 void main() {
     vec4 opacity = texture(opacityMask, fragTexCoord);
-    if (opacity.a == .0) {
+    if (opacity.a == 0.0) {
         discard;
     }
     fragColor = texture(colorAttachment, fragTexCoord);

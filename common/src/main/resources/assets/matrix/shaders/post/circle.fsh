@@ -2,13 +2,19 @@
 
 in vec2 fragTexCoord;
 
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
 uniform sampler2D framebuffer;
-uniform vec3 center = vec3(600.0);
-uniform float radius = 300;
-uniform vec2 resolution; // 必须正确设置为屏幕分辨率
-uniform float grayscaleIntensity = 1.0;
+
+layout(std140) uniform MatrixPostUniforms {
+    mat4 modelViewMatrix;
+    mat4 projectionMatrix;
+    vec4 circleParams0;
+    vec4 circleParams1;
+};
+
+#define center circleParams0.xyz
+#define radius circleParams0.w
+#define resolution circleParams1.xy
+#define grayscaleIntensity circleParams1.z
 
 out vec4 fragColor;
 

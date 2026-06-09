@@ -38,7 +38,7 @@ void main() {
     float end = start - sweep;
 
     bool inRange;
-    if (end < .0) {
+    if (end < 0.0) {
         inRange = angle <= start && angle >= 0.0 || angle >= end + 2.0 * PI && angle <= 2.0 * PI;
     } else {
         inRange = angle <= start && angle >= end;

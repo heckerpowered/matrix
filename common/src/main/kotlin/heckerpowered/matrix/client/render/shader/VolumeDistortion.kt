@@ -5,13 +5,11 @@
 
 package heckerpowered.matrix.client.render.shader
 
-import heckerpowered.matrix.client.shader.*
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.ResourceShader
 import org.joml.Vector3f
-import org.lwjgl.opengl.GL11.GL_TEXTURE_2D
-import org.lwjgl.opengl.GL11.glBindTexture
-import org.lwjgl.opengl.GL13.GL_TEXTURE0
-import org.lwjgl.opengl.GL13.glActiveTexture
-import org.lwjgl.opengl.GL20.*
+import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
+import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
 
 object VolumeDistortion {
     var sceneColorTexture: Int = 0
@@ -25,34 +23,6 @@ object VolumeDistortion {
 
     val Shader = BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-        ResourceShader("/assets/matrix/shaders/volume_distortion.frag", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("sceneColorTexture") { pointer ->
-                glActiveTexture(GL_TEXTURE0)
-                glBindTexture(GL_TEXTURE_2D, sceneColorTexture)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("depthAttachment") { pointer ->
-                glActiveTexture(GL_TEXTURE1)
-                glBindTexture(GL_TEXTURE_2D, depthAttachment)
-                glUniform1i(pointer, 1)
-            },
-            // projectionMatrixProvider,
-            // viewProjectionMatrixProvider,
-            inverseViewMatrixProvider,
-            inverseProjectionMatrixProvider,
-            UniformProvider("volumePosition") { pointer ->
-                glUniform3f(pointer, volumePosition.x, volumePosition.y, volumePosition.z)
-            },
-            UniformProvider("volumeRadius") { pointer ->
-                glUniform1f(pointer, volumeRadius)
-            },
-            UniformProvider("grayscaleIntensity") { pointer ->
-                glUniform1f(pointer, grayscaleIntensity)
-            },
-            UniformProvider("emissiveStrength") { pointer ->
-                glUniform1f(pointer, emissiveStrength)
-            }
-        )
+        ResourceShader("/assets/matrix/shaders/post/volume_distortion.fsh", GL_FRAGMENT_SHADER),
     )
 }

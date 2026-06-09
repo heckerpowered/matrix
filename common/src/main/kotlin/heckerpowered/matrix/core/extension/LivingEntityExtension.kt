@@ -16,7 +16,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.player.Player
 
 val LivingEntity.attackDamage: Double
-    get() = getAttributeValue(Attributes.ATTACK_DAMAGE)
+    get() = getAttribute(Attributes.ATTACK_DAMAGE)?.value ?: 0.0
 
 fun LivingEntity.healOverflow(amount: Float) {
     val actualAmount = amount * healingMultiplier.toFloat()

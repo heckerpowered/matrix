@@ -13,6 +13,7 @@ import heckerpowered.matrix.client.core.ClientOptions.aimAssistMaxDistance
 import heckerpowered.matrix.client.event.KeyEvent
 import heckerpowered.matrix.client.event.MouseButtonEvent
 import heckerpowered.matrix.client.render.PostProcessRenderer
+import heckerpowered.matrix.client.render.MatrixGuiPipelines
 import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.ui.element.ManaBar
@@ -158,6 +159,7 @@ object MatrixHud {
     private val manaOverclockAnimation = SimpleDoubleAnimation(initValue = 1.0)
     private val magicOverclockAnimation = SimpleDoubleAnimation(initValue = 1.0)
     private val grayscaleIntensityAnimation = SimpleDoubleAnimation(initValue = .0)
+    private val dissolveAnimation = SimpleDoubleAnimation(initValue = 1.0)
     private val crosshairX = SimpleDoubleAnimation(initValue = .0)
     private val crosshairY = SimpleDoubleAnimation(initValue = .0)
     private val magicHudTimeScale = TimeController.allocateTimeController()
@@ -666,6 +668,9 @@ object MatrixHud {
         magicShownOpacityAnimation.value = 1.0
         manaShownAnimation.value = .0
         manaOpacityAnimation.value = 1.0
+        dissolveAnimation.duration = Duration.ofMillis(1000)
+        dissolveAnimation.startTime = Duration.ZERO
+        dissolveAnimation.value = .0
         entityDescriptionOpacityAnimation.value = if (targetedEntity != null) 1.0 else .0
         descriptionYOffsetAnimation.value = if (targetedEntity != null) .0 else -35.0
         AimAssist.resetAnimation()
@@ -687,6 +692,8 @@ object MatrixHud {
         entityDescriptionOpacityAnimation.value = .0
         descriptionYOffsetAnimation.value = -35.0
         fovAnimation.value = 1.0
+        dissolveAnimation.duration = Duration.ofMillis(300)
+        dissolveAnimation.value = 1.0
 
         // takeScreenShot = true
         manaBar.onHudVisibilityChanged(false)
@@ -990,7 +997,15 @@ object MatrixHud {
         val top = (height / 2.0 - 100.0 - offsetY / 2.0).roundToInt()
         val bottom = (height / 2.0 + 100.0 + offsetY / 2.0).roundToInt()
 
-        drawContext.fill(left, top, right, bottom, color((alpha * 127.5).roundToInt(), 255, 255, 255))
+        MatrixGuiPipelines.drawDissolveRect(
+            drawContext,
+            left,
+            top,
+            right,
+            bottom,
+            color((alpha * 127.5).roundToInt(), 255, 255, 255),
+            dissolveAnimation.animatedValue.toFloat(),
+        )
 
         val target = cachedTargetedEntity
         val descriptionAlpha = min(alpha, entityDescriptionOpacityAnimation.animatedValue)

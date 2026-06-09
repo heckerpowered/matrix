@@ -8,7 +8,10 @@ package heckerpowered.matrix.client
 import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.network.MatrixClientPlayNetworking
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
+import heckerpowered.matrix.client.render.MatrixGuiPipelines
+import heckerpowered.matrix.client.render.MatrixPointSpriteParticles
 import heckerpowered.matrix.client.render.MatrixRenderSystem
+import heckerpowered.matrix.client.render.MatrixShaderPipelines
 import heckerpowered.matrix.client.render.ScreenEffectRenderer
 import heckerpowered.matrix.client.render.TargetGuideRenderer
 import heckerpowered.matrix.client.render.entity.DevEntityRenderer
@@ -30,8 +33,13 @@ import heckerpowered.matrix.common.magic.core.Magic
 import heckerpowered.matrix.common.magic.system.Magics
 import heckerpowered.matrix.core.isInfiniteMana
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener
 import org.joml.Matrix4f
+import net.minecraft.server.packs.PackType
+import net.minecraft.server.packs.resources.ResourceManager
 import java.time.Duration
 
 val projectionMatrix: Matrix4f
@@ -72,10 +80,12 @@ class MatrixClient : ClientModInitializer {
         MatrixClientPlayNetworking.onInitialize()
         DamageNumberHud.onInitialize()
         ScreenEffectRenderer.onInitialize()
+        MatrixPointSpriteParticles.onInitialize()
         ChannelSequenceRenderer.onInitialize()
         TargetGuideRenderer.onInitialize()
         ShockwaveRenderer.onInitialize()
         MatrixKeyBindings.onInitialize()
+        registerShaderReloadListener()
         registerEntityRenderers()
         onWindowInitialization()
     }
@@ -85,6 +95,23 @@ class MatrixClient : ClientModInitializer {
         EntityRendererRegistry.register<AttractorEntity>(ModEntityTypes.attractor) { context -> EmptyRenderer(context) }
         EntityRendererRegistry.register<FinderArrowEntity>(ModEntityTypes.FINDER_ARROW_ENTITY) { context -> FinderArrowEntityRenderer(context) }
         EntityRendererRegistry.register<DevEntity>(ModEntityTypes.devEntity) { context -> DevEntityRenderer(context) }
+    }
+
+    private fun registerShaderReloadListener() {
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(
+            object : SimpleSynchronousResourceReloadListener {
+                override fun getFabricId() = Matrix.identifier("shader_pipeline_reload")
+
+                override fun onResourceManagerReload(resourceManager: ResourceManager) {
+                    MatrixShaderPipelines.requestPostPipelinePrecompile()
+                    MatrixGuiPipelines.requestGuiPipelinePrecompile()
+                }
+            }
+        )
+        ClientTickEvents.END_CLIENT_TICK.register {
+            MatrixShaderPipelines.runRequestedPrecompileIfPossible()
+            MatrixGuiPipelines.runRequestedPrecompileIfPossible()
+        }
     }
 
     companion object {
@@ -112,6 +139,8 @@ class MatrixClient : ClientModInitializer {
             shaderPipelinesInitialized = true
             ShaderStageStore.Default.discoverFiles()
             ShaderStageStore.Default.precompileAll()
+            MatrixShaderPipelines.registerKnownPostPipelines()
+            MatrixGuiPipelines.registerKnownGuiPipelines()
         }
     }
 }

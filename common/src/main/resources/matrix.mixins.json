@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "heckerpowered.matrix.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
     "DamageSourceMixin",
     "EntityMixin",
@@ -14,6 +14,7 @@
     "DeltaTrackerTimerMixin",
     "GameRendererStandaloneMixin",
     "KeyboardMixin",
+    "LevelRendererStandaloneMixin",
     "MinecraftMixin",
     "MixinInGameHud"
   ],

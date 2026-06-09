@@ -6,7 +6,7 @@
 package heckerpowered.matrix.client.render.post
 
 import heckerpowered.matrix.client.shader.DissolveShader
-import heckerpowered.matrix.client.shader.Program
+import heckerpowered.matrix.client.shader.BlitProgram
 import heckerpowered.matrix.client.shader.ResourceShader
 import heckerpowered.matrix.client.shader.UniformProvider
 import org.lwjgl.opengl.GL46.*
@@ -15,7 +15,7 @@ object TextureDissolveShader {
     var colorAttachment: Int = 0
     var dissolveFactor: Float = 0F
 
-    val program = Program(
+    val program = BlitProgram(
         ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
         ResourceShader("/assets/matrix/shaders/post/dissolve/texture_dissolve.fsh", GL_FRAGMENT_SHADER),
         uniforms = arrayOf(
