@@ -6,13 +6,11 @@
 package heckerpowered.matrix.client.render
 
 import com.mojang.blaze3d.systems.RenderSystem
-import heckerpowered.matrix.client.render.OpenGLExtensions.getErrorName
-import heckerpowered.matrix.core.math.Vector3fExtensions.unaryMinus
-import net.minecraft.client.render.Camera
+import heckerpowered.matrix.core.math.unaryMinus
+import net.minecraft.client.Camera
 import org.joml.Matrix4f
 import org.joml.Matrix4fc
 import org.joml.Quaternionf
-import org.lwjgl.opengl.GL46.*
 
 object MatrixRenderSystem {
     var projectionMatrix = Matrix4f()
@@ -26,8 +24,8 @@ object MatrixRenderSystem {
     fun setupMatrix(camera: Camera, projectionMatrix: Matrix4fc) {
         this.projectionMatrix = Matrix4f(projectionMatrix)
 
-        val rotation = camera.rotation.conjugate(Quaternionf())
-        val translation = -camera.pos.toVector3f()
+        val rotation = camera.rotation().conjugate(Quaternionf())
+        val translation = -camera.position().toVector3f()
 
         viewMatrix.identity()
             .rotate(rotation)
@@ -36,27 +34,12 @@ object MatrixRenderSystem {
         viewProjectionMatrix.identity().mul(projectionMatrix).mul(viewMatrix)
         projectionMatrix.invert(inverseProjectionMatrix)
         inverseViewMatrix.identity()
-            .translate(camera.pos.toVector3f())
-            .rotate(camera.rotation)
+            .translate(camera.position().toVector3f())
+            .rotate(camera.rotation())
         viewProjectionMatrix.invert(inverseViewProjectionMatrix)
     }
 
     fun assertOnRenderThread() {
         RenderSystem.assertOnRenderThread()
-    }
-
-    fun createShader(type: Int): Int {
-        assertOnRenderThread()
-        val shader = glCreateShader(type)
-        if (shader != 0) {
-            return shader
-        }
-
-        val error = glGetError()
-        if (error == GL_INVALID_ENUM) {
-            error("GL_INVALID_ENUM: shaderType $type is not an accepted value.")
-        }
-        val errorName = getErrorName(error)
-        error("$errorName: shaderType: $type")
     }
 }

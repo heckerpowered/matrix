@@ -1,8 +1,9 @@
 {
+  "creativeTab.matrix": "Matrix",
   "effect.matrix.angered": "Angered",
   "effect.matrix.armor_penetration": "Armor Penetration",
   "effect.matrix.blood_pact": "Blood Pact",
-  "effect.matrix.borrowed_time": "Borrowed Time",
+  "effect.matrix.borrowed_time_effect": "Borrowed Time",
   "effect.matrix.cripple_movement": "Cripple Movement",
   "effect.matrix.mana_overload": "Mana Overload",
   "effect.matrix.wither_armor": "Wither Armor",
@@ -82,7 +83,6 @@
   "item.minecraft.lingering_potion.effect.angered": "Lingering Potion of Angered",
   "item.minecraft.potion.effect.angered": "Potion of Angered",
   "item.minecraft.splash_potion.effect.angered": "Slash Potion of Angered",
-  "itemGroup.matrix": "Matrix",
   "key.categories.matrix": "Matrix",
   "key.matrix.next_magic": "Next magic",
   "key.matrix.previous_magic": "Previous magic",
@@ -155,6 +155,6 @@
   "matrix.system_is_crashing": "System Crash Imminent",
   "matrix.warden_chestplate.description": "§7When Angered:§r\nImmune to §9damage§r, §9knockback§r, §9fire§r, and §9movement penalties§r.\nClears and blocks all negative effects.\nDamage is increased by §9100%§r.\n-§9100%§r melee weapon charge time.\nMovement speed is increased.",
   "matrix.wizard_helmet.accumulated_mana_delta": "Spent/Recovered Mana: ",
-  "matrix.wizard_helmet.blood_pact_conversion_efficiency": "Blood Pact Conversion Efficiency: ",
+  "matrix.wizard_helmet.blood_pact_exchange_rate": "Blood Pact Conversion Efficiency: ",
   "matrix.wizard_helmet.load.description": "Current load: "
 }

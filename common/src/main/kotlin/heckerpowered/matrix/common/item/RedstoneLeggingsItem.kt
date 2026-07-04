@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.combat.damage.DamageOutcomeContext
 import heckerpowered.matrix.common.combat.damage.DamageOutcomeRule
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitMaxPower
@@ -27,7 +28,7 @@ import net.minecraft.world.item.equipment.ArmorType
 import java.util.function.Consumer
 
 object RedstoneLeggingsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.redstone, ArmorType.LEGGINGS)
+    Properties().setId(ModItemIds.redstoneLeggings).humanoidArmor(ModArmorMaterials.redstone, ArmorType.LEGGINGS)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), RedstoneSuit, TooltipProvider, DamageOutcomeRule {

@@ -5,25 +5,21 @@
 
 package heckerpowered.matrix.client.ui.element
 
+import com.mojang.blaze3d.pipeline.BlendFunction
 import heckerpowered.matrix.client.MatrixHud
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.render.shader.hud.ProgressRingRenderer
-import heckerpowered.matrix.client.render.state.BlendFuncSeparateState
-import heckerpowered.matrix.client.render.state.ProgramState
-import heckerpowered.matrix.client.render.state.StateIsolation
-import heckerpowered.matrix.client.render.state.capabilities.BlendState
-import heckerpowered.matrix.client.render.state.capabilities.CullFaceState
-import heckerpowered.matrix.client.render.state.capabilities.DepthTestState
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.effect.ModMobEffects.WITHER_ARMOR_CHARGED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects
 import heckerpowered.matrix.common.item.ModComponents.borrowedTimeCharge
 import heckerpowered.matrix.common.item.ModComponents.borrowedTimeMaxCharge
 import heckerpowered.matrix.common.item.ModComponents.borrowedTimeState
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.*
-import net.minecraft.entity.EquipmentSlot
-import net.minecraft.util.math.ColorHelper
+import net.minecraft.client.DeltaTracker
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.world.entity.EquipmentSlot
+import net.minecraft.util.ARGB
+import org.joml.Vector2f
 import org.joml.Vector4f
 
 object StatusHud {
@@ -38,17 +34,49 @@ object StatusHud {
         // HudRenderCallback.EVENT.register(this::onHudRender)
     }
 
-    fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+    fun onHudRender(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
+        // Drop rings a skipped capture left behind (e.g. vanilla menu blur active last frame).
+        pendingRings.clear()
         renderWitherArmor(drawContext, tickCounter)
         renderPhaseWalk(drawContext, tickCounter)
+    }
+
+    private class PendingRing(
+        val color: Vector4f,
+        val progress: Float,
+        val center: Vector2f,
+        val radius: Float,
+        val thickness: Float,
+        val aspectRatio: Float,
+    )
+
+    private val pendingRings = mutableListOf<PendingRing>()
+
+    /**
+     * Draws the rings queued during extraction into [MatrixHud.hudFramebuffer]. Called by
+     * MatrixHud.onHudCaptureBegin right after the framebuffer is cleared and BEFORE the HUD
+     * stratum renders into it — this runs at GUI draw time (the extraction-time drawTo used to
+     * be wiped by that clear), and keeps the 1.21 order of ring below, text on top.
+     */
+    fun flushPendingRings() {
+        for (ring in pendingRings) {
+            ProgressRingRenderer.color = ring.color
+            ProgressRingRenderer.progress = ring.progress
+            ProgressRingRenderer.center = ring.center
+            ProgressRingRenderer.radius = ring.radius
+            ProgressRingRenderer.thickness = ring.thickness
+            ProgressRingRenderer.aspectRatio = ring.aspectRatio
+            ProgressRingRenderer.progressRingShader.drawTo(MatrixHud.hudFramebuffer, BlendFunction.TRANSLUCENT)
+        }
+        pendingRings.clear()
     }
 
     private val phaseWalkProgress = SimpleDoubleAnimation(initValue = .0)
     private val phaseWalkOpacity = SimpleDoubleAnimation(initValue = .0)
     private val phaseWalkYOffset = SimpleDoubleAnimation()
 
-    private fun renderPhaseWalk(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val chestplate = player.getEquippedStack(EquipmentSlot.CHEST)
+    private fun renderPhaseWalk(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
+        val chestplate = player.getItemBySlot(EquipmentSlot.CHEST)
         val isPhaseWalking = chestplate.components.getOrDefault(borrowedTimeState, false)
         val currentCharge = chestplate.components.getOrDefault(borrowedTimeCharge, 0L)
         val maxCharge = chestplate.components.getOrDefault(borrowedTimeMaxCharge, 0L)
@@ -76,8 +104,8 @@ object StatusHud {
         )
     }
 
-    private fun renderWitherArmor(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-        val statusEffect = player.getStatusEffect(WITHER_ARMOR_CHARGED_EFFECT)
+    private fun renderWitherArmor(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
+        val statusEffect = player.getEffect(ModMobEffects.WitherArmorCharged)
         if (statusEffect != null) {
             val previousValue = progress.value
             progress.value = 1.0 - statusEffect.duration / 200.0
@@ -103,12 +131,12 @@ object StatusHud {
         renderProgressRing(drawContext, progress.animatedValue.toFloat(), (statusEffect?.amplifier ?: 0).toString(), "凋零护甲", opacityAnimation.animatedValue.toFloat())
     }
 
-    private fun renderProgressRing(drawContext: DrawContext, progress: Float, progressString: String, description: String, opacity: Float, xOffset: Float = 0F, yOffset: Float = 0F) {
+    private fun renderProgressRing(drawContext: GuiGraphicsExtractor, progress: Float, progressString: String, description: String, opacity: Float, xOffset: Float = 0F, yOffset: Float = 0F) {
         MatrixHud.renderHud = true
         MatrixHud.useBloom = true
 
-        val scaledWidth = drawContext.scaledWindowWidth
-        val scaledHeight = drawContext.scaledWindowHeight
+        val scaledWidth = drawContext.guiWidth()
+        val scaledHeight = drawContext.guiHeight()
 
         val progressRingX = scaledWidth.toFloat()
         val progressRingY = scaledHeight / 2F
@@ -119,49 +147,51 @@ object StatusHud {
         val minY = progressRingY + PROGRESS_RING_SIZE / 2 + yOffset
         val maxY = progressRingY - PROGRESS_RING_SIZE / 2 + yOffset
 
-        val transformationMatrix = drawContext.matrices.peek().positionMatrix
-        val tessellator = Tessellator.getInstance()
-        val buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE)
+        // 26.2: the ring was a POSITION_TEXTURE quad drawn through progressRingShader (the
+        // quad's texcoords spanned the ring). progressRingShader is now a fullscreen
+        // BlitProgram, so the quad placement moves into the shader's center/radius/thickness
+        // uniforms (fragTexCoord space, y-up), and the pass targets MatrixHud.hudFramebuffer --
+        // the framebuffer that was implicitly bound here in 1.21 -- so the ring still feeds the
+        // blur/bloom composite (the 1.5x HDR color is preserved for the bloom pass). This runs
+        // during GUI EXTRACTION, but hudFramebuffer is cleared at GUI draw time right before
+        // the stratum renders, so the pass itself is queued and flushed post-clear
+        // (see flushPendingRings).
+        val radius = (PROGRESS_RING_SIZE / 2F) / scaledHeight
+        pendingRings.add(
+            PendingRing(
+                color = Vector4f(1.5F, 1.5F, 1.5F, opacity),
+                progress = progress,
+                center = Vector2f(
+                    ((minX + maxX) / 2F) / scaledWidth,
+                    1F - ((minY + maxY) / 2F) / scaledHeight
+                ),
+                radius = radius,
+                thickness = radius * 0.2F,
+                aspectRatio = scaledWidth.toFloat() / scaledHeight,
+            )
+        )
 
-        buffer.vertex(transformationMatrix, minX, minY, 0F).texture(0F, 0F)
-        buffer.vertex(transformationMatrix, maxX, minY, 0F).texture(1F, 0F)
-        buffer.vertex(transformationMatrix, maxX, maxY, 0F).texture(1F, 1F)
-        buffer.vertex(transformationMatrix, minX, maxY, 0F).texture(0F, 1F)
-
-        ProgressRingRenderer.color = Vector4f(1.5F, 1.5F, 1.5F, opacity)
-        ProgressRingRenderer.progress = progress
-
-        StateIsolation.isolate(
-            BlendState(true),
-            BlendFuncSeparateState(),
-            DepthTestState(false),
-            CullFaceState(false),
-            ProgramState(ProgressRingRenderer.progressRingShader)
-        ) {
-            BufferRenderer.draw(buffer.end())
-        }
-
-        val width = minecraft.textRenderer.getWidth(progressString)
+        val width = minecraft.font.width(progressString)
         val textAlpha = (opacity * 255).toInt()
         if (textAlpha <= 3) {
             return
         }
-        drawContext.drawText(
-            minecraft.textRenderer,
+        drawContext.text(
+            minecraft.font,
             progressString,
             ((minX + maxX) / 2).toInt() - width / 2,
-            ((minY + maxY) / 2).toInt() - minecraft.textRenderer.fontHeight / 2,
-            ColorHelper.Argb.getArgb(textAlpha, 255, 255, 255),
+            ((minY + maxY) / 2).toInt() - minecraft.font.lineHeight / 2,
+            ARGB.color(textAlpha, 255, 255, 255),
             true
         )
 
-        val descWidth = minecraft.textRenderer.getWidth(description)
-        drawContext.drawText(
-            minecraft.textRenderer,
+        val descWidth = minecraft.font.width(description)
+        drawContext.text(
+            minecraft.font,
             description,
             ((minX + maxX) / 2).toInt() - descWidth / 2,
-            minY.toInt() + minecraft.textRenderer.fontHeight,
-            ColorHelper.Argb.getArgb(textAlpha, 255, 255, 255),
+            minY.toInt() + minecraft.font.lineHeight,
+            ARGB.color(textAlpha, 255, 255, 255),
             true
         )
     }

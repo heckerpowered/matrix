@@ -5,17 +5,17 @@
 
 package heckerpowered.matrix.client.render.shader
 
-import heckerpowered.matrix.client.shader.*
+import com.mojang.blaze3d.textures.GpuTextureView
+import heckerpowered.matrix.client.shader.BlitProgram
+import heckerpowered.matrix.client.shader.TextureProvider
+import heckerpowered.matrix.client.shader.UniformProvider
+import heckerpowered.matrix.client.shader.putInverseProjectionMatrix
+import heckerpowered.matrix.client.shader.putInverseViewMatrix
 import org.joml.Vector3f
-import org.lwjgl.opengl.GL11.GL_TEXTURE_2D
-import org.lwjgl.opengl.GL11.glBindTexture
-import org.lwjgl.opengl.GL13.GL_TEXTURE0
-import org.lwjgl.opengl.GL13.glActiveTexture
-import org.lwjgl.opengl.GL20.*
 
 object VolumeDistortion {
-    var sceneColorTexture: Int = 0
-    var depthAttachment: Int = 0
+    var sceneColorTexture: GpuTextureView? = null
+    var depthAttachment: GpuTextureView? = null
 
     var volumePosition: Vector3f = Vector3f()
     var volumeRadius: Float = 0F
@@ -24,35 +24,22 @@ object VolumeDistortion {
     var emissiveStrength: Float = 4.0F
 
     val Shader = BlitProgram(
-        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-        ResourceShader("/assets/matrix/shaders/volume_distortion.frag", GL_FRAGMENT_SHADER),
+        "post/volume_distortion.fsh",
         uniforms = arrayOf(
-            UniformProvider("sceneColorTexture") { pointer ->
-                glActiveTexture(GL_TEXTURE0)
-                glBindTexture(GL_TEXTURE_2D, sceneColorTexture)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("depthAttachment") { pointer ->
-                glActiveTexture(GL_TEXTURE1)
-                glBindTexture(GL_TEXTURE_2D, depthAttachment)
-                glUniform1i(pointer, 1)
-            },
-            // projectionMatrixProvider,
-            // viewProjectionMatrixProvider,
-            inverseViewMatrixProvider,
-            inverseProjectionMatrixProvider,
-            UniformProvider("volumePosition") { pointer ->
-                glUniform3f(pointer, volumePosition.x, volumePosition.y, volumePosition.z)
-            },
-            UniformProvider("volumeRadius") { pointer ->
-                glUniform1f(pointer, volumeRadius)
-            },
-            UniformProvider("grayscaleIntensity") { pointer ->
-                glUniform1f(pointer, grayscaleIntensity)
-            },
-            UniformProvider("emissiveStrength") { pointer ->
-                glUniform1f(pointer, emissiveStrength)
+            UniformProvider("MatrixPostUniforms") {
+                // mat4 inverseViewMatrix
+                putInverseViewMatrix()
+                // mat4 inverseProjectionMatrix
+                putInverseProjectionMatrix()
+                // volumeParams0 = volumePosition.xyz, volumeRadius
+                putVec4(volumePosition.x, volumePosition.y, volumePosition.z, volumeRadius)
+                // volumeParams1.x = grayscaleIntensity, .y = emissiveStrength
+                putVec4(grayscaleIntensity, emissiveStrength, 0F, 0F)
             }
+        ),
+        textures = arrayOf(
+            TextureProvider("sceneColorTexture") { sceneColorTexture },
+            TextureProvider("depthAttachment") { depthAttachment }
         )
     )
 }

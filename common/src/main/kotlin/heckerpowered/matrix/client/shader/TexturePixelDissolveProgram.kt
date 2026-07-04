@@ -5,45 +5,54 @@
 
 package heckerpowered.matrix.client.shader
 
-import com.mojang.blaze3d.platform.GlConst
-import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.client.minecraft
-import net.minecraft.client.texture.ResourceTexture
-import org.lwjgl.opengl.GL20
-import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
-import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
+import com.mojang.blaze3d.textures.GpuTextureView
+
+// 26.2: post/dissolve/texture_pixel_dissolve.fsh declares
+//   layout(std140) uniform MatrixPostUniforms { vec4 dissolveParams0; vec4 dissolveEmissiveColor; };
+//   #define dissolveFactor dissolveParams0.x / emissiveRange .y / pixelStrength .z / detialStrength .w
+// The old code never actually supplied emissiveRange/pixelStrength/detialStrength/emissiveColor as
+// uniforms (GLSL defaults applied under the pre-std140 pipeline: emissiveRange=0.05, pixelStrength=100.0,
+// detialStrength=1.0, emissiveColor=vec4(0,0.5,1.0,1.0)), so this port keeps those exact values.
+// See MatrixPostUniforms.kt@f25647a "post/dissolve/texture_pixel_dissolve" for the reference slot layout.
+//
+// The mutable state lives in a separate holder because Kotlin forbids the super-constructor
+// lambdas from capturing the object's own (not yet initialized) instance.
+private object TexturePixelDissolveState {
+    var noiseTexture: GpuTextureView? = null
+    var normalTexture: GpuTextureView? = null
+    var dissolveFactor: Float = 1.0f
+}
 
 object TexturePixelDissolveProgram : BlitProgram(
-    ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-    ResourceShader("/assets/matrix/shaders/texture_pixel_dissolve.fsh", GL_FRAGMENT_SHADER),
+    "post/dissolve/texture_pixel_dissolve.fsh",
     uniforms = arrayOf(
-        UniformProvider("noiseTexture") { pointer ->
-            GL20.glActiveTexture(GlConst.GL_TEXTURE0)
-            GL20.glBindTexture(GL20.GL_TEXTURE_2D, TexturePixelDissolveProgram.noiseTexture)
-            GL20.glUniform1i(pointer, 0)
-        },
-        UniformProvider("normalTexture") { pointer ->
-            GL20.glActiveTexture(GlConst.GL_TEXTURE1)
-            GL20.glBindTexture(GL20.GL_TEXTURE_2D, TexturePixelDissolveProgram.normalTexture)
-            GL20.glUniform1i(pointer, 1)
-        },
-        UniformProvider("dissolveFactor") { pointer ->
-            GL20.glUniform1f(pointer, TexturePixelDissolveProgram.dissolveFactor)
+        UniformProvider("MatrixPostUniforms") {
+            putVec4(TexturePixelDissolveState.dissolveFactor, 0.05F, 100.0F, 1.0F)
+            putVec4(0F, 0.5F, 1.0F, 1.0F)
         }
+    ),
+    textures = arrayOf(
+        TextureProvider("noiseTexture") {
+            TexturePixelDissolveState.noiseTexture ?: DissolveShader.perlinNoiseTextureView
+        },
+        TextureProvider("normalTexture") { TexturePixelDissolveState.normalTexture }
     )
 ) {
-    private val perlinNoiseTexture = ResourceTexture(Matrix.identifier("textures/perlin_noise.png"))
-    private var perlinNoiseTextureId: Int = 0
-    private fun loadPerlinNoiseTexture() {
-        perlinNoiseTexture.load(minecraft.resourceManager)
-        perlinNoiseTextureId = perlinNoiseTexture.glId
-    }
+    var noiseTexture: GpuTextureView?
+        get() = TexturePixelDissolveState.noiseTexture
+        set(value) {
+            TexturePixelDissolveState.noiseTexture = value
+        }
 
-    init {
-        loadPerlinNoiseTexture()
-    }
+    var normalTexture: GpuTextureView?
+        get() = TexturePixelDissolveState.normalTexture
+        set(value) {
+            TexturePixelDissolveState.normalTexture = value
+        }
 
-    var noiseTexture: Int = perlinNoiseTextureId
-    var normalTexture: Int = 0
-    var dissolveFactor: Float = 1.0f
+    var dissolveFactor: Float
+        get() = TexturePixelDissolveState.dissolveFactor
+        set(value) {
+            TexturePixelDissolveState.dissolveFactor = value
+        }
 }

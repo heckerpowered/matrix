@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitMaxPower
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitPower
 import heckerpowered.matrix.data.language.MatrixLanguage
@@ -23,7 +24,7 @@ import java.util.function.Consumer
 
 object RedstoneShovelItem : ShovelItem(
     ModToolMaterials.redstone, 1.5F, -3.0F,
-    Properties()
+    Properties().setId(ModItemIds.redstoneShovel)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), RedstoneSuit, TooltipProvider {

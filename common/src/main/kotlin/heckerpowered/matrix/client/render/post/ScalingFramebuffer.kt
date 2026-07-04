@@ -5,12 +5,15 @@
 
 package heckerpowered.matrix.client.render.post
 
+import heckerpowered.matrix.client.render.textureHeight
+import heckerpowered.matrix.client.render.textureWidth
+import heckerpowered.matrix.core.FramebufferExtension
 import heckerpowered.matrix.core.approximatelyEqual
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gl.SimpleFramebuffer
+import com.mojang.blaze3d.pipeline.TextureTarget
 import kotlin.math.floor
 
-class ScalingFramebuffer(width: Int, height: Int, useDepth: Boolean, getError: Boolean = MinecraftClient.IS_SYSTEM_MAC, private val resolutionScaling: Double) : SimpleFramebuffer(width, height, useDepth, getError) {
+class ScalingFramebuffer(label: String, width: Int, height: Int, useDepth: Boolean, private val resolutionScaling: Double) :
+    TextureTarget(label, width, height, useDepth, FramebufferExtension.framebufferColorFormat) {
     val actualWidth
         get() = floor(textureWidth * resolutionScaling).toInt()
 
@@ -18,17 +21,17 @@ class ScalingFramebuffer(width: Int, height: Int, useDepth: Boolean, getError: B
         get() = floor(textureHeight * resolutionScaling).toInt()
 
     init {
-        resize(width, height, getError)
+        resize(width, height)
     }
 
-    override fun resize(width: Int, height: Int, getError: Boolean) {
+    override fun resize(width: Int, height: Int) {
         if (resolutionScaling.approximatelyEqual(.0)) {
-            super.resize(width, height, getError)
+            super.resize(width, height)
             return
         }
 
         val scaledWidth = floor(width * resolutionScaling).toInt().coerceAtLeast(1)
         val scaledHeight = floor(height * resolutionScaling).toInt().coerceAtLeast(1)
-        super.resize(scaledWidth, scaledHeight, getError)
+        super.resize(scaledWidth, scaledHeight)
     }
 }

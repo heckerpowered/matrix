@@ -3,7 +3,15 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D framebuffer;
-uniform float lod = .0;
+
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define lod MatrixPostData0.x
 
 out vec4 fragColor;
 
@@ -20,7 +28,11 @@ float luminance(vec3 color) {
 
 void main() {
     vec4 color = vec4(0);
-    vec2 texelSize = 1.0 / textureSize(framebuffer, 0);
+    // 1.21 sampled the full mip chain with FULL-RES texel offsets (the +-1 tent collapsed
+    // toward a bilinear fetch at deep lods — all spread came from the mip cascade). The
+    // 26.2 port feeds single-level views, whose textureSize is the LEVEL's size, so scale
+    // the offsets by exp2(-lod) to keep the original full-res-texel basis.
+    vec2 texelSize = exp2(-lod) / textureSize(framebuffer, 0);
     float weight = 0;
 
     for (int i = 0;i < 9; ++i) {

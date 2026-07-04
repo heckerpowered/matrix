@@ -3,10 +3,15 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D noiseTexture;
-uniform float time;
-uniform float innerRadius = 0.8;
-uniform float outerRadius = 0.9;
-uniform float feather = 0.02;
+
+layout(std140) uniform MatrixPostUniforms {
+    vec4 vortexParams;
+};
+
+#define time vortexParams.x
+#define innerRadius vortexParams.y
+#define outerRadius vortexParams.z
+#define feather vortexParams.w
 
 out vec4 fragColor;
 
@@ -88,7 +93,7 @@ void main() {
     float ringMask = smoothstep(gradientInner - feather, gradientInner + feather, blendedTex.r) - smoothstep(gradientOuter - feather, gradientOuter + feather, blendedTex.r);
     float opacityMask = radialGradientExponential(fragTexCoord, vec2(0.5), 0.4, 1.0, false);
     float alpha = 1.0 - step(blendedTex.r, gradientInner) + ringMask * opacityMask;
-    if (alpha == .0) {
+    if (alpha == 0.0) {
         discard;
     }
     fragColor = vec4(ringMask, ringMask, ringMask, 1.0);

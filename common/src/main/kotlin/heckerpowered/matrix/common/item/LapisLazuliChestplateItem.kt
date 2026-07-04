@@ -5,10 +5,11 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ToolMaterial
 import net.minecraft.world.item.equipment.ArmorType
 
 object LapisLazuliChestplateItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.lapisLazuli, ArmorType.CHESTPLATE)
+    Properties().setId(ModItemIds.lapisLazuliChestplate).humanoidArmor(ModArmorMaterials.lapisLazuli, ArmorType.CHESTPLATE)
 )

@@ -6,7 +6,8 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.client.render.particle.system.ExplosionParticle
+// GPU particle system retired (see common/attic)
+// import heckerpowered.matrix.client.render.particle.system.ExplosionParticle
 import heckerpowered.matrix.client.render.post.CameraShake
 import heckerpowered.matrix.client.render.post.ShockwaveRenderer
 import net.fabricmc.api.EnvType
@@ -54,7 +55,8 @@ class ClientboundExplosionPayload(
 
         CameraShake.shake(strength = 1F, duration = 100.milliseconds)
 
-        ExplosionParticle.randomVelocityModule.speedRange = Vector2f(0.0F, 20.0F)
-        ExplosionParticle.spawnParticleAt(entity.position())
+        // GPU particle system retired (see common/attic)
+        // ExplosionParticle.randomVelocityModule.speedRange = Vector2f(0.0F, 20.0F)
+        // ExplosionParticle.spawnParticleAt(entity.position())
     }
 }

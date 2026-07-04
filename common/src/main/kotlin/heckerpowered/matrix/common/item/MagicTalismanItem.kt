@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.rule.RuleRegistry
@@ -14,7 +15,7 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.Rarity
 
 object MagicTalismanItem : Item(
-    Properties()
+    Properties().setId(ModItemIds.magicTalisman)
         .fireResistant()
         .stacksTo(1)
         .rarity(Rarity.EPIC)

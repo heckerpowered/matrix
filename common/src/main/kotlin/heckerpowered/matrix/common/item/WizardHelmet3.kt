@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attacker
@@ -19,7 +20,7 @@ import net.minecraft.world.item.Rarity
  * Wizard Helmet 3 'Blood-forged Ruin'
  */
 object WizardHelmet3 : WizardHelmet(
-    Properties()
+    Properties().setId(ModItemIds.wizardHelmet3)
         .rarity(Rarity.UNCOMMON)
         .maxMana(10.0)
         .maxLoad(200.0)

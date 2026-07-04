@@ -28,7 +28,7 @@ object AttractMagic : Magic(
         val caster = invocation.caster.entityOrNull()
         target.level().addFreshEntity(AttractorEntity(target.level()).also {
             it.setPos(target.position())
-            it.owner = caster
+            it.setOwner(caster)
         })
     }
 }

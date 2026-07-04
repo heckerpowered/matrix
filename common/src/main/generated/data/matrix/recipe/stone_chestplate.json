@@ -3,9 +3,7 @@
   "category": "equipment",
   "group": "matrix_stone_suit",
   "key": {
-    "#": {
-      "item": "minecraft:cobblestone"
-    }
+    "#": "minecraft:cobblestone"
   },
   "pattern": [
     "# #",
@@ -13,7 +11,6 @@
     "###"
   ],
   "result": {
-    "count": 1,
     "id": "matrix:stone_chestplate"
   }
 }

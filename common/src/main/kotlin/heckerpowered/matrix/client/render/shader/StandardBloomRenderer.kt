@@ -5,48 +5,24 @@
 
 package heckerpowered.matrix.client.render.shader
 
-import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
-import heckerpowered.matrix.client.render.dump
-import heckerpowered.matrix.client.render.recommendMipLevel
-import net.minecraft.client.gl.Framebuffer
-import org.lwjgl.opengl.GL46.*
+import com.mojang.blaze3d.pipeline.RenderTarget
 
+// 26.2: this renderer was already dead code before the port (every step below was commented out
+// except raw GL mip-generation calls with no GpuDevice equivalent - manual glTexStorage2D /
+// glFramebufferTexture2D mip binding has no 1:1 wrapper API surface; mip management now belongs to
+// MipmapsFramebuffer). No callers exist anywhere in common/ (verified). Left as an inert stub rather
+// than deleted, to preserve the public shape for whatever this was meant to become.
+// TODO(26.2): reimplement on top of MipmapsFramebuffer if this renderer is revived.
 object StandardBloomRenderer {
-    private var brightnessPass: Int = -1
-    private val framebuffer: Framebuffer by lazy {
-        val framebuffer = PostProcessRenderer.createManagedFramebuffer()
-        // (framebuffer as FramebufferExtension).useMipmaps = true
-        // glBindTexture(GL_TEXTURE_2D, framebuffer.colorAttachment)
-        // glGenerateMipmap(GL_TEXTURE_2D)
-        framebuffer
+    private val framebuffer: RenderTarget by lazy {
+        PostProcessRenderer.createManagedFramebuffer()
     }
 
-    fun render(brightnessPass: Framebuffer) {
-        // this.brightnessPass = brightnessPass.fbo
-        // val colorAttachment = this.brightnessPass
-//
-        // glBindTexture(GL_TEXTURE_2D, colorAttachment)
-        // glGenerateMipmap(GL_TEXTURE_2D)
-//
-        // val boundFramebuffer = glGetInteger(GL_FRAMEBUFFER_BINDING)
-        // val boundColorAttachment = glGetFramebufferParameteri(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0)
-//
-        // glBindTexture(GL_TEXTURE_2D, boundColorAttachment)
-
-        // Render to mipmaps
-        framebuffer.beginWrite(true)
-        glBindTexture(GL_TEXTURE_2D, framebuffer.colorAttachment)
-        glTexStorage2D(GL_TEXTURE_2D, framebuffer.recommendMipLevel(), GL_RGBA8, framebuffer.textureWidth, framebuffer.textureHeight)
-
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-            GL_TEXTURE_2D, framebuffer.colorAttachment, 1
-        )
-
-        brightnessPass.draw(brightnessPass.textureWidth, brightnessPass.textureHeight)
-        framebuffer.dump(1, false)
-
-        minecraft.framebuffer.beginWrite(false)
+    fun render(brightnessPass: RenderTarget) {
+        // TODO(26.2): mip-chain generation/binding previously done via raw GL calls
+        // (glTexStorage2D/glFramebufferTexture2D/glGenerateMipmap) has no wrapper-API
+        // equivalent here; this call is currently a no-op pending a MipmapsFramebuffer-based
+        // reimplementation.
     }
 }

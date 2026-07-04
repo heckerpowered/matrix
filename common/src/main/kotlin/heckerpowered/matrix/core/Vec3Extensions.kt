@@ -5,8 +5,19 @@
 
 package heckerpowered.matrix.core
 
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
+
+/**
+ * Interpolated (render) position of this entity at [tickDelta] between the previous and
+ * current tick. Thin alias over [Entity.getPosition] (mojmap) — kept as an extension since
+ * several renderer call sites (ported from the 1.21/yarn `getLerpedPos` name) read more
+ * clearly with the old name.
+ */
+fun Entity.getLerpedPos(tickDelta: Float): Vec3 {
+    return getPosition(tickDelta)
+}
 
 fun Vec3.toAABB(): AABB {
     return AABB(this, this)

@@ -1,10 +1,13 @@
-#version 330 core
+#version 330
 
 in vec2 fragTexCoord;
 
 uniform sampler2D framebuffer;
-uniform float lod = .0;
 uniform sampler2D depthAttachment;
+
+layout(std140) uniform BlitConfig {
+    float lod;
+};
 
 out vec4 fragColor;
 

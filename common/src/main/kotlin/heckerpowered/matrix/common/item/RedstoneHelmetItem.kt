@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.entity.rule.EntityUpdateContext
 import heckerpowered.matrix.common.entity.rule.EntityUpdateRule
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitMaxPower
@@ -25,7 +26,7 @@ import net.minecraft.world.item.equipment.ArmorType
 import java.util.function.Consumer
 
 object RedstoneHelmetItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.redstone, ArmorType.HELMET)
+    Properties().setId(ModItemIds.redstoneHelmet).humanoidArmor(ModArmorMaterials.redstone, ArmorType.HELMET)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), EntityUpdateRule, RedstoneSuit, TooltipProvider {

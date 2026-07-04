@@ -5,19 +5,19 @@
 
 package heckerpowered.matrix.common.entity
 
-import net.minecraft.entity.EntityType
-import net.minecraft.entity.LivingEntity
-import net.minecraft.entity.data.DataTracker
-import net.minecraft.entity.projectile.ProjectileEntity
-import net.minecraft.item.ItemStack
-import net.minecraft.world.World
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.network.syncher.SynchedEntityData
+import net.minecraft.world.entity.projectile.Projectile
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.Level
 
-class ItemProjectileEntity(entityType: EntityType<out ProjectileEntity>, world: World, owner: LivingEntity?, var stack: ItemStack) : ProjectileEntity(entityType, world) {
+class ItemProjectileEntity(entityType: EntityType<out Projectile>, world: Level, owner: LivingEntity?, var stack: ItemStack) : Projectile(entityType, world) {
     init {
-        this.owner = owner
+        this.setOwner(owner)
     }
 
-    override fun initDataTracker(builder: DataTracker.Builder) {
+    override fun defineSynchedData(builder: SynchedEntityData.Builder) {
 
     }
 }

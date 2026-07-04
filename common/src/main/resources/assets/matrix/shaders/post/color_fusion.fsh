@@ -5,7 +5,14 @@ in vec2 fragTexCoord;
 uniform sampler2D primaryFramebuffer;
 uniform sampler2D secondaryFramebuffer;
 
-uniform vec4 colorMultiplier = vec4(1.0, 1.0, 1.0, 1.0);
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define colorMultiplier MatrixPostData0
 
 out vec4 fragColor;
 

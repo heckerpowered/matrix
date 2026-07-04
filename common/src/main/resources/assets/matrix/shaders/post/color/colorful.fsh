@@ -3,9 +3,17 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D framebuffer;
-uniform float brightness = 1.0;
-uniform float saturation = 1.0;
-uniform float contrast = 1.0;
+
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define brightness MatrixPostData0.x
+#define saturation MatrixPostData0.y
+#define contrast MatrixPostData0.z
 
 out vec4 fragColor;
 

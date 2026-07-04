@@ -6,9 +6,9 @@
 package heckerpowered.matrix.common.entity
 
 import heckerpowered.matrix.client.render.Color
-import heckerpowered.matrix.common.effect.ModMobEffects.ARMOR_PENETRATION_EFFECT
-import heckerpowered.matrix.common.effect.ModMobEffects.CRIPPLE_MOVEMENT_EFFECT
-import heckerpowered.matrix.common.effect.ModMobEffects.EXPOSED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.ArmorPenetration
+import heckerpowered.matrix.common.effect.ModMobEffects.CrippleMovement
+import heckerpowered.matrix.common.effect.ModMobEffects.Exposed
 import heckerpowered.matrix.common.entity.MagicLightningBolt.LightningType.*
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ExecutionPolicy
@@ -21,6 +21,8 @@ import heckerpowered.matrix.core.extension.damage
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.damagesource.DamageSource
+import net.minecraft.world.effect.MobEffectInstance
+import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LightningBolt
@@ -58,57 +60,61 @@ class MagicLightningBolt(entityType: EntityType<MagicLightningBolt>, level: Leve
     constructor(level: Level) : this(ModEntityTypes.MAGIC_LIGHTNING_ENTITY, level)
 
     private fun onStruckByLightning(entity: Entity) {
-        ++entity.fireTicks
-        if (entity.fireTicks == 0) {
-            entity.setOnFireFor(8.0f)
+        // Strikes only happen on the logical server; 26.2 splits Entity#hurt into
+        // hurtServer/hurtClient, and hurtServer (normal invulnerability frames) is the
+        // exact equivalent of the 1.21 Entity#damage these calls used.
+        val serverLevel = level() as? ServerLevel ?: return
+        ++entity.remainingFireTicks
+        if (entity.remainingFireTicks == 0) {
+            entity.igniteForSeconds(8.0f)
         }
 
-        val channeler = this.channeler
+        val channeler = this.cause
         val damageSource = if (channeler != null) {
-            channeler.world.damageSources.create(MatrixDamageTypes.magic, channeler)
+            channeler.level().damageSources().source(MatrixDamageTypes.magic, channeler)
         } else {
-            damageSources.generic()
+            damageSources().generic()
         }
         when (lightningType) {
             NORMAL -> performNormalStrike(entity)
-            RED -> entity.damage(damageSource, 20.0F)
+            RED -> entity.hurtServer(serverLevel, damageSource, 20.0F)
             ORANGE -> {
                 if (entity is LivingEntity) {
-                    entity.addStatusEffect(StatusEffectInstance(ARMOR_PENETRATION_EFFECT, 20 * 10, 4))
+                    entity.addEffect(MobEffectInstance(ArmorPenetration, 20 * 10, 4))
                 }
-                entity.damage(damageSource, 5.0F)
+                entity.hurtServer(serverLevel, damageSource, 5.0F)
             }
 
             YELLOW -> {
                 channeler?.apply {
-                    lastAttackedTicks = Int.MAX_VALUE
-                    swingHand(activeHand)
+                    attackStrengthTicker = Int.MAX_VALUE
+                    swing(usedItemHand)
                     attack(entity)
-                    addCritParticles(entity)
-                    addEnchantedHitParticles(entity)
+                    crit(entity)
+                    magicCrit(entity)
                 }
-                entity.damage(damageSource, 5.0F)
+                entity.hurtServer(serverLevel, damageSource, 5.0F)
                 if (entity is LivingEntity) {
-                    entity.addStatusEffect(StatusEffectInstance(StatusEffects.GLOWING, 20 * 10, 0))
+                    entity.addEffect(MobEffectInstance(MobEffects.GLOWING, 20 * 10, 0))
                 }
             }
 
             GREEN -> {
                 channeler?.heal(2F)
-                entity.damage(damageSource, 5.0F)
+                entity.hurtServer(serverLevel, damageSource, 5.0F)
                 if (entity is LivingEntity) {
-                    entity.addStatusEffect(StatusEffectInstance(StatusEffects.POISON, 20 * 10, 4))
+                    entity.addEffect(MobEffectInstance(MobEffects.POISON, 20 * 10, 4))
                 }
             }
 
             CYAN -> {
                 if (entity is LivingEntity) {
-                    if (entity.hasStatusEffect(CRIPPLE_MOVEMENT_EFFECT)) {
-                        entity.addStatusEffect(StatusEffectInstance(EXPOSED_EFFECT, 20 * 10, 0))
+                    if (entity.hasEffect(CrippleMovement)) {
+                        entity.addEffect(MobEffectInstance(Exposed, 20 * 10, 0))
                     }
                     val channeler = channeler
                     if (channeler == null) {
-                        entity.addStatusEffect(StatusEffectInstance(CRIPPLE_MOVEMENT_EFFECT, 20 * 10, 4))
+                        entity.addEffect(MobEffectInstance(CrippleMovement, 20 * 10, 4))
                     } else {
                         val invocation = MagicInvocation.fromEntity(channeler, entity)
                         val attempt = ExecutionPolicy(costMana = false)
@@ -119,11 +125,11 @@ class MagicLightningBolt(entityType: EntityType<MagicLightningBolt>, level: Leve
 
             BLUE -> {
                 if (channeler == null) {
-                    entity.damage(damageSource, 5.0F)
+                    entity.hurtServer(serverLevel, damageSource, 5.0F)
                     return
                 }
 
-                for (target in entity.world.getOtherEntities(entity, entity.boundingBox.expand(6.0))) {
+                for (target in entity.level().getEntities(entity, entity.boundingBox.inflate(6.0))) {
                     if (target !is LivingEntity) {
                         continue
                     }
@@ -134,13 +140,13 @@ class MagicLightningBolt(entityType: EntityType<MagicLightningBolt>, level: Leve
             }
 
             PURPLE -> {
-                entity.damage(damageSource, 5F)
-                world.createExplosion(entity, damageSource, damageCalculator, entity.x, entity.y, entity.z, 1.0F, false, World.ExplosionSourceType.MOB)
+                entity.hurtServer(serverLevel, damageSource, 5F)
+                level().explode(entity, damageSource, damageCalculator, entity.x, entity.y, entity.z, 1.0F, false, Level.ExplosionInteraction.MOB)
                 // TODO: add status effect
             }
 
             BLACK -> {
-                entity.kill()
+                (entity.level() as? ServerLevel)?.let(entity::kill)
             }
         }
     }
@@ -165,10 +171,11 @@ class MagicLightningBolt(entityType: EntityType<MagicLightningBolt>, level: Leve
     }
 
     private fun performOrangeStrike(entity: Entity) {
+        val level = this.level() as? ServerLevel ?: return
         if (entity is LivingEntity) {
-            entity.addStatusEffect(StatusEffectInstance(ARMOR_PENETRATION_EFFECT, 20 * 10, 4))
+            entity.addEffect(MobEffectInstance(ArmorPenetration, 20 * 10, 4))
         }
-        entity.damage(damageSource, 5.0F)
+        entity.hurtServer(level, damageSource(), 5.0F)
     }
 
     override fun recreateFromPacket(packet: ClientboundAddEntityPacket) {

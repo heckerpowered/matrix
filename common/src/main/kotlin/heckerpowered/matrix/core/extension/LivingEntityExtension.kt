@@ -16,7 +16,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.player.Player
 
 val LivingEntity.attackDamage: Double
-    get() = getAttributeValue(Attributes.ATTACK_DAMAGE)
+    // 26.2 removed attack_damage from many default mob attribute sets and getAttributeValue
+    // throws for absent attributes; absent means "cannot attack", i.e. 0 damage.
+    get() = if (attributes.hasAttribute(Attributes.ATTACK_DAMAGE)) getAttributeValue(Attributes.ATTACK_DAMAGE) else 0.0
 
 fun LivingEntity.healOverflow(amount: Float) {
     val actualAmount = amount * healingMultiplier.toFloat()

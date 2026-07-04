@@ -5,10 +5,11 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import net.minecraft.world.item.AxeItem
 
 object CoalAxeItem : AxeItem(
     ModToolMaterials.coal,
     6.5F, -3.15F,
-    Properties()
+    Properties().setId(ModItemIds.coalAxe)
 )

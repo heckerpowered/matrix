@@ -17,6 +17,8 @@ import heckerpowered.matrix.common.magic.core.SpellRank.CHIMERA
 import heckerpowered.matrix.common.magic.core.targetRank
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
+import heckerpowered.matrix.common.persistent.magicClock
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.SimpleExplosionDamageCalculator
 import java.util.*
@@ -42,7 +44,10 @@ object ExplosionMagic : Magic(
         val target = invocation.target
         val damageSource = invocation.defaultMagicDamageSource()
 
-        target.level().explode(caster, damageSource, damageCalculator, target.x, target.y, target.z, 4.0F, false, Level.ExplosionInteraction.MOB)
+        // Pre-migration jar: explosion power is the caster's magic overclock rate (HUD N key,
+        // 1.0 when absent or not a player) times the 4.0 base.
+        val power = ((caster as? ServerPlayer)?.magicClock ?: 1.0) * 4.0
+        target.level().explode(caster, damageSource, damageCalculator, target.x, target.y, target.z, power.toFloat(), false, Level.ExplosionInteraction.MOB)
     }
 
     override fun getBaseChannelTime(context: MagicCalculationContext): Long {

@@ -98,9 +98,7 @@ open class WizardHelmet(properties: Properties) : Item(
         val sink = MaxManaCalculationSink(maxMana = defaultMaxMana)
         CalculationPipeline.apply(context, sink)
 
-        val maxMana = sink.maxMana
-        val multiplier = sink.multiplier
-        return maxMana * multiplier
+        return sink.maxMana * sink.multiplier
     }
 
     protected open fun overloadBreakChancePerSecond(extraLoad: Double): Double {

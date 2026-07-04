@@ -54,7 +54,16 @@ object Magics : Iterable<Magic> {
         registerMagic(TuckInMagic)
     }
 
+    private var initialized = false
+
+    // Idempotent: invoked from mod initialization (MagicSystem) and defensively from datagen,
+    // which needs the registry populated for the per-magic enchantment loop in
+    // ModEnchantmentGenerator regardless of entrypoint ordering.
     fun onInitialize() {
+        if (initialized) {
+            return
+        }
+        initialized = true
         registerBuiltinMagics()
     }
 

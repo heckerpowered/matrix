@@ -6,14 +6,11 @@
 package heckerpowered.matrix.client.render.effect
 
 import heckerpowered.matrix.client.minecraft
+import heckerpowered.matrix.client.render.PostProcessRenderer
+import heckerpowered.matrix.client.render.mainRenderTarget
 import heckerpowered.matrix.client.render.shader.VolumeDistortion
-import heckerpowered.matrix.client.render.state.BlendFuncSeparateState
-import heckerpowered.matrix.client.render.state.FramebufferState
-import heckerpowered.matrix.client.render.state.StateIsolation
-import heckerpowered.matrix.client.render.state.ViewportState
-import heckerpowered.matrix.client.render.state.capabilities.BlendState
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import net.minecraft.entity.LivingEntity
+import net.minecraft.world.entity.LivingEntity
 
 object SculkCatalystEffectRenderer {
     var entity: LivingEntity? = null
@@ -42,20 +39,21 @@ object SculkCatalystEffectRenderer {
         }
 
         VolumeDistortion.grayscaleIntensity = 1.0F
-        VolumeDistortion.depthAttachment = minecraft.framebuffer.depthAttachment
-        VolumeDistortion.sceneColorTexture = minecraft.framebuffer.colorAttachment
+        // 1.21 sampled the main framebuffer's own color attachment while drawing back into
+        // it, which Vulkan forbids (same-texture read/write); snapshot the scene into the
+        // post-process ping target and sample the copy instead. Main's depth stays bound
+        // directly: this pass writes color only (writesDepth = false), so the depth view is
+        // never attached to the pass and reading it is safe on both backends.
+        PostProcessRenderer.copyFramebuffer(minecraft.mainRenderTarget, PostProcessRenderer.ping)
+        VolumeDistortion.depthAttachment = minecraft.mainRenderTarget.depthTextureView
+        VolumeDistortion.sceneColorTexture = PostProcessRenderer.ping.colorTextureView
 
         VolumeDistortion.volumeRadius = volumeRadius.animatedValue.toFloat()
         VolumeDistortion.emissiveStrength = emissiveStrength.animatedValue.toFloat()
 
-        val tickDelta = minecraft.renderTickCounter.getTickDelta(false)
-        VolumeDistortion.volumePosition = entity.getLerpedPos(tickDelta).toVector3f()
+        val tickDelta = minecraft.deltaTracker.getGameTimeDeltaPartialTick(false)
+        VolumeDistortion.volumePosition = entity.getPosition(tickDelta).toVector3f()
 
-        StateIsolation.isolate(
-            FramebufferState(minecraft.framebuffer), ViewportState(minecraft.framebuffer),
-            BlendState.captureSnapshot(), BlendFuncSeparateState.captureSnapshot()
-        ) {
-            VolumeDistortion.Shader.blit()
-        }
+        VolumeDistortion.Shader.drawTo(minecraft.mainRenderTarget)
     }
 }

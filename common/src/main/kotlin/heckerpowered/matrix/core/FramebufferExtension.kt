@@ -5,18 +5,25 @@
 
 package heckerpowered.matrix.core
 
-import com.mojang.blaze3d.platform.GlStateManager
-import heckerpowered.matrix.client.render.OpenGLExtensions.clearGLError
-import heckerpowered.matrix.client.render.recommendMipLevel
-import net.minecraft.client.gl.Framebuffer
-import org.lwjgl.opengl.GL46.*
+import com.mojang.blaze3d.GpuFormat
+import com.mojang.blaze3d.pipeline.RenderTarget
+import heckerpowered.matrix.client.render.MipmapsFramebuffer
 
+/**
+ * HDR framebuffer support surface, implemented via Mixin onto [RenderTarget].
+ *
+ * On the 26.2 GpuDevice wrapper API, [RenderTarget.createBuffers] always allocates the color
+ * attachment as `GpuFormat.RGBA8_UNORM`. [framebufferColorFormat] records the format Matrix
+ * *wants* new framebuffers to use (read by [MipmapsFramebuffer] and by whatever
+ * allocation path a Mixin end up driving); it no longer patches a raw GL image-format
+ * constant since there is nothing resembling `initFbo`/`glTexImage2D` left to intercept.
+ */
 interface FramebufferExtension {
     companion object {
         @JvmStatic
-        var framebufferColorFormat = GL_RGBA16F
+        var framebufferColorFormat: GpuFormat = GpuFormat.RGBA16_FLOAT
 
-        fun <T> changeColorFormat(colorFormat: Int, action: () -> T): T {
+        fun <T> changeColorFormat(colorFormat: GpuFormat, action: () -> T): T {
             val previousColorFormat = framebufferColorFormat
             framebufferColorFormat = colorFormat
             val result = action()
@@ -25,7 +32,7 @@ interface FramebufferExtension {
         }
 
         /**
-         * Indicates whether mipmaps should be allocated for this [Framebuffer].
+         * Indicates whether mipmaps should be allocated for this [RenderTarget].
          *
          * When set to `true`, the framebuffer's color attachment will be initialized
          * with enough storage to hold a full mipmap chain, allowing rendering to or sampling
@@ -39,58 +46,37 @@ interface FramebufferExtension {
          * accessing this property will always return `false`, and setting it will have no effect.
          * No exceptions will be thrown in such cases.
          */
-        var Framebuffer.allocateMipmaps: Boolean
+        var RenderTarget.allocateMipmaps: Boolean
             get() = (this as? FramebufferExtension)?.useMipmaps ?: false
             set(value) {
                 (this as? FramebufferExtension)?.useMipmaps = value
             }
 
         /**
+         * Points this [RenderTarget] at mip level [mipLevel] for both writing (rendering) and
+         * reading (sampling), then narrows the effective viewport to that level's dimensions.
          *
+         * 26.2 note: the old immediate-mode `beginWrite`/`glFramebufferTexture2D`/`glViewport`
+         * sequence has no equivalent — render passes are self-contained and target an explicit
+         * [com.mojang.blaze3d.textures.GpuTextureView] instead of a bound FBO attachment. This
+         * only has a real implementation for [MipmapsFramebuffer], which owns a per-level
+         * [com.mojang.blaze3d.textures.GpuTextureView] array; for any other [RenderTarget] this
+         * is a no-op.
          */
-        fun Framebuffer.beginWriteLod(mipLevel: Int, attachment: Int = GL_COLOR_ATTACHMENT0, setTextureSize: Boolean = true, setViewport: Boolean = true) {
-            clearGLError()
-
-            beginWrite(false)
-            glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, colorAttachment, mipLevel)
-            endWrite()
-
-            beginRead()
-            val textureWidth = glGetTexLevelParameteri(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_WIDTH)
-            val textureHeight = glGetTexLevelParameteri(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_HEIGHT)
-            endRead()
-
-            this.textureWidth = textureWidth
-            this.textureHeight = textureHeight
-
-            if (setViewport) {
-                viewportWidth = textureWidth
-                viewportHeight = textureHeight
-                GlStateManager._viewport(0, 0, textureWidth, textureHeight)
-            }
+        fun RenderTarget.beginWriteLod(mipLevel: Int, setViewport: Boolean = true) {
+            (this as? MipmapsFramebuffer)?.levelOfDetail = mipLevel
         }
 
-        fun Framebuffer.endWriteLod() {
+        fun RenderTarget.endWriteLod() {
             beginWriteLod(0)
         }
 
-        fun Framebuffer.beginReadLod(mipLevel: Int) {
-            beginRead()
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, mipLevel)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipLevel)
-            endRead()
+        fun RenderTarget.beginReadLod(mipLevel: Int) {
+            (this as? MipmapsFramebuffer)?.levelOfDetail = mipLevel
         }
 
-        fun Framebuffer.endReadLod() {
-            beginRead()
-            val textureWidth = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH)
-            val textureHeight = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT)
-
-            val maxMipLevel = recommendMipLevel(textureWidth, textureHeight)
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxMipLevel)
-            endRead()
+        fun RenderTarget.endReadLod() {
+            (this as? MipmapsFramebuffer)?.levelOfDetail = 0
         }
     }
 

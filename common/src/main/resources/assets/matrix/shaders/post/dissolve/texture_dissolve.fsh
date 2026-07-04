@@ -4,11 +4,17 @@ layout (location = 0) in vec2 fragTexCoord;
 
 uniform sampler2D noiseTexture;
 uniform sampler2D colorAttachment;
-uniform float dissolveFactor = 0.5;
-uniform float emissiveRange = 0.05;
-uniform vec4 emissiveColor = vec4(0, 0.5, 1.0, 1.0);
-uniform float pixelStrength = 16.0;
-uniform float detialStrength = 1;
+
+layout(std140) uniform MatrixPostUniforms {
+    vec4 dissolveParams0;
+    vec4 dissolveEmissiveColor;
+};
+
+#define dissolveFactor dissolveParams0.x
+#define emissiveRange dissolveParams0.y
+#define pixelStrength dissolveParams0.z
+#define detialStrength dissolveParams0.w
+#define emissiveColor dissolveEmissiveColor
 
 out vec4 fragColor;
 
@@ -32,14 +38,14 @@ float border() {
     return (normalColor.b - offsetColor.b) * detialStrength;
 }
 
-float clamp(float minValue, float maxValue, float value) {
+float clampRange(float minValue, float maxValue, float value) {
     return min(max(value, minValue), maxValue);
 }
 
 void main() {
     fragColor = texture(colorAttachment, texCoord());
 
-    float opacityMask = clamp(0, 1, (pixelColor() + border()) - pixelAnimation());
+    float opacityMask = clampRange(0.0, 1.0, (pixelColor() + border()) - pixelAnimation());
     fragColor.a *= ceil(opacityMask);
     fragColor.rgb = pow(1 - opacityMask, 10) * emissiveColor.rgb;
 }

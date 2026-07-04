@@ -5,28 +5,81 @@
 
 package heckerpowered.matrix.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.resource.ResourceHandle;
 import heckerpowered.matrix.client.render.ScreenEffectRenderer;
-import net.minecraft.client.render.*;
-import org.joml.Matrix4f;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher.PreparedFrame;
+import net.minecraft.client.renderer.state.level.LevelRenderState;
+import net.minecraft.util.profiling.ProfilerFiller;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(WorldRenderer.class)
+/**
+ * 26.2: {@code WorldRenderer} (Yarn) / {@code LevelRenderer} (Mojang) no longer renders
+ * entities through a single linear {@code render} method with a shared immediate
+ * {@link net.minecraft.client.renderer.MultiBufferSource.BufferSource}. Entity/terrain
+ * submission now happens inside the frame-graph pass built by {@code addMainPass}, whose
+ * body is compiled into the synthetic lambda {@code lambda$addMainPass$0}. Solid entities are
+ * drawn during {@link PreparedFrame#executeSolid()} and translucent-after-terrain entities
+ * during {@link PreparedFrame#executeTranslucentAfterTerrain()}, so the begin/end hooks are
+ * re-anchored immediately before/after those calls to preserve the original bracketing of
+ * {@link ScreenEffectRenderer#beginRenderEntity()}/{@link ScreenEffectRenderer#endRenderEntity()}
+ * around entity rendering.
+ */
+@Mixin(LevelRenderer.class)
 class WorldRendererMixin {
     private WorldRendererMixin() {
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/BufferBuilderStorage;getEntityVertexConsumers()Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;", shift = At.Shift.AFTER))
-    private void beginRenderEntity(RenderTickCounter tickCounter, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
+    @Inject(
+            method = "lambda$addMainPass$0",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid()V",
+                    shift = At.Shift.BEFORE
+            )
+    )
+    private void beginRenderEntity(
+            GpuBufferSlice gpuBufferSlice,
+            LevelRenderState levelRenderState,
+            ProfilerFiller profiler,
+            ChunkSectionsToRender sectionsToRender,
+            ResourceHandle resourceHandle,
+            PreparedFrame preparedFrame,
+            ResourceHandle resourceHandle2,
+            ResourceHandle resourceHandle3,
+            ResourceHandle resourceHandle4,
+            ResourceHandle resourceHandle5,
+            CallbackInfo ci
+    ) {
         ScreenEffectRenderer.beginRenderEntity();
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;draw(Lnet/minecraft/client/render/RenderLayer;)V", shift = At.Shift.AFTER, ordinal = 3))
-    private void endRenderEntity(RenderTickCounter tickCounter, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci, @Local LocalRef<VertexConsumerProvider.Immediate> immediate) {
+    @Inject(
+            method = "lambda$addMainPass$0",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeTranslucentAfterTerrain()V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void endRenderEntity(
+            GpuBufferSlice gpuBufferSlice,
+            LevelRenderState levelRenderState,
+            ProfilerFiller profiler,
+            ChunkSectionsToRender sectionsToRender,
+            ResourceHandle resourceHandle,
+            PreparedFrame preparedFrame,
+            ResourceHandle resourceHandle2,
+            ResourceHandle resourceHandle3,
+            ResourceHandle resourceHandle4,
+            ResourceHandle resourceHandle5,
+            CallbackInfo ci
+    ) {
         ScreenEffectRenderer.endRenderEntity();
     }
 }

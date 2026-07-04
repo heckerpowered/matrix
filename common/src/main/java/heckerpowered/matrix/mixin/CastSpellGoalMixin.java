@@ -6,7 +6,7 @@
 package heckerpowered.matrix.mixin;
 
 import heckerpowered.matrix.common.effect.ManaOverloadEffect;
-import net.minecraft.entity.mob.SpellcastingIllagerEntity;
+import net.minecraft.world.entity.monster.illager.SpellcasterIllager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,23 +16,31 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(SpellcastingIllagerEntity.CastSpellGoal.class)
+/**
+ * 26.2: {@code SpellcasterIllager.CastSpellGoal} (Yarn) is now the abstract base
+ * {@link SpellcasterIllager.SpellcasterUseSpellGoal}, with {@code canStart}/{@code shouldContinue}/
+ * {@code castSpell} renamed to {@code canUse}/{@code canContinueToUse}/{@code performSpellCasting}
+ * (the latter now {@code protected abstract}, implemented per-illager in subclasses such as
+ * {@code EvokerAttackSpellGoal}/{@code IllusionerBlindnessSpellGoal}). The outer-instance
+ * synthetic field is named {@code this$0} instead of the Yarn intermediary {@code field_7386}.
+ */
+@Mixin(SpellcasterIllager.SpellcasterUseSpellGoal.class)
 class CastSpellGoalMixin {
     @Shadow
     @Final
-    SpellcastingIllagerEntity field_7386; // this
+    SpellcasterIllager this$0;
 
-    @Inject(method = "canStart", at = @At("HEAD"), cancellable = true)
-    private void canStart(CallbackInfoReturnable<Boolean> cir) {
-        final var self = field_7386;
+    @Inject(method = "canUse", at = @At("HEAD"), cancellable = true)
+    private void canUse(CallbackInfoReturnable<Boolean> cir) {
+        final var self = this$0;
         if (ManaOverloadEffect.INSTANCE.isMagicAbilityDisabled(self)) {
             cir.setReturnValue(false);
         }
     }
 
-    @Inject(method = "shouldContinue", at = @At("HEAD"), cancellable = true)
-    private void shouldContinue(CallbackInfoReturnable<Boolean> cir) {
-        final var self = field_7386;
+    @Inject(method = "canContinueToUse", at = @At("HEAD"), cancellable = true)
+    private void canContinueToUse(CallbackInfoReturnable<Boolean> cir) {
+        final var self = this$0;
         if (ManaOverloadEffect.INSTANCE.isMagicAbilityDisabled(self)) {
             cir.setReturnValue(false);
         }
@@ -40,19 +48,19 @@ class CastSpellGoalMixin {
 
     @Inject(method = "start", at = @At("HEAD"), cancellable = true)
     private void start(CallbackInfo ci) {
-        final var self = field_7386;
+        final var self = this$0;
         if (ManaOverloadEffect.INSTANCE.isMagicAbilityDisabled(self)) {
             ci.cancel();
         }
     }
 
-    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/mob/SpellcastingIllagerEntity$CastSpellGoal;castSpell()V"))
-    private void tick(SpellcastingIllagerEntity.CastSpellGoal instance) {
-        final var self = field_7386;
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/illager/SpellcasterIllager$SpellcasterUseSpellGoal;performSpellCasting()V"))
+    private void tick(SpellcasterIllager.SpellcasterUseSpellGoal instance) {
+        final var self = this$0;
         if (ManaOverloadEffect.INSTANCE.isMagicAbilityDisabled(self)) {
             return;
         }
 
-        instance.castSpell();
+        instance.performSpellCasting();
     }
 }

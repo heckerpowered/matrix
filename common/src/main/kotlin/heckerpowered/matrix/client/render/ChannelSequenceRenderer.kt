@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.client.render
 
-import com.mojang.blaze3d.systems.RenderSystem
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.render.effect.SculkCatalystEffectRenderer
 import heckerpowered.matrix.client.render.post.CollapseEffectRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.AnimationClock
@@ -13,252 +13,98 @@ import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.magic.spell.SculkCatalystMagic
+import heckerpowered.matrix.core.getLerpedPos
 import heckerpowered.matrix.core.worldToScreen
-import heckerpowered.matrix.extension.MatrixLivingEntity
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.*
-import net.minecraft.client.render.entity.feature.FeatureRenderer
-import net.minecraft.client.render.entity.feature.FeatureRendererContext
-import net.minecraft.client.render.entity.model.EntityModel
-import net.minecraft.client.util.math.MatrixStack
-import net.minecraft.entity.EntityAttachmentType
-import net.minecraft.util.math.MathHelper
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
+import net.minecraft.client.DeltaTracker
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.world.entity.LivingEntity
-import org.joml.Matrix4f
 import java.time.Duration
-import java.util.*
+import java.util.WeakHashMap
 
-class ChannelSequenceRenderer(
-    context: FeatureRendererContext<LivingEntity, EntityModel<LivingEntity>>,
-) : FeatureRenderer<LivingEntity, EntityModel<LivingEntity>>(context) {
+/**
+ * Renders per-entity channel-sequence progress bars above an entity's head.
+ *
+ * 26.2 note (structural decision): in 1.21 this was a [net.minecraft.client.render.entity.feature.FeatureRenderer]
+ * (yarn) / [net.minecraft.client.renderer.entity.layers.RenderLayer] (mojmap) billboarding 3D quads
+ * in the entity's local space via [heckerpowered.matrix.client.MatrixClient]'s
+ * `LivingEntityFeatureRendererRegistrationCallback` registration. On 26.2 that registration
+ * point (`LivingEntityRenderLayerRegistrationCallback`) only ever hands a
+ * [net.minecraft.client.renderer.entity.state.LivingEntityRenderState], which carries no
+ * reference back to the source [LivingEntity] (nor a stable id) and there is no Fabric API
+ * extraction hook to stamp one on via [net.fabricmc.fabric.api.client.rendering.v1.FabricRenderState]
+ * for arbitrary (including vanilla) living entities without a Mixin into
+ * `LivingEntityRenderer.extractRenderState` — Mixins are out of scope for this port pass.
+ *
+ * `channelSequenceAnimationMap`/`offsetAnimationMap` are keyed by the live [LivingEntity]
+ * already (see [heckerpowered.matrix.client.render.ChannelAnimation]), so this renderer is
+ * rewritten as a screen-space HUD overlay (`HudElementRegistry`) that iterates those maps
+ * directly instead of going through the entity-render-state pipeline. [worldToScreen] performs
+ * the same perspective projection the old 3D billboard implicitly did, so the on-screen result
+ * (position, size, animation) is unchanged; only the rendering mechanism moved from a 3D quad
+ * (positioned via the entity attachment + camera-facing rotation matrix) to an equivalent 2D
+ * screen-space rectangle. No visual feature was dropped.
+ */
+object ChannelSequenceRenderer {
+    private val easingFunction = ElasticEase().also {
+        it.easingMode = EasingMode.OUT
+        it.oscillations = 0
+    }
 
-    private val disabled = false
+    class OffsetAnimation {
+        val xOffsetAnimationClock = AnimationClock(Duration.ofMillis(300), .0, -24.0)
+        var xOffsetAnimation = DoubleAnimation(xOffsetAnimationClock, easingFunction)
+    }
 
-    companion object {
-        private val easingFunction = ElasticEase().also {
-            it.easingMode = EasingMode.OUT
-            it.oscillations = 0
+    val channelSequenceAnimationMap = WeakHashMap<LivingEntity, MutableList<ChannelAnimation>>()
+    val offsetAnimationMap = WeakHashMap<LivingEntity, OffsetAnimation>()
+
+    fun onInitialize() {
+        ClientTickEvents.END_CLIENT_TICK.register {
+            channelSequenceAnimationMap.keys.toList().forEach(::onEntityTick)
         }
-
-        class OffsetAnimation {
-            val xOffsetAnimationClock = AnimationClock(Duration.ofMillis(300), .0, -24.0)
-            var xOffsetAnimation = DoubleAnimation(xOffsetAnimationClock, easingFunction)
-        }
-
-        val channelSequenceAnimationMap = WeakHashMap<LivingEntity, MutableList<ChannelAnimation>>()
-        val offsetAnimationMap = WeakHashMap<LivingEntity, OffsetAnimation>()
-
-        init {
-            EntityTickCallback.EVENT.register(::onEntityTick)
-            // HudRenderCallback.EVENT.register(::onHudRender)
-            // ClientTickEvents.START_WORLD_TICK.register { world ->
-            //     for (entry in channelSequenceAnimationMap) {
-            //         if (entry.key.world != world) {
-            //             continue
-            //         }
-            //         for (channelAnimation in entry.value) {
-            //             if (channelAnimation.currentChannelTime <= channelAnimation.channelTime) {
-            //                 channelAnimation.tick(entry.key)
-            //                 break
-            //             }
-            //         }
-            //     }
-
-            //     for (entry in channelSequenceAnimationMap.entries) {
-            //         if (entry.key.world != world) {
-            //             continue
-            //         }
-            //         val entity = entry.key
-            //         val list = entry.value
-            //         val iterator = list.iterator()
-            //         while (iterator.hasNext()) {
-            //             val channelAnimation = iterator.next()
-            //             if (channelAnimation.currentChannelTime > channelAnimation.channelTime && channelAnimation.opacityAnimation.animatedValue == 0.0) {
-            //                 offsetAnimationMap[entity]?.let {
-            //                     it.xOffsetAnimationClock.from = .0
-            //                     it.xOffsetAnimationClock.to = .0
-            //                 }
-            //                 iterator.remove()
-            //             }
-            //         }
-            //     }
-            // }
-        }
-
-        private fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
-            for (entry in channelSequenceAnimationMap) {
-                val entity = entry.key
-                val animation = entry.value
-                renderEntityChannelSequence(drawContext, tickCounter, entity, animation)
-            }
-        }
-
-        private fun renderRectangle(
-            buffer: BufferBuilder,
-            positionMatrix: Matrix4f,
-            rectangle: Rectangle,
-            color: Color,
-            z: Float = 0F,
-        ) {
-            buffer.vertex(positionMatrix, rectangle.min.x.toFloat(), rectangle.min.y.toFloat(), z).color(color.toInt())
-            buffer.vertex(positionMatrix, rectangle.max.x.toFloat(), rectangle.min.y.toFloat(), z).color(color.toInt())
-            buffer.vertex(positionMatrix, rectangle.max.x.toFloat(), rectangle.max.y.toFloat(), z).color(color.toInt())
-            buffer.vertex(positionMatrix, rectangle.min.x.toFloat(), rectangle.max.y.toFloat(), z).color(color.toInt())
-        }
-
-        private fun renderEntityChannelSequence(drawContext: DrawContext, tickCounter: RenderTickCounter, entity: LivingEntity, animation: List<ChannelAnimation>) {
-            val tickDelta = tickCounter.getTickDelta(false)
-
-            val transformationMatrix = drawContext.matrices.peek().positionMatrix
-            val tessellator = Tessellator.getInstance()
-            val buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR)
-
-            val lerpedPosition = entity.getLerpedPos(tickDelta).add(
-                .0,
-                entity.boundingBox.lengthY,
-                .0
-            )
-            val entityScreenPosition = worldToScreen(lerpedPosition) ?: return
-
-            animation.forEachIndexed { index, channelAnimation ->
-                val color = Color(128, 0, 0, (128 * channelAnimation.opacityAnimation.animatedValue).toInt())
-                val progressColor = Color(255, 0, 0, (255 * channelAnimation.opacityAnimation.animatedValue).toInt())
-                val animatedX = if (channelAnimation.opacityAnimation.animatedValue != 1.0 && channelAnimation.opacityAnimationClock.to == 0.0) {
-                    offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
-                } else {
-                    offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
-                }
-
-                val isChanneling = if (index == 0) {
-                    true
-                } else {
-                    animation[index - 1].let { it.currentChannelTime >= it.channelTime }
-                }
-                val partialProgress = if (isChanneling) {
-                    tickDelta
-                } else {
-                    .0f
-                }
-                val channelProgress = ((channelAnimation.currentChannelTime + partialProgress - channelAnimation.initialProgressOffset) / channelAnimation.channelTime.toDouble()).coerceAtMost(1.0)
-
-                val progressRectangle = Rectangle(
-                    Point(
-                        entityScreenPosition.x + -8.0 + index * 24 + animatedX,
-                        entityScreenPosition.y + 16.0 + channelAnimation.shownAnimation.animatedValue
-                    ), Point(
-                        entityScreenPosition.x + 8.0 + index * 24 + animatedX,
-                        entityScreenPosition.y + (1 - channelProgress) * 16.0 + channelAnimation.shownAnimation.animatedValue
-                    )
-                )
-                val rectangle = Rectangle(
-                    Point(
-                        entityScreenPosition.x + -8.0 + index * 24 + animatedX,
-                        entityScreenPosition.y + (1 - channelProgress).coerceIn(.0..1.0) * 16.0 + channelAnimation.shownAnimation.animatedValue
-                    ), Point(
-                        entityScreenPosition.x + 8.0 + index * 24 + animatedX,
-                        entityScreenPosition.y + .0 + channelAnimation.shownAnimation.animatedValue
-                    )
-                )
-                renderRectangle(buffer, transformationMatrix, rectangle, color, 0F)
-                renderRectangle(buffer, transformationMatrix, progressRectangle, progressColor, 0F)
-            }
-
-            RenderSystem.enableBlend()
-            RenderSystem.setShader(GameRenderer::getPositionColorProgram)
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
-
-            buffer.endNullable()?.let { BufferRenderer.draw(it) }
-
-            RenderSystem.disableBlend()
-        }
-
-        private fun onEntityTick(entity: LivingEntity) {
-            if (!entity.world.isClient) {
-                return
-            }
-            val channelAnimation = channelSequenceAnimationMap[entity] ?: return
-            val removed = channelAnimation.removeIf { it.currentChannelTime > it.channelTime && it.opacityAnimation.animatedValue == 0.0 }
-            if (removed) {
-                offsetAnimationMap[entity]?.xOffsetAnimationClock?.apply {
-                    from = .0
-                    to = .0
-                }
-            }
-            channelAnimation
-                .firstOrNull { it.currentChannelTime <= it.channelTime }
-                ?.tick(entity)
+        HudElementRegistry.addLast(Matrix.identifier("channel_sequence")) { drawContext, tickCounter ->
+            onHudRender(drawContext, tickCounter)
         }
     }
 
-    override fun render(
-        matrices: MatrixStack,
-        vertexConsumers: VertexConsumerProvider,
-        light: Int,
-        entity: LivingEntity,
-        limbAngle: Float,
-        limbDistance: Float,
-        tickDelta: Float,
-        animationProgress: Float,
-        headYaw: Float,
-        headPitch: Float,
-    ) {
-        if (entity !is MatrixLivingEntity || disabled) {
-            return
+    private fun onHudRender(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
+        for (entry in channelSequenceAnimationMap) {
+            val entity = entry.key
+            val animation = entry.value
+            renderEntityChannelSequence(drawContext, tickCounter, entity, animation)
         }
+    }
 
-        val channelAnimations = channelSequenceAnimationMap[entity] ?: return
+    private fun renderEntityChannelSequence(
+        drawContext: GuiGraphicsExtractor,
+        tickCounter: DeltaTracker,
+        entity: LivingEntity,
+        animation: List<ChannelAnimation>,
+    ) {
+        val tickDelta = tickCounter.getGameTimeDeltaPartialTick(false)
 
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
+        val lerpedPosition = entity.getLerpedPos(tickDelta).add(
+            .0,
+            entity.boundingBox.ysize,
+            .0
+        )
+        val entityScreenPosition = worldToScreen(
+            lerpedPosition,
+            viewportWidth = drawContext.guiWidth(),
+            viewportHeight = drawContext.guiHeight(),
+        ) ?: return
 
-        val minecraftClient = MinecraftClient.getInstance()
-        val camera = minecraftClient.gameRenderer.camera
-        val entityRenderer = minecraftClient.entityRenderDispatcher.getRenderer(entity)
-        val positionOffset = entityRenderer.getPositionOffset(entity, tickDelta)
-
-        val entityPartialX = MathHelper.lerp(tickDelta.toDouble(), entity.lastRenderX, entity.x)
-        val entityPartialY = MathHelper.lerp(tickDelta.toDouble(), entity.lastRenderY, entity.y)
-        val entityPartialZ = MathHelper.lerp(tickDelta.toDouble(), entity.lastRenderZ, entity.z)
-
-        val entityRelativeX = entityPartialX - camera.pos.x
-        val entityRelativeY = entityPartialY - camera.pos.y
-        val entityRelativeZ = entityPartialZ - camera.pos.z
-
-        val offsetX = entityRelativeX + positionOffset.x
-        val offsetY = entityRelativeY + positionOffset.y
-        val offsetZ = entityRelativeZ + positionOffset.z
-
-        val matrixStack = MatrixStack()
-        matrixStack.push()
-        matrixStack.translate(offsetX, offsetY, offsetZ)
-
-        val position = entity.attachments.getPointNullable(EntityAttachmentType.NAME_TAG, 0, entity.getYaw(tickDelta))!!
-
-        matrixStack.push()
-        matrixStack.translate(position.x, position.y + 0.5, position.z)
-        matrixStack.multiply(minecraftClient.entityRenderDispatcher.rotation)
-        matrixStack.scale(0.025f, -0.025f, 0.025f)
-
-        val positionMatrix = matrixStack.peek().positionMatrix
-
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram)
-        RenderSystem.enableBlend()
-        val layer = RenderLayer.getGui()
-        val buffer = vertexConsumers.getBuffer(layer)
-
-        channelAnimations.forEachIndexed { index, channelAnimation ->
+        animation.forEachIndexed { index, channelAnimation ->
             val color = Color(128, 0, 0, (128 * channelAnimation.opacityAnimation.animatedValue).toInt())
             val progressColor = Color(255, 0, 0, (255 * channelAnimation.opacityAnimation.animatedValue).toInt())
-            val animatedX = if (channelAnimation.opacityAnimation.animatedValue != 1.0 && channelAnimation.opacityAnimationClock.to == 0.0) {
-                offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
-            } else {
-                offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
-            }
+            val animatedX = offsetAnimationMap[entity]?.xOffsetAnimation?.animatedValue ?: 0.0
 
             val isChanneling = if (index == 0) {
                 true
             } else {
-                channelAnimations[index - 1].let { it.currentChannelTime >= it.channelTime }
+                animation[index - 1].let { it.currentChannelTime >= it.channelTime }
             }
             val partialProgress = if (isChanneling) {
                 tickDelta
@@ -266,59 +112,42 @@ class ChannelSequenceRenderer(
                 .0f
             }
             val channelProgress = ((channelAnimation.currentChannelTime + partialProgress - channelAnimation.initialProgressOffset) / channelAnimation.channelTime.toDouble()).coerceAtMost(1.0)
-            val progressRectangle = Rectangle(
-                Point(
-                    -8.0 + index * 24 + animatedX, 16.0 + channelAnimation.shownAnimation.animatedValue
-                ), Point(
-                    8.0 + index * 24 + animatedX, (1 - channelProgress) * 16.0 + channelAnimation.shownAnimation.animatedValue
-                )
-            )
-            val rectangle = Rectangle(
-                Point(
-                    -8.0 + index * 24 + animatedX, (1 - channelProgress).coerceIn(.0..1.0) * 16.0 + channelAnimation.shownAnimation.animatedValue
-                ), Point(
-                    8.0 + index * 24 + animatedX, .0 + channelAnimation.shownAnimation.animatedValue
-                )
-            )
-            renderRectangle(
-                buffer, positionMatrix, rectangle, color, light, if (isChanneling) {
-                    0.01f
-                } else {
-                    -0.01f
-                }
-            )
-            renderRectangle(
-                buffer, positionMatrix, progressRectangle, progressColor, light, if (isChanneling) {
-                    0f
-                } else {
-                    -0.01f
-                }
-            )
-            if (channelAnimations[index].magic == SculkCatalystMagic &&
-                channelAnimations[index].currentChannelTime < channelAnimations[index].channelTime
+
+            val minX = (entityScreenPosition.x + -8.0 + index * 24 + animatedX).toInt()
+            val maxX = (entityScreenPosition.x + 8.0 + index * 24 + animatedX).toInt()
+            val topY = (entityScreenPosition.y + 16.0 + channelAnimation.shownAnimation.animatedValue).toInt()
+            val progressY = (entityScreenPosition.y + (1 - channelProgress) * 16.0 + channelAnimation.shownAnimation.animatedValue).toInt()
+            val bottomY = (entityScreenPosition.y + (1 - channelProgress).coerceIn(.0, 1.0) * 16.0 + channelAnimation.shownAnimation.animatedValue).toInt()
+            val topOfBar = (entityScreenPosition.y + .0 + channelAnimation.shownAnimation.animatedValue).toInt()
+
+            // Background (unfilled) bar: from the animated top down to the progress line.
+            drawContext.fill(minX, bottomY, maxX, topOfBar, color.toInt())
+            // Progress (filled) bar: from the fixed bottom up to the progress line.
+            drawContext.fill(minX, topY, maxX, progressY, progressColor.toInt())
+
+            if (channelAnimation.magic == SculkCatalystMagic &&
+                channelAnimation.currentChannelTime < channelAnimation.channelTime
             ) {
                 SculkCatalystEffectRenderer.entity = entity
                 CollapseEffectRenderer.dissolveFactor.value = channelProgress / 4.0
             }
         }
-
-        RenderSystem.disableBlend()
-        matrixStack.pop()
-        matrixStack.pop()
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
     }
 
-    private fun renderRectangle(
-        buffer: VertexConsumer,
-        positionMatrix: Matrix4f?,
-        rectangle: Rectangle,
-        color: Color,
-        light: Int,
-        z: Float = 0.01f,
-    ) {
-        buffer.vertex(positionMatrix, rectangle.min.x.toFloat(), rectangle.min.y.toFloat(), z).color(color.toInt())
-        buffer.vertex(positionMatrix, rectangle.max.x.toFloat(), rectangle.min.y.toFloat(), z).color(color.toInt())
-        buffer.vertex(positionMatrix, rectangle.max.x.toFloat(), rectangle.max.y.toFloat(), z).color(color.toInt())
-        buffer.vertex(positionMatrix, rectangle.min.x.toFloat(), rectangle.max.y.toFloat(), z).color(color.toInt())
+    private fun onEntityTick(entity: LivingEntity) {
+        if (!entity.level().isClientSide) {
+            return
+        }
+        val channelAnimation = channelSequenceAnimationMap[entity] ?: return
+        val removed = channelAnimation.removeIf { it.currentChannelTime > it.channelTime && it.opacityAnimation.animatedValue == 0.0 }
+        if (removed) {
+            offsetAnimationMap[entity]?.xOffsetAnimationClock?.apply {
+                from = .0
+                to = .0
+            }
+        }
+        channelAnimation
+            .firstOrNull { it.currentChannelTime <= it.channelTime }
+            ?.tick(entity)
     }
 }

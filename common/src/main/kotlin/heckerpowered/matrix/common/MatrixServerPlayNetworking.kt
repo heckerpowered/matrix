@@ -15,6 +15,7 @@ object MatrixServerPlayNetworking {
         PayloadTypeRegistry.serverboundPlay().register(ServerboundWarpPayload.type, ServerboundWarpPayload.codec)
         PayloadTypeRegistry.serverboundPlay().register(ServerboundActivateBloodPactPayload.type, ServerboundActivateBloodPactPayload.codec)
         PayloadTypeRegistry.serverboundPlay().register(ServerboundBorrowedTimePayload.type, ServerboundBorrowedTimePayload.codec)
+        PayloadTypeRegistry.serverboundPlay().register(ServerboundOverclockPayload.type, ServerboundOverclockPayload.codec)
 
         PayloadTypeRegistry.clientboundPlay().register(ClientboundSyncManaPayload.type, ClientboundSyncManaPayload.codec)
         PayloadTypeRegistry.clientboundPlay().register(ClientboundSystemCrashPayload.type, ClientboundSystemCrashPayload.codec)
@@ -30,5 +31,6 @@ object MatrixServerPlayNetworking {
         ServerPlayNetworking.registerGlobalReceiver(ServerboundWarpPayload.type, ServerboundWarpPayload::handle)
         ServerPlayNetworking.registerGlobalReceiver(ServerboundActivateBloodPactPayload.type, ServerboundActivateBloodPactPayload::handle)
         ServerPlayNetworking.registerGlobalReceiver(ServerboundBorrowedTimePayload.type, ServerboundBorrowedTimePayload::handle)
+        ServerPlayNetworking.registerGlobalReceiver(ServerboundOverclockPayload.type, ServerboundOverclockPayload::handle)
     }
 }

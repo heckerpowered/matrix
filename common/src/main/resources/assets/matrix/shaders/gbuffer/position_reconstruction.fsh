@@ -15,7 +15,9 @@ vec3 worldAbsolutePosition(vec2 uv, float depth) {
     // Convert UV coordinates and depth to clip space coordinates.
     // UV is mapped from [0,1] to [-1,1].
     // Depth is mapped from [0,1] (typically from a depth texture or depth buffer) to [-1,1] (clip space z).
-    vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    // 26.2 renders with zero-to-one depth on both backends (glClipControl GL_ZERO_TO_ONE /
+    // Vulkan native); the inverse projection encodes that convention, so use depth directly.
+    vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, depth, 1.0);
 
     // Convert clip space coordinates to view space coordinates.
     // inverse projection matrix handles the perspective projection, but the result is still a homogeneous coordinate.
@@ -44,7 +46,7 @@ void main() {
     ncd.y = -ndc.y;
 
     float depth = texture(depthAttachment, fragTexCoord).r;
-    vec4 clipPosition = vec4(ndc, depth * 2.0 - 1.0, 1.0);
+    vec4 clipPosition = vec4(ndc, depth, 1.0); // zero-to-one depth, see above
     vec4 viewPosition = inverseProjectionMatrix * clipPosition;
     viewPosition /= viewPosition.w;// Perspective divide
     vec4 worldPosition = inverseModelViewMatrix * viewPosition;

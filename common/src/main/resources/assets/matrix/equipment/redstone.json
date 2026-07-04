@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "matrix:redstone"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "matrix:redstone"
+      }
+    ]
+  }
+}

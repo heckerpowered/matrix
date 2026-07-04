@@ -13,9 +13,13 @@ import net.minecraft.world.entity.LivingEntity
 
 object MagicSystem {
     fun onInitialize() {
+        // Registers the built-in magics; nothing invoked this before, leaving the magic
+        // registry empty at runtime (no HUD, no magic enchantments in datagen).
+        Magics.onInitialize()
         ChannelQueuePersistenceRule.onInitialize()
         ChannelQueueTicker.onInitialize()
         ManaRegenerationTicker.onInitialize()
+        ManaOverclockRule.onInitialize()
     }
 
     @JvmStatic

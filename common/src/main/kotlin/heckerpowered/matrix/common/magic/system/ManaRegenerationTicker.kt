@@ -39,6 +39,7 @@ object ManaRegenerationTicker {
         val account = ManaLedger.account(player)
         if (player.isInfiniteMana) {
             val maximum = account.incomingRemainingUnits() ?: return
+            if (maximum <= 0) return
             ManaLedger.Authority.postTransfer(account, maximum)
             return
         }
@@ -48,10 +49,11 @@ object ManaRegenerationTicker {
         CalculationPipeline.apply(context, sink)
 
         val regenerationAmount = (sink.regeneration * sink.multiplier).mana.toLedgerUnits()
-        ManaLedger.Authority.postTransfer(
-            account,
-            regenerationAmount.coerceTransferUnits(ManaLedger.Authority, account)
-        )
+        val transferAmount = regenerationAmount.coerceTransferUnits(ManaLedger.Authority, account)
+        // A player without a wizard helmet has zero max mana; a zero regeneration tick is a
+        // no-op, not a ledger error (the ledger contract rejects non-positive transfers).
+        if (transferAmount <= 0) return
+        ManaLedger.Authority.postTransfer(account, transferAmount)
     }
 
     private fun syncMana(player: ServerPlayer) {

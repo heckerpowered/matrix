@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
@@ -28,7 +29,7 @@ import java.util.function.Consumer
 // TODO: EntityPolarity
 // TODO: Restrict negative effects
 object WardenChestplateItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.warden, ArmorType.CHESTPLATE)
+    Properties().setId(ModItemIds.wardenChestplate).humanoidArmor(ModArmorMaterials.warden, ArmorType.CHESTPLATE)
         .fireResistant()
         .rarity(Rarity.EPIC)
 ), TooltipProvider, DamageComputationRule, KnockbackRule {

@@ -5,13 +5,14 @@
 
 package heckerpowered.matrix.client.core
 
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.core.lerp
 import heckerpowered.matrix.core.toDegrees
 import heckerpowered.matrix.core.wrapDegrees
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
-import net.minecraft.util.math.Vec3d
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
+import net.minecraft.world.phys.Vec3
 import java.time.Duration
 import kotlin.math.atan2
 import kotlin.math.sqrt
@@ -35,7 +36,8 @@ object AimAssist {
     var autoUnlock = true
 
     init {
-        HudRenderCallback.EVENT.register { drawContext, tickCounter ->
+        // 26.2: HudRenderCallback was replaced by HudElementRegistry; still invoked once per rendered frame.
+        HudElementRegistry.addLast(Matrix.identifier("aim_assist")) { drawContext, tickCounter ->
             if (autoApplyRotation && isAiming) {
                 applyRotation()
             }
@@ -47,22 +49,22 @@ object AimAssist {
 
     @JvmStatic
     fun onMouseUpdate(timeDelta: Double): Boolean {
-        lockedPitch.from = player.getPitch(timeDelta.toFloat()).toDouble()
-        lockedYaw.from = player.getYaw(timeDelta.toFloat()).toDouble()
+        lockedPitch.from = player.getViewXRot(timeDelta.toFloat()).toDouble()
+        lockedYaw.from = player.getViewYRot(timeDelta.toFloat()).toDouble()
         return isMouseLocked && isAiming
     }
 
     fun applyRotation() {
-        player.pitch = lockedPitch.animatedValue.toFloat()
-        player.yaw = lockedYaw.animatedValue.toFloat()
+        player.xRot = lockedPitch.animatedValue.toFloat()
+        player.yRot = lockedYaw.animatedValue.toFloat()
     }
 
-    fun lookAt(position: Vec3d, tickDelta: Double) {
-        val x = lerp(tickDelta, player.prevX, player.x)
-        val y = lerp(tickDelta, player.prevY, player.y)
-        val z = lerp(tickDelta, player.prevZ, player.z)
+    fun lookAt(position: Vec3, tickDelta: Double) {
+        val x = lerp(tickDelta, player.xo, player.x)
+        val y = lerp(tickDelta, player.yo, player.y)
+        val z = lerp(tickDelta, player.zo, player.z)
 
-        val playerPosition = Vec3d(x, y, z)
+        val playerPosition = Vec3(x, y, z)
 
         val direction = position.subtract(playerPosition)
         val distance2D = sqrt(direction.x * direction.x + direction.z * direction.z)
@@ -74,12 +76,12 @@ object AimAssist {
         lockedPitch.value = wrapDegrees(pitch)
     }
 
-    fun rotationDifference(position: Vec3d, tickDelta: Double): Double {
-        val x = lerp(tickDelta, player.prevX, player.x)
-        val y = lerp(tickDelta, player.prevY, player.y)
-        val z = lerp(tickDelta, player.prevZ, player.z)
+    fun rotationDifference(position: Vec3, tickDelta: Double): Double {
+        val x = lerp(tickDelta, player.xo, player.x)
+        val y = lerp(tickDelta, player.yo, player.y)
+        val z = lerp(tickDelta, player.zo, player.z)
 
-        val playerPosition = Vec3d(x, y, z)
+        val playerPosition = Vec3(x, y, z)
 
         val direction = position.subtract(playerPosition)
         val distance2D = sqrt(direction.x * direction.x + direction.z * direction.z)
@@ -87,8 +89,8 @@ object AimAssist {
         val pitch = -toDegrees(atan2(direction.y, distance2D))
         val yaw = toDegrees(atan2(direction.z, direction.x)) - 90
 
-        val pitchDifference = wrapDegrees(pitch) - wrapDegrees(player.pitch.toDouble())
-        val yawDifference = wrapDegrees(yaw) - wrapDegrees(player.yaw.toDouble())
+        val pitchDifference = wrapDegrees(pitch) - wrapDegrees(player.xRot.toDouble())
+        val yawDifference = wrapDegrees(yaw) - wrapDegrees(player.yRot.toDouble())
         return sqrt(pitchDifference * pitchDifference + yawDifference * yawDifference)
     }
 

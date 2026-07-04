@@ -2,18 +2,29 @@
 
 in vec2 fragTexCoord;
 
-uniform float progress = 1.0;
-uniform float radius = 0.5;
-uniform float thickness = 0.1;
-uniform vec2 center = vec2(0.5, 0.5);
-uniform vec4 color = vec4(1.0);
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define progress MatrixPostData0.x
+#define radius MatrixPostData0.y
+#define thickness MatrixPostData0.z
+#define aspectRatio MatrixPostData0.w
+#define center MatrixPostData1.xy
+#define color MatrixPostData2
 
 out vec4 fragColor;
 
 #define PI 3.141592653589793
 
 void main() {
-    vec2 direction = fragTexCoord - center;
+    // Height-normalized space: the fullscreen pass' texcoords are anisotropic, so scale
+    // the x distance by the aspect ratio to keep the ring circular (radius/thickness are
+    // height-normalized at the call site).
+    vec2 direction = (fragTexCoord - center) * vec2(aspectRatio, 1.0);
     float distance = length(direction);
     if (distance < radius - thickness || distance > radius) {
         discard;
@@ -31,7 +42,7 @@ void main() {
     float end = start - sweep;
 
     bool inRange;
-    if (end < .0) {
+    if (end < 0.0) {
         inRange = angle <= start && angle >= 0.0 || angle >= end + 2.0 * PI && angle <= 2.0 * PI;
     } else {
         inRange = angle <= start && angle >= end;

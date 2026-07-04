@@ -7,7 +7,7 @@ package heckerpowered.matrix.client.event
 
 import net.fabricmc.fabric.api.event.Event
 import net.fabricmc.fabric.api.event.EventFactory
-import net.minecraft.client.gl.Framebuffer
+import com.mojang.blaze3d.pipeline.RenderTarget
 
 fun interface InitAttachmentCallback {
     companion object {
@@ -36,5 +36,5 @@ fun interface InitAttachmentCallback {
      * Implementers can use this hook to perform additional setup on the attachment,
      * such as configuring mipmap levels, setting texture parameters, or clearing initial data.
      */
-    fun onInitAttachment(framebuffer: Framebuffer)
+    fun onInitAttachment(framebuffer: RenderTarget)
 }

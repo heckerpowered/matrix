@@ -5,16 +5,17 @@
 
 package heckerpowered.matrix.client.render.shader
 
+import com.mojang.blaze3d.textures.GpuTextureView
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.render.post.ScaleSampling
 import heckerpowered.matrix.client.shader.BlitProgram
-import heckerpowered.matrix.client.shader.ResourceShader
+import heckerpowered.matrix.client.shader.TextureProvider
 import heckerpowered.matrix.client.shader.UniformProvider
 import org.joml.Vector2f
-import org.lwjgl.opengl.GL46.*
 
 object GaussianBlurRenderer {
-    var colorAttachment: Int = 0
+    /** Color attachment to blur, kept as `colorAttachment` for source compatibility with existing call sites. */
+    var colorAttachment: GpuTextureView? = null
     var gaussianKernel: FloatArray = FloatArray(0)
     var direction: Vector2f = Vector2f(1F, 0F)
 
@@ -25,23 +26,35 @@ object GaussianBlurRenderer {
     val fullPong = PostProcessRenderer.createManagedFramebuffer()
 
     val gaussianBlurShader = BlitProgram(
-        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-        ResourceShader("/assets/matrix/shaders/post/blur/gaussian_blur.fsh", GL_FRAGMENT_SHADER),
+        "post/blur/gaussian_blur.fsh",
         uniforms = arrayOf(
-            UniformProvider("framebuffer") { pointer ->
-                glActiveTexture(GL_TEXTURE0)
-                glBindTexture(GL_TEXTURE_2D, colorAttachment)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("kernel") { pointer ->
-                glUniform1fv(pointer, gaussianKernel)
-            },
-            UniformProvider("kernelSize") { pointer ->
-                glUniform1i(pointer, (gaussianKernel.size - 1).coerceAtLeast(0))
-            },
-            UniformProvider("direction") { pointer ->
-                glUniform2f(pointer, direction.x, direction.y)
+            UniformProvider("MatrixPostUniforms") {
+                // MatrixPostData0 = vec4(direction.x, direction.y, kernelSize, 0)
+                val kernelSize = (gaussianKernel.size - 1).coerceIn(0, 48)
+                putVec4(direction.x, direction.y, kernelSize.toFloat(), 0F)
+
+                // MatrixPostData1..13 = kernel[0..48] packed 4 floats per vec4.
+                if (gaussianKernel.isEmpty()) {
+                    putVec4(1.0F, 0F, 0F, 0F)
+                    repeat(12) { putVec4(0F, 0F, 0F, 0F) }
+                } else {
+                    var i = 0
+                    while (i < 52) {
+                        putVec4(
+                            gaussianKernel.getOrElse(i) { 0F },
+                            gaussianKernel.getOrElse(i + 1) { 0F },
+                            gaussianKernel.getOrElse(i + 2) { 0F },
+                            gaussianKernel.getOrElse(i + 3) { 0F }
+                        )
+                        i += 4
+                    }
+                }
             }
+        ),
+        textures = arrayOf(
+            // The pre-26.2 code forced GL_LINEAR on every blur-chain texture; filtering is
+            // per-sampler now, so bilinear here preserves the original sampling behavior.
+            TextureProvider("framebuffer", bilinear = true) { colorAttachment }
         )
     )
 

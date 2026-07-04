@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "matrix:warden"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "matrix:warden"
+      }
+    ]
+  }
+}

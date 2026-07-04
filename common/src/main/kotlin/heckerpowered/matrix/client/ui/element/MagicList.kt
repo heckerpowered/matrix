@@ -5,21 +5,23 @@
 
 package heckerpowered.matrix.client.ui.element
 
-import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.MatrixHud.targetedEntity
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.textures.FilterMode
+import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.shader.BlurRenderer
 import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
-import heckerpowered.matrix.common.magic.core.LMagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.Magic
+import heckerpowered.matrix.common.magic.core.MagicAvailability
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
-import heckerpowered.matrix.common.magic.core.description
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.*
-import net.minecraft.text.Text
-import net.minecraft.util.math.ColorHelper
+import heckerpowered.matrix.data.language.MatrixLanguage
+import net.minecraft.client.DeltaTracker
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.network.chat.Component
+import net.minecraft.util.ARGB
 
 /**
  * Renderer of the magic list in the HUD.
@@ -126,7 +128,7 @@ object MagicList {
     /**
      * Update the use animation list for the magics, called every frame.
      */
-    private fun updateUseAnimationList(tickCounter: RenderTickCounter) {
+    private fun updateUseAnimationList(tickCounter: DeltaTracker) {
         for (i in animationList.indices) {
             val animation = animationList[i]
             if (animation == .0) {
@@ -135,11 +137,13 @@ object MagicList {
 
             // Just update the animation for the current magic, they will automatically stop
             // when they reach their full duration.
-            animationList[i] = animation + tickCounter.lastFrameDuration / 2000000
+            // 26.2: old Timer.lastFrameDuration (tick delta of the last rendered frame) is now
+            // DeltaTracker.getGameTimeDeltaTicks() (unpaused per-frame tick delta).
+            animationList[i] = animation + tickCounter.gameTimeDeltaTicks / 2000000
         }
     }
 
-    fun render(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+    fun render(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
         if (magics.isEmpty()) {
             return
         }
@@ -147,26 +151,27 @@ object MagicList {
         updateUseAnimationList(tickCounter)
     }
 
-    private fun getMagicAvailableStatus(magic: Magic): LMagicAvailableStatus {
+    private fun getMagicAvailableStatus(magic: Magic): MagicAvailability {
         val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
         return magic.availableStatus(calculationContext)
     }
 
     private fun calculateMagicWidth(magic: Magic): Double {
-        val textRenderer = minecraft.textRenderer
+        val textRenderer = minecraft.font
 
         val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
         val costString = magic.getCost(calculationContext).toString()
-        val statusString = magic.availableStatus(calculationContext).description.toString()
+        val statusString = (magic.availableStatus(calculationContext).firstOrNull()?.description
+            ?: MatrixLanguage.magicAvailable).string
 
-        val magicNameWidth = textRenderer.getWidth(magic.definition.name)
-        val costWidth = textRenderer.getWidth(costString)
-        val statusWidth = textRenderer.getWidth(statusString)
+        val magicNameWidth = textRenderer.width(magic.definition.name)
+        val costWidth = textRenderer.width(costString)
+        val statusWidth = textRenderer.width(statusString)
 
         return magicNameWidth + costWidth + statusWidth + MAGIC_ELEMENT_SPAN * 3 // 3 spans for the name, cost, and status
     }
 
-    private fun renderMagic(index: Int, drawContext: DrawContext, tickCounter: RenderTickCounter) {
+    private fun renderMagic(index: Int, drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
         if (opacity.animatedValue == .0) {
             return
         }
@@ -176,12 +181,13 @@ object MagicList {
 
         val calculationContext = MagicCalculationContext.fromEntity(player, targetedEntity)
         val costString = magic.getCost(calculationContext).toString()
-        val statusString = magic.availableStatus(calculationContext).description.toString()
+        val statusString = (magic.availableStatus(calculationContext).firstOrNull()?.description
+            ?: MatrixLanguage.magicAvailable).string
 
-        val textRenderer = minecraft.textRenderer
-        val magicNameWidth = textRenderer.getWidth(magic.definition.name)
-        val costWidth = textRenderer.getWidth(costString)
-        val statusWidth = textRenderer.getWidth(statusString)
+        val textRenderer = minecraft.font
+        val magicNameWidth = textRenderer.width(magic.definition.name)
+        val costWidth = textRenderer.width(costString)
+        val statusWidth = textRenderer.width(statusString)
 
         val magicWidth = magicNameWidth + costWidth + statusWidth + MAGIC_ELEMENT_SPAN * 3 // 3 spans for the name, cost, and status
 
@@ -190,41 +196,50 @@ object MagicList {
 
         val startX = (MAGIC_ELEMENT_MARGIN + indent + xOffset.animatedValue).toFloat()
         val endX = (startX + widthAnimation.animatedValue).toFloat()
-        val startY = (index * (MAGIC_ELEMENT_HEIGHT + MAGIC_ELEMENT_MARGIN) + drawContext.scaledWindowHeight / 2 - (indentList.size + 1) * (MAGIC_ELEMENT_HEIGHT + MAGIC_ELEMENT_MARGIN) / 2).toFloat()
+        val startY = (index * (MAGIC_ELEMENT_HEIGHT + MAGIC_ELEMENT_MARGIN) + drawContext.guiHeight() / 2 - (indentList.size + 1) * (MAGIC_ELEMENT_HEIGHT + MAGIC_ELEMENT_MARGIN) / 2).toFloat()
         val endY = startY + MAGIC_ELEMENT_HEIGHT.toFloat()
 
         drawContext.enableScissor(startX.toInt(), startY.toInt(), endX.toInt(), endY.toInt())
 
-        BlurRenderer.blurTextureRenderProgram.enableShader()
-        BlurRenderer.renderQuad()
-        BlurRenderer.blurTextureRenderProgram.disableShader()
-
-        val transformationMatrix = drawContext.matrices.peek().positionMatrix
-        val builder = Tessellator.getInstance()
-        val buffer = builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR)
+        // 1.21 composited the blurred HUD by drawing a scissored fullscreen quad through
+        // blur_mask.fsh, whose alpha<0.1 discard produced a hard cutout: faint-alpha fringes
+        // never touched the destination. The blit below must stay on the extracted-GUI path
+        // (drawContext) for GUI ordering and scissoring, and that path only alpha-blends, so
+        // the mask is pre-punched instead: blur_mask.fsh copies blurFramebuffer into a
+        // transparent-cleared ping target (blend off, so every discarded texel remains fully
+        // transparent), and the blit samples the punched copy — restoring the 1.21 hard-cutout
+        // look through ordinary alpha blending.
+        PostProcessRenderer.clear(PostProcessRenderer.ping)
+        BlurRenderer.renderQuad(PostProcessRenderer.ping)
+        PostProcessRenderer.ping.colorTextureView?.let { punchedView ->
+            val guiWidth = drawContext.guiWidth().toFloat()
+            val guiHeight = drawContext.guiHeight().toFloat()
+            drawContext.blit(
+                punchedView,
+                RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR),
+                startX.toInt(), startY.toInt(),
+                (endX - startX).toInt(), (endY - startY).toInt(),
+                startX / guiWidth, endX / guiWidth,
+                startY / guiHeight, endY / guiHeight
+            )
+        }
 
         val backgroundColorAnimation = backgroundColorAnimationList[index]
-        val backgroundColor = ColorHelper.Argb.getArgb(
+        val backgroundColor = ARGB.color(
             (opacity.animatedValue * 127.5).toInt(),
             backgroundColorAnimation.red.animatedValue.toInt(),
             backgroundColorAnimation.green.animatedValue.toInt(),
             backgroundColorAnimation.blue.animatedValue.toInt()
         )
 
-        buffer.vertex(transformationMatrix, startX, startY, 0F).color(backgroundColor)
-        buffer.vertex(transformationMatrix, endX, startY, 0F).color(backgroundColor)
-        buffer.vertex(transformationMatrix, endX, endY, 0F).color(backgroundColor)
-        buffer.vertex(transformationMatrix, startX, endY, 0F).color(backgroundColor)
+        // 26.2: manual Tessellator/BufferRenderer quad replaced by GuiGraphicsExtractor.fill,
+        // which draws the same axis-aligned rectangle through the GUI render pipeline.
+        drawContext.fill(startX.toInt(), startY.toInt(), endX.toInt(), endY.toInt(), backgroundColor)
 
-        RenderSystem.enableBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram)
-        BufferRenderer.drawWithGlobalProgram(buffer.end())
-        RenderSystem.disableBlend()
-
-        val foregroundColor = ColorHelper.Argb.getArgb((opacity.animatedValue * 255).toInt(), 255, 255, 255)
-        drawContext.drawText(textRenderer, magic.definition.name, startX.toInt() + 5, startY.toInt() + 5, foregroundColor, false)
-        drawContext.drawText(textRenderer, Text.literal(costString), startX.toInt() + magicNameWidth + 15, startY.toInt() + 5, foregroundColor, false)
-        drawContext.drawText(textRenderer, statusString, startX.toInt() + magicNameWidth + costWidth + 25, startY.toInt() + 5, foregroundColor, false)
+        val foregroundColor = ARGB.color((opacity.animatedValue * 255).toInt(), 255, 255, 255)
+        drawContext.text(textRenderer, magic.definition.name, startX.toInt() + 5, startY.toInt() + 5, foregroundColor, false)
+        drawContext.text(textRenderer, Component.literal(costString), startX.toInt() + magicNameWidth + 15, startY.toInt() + 5, foregroundColor, false)
+        drawContext.text(textRenderer, statusString, startX.toInt() + magicNameWidth + costWidth + 25, startY.toInt() + 5, foregroundColor, false)
 
         drawContext.disableScissor()
     }

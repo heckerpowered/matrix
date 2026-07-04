@@ -36,6 +36,12 @@ object ManaLedger {
 
     private fun transferMana(from: LedgerAccount, to: LedgerAccount, amount: Mana): TransactionResult {
         val ledgerAmount = amount.toLedgerUnits()
+        if (ledgerAmount <= 0) {
+            // The ledger contract rejects non-positive transfers; issuing/extinguishing zero
+            // mana (e.g. proportional issuance for a player without a wizard helmet, whose
+            // max mana is 0) is a no-op, not an error.
+            return TransactionResult.Approved
+        }
         return from.postTransfer(to, ledgerAmount)
     }
 

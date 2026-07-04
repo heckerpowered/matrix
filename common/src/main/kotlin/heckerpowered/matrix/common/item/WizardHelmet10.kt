@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.combat.damage.DamageSettlementContext
 import heckerpowered.matrix.common.combat.damage.DamageSettlementRule
 import heckerpowered.matrix.common.network.ClientboundSyncHealthPayload
@@ -22,7 +23,7 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Rarity
 
 object WizardHelmet10 : WizardHelmet(
-    Properties()
+    Properties().setId(ModItemIds.wizardHelmet10)
         .fireResistant()
         .rarity(Rarity.EPIC)
         .maxMana(12.0)

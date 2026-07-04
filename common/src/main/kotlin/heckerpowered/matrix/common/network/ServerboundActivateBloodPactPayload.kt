@@ -6,8 +6,8 @@
 package heckerpowered.matrix.common.network
 
 import heckerpowered.matrix.Matrix
-import heckerpowered.matrix.common.effect.ModMobEffects.BLOOD_PACT_EFFECT
-import heckerpowered.matrix.common.enchantment.ModEnchantments.bloodPact
+import heckerpowered.matrix.common.effect.ModMobEffects.BloodPact
+import heckerpowered.matrix.common.enchantment.ModEnchantments
 import heckerpowered.matrix.common.enchantment.getEnchantmentLevel
 import heckerpowered.matrix.common.persistent.wizardHelmet
 import heckerpowered.matrix.common.persistent.wizardHelmetStack
@@ -31,13 +31,13 @@ data object ServerboundActivateBloodPactPayload : CustomPacketPayload {
     fun handle(@Suppress("unused") payload: ServerboundActivateBloodPactPayload, context: Context) {
         val player = context.player()
         val level = player.level()
-        if (player.wizardHelmetStack.getEnchantmentLevel(level, bloodPact) <= 0) return
-        if (player.hasEffect(BLOOD_PACT_EFFECT) || player.cooldowns.isOnCooldown(player.wizardHelmetStack)) {
+        if (player.wizardHelmetStack.getEnchantmentLevel(level, ModEnchantments.BloodPact) <= 0) return
+        if (player.hasEffect(BloodPact) || player.cooldowns.isOnCooldown(player.wizardHelmetStack)) {
             level.playSound(null, player.x, player.y, player.z, SoundEvents.BLAZE_HURT, SoundSource.PLAYERS, 3.0F, 1.0F)
             return
         }
 
-        player.addEffect(MobEffectInstance(BLOOD_PACT_EFFECT, 20 * 30, 0, false, true))
+        player.addEffect(MobEffectInstance(BloodPact, 20 * 30, 0, false, true))
         level.playSound(null, player.x, player.y, player.z, SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 1.0F, 1.0F)
         player.cooldowns.addCooldown(player.wizardHelmetStack, 20 * (30 + 14)) // 30 = duration, 14 = cooldown
 

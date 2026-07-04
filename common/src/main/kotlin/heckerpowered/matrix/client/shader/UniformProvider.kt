@@ -5,103 +5,74 @@
 
 package heckerpowered.matrix.client.shader
 
-import com.mojang.blaze3d.systems.RenderSystem
-import heckerpowered.matrix.Matrix
+import com.mojang.blaze3d.buffers.Std140Builder
+import com.mojang.blaze3d.textures.GpuTextureView
 import heckerpowered.matrix.client.minecraft
-import heckerpowered.matrix.client.player
 import heckerpowered.matrix.client.projectionMatrix
 import heckerpowered.matrix.client.render.MatrixRenderSystem
 import org.joml.Matrix4f
-import org.lwjgl.opengl.GL46.*
-import org.lwjgl.system.MemoryUtil
-import org.slf4j.MarkerFactory
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 
-private val buffer = MemoryUtil.memAllocFloat(16)
+/**
+ * Writes one std140 uniform block of a [BlitProgram].
+ *
+ * [name] is the uniform block's name as declared in the GLSL source
+ * (`layout(std140) uniform <name> { ... };`); [write] emits the block's members in
+ * declaration order through [Std140Builder], which handles std140 alignment. This replaces
+ * the former per-uniform `glUniform*` writers: on the 26.2 wrapper API (Vulkan and OpenGL
+ * alike) loose uniforms no longer exist, uniform data lives in buffer-backed blocks.
+ */
+open class UniformProvider(val name: String, val write: Std140Builder.() -> Unit)
 
-val projectionMatrixProvider = UniformProvider("projectionMatrix") { pointer ->
-    buffer.position(0)
-    RenderSystem.getProjectionMatrix().get(buffer)
-    glUniformMatrix4fv(pointer, false, buffer)
+/**
+ * Supplies a texture for the sampler uniform called [name] in a [BlitProgram].
+ * Returning `null` skips the binding for this draw.
+ */
+open class TextureProvider(
+    val name: String,
+    val bilinear: Boolean = false,
+    val mipmap: Boolean = false,
+    val view: () -> GpuTextureView?,
+)
+
+/** Seconds-scale time value matching the previous `time` uniform providers. */
+fun shaderTimeSeconds(): Float {
+    return System.nanoTime().milliseconds.toDouble(DurationUnit.SECONDS).toFloat()
 }
 
-val modelViewMatrixProvider = UniformProvider("modelViewMatrix") { pointer ->
-    buffer.position(0)
-    RenderSystem.getModelViewMatrix().get(buffer)
-    glUniformMatrix4fv(pointer, false, buffer)
+/** Camera-relative matrices, kept for shaders whose blocks embed them. */
+fun Std140Builder.putProjectionMatrix(): Std140Builder = putMat4f(projectionMatrix)
+
+fun Std140Builder.putInverseProjectionMatrix(): Std140Builder = putMat4f(Matrix4f(projectionMatrix).invert())
+
+fun Std140Builder.putViewMatrix(): Std140Builder = putMat4f(MatrixRenderSystem.viewMatrix)
+
+fun Std140Builder.putInverseViewMatrix(): Std140Builder = putMat4f(MatrixRenderSystem.inverseViewMatrix)
+
+fun Std140Builder.putViewProjectionMatrix(): Std140Builder = putMat4f(MatrixRenderSystem.viewProjectionMatrix)
+
+/** Interpolated local player position, matching the previous `playerPosition` provider. */
+fun Std140Builder.putPlayerPosition(): Std140Builder {
+    val tickDelta = minecraft.deltaTracker.getGameTimeDeltaPartialTick(true)
+    val position = minecraft.player?.getPosition(tickDelta)
+    return putVec3(
+        position?.x?.toFloat() ?: 0F,
+        position?.y?.toFloat() ?: 0F,
+        position?.z?.toFloat() ?: 0F
+    )
 }
 
-val inverseProjectionMatrixProvider = UniformProvider("inverseProjectionMatrix") { pointer ->
-    buffer.position(0)
-
-    val projectionMatrix = projectionMatrix
-    val invertProjectionMatrix = Matrix4f(projectionMatrix).invert()
-    invertProjectionMatrix.get(buffer)
-
-    glUniformMatrix4fv(pointer, false, buffer)
+/** Camera position, matching the previous `cameraPosition` provider. */
+fun Std140Builder.putCameraPosition(): Std140Builder {
+    val position = minecraft.gameRenderer.mainCamera().position()
+    return putVec3(position.x.toFloat(), position.y.toFloat(), position.z.toFloat())
 }
 
-val inverseModelViewMatrixProvider = UniformProvider("inverseModelViewMatrix") { pointer ->
-    buffer.position(0)
-
-    val modelViewMatrix = RenderSystem.getModelViewMatrix()
-    val invertModelViewMatrix = Matrix4f(modelViewMatrix).invert()
-    invertModelViewMatrix.get(buffer)
-
-    glUniformMatrix4fv(pointer, false, buffer)
-}
-
-val inverseViewMatrixProvider = UniformProvider("inverseViewMatrix") { pointer ->
-    buffer.position(0)
-    MatrixRenderSystem.inverseViewMatrix.get(buffer)
-    glUniformMatrix4fv(pointer, false, buffer)
-}
-
-val viewMatrixProvider = UniformProvider("inverseViewMatrix") { pointer ->
-    buffer.position(0)
-    MatrixRenderSystem.viewMatrix.get(buffer)
-    glUniformMatrix4fv(pointer, false, buffer)
-}
-
-val viewProjectionMatrixProvider = UniformProvider("viewProjectionMatrix") { pointer ->
-    buffer.position(0)
-    MatrixRenderSystem.viewProjectionMatrix.get(buffer)
-    glUniformMatrix4fv(pointer, false, buffer)
-}
-
-val playerPositionProvider = UniformProvider("playerPosition") { pointer ->
-    val tickDelta = minecraft.renderTickCounter.getTickDelta(true)
-    val position = player.getLerpedPos(tickDelta)
-    glUniform3f(pointer, position.x.toFloat(), position.y.toFloat(), position.z.toFloat())
-}
-
-val cameraPositionProvider = UniformProvider("cameraPosition") { pointer ->
-    val camera = minecraft.gameRenderer.camera
-    glUniform3f(pointer, camera.pos.x.toFloat(), camera.pos.y.toFloat(), camera.pos.z.toFloat())
-}
-
-val resolutionProvider = UniformProvider("resolution") { pointer ->
-    val width = minecraft.window.framebufferWidth.toFloat()
-    val height = minecraft.window.framebufferHeight.toFloat()
-    glUniform2f(pointer, width, height)
-}
-
-val timeProvider = UniformProvider("time") { pointer ->
-    glUniform1f(pointer, System.nanoTime().milliseconds.toDouble(DurationUnit.SECONDS).toFloat())
-}
-
-open class UniformProvider(val name: String, val set: (pointer: Int) -> Unit) {
-    companion object {
-        private val MARKER = MarkerFactory.getMarker("UniformProvider")
-    }
-
-    var pointer = -1
-
-    fun init(program: Int) {
-        pointer = glGetUniformLocation(program, name)
-        if (pointer == -1) {
-            Matrix.LOGGER.error(MARKER, "Cannot find uniform location, name: $name")
-        }
-    }
+/** Framebuffer resolution, matching the previous `resolution` provider. */
+fun Std140Builder.putResolution(): Std140Builder {
+    return putVec2(
+        minecraft.window.width.toFloat(),
+        minecraft.window.height.toFloat()
+    )
 }

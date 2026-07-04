@@ -6,7 +6,7 @@
 package heckerpowered.matrix.common.effect
 
 import heckerpowered.matrix.common.combat.damage.*
-import heckerpowered.matrix.common.effect.ModMobEffects.IGNITE_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.Ignite
 import heckerpowered.matrix.common.entity.rule.AttributeComputationContext
 import heckerpowered.matrix.common.entity.rule.AttributeComputationRule
 import heckerpowered.matrix.common.rule.RuleRegistry
@@ -83,7 +83,7 @@ object IgniteEffect : MobEffect(
         val target = context.target
 
         if (context.source.isAdditionalDamage) return
-        if (!target.hasEffect(IGNITE_EFFECT)) return
+        if (!target.hasEffect(Ignite)) return
         if (!source.`is`(DamageTypeTags.IS_FIRE)) return
 
         context.damageMultiplier += 0.2
@@ -94,7 +94,7 @@ object IgniteEffect : MobEffect(
         val target = context.target
 
         if (context.source.isAdditionalDamage) return
-        val igniteEffect = target.getEffect(IGNITE_EFFECT) ?: return
+        val igniteEffect = target.getEffect(Ignite) ?: return
         if (source.`is`(DamageTypeTags.IS_FIRE)) return
 
         igniteEffect.mapDuration { it + 10 }

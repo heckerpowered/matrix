@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attackerAsLiving
@@ -23,7 +24,7 @@ import net.minecraft.world.item.component.TooltipProvider
 import java.util.function.Consumer
 
 object RedstoneSwordItem : Item(
-    Properties()
+    Properties().setId(ModItemIds.redstoneSword)
         .sword(ModToolMaterials.redstone, 3.0F, -2.4F)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)

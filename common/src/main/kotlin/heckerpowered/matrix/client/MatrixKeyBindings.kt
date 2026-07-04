@@ -5,51 +5,55 @@
 
 package heckerpowered.matrix.client
 
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
-import net.minecraft.client.option.KeyBinding
-import net.minecraft.client.util.InputUtil
+import heckerpowered.matrix.Matrix
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
+import net.minecraft.client.KeyMapping
+import com.mojang.blaze3d.platform.InputConstants
 import org.lwjgl.glfw.GLFW
 
 object MatrixKeyBindings {
-    val useMagic: KeyBinding = KeyBindingHelper.registerKeyBinding(
-        KeyBinding(
+    // 26.2: KeyMapping categories are registered KeyMapping.Category records instead of translation-key strings.
+    private val category = KeyMapping.Category.register(Matrix.identifier("matrix"))
+
+    val useMagic: KeyMapping = KeyMappingHelper.registerKeyMapping(
+        KeyMapping(
             "key.matrix.use_magic",
-            InputUtil.Type.KEYSYM,
+            InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_F,
-            "key.categories.matrix"
+            category
         )
     )
 
-    val nextMagic: KeyBinding = KeyBindingHelper.registerKeyBinding(
-        KeyBinding(
+    val nextMagic: KeyMapping = KeyMappingHelper.registerKeyMapping(
+        KeyMapping(
             "key.matrix.next_magic",
-            InputUtil.Type.KEYSYM,
+            InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_DOWN,
-            "key.categories.matrix"
+            category
         )
     )
 
-    val previousMagic: KeyBinding = KeyBindingHelper.registerKeyBinding(
-        KeyBinding(
+    val previousMagic: KeyMapping = KeyMappingHelper.registerKeyMapping(
+        KeyMapping(
             "key.matrix.previous_magic",
-            InputUtil.Type.KEYSYM,
+            InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_UP,
-            "key.categories.matrix"
+            category
         )
     )
 
-    val overclockMagic = KeyBinding(
+    val overclockMagic = KeyMapping(
         "key.matrix.overclock_magic",
-        InputUtil.Type.KEYSYM,
+        InputConstants.Type.KEYSYM,
         GLFW.GLFW_KEY_N,
-        "key.categories.matrix"
+        category
     )
 
-    val overclockMana = KeyBinding(
+    val overclockMana = KeyMapping(
         "key.matrix.overclock_mana",
-        InputUtil.Type.KEYSYM,
+        InputConstants.Type.KEYSYM,
         GLFW.GLFW_KEY_M,
-        "key.categories.matrix"
+        category
     )
 
     fun onInitialize() {

@@ -5,122 +5,136 @@
 
 package heckerpowered.matrix.client.render
 
-import com.mojang.blaze3d.platform.GlConst
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.platform.GlStateManager.Viewport
+import com.mojang.blaze3d.buffers.GpuBuffer
+import com.mojang.blaze3d.pipeline.RenderTarget
+import com.mojang.blaze3d.platform.NativeImage
 import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.shader.BlitProgram
-import heckerpowered.matrix.client.shader.ResourceShader
+import heckerpowered.matrix.client.shader.TextureProvider
 import heckerpowered.matrix.client.shader.UniformProvider
-import net.minecraft.client.gl.Framebuffer
-import net.minecraft.client.texture.NativeImage
+import net.minecraft.client.Minecraft
 import org.joml.Vector4f
-import org.lwjgl.opengl.GL46.*
 import java.io.File
 
-fun Framebuffer.blit(target: Framebuffer, mask: Int, filter: Int) {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo)
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target.fbo)
-    glBlitFramebuffer(
-        0, 0, textureWidth, textureHeight,
-        0, 0, target.textureWidth, target.textureHeight,
-        mask, filter
-    )
-}
+/**
+ * The window-sized framebuffer everything is composed into; replaces the former
+ * `minecraft.framebuffer` accessor from the pre-26.2 mappings.
+ */
+val Minecraft.mainRenderTarget: RenderTarget
+    get() = gameRenderer.mainRenderTarget()
 
-private var primaryFramebuffer: Framebuffer? = null
-private var secondaryFramebuffer: Framebuffer? = null
+/** Compatibility accessors matching the pre-26.2 Framebuffer field names. */
+val RenderTarget.textureWidth: Int
+    get() = width
+
+val RenderTarget.textureHeight: Int
+    get() = height
+
+private var primaryFramebuffer: RenderTarget? = null
+private var secondaryFramebuffer: RenderTarget? = null
 var colorMultiplier = Vector4f(1.0F, 1.0F, 1.0F, 1.0F)
+
 private val colorFusionShader by lazy {
     BlitProgram(
-        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-        ResourceShader("/assets/matrix/shaders/post/color_fusion.fsh", GL_FRAGMENT_SHADER),
+        "post/color_fusion.fsh",
         uniforms = arrayOf(
-            UniformProvider("primaryFramebuffer") { pointer ->
-                val framebuffer = primaryFramebuffer ?: return@UniformProvider
-
-                glActiveTexture(GlConst.GL_TEXTURE0)
-                glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("secondaryFramebuffer") { pointer ->
-                val framebuffer = secondaryFramebuffer ?: return@UniformProvider
-
-                glActiveTexture(GlConst.GL_TEXTURE0 + 1)
-                glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                glUniform1i(pointer, 1)
-            },
-            UniformProvider("colorMultiplier") { pointer ->
-                glUniform4f(pointer, colorMultiplier.x, colorMultiplier.y, colorMultiplier.z, colorMultiplier.w)
+            UniformProvider("MatrixPostUniforms") {
+                // MatrixPostData0 = colorMultiplier
+                putVec4(colorMultiplier)
+                putVec4(0F, 0F, 0F, 0F)
+                putVec4(0F, 0F, 0F, 0F)
+                putVec4(0F, 0F, 0F, 0F)
             }
+        ),
+        textures = arrayOf(
+            TextureProvider("primaryFramebuffer") { primaryFramebuffer?.colorTextureView },
+            TextureProvider("secondaryFramebuffer") { secondaryFramebuffer?.colorTextureView }
         )
     )
 }
 
 private val blendScreenShader by lazy {
     BlitProgram(
-        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-        ResourceShader("/assets/matrix/shaders/post/blend_screen.fsh", GL_FRAGMENT_SHADER),
-        uniforms = arrayOf(
-            UniformProvider("primaryFramebuffer") { pointer ->
-                val framebuffer = primaryFramebuffer ?: return@UniformProvider
-
-                glActiveTexture(GlConst.GL_TEXTURE0)
-                glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                glUniform1i(pointer, 0)
-            },
-            UniformProvider("secondaryFramebuffer") { pointer ->
-                val framebuffer = secondaryFramebuffer ?: return@UniformProvider
-
-                glActiveTexture(GlConst.GL_TEXTURE0 + 1)
-                glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-                glUniform1i(pointer, 1)
-            }
+        "post/blend_screen.fsh",
+        textures = arrayOf(
+            TextureProvider("primaryFramebuffer") { primaryFramebuffer?.colorTextureView },
+            TextureProvider("secondaryFramebuffer") { secondaryFramebuffer?.colorTextureView }
         )
     )
 }
 
-val tentBlurShader = BlitProgram(
-    ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-    ResourceShader("/assets/matrix/shaders/post/blur/tent.fsh", GL_FRAGMENT_SHADER),
-    uniforms = arrayOf(UniformProvider("framebuffer") { pointer ->
-        val framebuffer = primaryFramebuffer ?: return@UniformProvider
+val tentBlurShader by lazy {
+    BlitProgram(
+        "post/blur/tent.fsh",
+        uniforms = arrayOf(
+            UniformProvider("MatrixPostUniforms") {
+                // MatrixPostData0.x = lod
+                putVec4(PostProcessRenderer.levelOfDetail, 0F, 0F, 0F)
+                putVec4(0F, 0F, 0F, 0F)
+                putVec4(0F, 0F, 0F, 0F)
+                putVec4(0F, 0F, 0F, 0F)
+            }
+        ),
+        textures = arrayOf(
+            TextureProvider("framebuffer", bilinear = true, mipmap = true) { primaryFramebuffer?.colorTextureView }
+        )
+    )
+}
 
-        glActiveTexture(GlConst.GL_TEXTURE0)
-        glBindTexture(GlConst.GL_TEXTURE_2D, framebuffer.colorAttachment)
-        RenderSystem.glUniform1i(pointer, 0)
-    })
-)
+// 1.21 semantics: linearCopyTo/nearestCopyTo were raw glBlitFramebuffer calls — a full
+// REPLACE of every destination pixel, black/transparent included. blit_replace.fsh has no
+// black-pixel discard (that discard in blit_no_depth.fsh is a compositing behavior); routing
+// these copies through the discarding shader left stale destination content behind wherever
+// the source was transparent — the source of the fullscreen acrylic-wash leak.
+private val linearCopyShader by lazy {
+    BlitProgram(
+        "blit/blit_replace.fsh",
+        uniforms = arrayOf(UniformProvider("BlitConfig") { putFloat(0F) }),
+        textures = arrayOf(TextureProvider("framebuffer", bilinear = true) { primaryFramebuffer?.colorTextureView })
+    )
+}
+
+private val nearestCopyShader by lazy {
+    BlitProgram(
+        "blit/blit_replace.fsh",
+        uniforms = arrayOf(UniformProvider("BlitConfig") { putFloat(0F) }),
+        textures = arrayOf(TextureProvider("framebuffer", bilinear = false) { primaryFramebuffer?.colorTextureView })
+    )
+}
 
 /**
- *
+ * Blends this framebuffer with [other] through the color fusion shader into the current
+ * post-process target. Renders into the current framebuffer of [PostProcessRenderer].
  */
-infix fun Framebuffer.blend(other: Framebuffer) {
+infix fun RenderTarget.blend(other: RenderTarget) {
     primaryFramebuffer = this
     secondaryFramebuffer = other
-    colorFusionShader.blit()
+    colorFusionShader.drawTo(PostProcessRenderer.currentFramebuffer())
 }
 
-infix fun Framebuffer.blendScreen(other: Framebuffer) {
+infix fun RenderTarget.blendScreen(other: RenderTarget) {
     primaryFramebuffer = this
     secondaryFramebuffer = other
-    blendScreenShader.blit()
+    blendScreenShader.drawTo(PostProcessRenderer.currentFramebuffer())
 }
 
-infix fun Framebuffer.copyTo(other: Framebuffer) {
-    blit(other, GL_COLOR_BUFFER_BIT, GL_LINEAR)
+infix fun RenderTarget.copyTo(other: RenderTarget) {
+    primaryFramebuffer = this
+    linearCopyShader.drawTo(other)
 }
 
-infix fun Framebuffer.copyDepthTo(other: Framebuffer) {
-    blit(other, GL_DEPTH_BUFFER_BIT, GL_LINEAR)
+infix fun RenderTarget.copyDepthTo(other: RenderTarget) {
+    other.copyDepthFrom(this)
 }
 
-infix fun Framebuffer.linearCopyTo(other: Framebuffer) {
-    blit(other, GL_COLOR_BUFFER_BIT, GL_LINEAR)
+infix fun RenderTarget.linearCopyTo(other: RenderTarget) {
+    primaryFramebuffer = this
+    linearCopyShader.drawTo(other)
 }
 
-infix fun Framebuffer.nearestCopyTo(other: Framebuffer) {
-    blit(other, GL_COLOR_BUFFER_BIT, GL_NEAREST)
+infix fun RenderTarget.nearestCopyTo(other: RenderTarget) {
+    primaryFramebuffer = this
+    nearestCopyShader.drawTo(other)
 }
 
 /**
@@ -176,73 +190,65 @@ fun recommendMipLevel(width: Int, height: Int): Int {
  * @return the number of mipmap levels needed.
  * @author heckerpowered
  */
-fun Framebuffer.recommendMipLevel(): Int {
-    return recommendMipLevel(textureWidth, textureHeight)
+fun RenderTarget.recommendMipLevel(): Int {
+    return recommendMipLevel(width, height)
 }
 
-fun Framebuffer.dump(levelOfDetail: Int = 0, generateMipmap: Boolean = true) {
+fun RenderTarget.dump(levelOfDetail: Int = 0, generateMipmap: Boolean = true) {
     dump(hashCode().toString(), levelOfDetail, generateMipmap)
 }
 
-fun Framebuffer.dump(name: String, levelOfDetail: Int = 0, generateMipmap: Boolean = true) {
-    RenderSystem.bindTexture(colorAttachment)
-
-    if (generateMipmap) {
-        glGenerateMipmap(GL_TEXTURE_2D)
-    }
-    val width = glGetTexLevelParameteri(GL_TEXTURE_2D, levelOfDetail, GL_TEXTURE_WIDTH)
-    val height = glGetTexLevelParameteri(GL_TEXTURE_2D, levelOfDetail, GL_TEXTURE_HEIGHT)
-
+/**
+ * Writes the color attachment (at [levelOfDetail]) to `screenshots/framebuffer_dump_<name>.png`.
+ * Debug utility; reads back through the GpuDevice wrapper so it works on both backends.
+ */
+fun RenderTarget.dump(name: String, levelOfDetail: Int = 0, @Suppress("UNUSED_PARAMETER") generateMipmap: Boolean = true) {
+    val texture = colorTexture ?: return
+    val width = texture.getWidth(levelOfDetail)
+    val height = texture.getHeight(levelOfDetail)
     if (width <= 0 || height <= 0) {
-        OpenGLExtensions.fastCheck("Framebuffer dump: invalid texture size")
         return
     }
 
-    NativeImage(width, height, false).use { nativeImage ->
-        nativeImage.loadFromTextureImage(levelOfDetail, false)
-        nativeImage.mirrorVertically()
+    val device = RenderSystem.getDevice()
+    val encoder = device.createCommandEncoder()
+    val bytesPerPixel = texture.format.blockSize()
+    val readback = device.createBuffer(
+        { "matrix framebuffer dump" },
+        GpuBuffer.USAGE_MAP_READ or GpuBuffer.USAGE_COPY_DST,
+        (width * height * bytesPerPixel).toLong()
+    )
+    encoder.copyTextureToBuffer(texture, readback, 0L, {
+        readback.map(true, false).use { mapped ->
+            NativeImage(width, height, false).use { nativeImage ->
+                for (y in 0 until height) {
+                    for (x in 0 until width) {
+                        val color = mapped.data().getInt((y * width + x) * bytesPerPixel)
+                        nativeImage.setPixelABGR(x, y, color)
+                    }
+                }
+                // 26.2: NativeImage has no mirror helper anymore; wrapper readback is
+                // top-down already, so no flip is needed (debug utility only).
 
-        val file = File("screenshots")
-        file.mkdir()
+                val file = File("screenshots")
+                file.mkdir()
 
-        val filename = "framebuffer_dump_${name}.png"
-        nativeImage.writeTo(File(file, filename))
-    }
+                val filename = "framebuffer_dump_${name}.png"
+                nativeImage.writeToFile(File(file, filename))
+            }
+        }
+        readback.close()
+    }, levelOfDetail)
 }
 
 /**
- * Executes the given [action] while preserving the currently bound framebuffer and viewport state.
+ * Executes the given [action].
  *
- * This function backs up the current framebuffer binding and viewport dimensions,
- * then invokes the specified [action]. After the action completes, the original framebuffer
- * and viewport state are restored. This ensures that temporary framebuffer or viewport changes
- * inside [action] do not leak outside the function scope.
- *
- * This is especially useful when performing off-screen rendering or rendering to custom framebuffers,
- * as it guarantees rendering state isolation.
- *
- * Example usage:
- * ```
- * framebufferGuard {
- *     glBindFramebuffer(GL_FRAMEBUFFER, customFramebuffer)
- *     GlStateManager._viewport(0, 0, width, height)
- *     renderSomething()
- * }
- * // Original framebuffer and viewport are now restored
- * ```
- *
- * @param action The block of code to execute within the guarded framebuffer and viewport state.
+ * Under the 26.2 wrapper API render passes are self-contained: there is no longer any global
+ * framebuffer/viewport binding to guard, so this is a plain invocation kept for source
+ * compatibility.
  */
-@Deprecated("Use StateIsolation.isolate(FramebufferState(this)) { action() } instead")
+@Deprecated("Render passes are self-contained on the 26.2 wrapper API; the guard is no longer needed")
 fun framebufferGuard(action: () -> Unit) {
-    val previousBindingFramebuffer = glGetInteger(GL_FRAMEBUFFER_BINDING)
-    val previousViewportX = Viewport.getX()
-    val previousViewportY = Viewport.getY()
-    val previousViewportWidth = Viewport.getWidth()
-    val previousViewportHeight = Viewport.getHeight()
-
     action()
-
-    glBindFramebuffer(GL_FRAMEBUFFER, previousBindingFramebuffer)
-    GlStateManager._viewport(previousViewportX, previousViewportY, previousViewportWidth, previousViewportHeight)
 }

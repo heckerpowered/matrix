@@ -10,15 +10,16 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 
 object MatrixClientPlayNetworking {
     fun onInitialize() {
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncManaPayload.id, ClientboundSyncManaPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundSystemCrashPayload.id, ClientboundSystemCrashPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundChannelMagicPayload.id, ClientboundChannelMagicPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundBorrowedTimePayload.id, ClientboundBorrowedTimePayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncHealthPayload.id, ClientboundSyncHealthPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundWitherArmorTriggerPayload.id, ClientboundWitherArmorTriggerPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ImminentDangerPayload.id, ImminentDangerPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncManaPayload.type, ClientboundSyncManaPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundSystemCrashPayload.type) { _, context -> ClientboundSystemCrashPayload.handle(context) }
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundChannelMagicPayload.type, ClientboundChannelMagicPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundBorrowedTimePayload.type, ClientboundBorrowedTimePayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncHealthPayload.type, ClientboundSyncHealthPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundWitherArmorTriggerPayload.type) { _, context -> ClientboundWitherArmorTriggerPayload.handle(context) }
+        // ImminentDangerPayload does not exist in the codebase (pre-migration dangling reference):
+        // ClientPlayNetworking.registerGlobalReceiver(ImminentDangerPayload.id, ImminentDangerPayload::handle)
         ClientPlayNetworking.registerGlobalReceiver(ClientboundTeleportPayload.type, ClientboundTeleportPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundExplosionPayload.id, ClientboundExplosionPayload::handle)
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundDamageNumberPayload.id, ClientboundDamageNumberPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundExplosionPayload.type, ClientboundExplosionPayload::handle)
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundDamageNumberPayload.type, ClientboundDamageNumberPayload::handle)
     }
 }

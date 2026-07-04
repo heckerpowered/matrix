@@ -8,21 +8,22 @@ package heckerpowered.matrix.client.ui.element
 import heckerpowered.foundation.ui.animation.core.AnimationScope
 import heckerpowered.foundation.ui.animation.tween.TweenSpec
 import heckerpowered.foundation.ui.color.Argb8
+import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.easingFunction
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.core.worldToScreen
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
-import net.minecraft.client.font.TextRenderer
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.RenderTickCounter
-import net.minecraft.util.math.Vec3d
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.DeltaTracker
+import net.minecraft.world.phys.Vec3
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.milliseconds
 
 object DamageNumberHud {
     private val scope = AnimationScope()
 
-    private class DamageNumber(val text: String, val color: Argb8, val position: Vec3d, scope: AnimationScope, val uid: Long) {
+    private class DamageNumber(val text: String, val color: Argb8, val position: Vec3, scope: AnimationScope, val uid: Long) {
         var size by scope.doubleAnimation(20.0)
         var yOffset by scope.doubleAnimation(.0)
         var opacity by scope.doubleAnimation(.0)
@@ -45,7 +46,10 @@ object DamageNumberHud {
     }
 
     fun onInitialize() {
-        HudRenderCallback.EVENT.register(this::onHudRender)
+        // 26.2: HudRenderCallback was replaced by HudElementRegistry; still invoked once per rendered frame.
+        HudElementRegistry.addLast(Matrix.identifier("damage_numbers")) { drawContext, tickCounter ->
+            onHudRender(drawContext, tickCounter)
+        }
     }
 
     private fun formatDamage(value: Float): String {
@@ -59,7 +63,7 @@ object DamageNumberHud {
         return truncated.toString()
     }
 
-    fun addDamageNumber(damage: Float, color: Argb8, position: Vec3d) {
+    fun addDamageNumber(damage: Float, color: Argb8, position: Vec3) {
         val formattedDamage = formatDamage(damage)
         addDamageNumber(formattedDamage, color, position)
     }
@@ -67,7 +71,7 @@ object DamageNumberHud {
     private var createdThisSecond = 0
     private var lastSecondMarkNanos = System.nanoTime()
 
-    fun addDamageNumber(text: String, color: Argb8, position: Vec3d) {
+    fun addDamageNumber(text: String, color: Argb8, position: Vec3) {
         createdThisSecond++
 
         val damageNumber = DamageNumber(text, color, position, scope, ++counter)
@@ -83,7 +87,7 @@ object DamageNumberHud {
         damageNumbers.add(damageNumber)
     }
 
-    private fun renderDamageNumber(damageNumber: DamageNumber, drawContext: DrawContext, tickCounter: RenderTickCounter) {
+    private fun renderDamageNumber(damageNumber: DamageNumber, drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
         if (damageNumber.opacity <= 4.0) return
         if (!damageNumber.isFading && damageNumber.opacity >= 255.0) {
             damageNumber.isFading = true
@@ -94,49 +98,46 @@ object DamageNumberHud {
 
         val base = damageNumber.position
         val screenPosition = worldToScreen(
-            Vec3d(base.x, base.y + damageNumber.yOffset, base.z)
+            Vec3(base.x, base.y + damageNumber.yOffset, base.z)
         ) ?: return
 
         val text = damageNumber.text
-        val textRenderer = minecraft.textRenderer
+        val font = minecraft.font
 
-        val width = textRenderer.getWidth(text)
-        val height = textRenderer.fontHeight
+        val width = font.width(text)
+        val height = font.lineHeight
 
         val centerX = screenPosition.x + width / 2
         val centerY = screenPosition.y + height / 2
 
-        val matrices = drawContext.matrices
-        matrices.push()
-        matrices.translate(centerX, centerY, 0.0)
-        matrices.scale(
+        val pose = drawContext.pose()
+        pose.pushMatrix()
+        pose.translate(centerX.toFloat(), centerY.toFloat())
+        pose.scale(
             damageNumber.size.toFloat(),
-            damageNumber.size.toFloat(),
-            1.0f
+            damageNumber.size.toFloat()
         )
-        matrices.translate(-centerX, -centerY, 0.0)
+        pose.translate(-centerX.toFloat(), -centerY.toFloat())
 
         val argb = damageNumber.color
             .withAlpha(damageNumber.opacity.toInt())
             .packed
 
-        textRenderer.draw(
+        // 26.2: text()'s no-lightmap 2D path already renders on top like the old SEE_THROUGH
+        // layer (full-bright, no depth test) — light-value/layer params no longer exposed.
+        drawContext.text(
+            font,
             text,
-            screenPosition.x.toFloat(),
-            screenPosition.y.toFloat(),
+            screenPosition.x.roundToInt(),
+            screenPosition.y.roundToInt(),
             argb,
-            true,
-            matrices.peek().positionMatrix,
-            drawContext.vertexConsumers,
-            TextRenderer.TextLayerType.SEE_THROUGH,
-            0,
-            15728880
+            true
         )
 
-        matrices.pop()
+        pose.popMatrix()
     }
 
-    fun onHudRender(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+    fun onHudRender(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
         for (damageNumber in damageNumbers) {
             renderDamageNumber(damageNumber, drawContext, tickCounter)
         }

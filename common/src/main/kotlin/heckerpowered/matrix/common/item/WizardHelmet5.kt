@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attacker
@@ -24,7 +25,7 @@ import net.minecraft.world.item.Rarity
  * Wizard Helmet 5 'Axiom of Annihilation'
  */
 object WizardHelmet5 : WizardHelmet(
-    Properties()
+    Properties().setId(ModItemIds.wizardHelmet5)
         .rarity(Rarity.EPIC)
         .maxMana(12.0)
         .maxLoad(125.0)

@@ -19,9 +19,9 @@ import heckerpowered.matrix.common.magic.channel.CasterContext
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.magic.rule.resource.CastingResourcePipeline
 import heckerpowered.matrix.data.language.MatrixLanguage
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.text.Text
-import net.minecraft.util.math.MathHelper
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.network.chat.Component
+import net.minecraft.util.Mth
 
 class ManaBar {
     companion object {
@@ -48,23 +48,36 @@ class ManaBar {
         easingFunction.oscillations = 0
     }
 
+    /**
+     * The ledger-backed max mana is legitimately 0 until the first server sync after the HUD
+     * appears (and while the animation ramps up from its initial 0), so a 0-divisor
+     * percentage means "empty bar", not NaN (which crashes the roundToInt in the renderer).
+     */
+    private fun percentageOfMaxMana(amount: Double): Double {
+        val maxMana = maxMana.animatedValue
+        if (maxMana <= 0.0) {
+            return 0.0
+        }
+        return amount / maxMana
+    }
+
     private fun manaPercentage(): Double {
         if (mana.value.isInfinite()) {
             return 1.0
         }
-        return mana.animatedValue / maxMana.animatedValue
+        return percentageOfMaxMana(mana.animatedValue)
     }
 
     private val actualManaPercentage: Double
         get() = if (mana.value.isInfinite()) {
             1.0
         } else {
-            (mana.animatedValue - manaUsage.animatedValue) / maxMana.animatedValue
+            percentageOfMaxMana(mana.animatedValue - manaUsage.animatedValue)
         }
 
     private val dissolveShader = DissolveShader()
 
-    private fun renderManaBar(drawContext: DrawContext, renderer: LegacyMatrixUIRenderer) {
+    private fun renderManaBar(drawContext: GuiGraphicsExtractor, renderer: LegacyMatrixUIRenderer) {
         if (!manaUsage.isAnimating) {
             mana.value -= manaUsage.value
             manaUsage.value = .0
@@ -74,7 +87,7 @@ class ManaBar {
             10.0 + shownAnimation.animatedValue
         )
         val maxPoint = Point(
-            MathHelper.lerp(manaPercentage(), 50.0, renderer.scaledWindowWidth - 50.0),
+            Mth.lerp(manaPercentage(), 50.0, renderer.scaledWindowWidth - 50.0),
             25.0 + shownAnimation.animatedValue
         )
 
@@ -98,7 +111,7 @@ class ManaBar {
 
         val window = MinecraftClient.getInstance().window
         val scaleFactor = window.scaleFactor
-        val maxX = MathHelper.lerp(actualManaPercentage, 50.0, renderer.scaledWindowWidth - 50.0)
+        val maxX = Mth.lerp(actualManaPercentage, 50.0, renderer.scaledWindowWidth - 50.0)
         RenderSystem.enableScissor(
         (minPoint.x * scaleFactor).toInt(),
         (window.framebufferHeight - maxPoint.y * scaleFactor).toInt(),
@@ -117,12 +130,11 @@ class ManaBar {
         dissolveShader.resolutionX = 1.0F
         dissolveShader.resolutionY = 1.0F
          */
-        val multiplier = 1F
-        RenderSystem.setShaderColor(multiplier, multiplier, multiplier, 1.0F)
+        // 26.2: RenderSystem.setShaderColor no longer exists; the old calls used
+        // multiplier = 1F on both sides, i.e. identity — nothing to replace.
         renderer.renderRectangle(Rectangle(minPoint, maxPoint), manaBarColor)
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F)
 
-        val usagePercentage = manaUsage.animatedValue / maxMana.animatedValue
+        val usagePercentage = percentageOfMaxMana(manaUsage.animatedValue)
         val usageMinPoint = Point(
             (maxPoint.x - usagePercentage * (renderer.scaledWindowWidth - 100)).coerceAtLeast(50.0),
             minPoint.y
@@ -130,7 +142,7 @@ class ManaBar {
 
         renderer.renderRectangle(Rectangle(usageMinPoint, maxPoint), usageManaColor)
 
-        val costPercentage = manaCost.animatedValue / maxMana.animatedValue
+        val costPercentage = percentageOfMaxMana(manaCost.animatedValue)
         val costMinPoint = Point(
             (usageMinPoint.x - costPercentage * (renderer.scaledWindowWidth - 100)).coerceAtLeast(50.0),
             maxPoint.y
@@ -154,13 +166,13 @@ class ManaBar {
         val total = (castingResources.animatedValue * 10).toLong() / 10.0
         if (total != 0.0) {
             renderer.render(
-                Text.literal("${MatrixLanguage.mana.string} ≈ $total + ${currentMana}/${maxMana}"),
+                Component.literal("${MatrixLanguage.mana.string} ≈ $total + ${currentMana}/${maxMana}"),
                 Point(55.0, 12.5 + shownAnimation.animatedValue), Color(255, 255, 255, 255),
                 true
             )
         } else {
             renderer.render(
-                Text.literal("${MatrixLanguage.mana.string} = ${currentMana}/${maxMana}"),
+                Component.literal("${MatrixLanguage.mana.string} = ${currentMana}/${maxMana}"),
                 Point(55.0, 12.5 + shownAnimation.animatedValue), Color(255, 255, 255, 255),
                 true
             )
@@ -170,7 +182,7 @@ class ManaBar {
     val animationRemaining: Boolean
         get() = manaUsage.isAnimating || mana.isAnimating
 
-    fun render(drawContext: DrawContext, renderer: LegacyMatrixUIRenderer) {
+    fun render(drawContext: GuiGraphicsExtractor, renderer: LegacyMatrixUIRenderer) {
         if (!visibility) {
             opacityAnimation.value = .0
             shownAnimation.value = -50.0

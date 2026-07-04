@@ -16,6 +16,7 @@ import heckerpowered.matrix.common.magic.rule.calculation.sink.CostCalculationSi
 import heckerpowered.matrix.common.magic.rule.effect.MagicCastPipeline
 import heckerpowered.matrix.common.magic.rule.effect.MagicChannelPipeline
 import heckerpowered.matrix.common.magic.rule.resource.CastingResourcePipeline
+import heckerpowered.matrix.core.isInfiniteMana
 import heckerpowered.matrix.common.persistent.queueSize
 import net.minecraft.core.Holder
 import net.minecraft.world.Difficulty
@@ -178,6 +179,12 @@ abstract class Magic(val definition: MagicDefinition) {
      * @return true if the required cost can be satisfied; false otherwise.
      */
     protected open fun checkMana(context: MagicCalculationContext): Boolean {
+        // Infinite mana (/matrix mana infinite, operator-gated) bypasses the affordability
+        // gate entirely; ExecutionPolicy.payCost already skips the actual payment, this was
+        // the missing half that still reported InsufficientMana.
+        if (context.playerOrNull()?.isInfiniteMana == true) {
+            return true
+        }
         val requiredCost = getCost(context).mana
         val resourceSet = CastingResourcePipeline.collect(context)
         return resourceSet.canAfford(context, requiredCost)

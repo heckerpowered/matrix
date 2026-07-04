@@ -5,37 +5,42 @@
 
 package heckerpowered.matrix.mixin;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import heckerpowered.matrix.Matrix;
 import heckerpowered.matrix.client.MatrixHud;
 import heckerpowered.matrix.common.effect.ModMobEffects;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.util.Identifier;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fStack;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Hud;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(InGameHud.class)
+/**
+ * 26.2: InGameHud became the extract-based {@link Hud}; renderHeart/renderCrosshair are now
+ * extractHeart/extractCrosshair, HeartType.getTexture is getSprite, and the crosshair is
+ * positioned directly through blitSprite's x/y (no pose translate), so the former
+ * Matrix4fStack.translate redirect is folded into the blitSprite redirect.
+ */
+@Mixin(Hud.class)
 class MixinInGameHud {
     private MixinInGameHud() {
     }
 
-    @Inject(method = "renderMainHud", at = @At("HEAD"))
-    private void renderMainHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    private void extractRenderState(GuiGraphicsExtractor context, DeltaTracker tickCounter, CallbackInfo ci) {
         // UIBlurShader.startUIOverlayDrawing(context, tickCounter.getTickDelta(false));
     }
 
-    @Redirect(method = "drawHeart", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud$HeartType;getTexture(ZZZ)Lnet/minecraft/util/Identifier;"))
-    private Identifier getTexture(InGameHud.HeartType instance, boolean hardcore, boolean half, boolean blinking) {
-        final var minecraft = MinecraftClient.getInstance();
+    @Redirect(method = "extractHeart", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Hud$HeartType;getSprite(ZZZ)Lnet/minecraft/resources/Identifier;"))
+    private Identifier getSprite(Hud.HeartType instance, boolean hardcore, boolean half, boolean blinking) {
+        final var minecraft = Minecraft.getInstance();
         final var player = minecraft.player;
-        if (instance == InGameHud.HeartType.NORMAL && player != null && player.hasStatusEffect(ModMobEffects.getBloodPactEffect())) {
+        if (instance == Hud.HeartType.NORMAL && player != null && player.hasEffect(ModMobEffects.INSTANCE.getBloodPact())) {
             if (half) {
                 return blinking ? Matrix.identifier("hud/heart/half_blinking") : Matrix.identifier("hud/heart/half");
             } else {
@@ -43,22 +48,16 @@ class MixinInGameHud {
             }
         }
 
-        return instance.getTexture(hardcore, half, blinking);
+        return instance.getSprite(hardcore, half, blinking);
     }
 
-    @Redirect(method = "renderCrosshair", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4fStack;translate(FFF)Lorg/joml/Matrix4f;", remap = false))
-    private Matrix4f translate(Matrix4fStack instance, float x, float y, float z) {
-        final var translatedCrosshairPosition = MatrixHud.translateCrosshairPosition(x, y);
-        return instance.translate(translatedCrosshairPosition.x, translatedCrosshairPosition.y, z);
-    }
-
-    @Redirect(method = "renderCrosshair", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lnet/minecraft/util/Identifier;IIII)V"))
-    private void translate(DrawContext instance, Identifier texture, int x, int y, int width, int height) {
+    @Redirect(method = "extractCrosshair", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V"))
+    private void translateCrosshair(GuiGraphicsExtractor instance, RenderPipeline pipeline, Identifier texture, int x, int y, int width, int height) {
         if (width != 15 || height != 15) {
-            instance.drawGuiTexture(texture, x, y, width, height);
+            instance.blitSprite(pipeline, texture, x, y, width, height);
             return;
         }
         final var translatedCrosshairPosition = MatrixHud.translateCrosshairPosition(x, y);
-        instance.drawGuiTexture(texture, (int) translatedCrosshairPosition.x, (int) translatedCrosshairPosition.y, width, height);
+        instance.blitSprite(pipeline, texture, (int) translatedCrosshairPosition.x, (int) translatedCrosshairPosition.y, width, height);
     }
 }

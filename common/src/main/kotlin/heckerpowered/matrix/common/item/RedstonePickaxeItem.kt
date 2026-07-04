@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitMaxPower
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitPower
 import heckerpowered.matrix.data.language.MatrixLanguage
@@ -22,7 +23,7 @@ import net.minecraft.world.level.block.state.BlockState
 import java.util.function.Consumer
 
 object RedstonePickaxeItem : Item(
-    Properties()
+    Properties().setId(ModItemIds.redstonePickaxe)
         .pickaxe(ModToolMaterials.redstone, 1.0F, -2.8F)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)

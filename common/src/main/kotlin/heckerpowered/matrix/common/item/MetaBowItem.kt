@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.item.ModComponents.shootPerMinute
 import heckerpowered.matrix.core.utility.FixedRateRepeater
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
@@ -21,7 +22,7 @@ import net.minecraft.world.level.Level
 import kotlin.time.Duration.Companion.minutes
 
 object MetaBowItem : BowItem(
-    Properties()
+    Properties().setId(ModItemIds.metaBow)
         .durability(3840)
         .component(shootPerMinute, 3600)
 ) {

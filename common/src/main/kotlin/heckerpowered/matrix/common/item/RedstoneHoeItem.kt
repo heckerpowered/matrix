@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitMaxPower
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitPower
 import heckerpowered.matrix.data.language.MatrixLanguage
@@ -23,7 +24,7 @@ import java.util.function.Consumer
 
 object RedstoneHoeItem : HoeItem(
     ModToolMaterials.redstone, -2.0F, -1.0F,
-    Properties()
+    Properties().setId(ModItemIds.redstoneHoe)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), RedstoneSuit, TooltipProvider {

@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.combat.damage.DamageComputationContext
 import heckerpowered.matrix.common.combat.damage.DamageComputationRule
 import heckerpowered.matrix.common.combat.damage.attacker
@@ -41,7 +42,7 @@ import kotlin.math.floor
  * Wizard Helmet 13 'Overflux Crown'
  */
 object WizardHelmet13 : WizardHelmet(
-    Properties()
+    Properties().setId(ModItemIds.wizardHelmet13)
         .fireResistant()
         .rarity(Rarity.EPIC)
         .maxMana(12.0)

@@ -4,9 +4,16 @@ in vec2 fragTexCoord;
 
 uniform sampler2D signedDistanceField;
 
-uniform vec2 shadowOffset = vec2(0.0, 0.0);
-uniform float shadowSize = 8.0;
-uniform vec4 shadowColor = vec4(0.0, 0.0, 0.0, 0.5);
+layout(std140) uniform MatrixPostUniforms {
+    vec4 MatrixPostData0;
+    vec4 MatrixPostData1;
+    vec4 MatrixPostData2;
+    vec4 MatrixPostData3;
+};
+
+#define shadowOffset MatrixPostData0.xy
+#define shadowSize MatrixPostData0.z
+#define shadowColor MatrixPostData1
 
 out vec4 fragColor;
 

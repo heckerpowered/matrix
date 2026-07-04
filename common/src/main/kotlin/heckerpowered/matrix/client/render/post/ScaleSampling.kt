@@ -5,20 +5,12 @@
 
 package heckerpowered.matrix.client.render.post
 
-import com.mojang.blaze3d.platform.GlConst
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.platform.GlStateManager.Viewport
-import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.shader.BlitProgram
-import heckerpowered.matrix.client.shader.ResourceShader
+import heckerpowered.matrix.client.shader.TextureProvider
 import heckerpowered.matrix.client.shader.UniformProvider
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gl.Framebuffer
-import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
-import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
-import org.lwjgl.opengl.GL31
+import com.mojang.blaze3d.pipeline.RenderTarget
 
 object ScaleSampling {
     private val downScalingFramebuffers = mutableMapOf<Double, ScalingFramebuffer>()
@@ -27,13 +19,12 @@ object ScaleSampling {
     fun getDownScalingFramebuffer(scaling: Double): ScalingFramebuffer {
         return downScalingFramebuffers.computeIfAbsent(scaling) {
             val framebuffer = ScalingFramebuffer(
-                minecraft.window.framebufferWidth,
-                minecraft.window.framebufferHeight,
+                "matrix downscale $scaling",
+                minecraft.window.width,
+                minecraft.window.height,
                 true,
-                MinecraftClient.IS_SYSTEM_MAC,
                 scaling
             )
-            framebuffer.setClearColor(.0F, .0F, .0F, .0F)
             PostProcessRenderer.manageFramebuffer(framebuffer)
             framebuffer
         }
@@ -42,13 +33,12 @@ object ScaleSampling {
     fun getUpScalingFramebuffer(scaling: Double): ScalingFramebuffer {
         return upScalingFramebuffers.computeIfAbsent(scaling) {
             val framebuffer = ScalingFramebuffer(
-                minecraft.window.framebufferWidth,
-                minecraft.window.framebufferHeight,
+                "matrix upscale $scaling",
+                minecraft.window.width,
+                minecraft.window.height,
                 true,
-                MinecraftClient.IS_SYSTEM_MAC,
                 scaling
             )
-            framebuffer.setClearColor(.0F, .0F, .0F, .0F)
             PostProcessRenderer.manageFramebuffer(framebuffer)
             framebuffer
         }
@@ -56,87 +46,74 @@ object ScaleSampling {
 
     fun createManagedScalingFramebuffer(scaling: Double): ScalingFramebuffer {
         val framebuffer = ScalingFramebuffer(
-            minecraft.window.framebufferWidth,
-            minecraft.window.framebufferHeight,
+            "matrix managed scale $scaling",
+            minecraft.window.width,
+            minecraft.window.height,
             true,
-            MinecraftClient.IS_SYSTEM_MAC,
             scaling
         )
-        framebuffer.setClearColor(.0F, .0F, .0F, .0F)
         PostProcessRenderer.manageFramebuffer(framebuffer)
         return framebuffer
     }
 
     fun clearAll() {
-        downScalingFramebuffers.values.forEach { it.clear(false) }
-        upScalingFramebuffers.values.forEach { it.clear(false) }
+        downScalingFramebuffers.values.forEach { PostProcessRenderer.clear(it) }
+        upScalingFramebuffers.values.forEach { PostProcessRenderer.clear(it) }
     }
 
     val framebuffer = PostProcessRenderer.createManagedFramebuffer()
 
     var levelOfDetail = 0F
 
-    private var sourceFramebuffer: Framebuffer? = null
-    private var targetFramebuffer: Framebuffer? = null
+    private var sourceFramebuffer: RenderTarget? = null
+    private var targetFramebuffer: RenderTarget? = null
 
-    private val sourceFramebufferProvider = UniformProvider("framebuffer") { pointer ->
-        val sourceFramebuffer = sourceFramebuffer ?: return@UniformProvider
-
-        GL31.glActiveTexture(GlConst.GL_TEXTURE0)
-        GL31.glBindTexture(GlConst.GL_TEXTURE_2D, sourceFramebuffer.colorAttachment)
-
-        RenderSystem.glUniform1i(pointer, 0)
-    }
-
-    private val sourceResolutionProvider = UniformProvider("sourceResolution") { pointer ->
-        val framebuffer = sourceFramebuffer ?: return@UniformProvider
-
-        GL31.glUniform2f(pointer, framebuffer.textureWidth.toFloat(), framebuffer.textureHeight.toFloat())
-    }
-
-    private val targetResolutionProvider = UniformProvider("targetResolution") { pointer ->
-        val framebuffer = targetFramebuffer ?: return@UniformProvider
-
-        GL31.glUniform2f(pointer, framebuffer.textureWidth.toFloat(), framebuffer.textureHeight.toFloat())
+    private val sourceFramebufferProvider = TextureProvider("framebuffer") {
+        sourceFramebuffer?.colorTextureView
     }
 
     // Bi-linear sampling method
     val bilinearSample by lazy {
         BlitProgram(
-            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-            ResourceShader("/assets/matrix/shaders/post/sampling/bilinear.fsh", GL_FRAGMENT_SHADER),
-            uniforms = arrayOf(sourceFramebufferProvider, sourceResolutionProvider, targetResolutionProvider)
+            "post/sampling/bilinear.fsh",
+            uniforms = arrayOf(
+                UniformProvider("MatrixPostUniforms") {
+                    // MatrixPostData0 = vec4(sourceResolution, targetResolution)
+                    putVec4(
+                        sourceFramebuffer?.width?.toFloat() ?: 0F,
+                        sourceFramebuffer?.height?.toFloat() ?: 0F,
+                        targetFramebuffer?.width?.toFloat() ?: 0F,
+                        targetFramebuffer?.height?.toFloat() ?: 0F
+                    )
+                    putVec4(0F, 0F, 0F, 0F)
+                    putVec4(0F, 0F, 0F, 0F)
+                    putVec4(0F, 0F, 0F, 0F)
+                }
+            ),
+            textures = arrayOf(sourceFramebufferProvider)
         )
     }
 
     val textureLod by lazy {
         BlitProgram(
-            ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-            ResourceShader("/assets/matrix/shaders/post/lower_sampling/lod.fsh", GL_FRAGMENT_SHADER),
+            "post/lower_sampling/lod.fsh",
             uniforms = arrayOf(
-                sourceFramebufferProvider,
-                UniformProvider("levelOfDetail") { pointer ->
-                    GL31.glUniform1f(pointer, levelOfDetail)
+                UniformProvider("MatrixPostUniforms") {
+                    // MatrixPostData0.x = levelOfDetail
+                    putVec4(levelOfDetail, 0F, 0F, 0F)
+                    putVec4(0F, 0F, 0F, 0F)
+                    putVec4(0F, 0F, 0F, 0F)
+                    putVec4(0F, 0F, 0F, 0F)
                 }
-            )
+            ),
+            textures = arrayOf(sourceFramebufferProvider)
         )
     }
 
-    fun sample(sourceFramebuffer: Framebuffer, targetFramebuffer: Framebuffer, sampler: BlitProgram) {
-        val previousFramebuffer = GlStateManager.getBoundFramebuffer()
-        val previousViewportX = Viewport.getX()
-        val previousViewportY = Viewport.getY()
-        val previousViewportWidth = Viewport.getWidth()
-        val previousViewportHeight = Viewport.getHeight()
-
+    fun sample(sourceFramebuffer: RenderTarget, targetFramebuffer: RenderTarget, sampler: BlitProgram) {
         this.sourceFramebuffer = sourceFramebuffer
         this.targetFramebuffer = targetFramebuffer
 
-        targetFramebuffer.beginWrite(true)
-        sampler.blit()
-        targetFramebuffer.endWrite()
-
-        GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, previousFramebuffer)
-        GlStateManager._viewport(previousViewportX, previousViewportY, previousViewportWidth, previousViewportHeight)
+        sampler.drawTo(targetFramebuffer)
     }
 }

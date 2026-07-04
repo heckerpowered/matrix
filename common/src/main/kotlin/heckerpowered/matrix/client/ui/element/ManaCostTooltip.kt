@@ -5,7 +5,6 @@
 
 package heckerpowered.matrix.client.ui.element
 
-import com.mojang.blaze3d.systems.RenderSystem
 import heckerpowered.matrix.client.MatrixHud
 import heckerpowered.matrix.client.minecraft
 import heckerpowered.matrix.client.player
@@ -15,9 +14,9 @@ import heckerpowered.matrix.client.ui.foundation.animation.ColorAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.data.language.MatrixLanguage
-import net.minecraft.client.font.TextRenderer
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.*
+import net.minecraft.client.DeltaTracker
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.util.ARGB
 import java.time.Duration
 import kotlin.math.abs
 import kotlin.math.min
@@ -56,7 +55,7 @@ object ManaCostTooltip {
         }
     }
 
-    fun render(drawContext: DrawContext, tickCounter: RenderTickCounter) {
+    fun render(drawContext: GuiGraphicsExtractor, tickCounter: DeltaTracker) {
         val currentMagic = MatrixHud.selectedMagic
         val target = MatrixHud.targetedEntity
         val calculationContext = MagicCalculationContext.fromEntity(player, target)
@@ -81,30 +80,20 @@ object ManaCostTooltip {
             return
         }
 
-        val minPoint = Point(drawContext.scaledWindowWidth / 2 - 125.0, drawContext.scaledWindowHeight - shownAnimation.animatedValue)
-        val maxPoint = Point(drawContext.scaledWindowWidth / 2 + 125.0, minPoint.y + 15)
+        val minPoint = Point(drawContext.guiWidth() / 2 - 125.0, drawContext.guiHeight() - shownAnimation.animatedValue)
+        val maxPoint = Point(drawContext.guiWidth() / 2 + 125.0, minPoint.y + 15)
 
         val color = backgroundColorAnimation
-        val red = color.red.animatedValue.toFloat()
-        val green = color.green.animatedValue.toFloat()
-        val blue = color.blue.animatedValue.toFloat()
-        val alpha = (opacityAnimation.animatedValue * 0.5).toFloat()
+        val red = (color.red.animatedValue * 255.0).toInt()
+        val green = (color.green.animatedValue * 255.0).toInt()
+        val blue = (color.blue.animatedValue * 255.0).toInt()
+        val alpha = (opacityAnimation.animatedValue * 0.5 * 255.0).toInt()
 
-        val transformationMatrix = drawContext.matrices.peek().positionMatrix
-        val tessellator = Tessellator.getInstance()
+        // 26.2: manual Tessellator/BufferRenderer quad replaced by GuiGraphicsExtractor.fill,
+        // which draws the same axis-aligned rectangle through the GUI render pipeline.
+        drawContext.fill(minPoint.x.toInt(), minPoint.y.toInt(), maxPoint.x.toInt(), maxPoint.y.toInt(), ARGB.color(alpha, red, green, blue))
 
-        val buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR)
-        buffer.vertex(transformationMatrix, maxPoint.x.toFloat(), maxPoint.y.toFloat(), 0.0F).color(red, green, blue, alpha)
-        buffer.vertex(transformationMatrix, maxPoint.x.toFloat(), minPoint.y.toFloat(), 0.0F).color(red, green, blue, alpha)
-        buffer.vertex(transformationMatrix, minPoint.x.toFloat(), minPoint.y.toFloat(), 0.0F).color(red, green, blue, alpha)
-        buffer.vertex(transformationMatrix, minPoint.x.toFloat(), maxPoint.y.toFloat(), 0.0F).color(red, green, blue, alpha)
-
-        RenderSystem.enableBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram)
-        BufferRenderer.drawWithGlobalProgram(buffer.end())
-        RenderSystem.disableBlend()
-
-        val textRenderer = minecraft.textRenderer
+        val textRenderer = minecraft.font
         val difference = abs(normalCost - cost)
         if (difference != lastDifference) {
             differenceChangedAnimation.value = .0
@@ -135,21 +124,21 @@ object ManaCostTooltip {
             return
         }
 
-        val vertexConsumerProvider = drawContext.vertexConsumers
         val yOffset = 2.5F
 
+        // 26.2: manual textRenderer.draw(...) into a vertex consumer replaced by
+        // GuiGraphicsExtractor.text, which renders through the GUI text pipeline.
         if (stateForegroundOpacity > 3) {
             if (displayState) {
-                textRenderer.draw(MatrixLanguage.manaCostIncreased, minPoint.x.toFloat() + 5F, minPoint.y.toFloat() + yOffset, foregroundColor.toInt(), false, transformationMatrix, vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880)
+                drawContext.text(textRenderer, MatrixLanguage.manaCostIncreased, (minPoint.x + 5.0).toInt(), (minPoint.y + yOffset).toInt(), foregroundColor.toInt(), false)
             } else {
-                textRenderer.draw(MatrixLanguage.manaCostReduced, minPoint.x.toFloat() + 5F, minPoint.y.toFloat() + yOffset, foregroundColor.toInt(), false, transformationMatrix, vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880)
+                drawContext.text(textRenderer, MatrixLanguage.manaCostReduced, (minPoint.x + 5.0).toInt(), (minPoint.y + yOffset).toInt(), foregroundColor.toInt(), false)
             }
         }
 
         if ((foregroundOpacity * 255).toInt() > 3 && cost != normalCost) {
-            val width = textRenderer.getWidth(displayedDifference.toString())
-            textRenderer.draw(displayedDifference.toString(), maxPoint.x.toFloat() - 5F - width, minPoint.y.toFloat() + yOffset, differenceForegroundColor.toInt(), false, transformationMatrix, vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880)
+            val width = textRenderer.width(displayedDifference.toString())
+            drawContext.text(textRenderer, displayedDifference.toString(), (maxPoint.x - 5.0).toInt() - width, (minPoint.y + yOffset).toInt(), differenceForegroundColor.toInt(), false)
         }
-        drawContext.draw()
     }
 }

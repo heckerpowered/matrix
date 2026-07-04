@@ -14,7 +14,6 @@
     "LevelMixin",
     "LivingEntityMixin",
     "MinecraftServerMixin",
-    "PlayerEntityMixin",
     "PlayerMixin",
     "ServerCommonNetworkHandlerMixin",
     "ServerPlayerEntityMixin",
@@ -23,17 +22,20 @@
     "TargetPredicateMixin",
     "TridentEntityMixin",
     "TridentItemMixin",
-    "WitchEntityMixin",
-    "WorldMixin"
+    "WitchEntityMixin"
   ],
   "client": [
+    "CameraMixin",
     "FramebufferMixin",
     "GameRendererMixin",
     "KeyboardMixin",
     "MinecraftClientMixin",
     "MixinInGameHud",
     "MouseMixin",
-    "WorldRendererMixin"
+    "WorldRendererMixin",
+    "GuiRenderStateAccessor",
+    "GuiRenderStateMixin",
+    "GuiRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

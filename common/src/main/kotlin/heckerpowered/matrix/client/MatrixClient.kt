@@ -9,28 +9,34 @@ import heckerpowered.matrix.Matrix
 import heckerpowered.matrix.client.network.MatrixClientPlayNetworking
 import heckerpowered.matrix.client.render.ChannelSequenceRenderer
 import heckerpowered.matrix.client.render.MatrixRenderSystem
+import heckerpowered.matrix.client.render.dump
+import heckerpowered.matrix.client.render.mainRenderTarget
 import heckerpowered.matrix.client.render.ScreenEffectRenderer
 import heckerpowered.matrix.client.render.entity.DevEntityRenderer
 import heckerpowered.matrix.client.render.entity.EmptyRenderer
 import heckerpowered.matrix.client.render.entity.FinderArrowEntityRenderer
 import heckerpowered.matrix.client.render.entity.MagicLightningEntityRenderer
-import heckerpowered.matrix.client.render.item.VortexItemRenderer
-import heckerpowered.matrix.client.shader.ShaderStageStore
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.entity.ModEntityTypes
-import heckerpowered.matrix.common.item.MagicTalismanItem
+import heckerpowered.matrix.common.item.getMagics
 import heckerpowered.matrix.common.magic.core.Magic
-import heckerpowered.matrix.common.magic.system.MagicSystem
 import net.fabricmc.api.ClientModInitializer
-import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
-import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback
-import net.minecraft.client.render.entity.feature.FeatureRendererContext
-import net.minecraft.client.render.entity.model.EntityModel
-import net.minecraft.entity.LivingEntity
+import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
 import java.time.Duration
+
+// Restored from pre-migration MatrixClient.kt (accidentally deleted in 53dcdd6);
+// same non-null semantics as the original 1.21 definitions.
+val minecraft
+    get() = Minecraft.getInstance()!!
+
+val world
+    get() = Minecraft.getInstance().level!!
+
+val player
+    get() = Minecraft.getInstance().player!!
 
 val projectionMatrix: Matrix4f
     get() {
@@ -72,12 +78,19 @@ class MatrixClient : ClientModInitializer {
         MatrixKeyBindings.onInitialize()
         registerEntityRenderers()
 
-        LivingEntityFeatureRendererRegistrationCallback.EVENT.register { _, entityRenderer, registrationHelper, _ ->
-            @Suppress("UNCHECKED_CAST")
-            registrationHelper.register(ChannelSequenceRenderer(entityRenderer as FeatureRendererContext<LivingEntity, EntityModel<LivingEntity>>))
-        }
+        // 26.2: ChannelSequenceRenderer is no longer a per-entity-type RenderLayer registered
+        // through LivingEntityRenderLayerRegistrationCallback — see the structural-decision
+        // note at the top of ChannelSequenceRenderer.kt for why (no Fabric API extraction hook
+        // exists to get the source LivingEntity into an arbitrary LivingEntityRenderState
+        // without a Mixin). It is now a self-contained HUD overlay; onInitialize() registers
+        // both its ClientTickEvents animation driver and its HudElementRegistry draw callback.
+        ChannelSequenceRenderer.onInitialize()
 
-        BuiltinItemRendererRegistry.INSTANCE.register(MagicTalismanItem, VortexItemRenderer)
+        // 26.2: BuiltinItemRendererRegistry/DynamicItemRenderer (Fabric API) is gone; custom
+        // item GPU rendering now goes through the data-driven SpecialModelRenderer system
+        // (item model JSON + registered Unbaked/codec type), which is out of scope for this
+        // renderer-only port pass. See the TODO(26.2) note at the top of VortexItemRenderer.kt.
+
     }
 
     private fun registerEntityRenderers() {
@@ -91,7 +104,9 @@ class MatrixClient : ClientModInitializer {
         private var lastNonEmptyMagicList: List<Magic>? = null
 
         fun getPlayerMagics(): List<Magic> {
-            val magics = MagicSystem.getMagics(player)
+            // The old MagicManager/MagicSystem lookup was replaced by the Player.getMagics()
+            // extension during the magic-system refactor; same enchantment-derived list.
+            val magics = player.getMagics().toList()
             if (magics.isNotEmpty()) {
                 this.lastNonEmptyMagicList = magics
             }
@@ -100,8 +115,7 @@ class MatrixClient : ClientModInitializer {
 
         @JvmStatic
         fun onWindowInitialization() {
-            ShaderStageStore.Default.discoverFiles()
-            ShaderStageStore.Default.precompileAll()
+            // 26.2: shader pipelines are compiled by the vanilla ShaderManager on demand
         }
     }
 }

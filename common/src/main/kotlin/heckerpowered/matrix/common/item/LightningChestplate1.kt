@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.entity.rule.AttributeComputationContext
 import heckerpowered.matrix.common.entity.rule.AttributeComputationRule
 import heckerpowered.matrix.common.entity.rule.LivingDeathContext
@@ -38,7 +39,7 @@ import java.util.function.Consumer
  * Lightning Chestplate 1 'Warp Dancer'
  */
 object LightningChestplate1 : Item(
-    Properties()
+    Properties().setId(ModItemIds.lightningChestplateBorrowedTime)
         .humanoidArmor(ModArmorMaterials.lightning, ArmorType.CHESTPLATE)
         .fireResistant()
         .rarity(Rarity.EPIC)

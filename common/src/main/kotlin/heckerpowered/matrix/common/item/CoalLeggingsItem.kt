@@ -5,10 +5,11 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ToolMaterial
 import net.minecraft.world.item.equipment.ArmorType
 
 object CoalLeggingsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.coal, ArmorType.LEGGINGS)
+    Properties().setId(ModItemIds.coalLeggings).humanoidArmor(ModArmorMaterials.coal, ArmorType.LEGGINGS)
 )

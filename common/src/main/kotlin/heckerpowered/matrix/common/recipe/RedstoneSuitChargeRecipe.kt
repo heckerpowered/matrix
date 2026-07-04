@@ -63,6 +63,7 @@ object RedstoneSuitChargeRecipe : CustomRecipe() {
 
     val mapCodec: MapCodec<RedstoneSuitChargeRecipe> = MapCodec.unit(RedstoneSuitChargeRecipe)
     val streamCodec: StreamCodec<RegistryFriendlyByteBuf, RedstoneSuitChargeRecipe> = StreamCodec.unit<RegistryFriendlyByteBuf, RedstoneSuitChargeRecipe>(RedstoneSuitChargeRecipe)
+    @get:JvmName("serializerInstance")
     val serializer: RecipeSerializer<RedstoneSuitChargeRecipe> = RecipeSerializer<RedstoneSuitChargeRecipe>(mapCodec, streamCodec)
 
     override fun getSerializer(): RecipeSerializer<out CustomRecipe> {

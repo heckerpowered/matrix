@@ -8,9 +8,6 @@ package heckerpowered.matrix.client.render.shader.hud
 import heckerpowered.matrix.client.shader.*
 import org.joml.Vector2f
 import org.joml.Vector4f
-import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
-import org.lwjgl.opengl.GL20.GL_VERTEX_SHADER
-import org.lwjgl.opengl.GL46
 
 object ProgressRingRenderer {
     /**
@@ -41,26 +38,23 @@ object ProgressRingRenderer {
      */
     var color: Vector4f = Vector4f(1.0F)
 
+    /**
+     * The aspect ratio (width / height) of the target the ring is drawn into; the fragment
+     * shader uses it to keep the ring circular in the anisotropic fullscreen texcoord space.
+     */
+    var aspectRatio: Float = 1.0F
+
+    // 26.2: the ring was a positioned POSITION_TEXTURE quad in 1.21; it is a fullscreen pass
+    // now, with placement carried by the center/radius/thickness uniforms (height-normalized,
+    // aspect-corrected in the fragment shader).
     val progressRingShader = BlitProgram(
-        ResourceShader("/assets/matrix/shaders/position_texture.fsh", GL_VERTEX_SHADER),
-        ResourceShader("/assets/matrix/shaders/post/hud/progress_ring.fsh", GL_FRAGMENT_SHADER),
+        "post/hud/progress_ring.fsh",
         uniforms = arrayOf(
-            modelViewMatrixProvider,
-            projectionMatrixProvider,
-            UniformProvider("progress") { pointer ->
-                GL46.glUniform1f(pointer, progress)
-            },
-            UniformProvider("radius") { pointer ->
-                GL46.glUniform1f(pointer, radius)
-            },
-            UniformProvider("thickness") { pointer ->
-                GL46.glUniform1f(pointer, thickness)
-            },
-            UniformProvider("center") { pointer ->
-                GL46.glUniform2f(pointer, center.x, center.y)
-            },
-            UniformProvider("color") { pointer ->
-                GL46.glUniform4f(pointer, color.x, color.y, color.z, color.w)
+            UniformProvider("MatrixPostUniforms") {
+                putVec4(progress, radius, thickness, aspectRatio)
+                putVec4(center.x, center.y, 0F, 0F)
+                putVec4(color.x, color.y, color.z, color.w)
+                putVec4(0F, 0F, 0F, 0F)
             }
         )
     )

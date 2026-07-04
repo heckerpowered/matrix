@@ -5,7 +5,7 @@
 
 package heckerpowered.matrix.common.enchantment
 
-import heckerpowered.matrix.common.effect.ModMobEffects.WITHER_ARMOR_CHARGED_EFFECT
+import heckerpowered.matrix.common.effect.ModMobEffects.WitherArmorCharged
 import heckerpowered.matrix.common.entity.rule.EntityUpdateContext
 import heckerpowered.matrix.common.entity.rule.EntityUpdateRule
 import heckerpowered.matrix.common.rule.RuleRegistry
@@ -30,9 +30,9 @@ object WitherArmorEnchantment : EntityUpdateRule {
 
         val enchantmentLevel = entity.getEnchantmentLevel(ModEnchantments.WitherArmor)
         if (enchantmentLevel <= 0) return
-        if (entity.hasEffect(WITHER_ARMOR_CHARGED_EFFECT)) return
+        if (entity.hasEffect(WitherArmorCharged)) return
 
-        entity.addEffect(MobEffectInstance(WITHER_ARMOR_CHARGED_EFFECT, 20 * 10, 0, true, true))
+        entity.addEffect(MobEffectInstance(WitherArmorCharged, 20 * 10, 0, true, true))
         if (entity is ServerPlayer) {
             entity.level().server.playerList.sendActiveEffects(entity, entity.connection)
         }

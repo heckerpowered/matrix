@@ -10,7 +10,7 @@ import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.EasingMode
 import heckerpowered.matrix.client.ui.foundation.animation.ElasticEase
 import heckerpowered.matrix.common.magic.core.Magic
-import net.minecraft.entity.LivingEntity
+import net.minecraft.world.entity.LivingEntity
 import java.time.Duration
 
 class ChannelAnimation(

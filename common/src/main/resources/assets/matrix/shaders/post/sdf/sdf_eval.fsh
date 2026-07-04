@@ -13,7 +13,7 @@ void main() {
     float maxDistance = length(resolution);
     float dist = length((fragTexCoord - nearest) * resolution) / maxDistance;
     vec4 color = texture(originFramebuffer, fragTexCoord);
-    if (color.a != .0) {
+    if (color.a != 0.0) {
         dist = -dist;
     }
 

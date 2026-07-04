@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.magic.channel.ChannelExecutor
 import heckerpowered.matrix.common.magic.channel.ExecutionPolicy
 import heckerpowered.matrix.common.magic.channel.MagicInvocation
@@ -15,7 +16,7 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 
 object LapisLazuliSwordItem : Item(
-    Properties().sword(ModToolMaterials.lapisLazuli, 3.0F, -2.4F)
+    Properties().setId(ModItemIds.lapisLazuliSword).sword(ModToolMaterials.lapisLazuli, 3.0F, -2.4F)
 ) {
     override fun postHurtEnemy(itemStack: ItemStack, mob: LivingEntity, attacker: LivingEntity) {
         super.postHurtEnemy(itemStack, mob, attacker)

@@ -5,9 +5,10 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.equipment.ArmorType
 
 object EmeraldLeggingsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.emerald, ArmorType.LEGGINGS)
+    Properties().setId(ModItemIds.emeraldLeggings).humanoidArmor(ModArmorMaterials.emerald, ArmorType.LEGGINGS)
 )

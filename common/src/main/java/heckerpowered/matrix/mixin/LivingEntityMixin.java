@@ -301,7 +301,8 @@ abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "knockback", at = @At("HEAD"), cancellable = true)
     private void knockback(
-            double power, double x, double z, CallbackInfo ci,
+            // 26.2 release: knockback gained (DamageSource source, float amount, boolean sprinting)
+            double power, double x, double z, net.minecraft.world.damagesource.DamageSource source, float amount, boolean sprinting, CallbackInfo ci,
             @Local(argsOnly = true, name = "power") LocalDoubleRef powerReference,
             @Local(argsOnly = true, name = "xd") LocalDoubleRef xReference,
             @Local(argsOnly = true, name = "zd") LocalDoubleRef zReference) {

@@ -49,11 +49,11 @@ class AttractorEntity(entityType: EntityType<AttractorEntity>, level: Level) : E
         get() = entityData.get(AttractorEntity.ownerUuid).getOrNull()
         set(value) = entityData.set(AttractorEntity.ownerUuid, Optional.ofNullable(value))
 
-    var owner: LivingEntity?
-        get() = super.getOwner()
-        set(value) {
-            ownerUuid = EntityReference.of(value)
-        }
+    // 26.2: a Kotlin `owner` property would accidentally override OwnableEntity's default
+    // getOwner(); reads go through the interface default, writes through this setter.
+    fun setOwner(value: LivingEntity?) {
+        ownerUuid = EntityReference.of(value)
+    }
 
     constructor(level: Level) : this(ModEntityTypes.attractor, level)
 

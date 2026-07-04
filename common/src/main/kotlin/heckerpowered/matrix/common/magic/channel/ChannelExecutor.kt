@@ -70,6 +70,6 @@ object ChannelExecutor {
                 it.initialProgressOffset = Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(true)
             })
         ChannelSequenceRenderer.offsetAnimationMap
-            .computeIfAbsent(target) { ChannelSequenceRenderer.Companion.OffsetAnimation() }
+            .computeIfAbsent(target) { ChannelSequenceRenderer.OffsetAnimation() }
     }
 }

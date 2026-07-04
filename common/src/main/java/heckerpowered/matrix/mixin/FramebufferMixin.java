@@ -5,55 +5,39 @@
 
 package heckerpowered.matrix.mixin;
 
+import com.mojang.blaze3d.GpuFormat;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.GpuDevice;
+import com.mojang.blaze3d.textures.GpuTexture;
 import heckerpowered.matrix.client.event.InitAttachmentCallback;
-import heckerpowered.matrix.client.render.OpenGLExtensions;
 import heckerpowered.matrix.client.render.RenderExtensionsKt;
 import heckerpowered.matrix.core.FramebufferExtension;
-import kotlin.Unit;
-import net.minecraft.client.gl.Framebuffer;
-import org.jetbrains.annotations.Nullable;
-import org.lwjgl.system.MemoryUtil;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import java.nio.IntBuffer;
-
-import static com.mojang.blaze3d.platform.GlStateManager._texImage2D;
-import static heckerpowered.matrix.Matrix.LOGGER;
-import static org.lwjgl.opengl.GL46.*;
+import java.util.function.Supplier;
 
 /**
- * Mixin for the {@link Framebuffer} class to extend its functionality.
+ * Mixin for the {@link RenderTarget} class to extend its functionality.
  * <p>
- * This mixin adds support for:
- * <ul>
- * <li>Using alternative color formats for the framebuffer texture, such as RGBA16, enabling HDR rendering.</li>
- * <li>Allocating and generating mipmaps for framebuffer's color attachment texture during initialization, if enabled.</li>
- * </ul>
- * </p>
+ * Adds optional full-mipmap-chain allocation for the color attachment (used by the bloom
+ * pipeline), applied through the backend-agnostic {@link GpuDevice#createTexture} wrapper
+ * inside {@code createBuffers}, so it works on both the Vulkan and OpenGL backends.
+ * <p>
+ * 26.2 release note: the pre-migration global HDR color-format override is gone. Release
+ * pipelines declare their color target format and render passes validate the attachment
+ * against it, so vanilla-rendered targets (the main framebuffer, entity/GUI capture targets)
+ * must keep the format vanilla created them with; HDR formats are now passed explicitly to
+ * the mod's own render targets instead (see FramebufferExtension.framebufferColorFormat).
  *
  * @author heckerpowered
  */
-@Mixin(Framebuffer.class)
+@Mixin(RenderTarget.class)
 class FramebufferMixin implements FramebufferExtension {
     @Unique
-    private static final Marker MARKER = MarkerFactory.getMarker("FRAMEBUFFER_MIXIN");
-    @Shadow
-    protected int colorAttachment;
-    @Unique
     private boolean useMipmaps = false;
-
-    @ModifyConstant(method = "initFbo", constant = @Constant(intValue = GL_RGBA8))
-    private int modify$imageFormat(int constant) {
-        return FramebufferExtension.getFramebufferColorFormat();
-    }
 
     @SuppressWarnings("all")
     @Override
@@ -67,49 +51,23 @@ class FramebufferMixin implements FramebufferExtension {
         useMipmaps = b;
     }
 
+    /**
+     * The second createTexture invocation inside createBuffers allocates the color
+     * attachment (the first one is the depth attachment); allocate a full mipmap chain
+     * when enabled.
+     */
     @Redirect(
-            method = "initFbo",
+            method = "createBuffers",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/blaze3d/platform/GlStateManager;_texImage2D(IIIIIIIILjava/nio/IntBuffer;)V"
+                    target = "Lcom/mojang/blaze3d/systems/GpuDevice;createTexture(Ljava/util/function/Supplier;ILcom/mojang/blaze3d/GpuFormat;IIII)Lcom/mojang/blaze3d/textures/GpuTexture;",
+                    ordinal = 1
             )
     )
-    private void texImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, @Nullable IntBuffer pixels) {
-        InitAttachmentCallback.EVENT.invoker().onInitAttachment((Framebuffer) (Object) this);
-        final var isDepthAttachment = format == GL_DEPTH_COMPONENT;
-        if (!useMipmaps || isDepthAttachment) {
-            _texImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
-            return;
-        }
-
-        OpenGLExtensions.clearGLError();
-
-        @SuppressWarnings("DataFlowIssue") final var self = (Framebuffer) (Object) this;
-        final var recommendMipLevels = RenderExtensionsKt.recommendMipLevel(self);
-        glTexStorage2D(target, recommendMipLevels, internalFormat, width, height);
-        OpenGLExtensions.checkGLError(error -> {
-            final var name = OpenGLExtensions.getErrorName(error);
-            final var message = OpenGLExtensions.getErrorDescription(error);
-            LOGGER.error(MARKER, "Error occurs during call `glTexStorage2D`: {}", name);
-            LOGGER.error(MARKER, message);
-            LOGGER.error(MARKER, "Target: {}, Level: {}, InternalFormat: {}, Width: {}, Height: {}", target, level, internalFormat, width, height);
-            return Unit.INSTANCE;
-        });
-
-        final var packedPixelDataType = OpenGLExtensions.getPackedPixelDataTypeForFormat(internalFormat);
-        final var bytesPerPixel = OpenGLExtensions.getBytesPerPixel(format, type);
-        final var bufferSize = width * height * bytesPerPixel;
-        final var buffer = MemoryUtil.memAlloc(bufferSize);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, buffer);
-        MemoryUtil.memFree(buffer);
-
-        OpenGLExtensions.checkGLError(error -> {
-            final var name = OpenGLExtensions.getErrorName(error);
-            final var message = OpenGLExtensions.getErrorDescription(error);
-            LOGGER.error(MARKER, "Error occurs during call `glTexSubImage2D`: {}", name);
-            LOGGER.error(MARKER, message);
-            LOGGER.error(MARKER, "Width: {}, Height: {}, Format: {} Type: {}:", width, height, format, packedPixelDataType);
-            return Unit.INSTANCE;
-        });
+    private GpuTexture matrix$createColorTexture(GpuDevice device, Supplier<String> label, int usage, GpuFormat format, int width, int height, int depthOrLayers, int mipLevels) {
+        final var levels = useMipmaps ? Math.max(RenderExtensionsKt.recommendMipLevel(width, height), 1) : mipLevels;
+        final var texture = device.createTexture(label, usage, format, width, height, depthOrLayers, levels);
+        InitAttachmentCallback.EVENT.invoker().onInitAttachment((RenderTarget) (Object) this);
+        return texture;
     }
 }

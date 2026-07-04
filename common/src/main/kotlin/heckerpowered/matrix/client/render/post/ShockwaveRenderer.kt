@@ -5,15 +5,16 @@
 
 package heckerpowered.matrix.client.render.post
 
+import com.mojang.blaze3d.textures.GpuTextureView
+import heckerpowered.matrix.client.render.PostProcessRenderer
 import heckerpowered.matrix.client.shader.*
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.core.times
 import org.joml.Vector3f
 import org.joml.Vector4f
-import org.lwjgl.opengl.GL46.*
 
 object ShockwaveRenderer {
-    var depthAttachment: Int = -1
+    var depthAttachment: GpuTextureView? = null
 
     var wavePosition: Vector3f = Vector3f()
     var waveColor = Vector4f(0.1F, 0.5F, 1.0F, 1.0F) * 4.0F
@@ -21,28 +22,27 @@ object ShockwaveRenderer {
     var waveSize = SimpleDoubleAnimation()
 
     val shockwaveShader = BlitProgram(
-        ResourceShader("/assets/matrix/shaders/sobel.vert", GL_VERTEX_SHADER),
-        ResourceShader("/assets/matrix/shaders/post/shockwave.fsh", GL_FRAGMENT_SHADER),
+        "post/shockwave.fsh",
         uniforms = arrayOf(
-            UniformProvider("depthAttachment") { pointer ->
-                glActiveTexture(GL_TEXTURE0)
-                glBindTexture(GL_TEXTURE_2D, depthAttachment)
-                glUniform1i(pointer, 0)
-            },
-            inverseProjectionMatrixProvider,
-            inverseViewMatrixProvider,
-            UniformProvider("wavePosition") { pointer ->
-                glUniform3f(pointer, wavePosition.x, wavePosition.y, wavePosition.z)
-            },
-            UniformProvider("waveColor") { pointer ->
-                glUniform4f(pointer, waveColor.x, waveColor.y, waveColor.z, waveColor.w)
-            },
-            UniformProvider("waveRadius") { pointer ->
-                glUniform1f(pointer, waveRadius.animatedValue.toFloat())
-            },
-            UniformProvider("waveSize") { pointer ->
-                glUniform1f(pointer, waveSize.animatedValue.toFloat())
+            UniformProvider("MatrixPostUniforms") {
+                putInverseProjectionMatrix()
+                putInverseViewMatrix()
+                // MatrixPostData0.xyz = wavePosition, MatrixPostData0.w = waveRadius
+                putVec4(wavePosition.x, wavePosition.y, wavePosition.z, waveRadius.animatedValue.toFloat())
+                // MatrixPostData1 = waveColor
+                putVec4(waveColor.x, waveColor.y, waveColor.z, waveColor.w)
+                // MatrixPostData2.x = waveSize
+                putVec4(waveSize.animatedValue.toFloat(), 0F, 0F, 0F)
             }
+        ),
+        textures = arrayOf(
+            // Pre-existing bug fixed: the .fsh declares `uniform sampler2D framebuffer;` (the
+            // scene color it additively blends the wave color into) but the old Kotlin uniform
+            // array never wired it up. Every other post shader in this codebase sources its
+            // "previous pass output" sampler from PostProcessRenderer.framebufferProvider
+            // (see RenderExtensions.kt / PostProcessRenderer.kt); used here for the same role.
+            heckerpowered.matrix.client.render.framebufferProvider,
+            TextureProvider("depthAttachment") { depthAttachment }
         )
     )
 }

@@ -5,6 +5,7 @@
 
 package heckerpowered.matrix.common.item
 
+import heckerpowered.matrix.common.reference.ModItemIds
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitMaxPower
 import heckerpowered.matrix.common.item.ModComponents.redstoneSuitPower
 import heckerpowered.matrix.data.language.MatrixLanguage
@@ -18,7 +19,7 @@ import net.minecraft.world.item.equipment.ArmorType
 import java.util.function.Consumer
 
 object RedstoneBootsItem : Item(
-    Properties().humanoidArmor(ModArmorMaterials.redstone, ArmorType.BOOTS)
+    Properties().setId(ModItemIds.redstoneBoots).humanoidArmor(ModArmorMaterials.redstone, ArmorType.BOOTS)
         .component(redstoneSuitMaxPower, 20)
         .component(redstoneSuitPower, 0)
 ), RedstoneSuit, TooltipProvider {

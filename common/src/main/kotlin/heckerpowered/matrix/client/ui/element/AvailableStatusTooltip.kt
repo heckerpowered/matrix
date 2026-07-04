@@ -15,7 +15,7 @@ import heckerpowered.matrix.client.ui.foundation.animation.DoubleAnimation
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.magic.core.LMagicAvailableStatus
 import heckerpowered.matrix.common.magic.core.description
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import java.time.Duration
 import kotlin.math.min
 
@@ -39,7 +39,7 @@ object AvailableStatusTooltip {
         shownAnimation.currentValue = -50.0
     }
 
-    fun render(drawContext: DrawContext, renderer: LegacyMatrixUIRenderer, status: LMagicAvailableStatus) {
+    fun render(drawContext: GuiGraphicsExtractor, renderer: LegacyMatrixUIRenderer, status: LMagicAvailableStatus) {
         val minPoint = Point(
             renderer.scaledWindowWidth / 2 - 125.0,
             30.0 + shownAnimation.animatedValue
