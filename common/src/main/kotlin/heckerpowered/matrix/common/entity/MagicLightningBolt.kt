@@ -18,6 +18,7 @@ import heckerpowered.matrix.common.magic.spell.ExplosionMagic.damageCalculator
 import heckerpowered.matrix.common.magic.spell.LightningBoltMagic
 import heckerpowered.matrix.common.tag.MatrixDamageTypes
 import heckerpowered.matrix.core.extension.damage
+import heckerpowered.matrix.mixin.LivingEntityAccessor
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.damagesource.DamageSource
@@ -87,7 +88,7 @@ class MagicLightningBolt(entityType: EntityType<MagicLightningBolt>, level: Leve
 
             YELLOW -> {
                 channeler?.apply {
-                    attackStrengthTicker = Int.MAX_VALUE
+                    (this as LivingEntityAccessor).`matrix$setAttackStrengthTicker`(Int.MAX_VALUE)
                     swing(usedItemHand)
                     attack(entity)
                     crit(entity)

@@ -6,7 +6,11 @@
 package heckerpowered.matrix.core.utility
 
 import heckerpowered.matrix.core.*
+import heckerpowered.matrix.mixin.EntitySectionAccessor
+import heckerpowered.matrix.mixin.EntitySectionStorageAccessor
+import heckerpowered.matrix.mixin.LevelEntityGetterAdapterAccessor
 import net.minecraft.core.SectionPos
+import net.minecraft.util.ClassInstanceMultiMap
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart
 import net.minecraft.world.level.Level
@@ -132,7 +136,10 @@ fun Level.getEntities(searchBox: AABB): Sequence<Entity> = sequence {
         return@sequence
     }
 
-    val entities = entityGetter.sectionStorage
+    @Suppress("UNCHECKED_CAST")
+    val sectionStorage = (entityGetter as LevelEntityGetterAdapterAccessor)
+        .`matrix$getSectionStorage`() as EntitySectionStorage<EntityAccess>
+    val entities = sectionStorage
         .getEntities(searchBox)
         .mapNotNull { it as? Entity }
 
@@ -169,7 +176,8 @@ fun <T : EntityAccess> EntitySectionStorage<T>.getAccessibleNonEmptySections(
         val minSectionKey = SectionPos.asLong(sectionX, 0, 0)
         val maxSectionKey = SectionPos.asLong(sectionX, -1, -1)
 
-        val sections = sectionIds
+        val sections = (this@getAccessibleNonEmptySections as EntitySectionStorageAccessor)
+            .`matrix$getSectionIds`()
             .subSet(minSectionKey, maxSectionKey + 1L)
             .asSequence()
             .filter { sectionKey ->
@@ -184,5 +192,8 @@ fun <T : EntityAccess> EntitySectionStorage<T>.getAccessibleNonEmptySections(
     }
 }
 
-fun <T : EntityAccess> EntitySection<T>.getEntities(searchBox: AABB): Sequence<T> =
-    storage.asSequence().filter { it.boundingBox.intersects(searchBox) }
+fun <T : EntityAccess> EntitySection<T>.getEntities(searchBox: AABB): Sequence<T> {
+    @Suppress("UNCHECKED_CAST")
+    val storage = (this as EntitySectionAccessor).`matrix$getStorage`() as ClassInstanceMultiMap<T>
+    return storage.asSequence().filter { it.boundingBox.intersects(searchBox) }
+}

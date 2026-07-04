@@ -14,6 +14,9 @@ import heckerpowered.matrix.common.magic.rule.effect.ChannelEffect
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.rule.RuleRegistry
 import heckerpowered.matrix.common.rule.register
+import heckerpowered.matrix.mixin.BrainAccessor
+import heckerpowered.matrix.mixin.LivingEntityAccessor
+import heckerpowered.matrix.mixin.MobAccessor
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.NeutralMob
@@ -86,12 +89,12 @@ object MemoryWipeMagic : Magic(
         val target = invocation.target
         val caster = invocation.caster.asPlayerOrNull()
 
-        target.brain.memories
+        (target.brain as BrainAccessor).`matrix$getMemories`()
             .filter { it.key !in MEMORY_WIPE_PRESERVED_MEMORIES }
             .forEach { it.value.clear() }
         if (target is Mob) {
             target.target = null
-            target.targetSelector.availableGoals
+            (target as MobAccessor).`matrix$getTargetSelector`().availableGoals
                 .map { it.goal }
                 .forEach { it.stop() }
         }
@@ -100,8 +103,10 @@ object MemoryWipeMagic : Magic(
             target.stopBeingAngry()
         }
         target.lastHurtByMob = null
-        target.lastHurtByPlayer = null
-        target.lastHurtByPlayerMemoryTime = 0
+        (target as LivingEntityAccessor).apply {
+            `matrix$setLastHurtByPlayer`(null)
+            `matrix$setLastHurtByPlayerMemoryTime`(0)
+        }
 
         if (caster == null) return
         if (target is Villager) {
@@ -115,15 +120,17 @@ object MemoryWipeMagic : Magic(
         brain.clearMemories()
         if (this is Mob) {
             target = null
-            targetSelector.availableGoals
+            (this as MobAccessor).`matrix$getTargetSelector`().availableGoals
                 .map { it.goal }
                 .forEach { it.stop() }
         }
         if (this is NeutralMob) {
             stopBeingAngry()
         }
-        lastHurtByPlayer = null
-        lastHurtByPlayerMemoryTime = 0
+        (this as LivingEntityAccessor).apply {
+            `matrix$setLastHurtByPlayer`(null)
+            `matrix$setLastHurtByPlayerMemoryTime`(0)
+        }
         lastHurtByMob = null
     }
 

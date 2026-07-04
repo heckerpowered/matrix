@@ -14,6 +14,7 @@ import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.core.utility.getOtherEntities
 import heckerpowered.matrix.core.utility.withinDistance
+import heckerpowered.matrix.mixin.LivingEntityAccessor
 import net.minecraft.world.entity.player.Player
 
 object TeleportMagic : Magic(
@@ -36,7 +37,7 @@ object TeleportMagic : Magic(
             .filter { it != caster }
             .forEach {
                 it.invulnerableTime = 0
-                caster.attackStrengthTicker = Int.MAX_VALUE
+                (caster as LivingEntityAccessor).`matrix$setAttackStrengthTicker`(Int.MAX_VALUE)
                 if (caster is Player) {
                     caster.attack(it)
                     caster.crit(it)

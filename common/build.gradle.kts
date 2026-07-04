@@ -69,6 +69,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 
     implementation(project(":ledger"))
+    // Ledger is a plain Kotlin library, not an installed mod: without jar-in-jar bundling it
+    // only exists on the dev classpath and production dies with NoClassDefFoundError on the
+    // first mana tick.
+    include(project(":ledger"))
 }
 
 tasks.test {

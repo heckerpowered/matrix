@@ -14,6 +14,7 @@ import heckerpowered.matrix.common.magic.core.MagicDefinition
 import heckerpowered.matrix.common.magic.resource.Mana.Companion.mana
 import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.core.extension.damage
+import heckerpowered.matrix.mixin.LivingEntityAccessor
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.ai.attributes.Attributes
 
@@ -57,7 +58,7 @@ object TuckInMagic : Magic(
     private fun consumeFromAbsorptionThenHealth(caster: LivingEntity, consumptionAmount: Double) {
         val currentAbsorptionAmount = caster.absorptionAmount.toDouble()
         val absorptionConsumptionAmount = consumptionAmount.coerceAtMost(currentAbsorptionAmount)
-        caster.internalSetAbsorptionAmount((currentAbsorptionAmount - absorptionConsumptionAmount).toFloat())
+        (caster as LivingEntityAccessor).`matrix$internalSetAbsorptionAmount`((currentAbsorptionAmount - absorptionConsumptionAmount).toFloat())
 
         val remainingConsumptionAmount = consumptionAmount - absorptionConsumptionAmount
         if (remainingConsumptionAmount <= 0.0) return

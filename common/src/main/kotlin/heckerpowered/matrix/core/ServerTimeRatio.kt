@@ -5,6 +5,8 @@
 
 package heckerpowered.matrix.core
 
+import heckerpowered.matrix.mixin.MinecraftServerAccessor
+import heckerpowered.matrix.mixin.TickRateManagerAccessor
 import net.minecraft.server.MinecraftServer
 import net.minecraft.util.Util
 import kotlin.time.Duration
@@ -16,27 +18,34 @@ import kotlin.time.DurationUnit
 // Util.getNanos() — the server loop's clock, which the client JVM redirects to the GLFW
 // timer (System.nanoTime() has a different epoch and would produce a never-arriving
 // deadline, freezing the integrated server).
+//
+// Field access goes through mixin accessors, NOT class-tweaker widenings: in production the
+// tweaker's accessible-field entries did not take effect (IllegalAccessError), while mixin
+// accessors behave identically in dev and production.
 class ServerTimeRatio(private val minecraftServer: MinecraftServer) {
+    private val serverAccess get() = minecraftServer as MinecraftServerAccessor
+    private val tickRateAccess get() = minecraftServer.tickRateManager() as TickRateManagerAccessor
+
     var tickDuration: Duration
-        get() = minecraftServer.tickRateManager().nanosecondsPerTick.nanoseconds
+        get() = tickRateAccess.`matrix$getNanosecondsPerTick`().nanoseconds
         set(value) {
             val newTickDurationNanos = value.toLong(DurationUnit.NANOSECONDS)
-            if (minecraftServer.tickRateManager().nanosecondsPerTick == newTickDurationNanos) {
+            if (tickRateAccess.`matrix$getNanosecondsPerTick`() == newTickDurationNanos) {
                 // The tick time has already synced.
                 return
             }
 
-            minecraftServer.tickRateManager().nanosecondsPerTick = newTickDurationNanos
+            tickRateAccess.`matrix$setNanosecondsPerTick`(newTickDurationNanos)
 
             val currentTickStartTimeNanos = minecraftServer.tickStartTimeNanos
-            val currentTickEndTimeNanos = minecraftServer.nextTickTimeNanos
+            val currentTickEndTimeNanos = serverAccess.`matrix$getNextTickTimeNanos`()
             val currentTimeNanos = Util.getNanos()
             val timeRange = currentTickStartTimeNanos.toDouble()..currentTickEndTimeNanos.toDouble()
             val remainingTimeRatio = (1 - currentTimeNanos.toDouble().inverseLerp(timeRange)).coerceIn(.0..1.0)
             val newCurrentTickEndTime = currentTimeNanos + (newTickDurationNanos * remainingTimeRatio).toLong()
 
             // Not waiting for next tick means wait until `tickStartTimeNanos`
-            minecraftServer.waitingForNextTick = false
-            minecraftServer.nextTickTimeNanos = newCurrentTickEndTime
+            serverAccess.`matrix$setWaitingForNextTick`(false)
+            serverAccess.`matrix$setNextTickTimeNanos`(newCurrentTickEndTime)
         }
 }

@@ -18,6 +18,7 @@ import heckerpowered.matrix.common.magic.system.GameTick.Companion.ticks
 import heckerpowered.matrix.common.persistent.mana
 import heckerpowered.matrix.common.persistent.maxMana
 import heckerpowered.matrix.core.extension.damage
+import heckerpowered.matrix.mixin.EntityInvoker
 import net.minecraft.world.entity.ai.attributes.Attributes
 
 object DecisiveStrikeMagic : Magic(
@@ -68,7 +69,7 @@ object DecisiveStrikeMagic : Magic(
         val target = context.target
         val damageSource = context.defaultMagicDamageSource()
 
-        if (target?.isInvulnerable == true || target?.isInvulnerableToBase(damageSource) == true) {
+        if (target?.isInvulnerable == true || (target as? EntityInvoker)?.`matrix$isInvulnerableToBase`(damageSource) == true) {
             availability += MagicAvailableStatus.TargetImmune
         }
 

@@ -30,7 +30,9 @@ class ServerPlayNetworkHandlerMixin {
         final var instantUse = WardenChestplateItem.isAngered(player) || isPhaseWalking(player);
         if (instantUse && player.isUsingItem()) {
             final var activeItem = player.getActiveItem();
-            player.useItemRemaining = 0;
+            // Cross-class write of a protected LivingEntity field: must go through the
+            // accessor — the class-tweaker widening does not apply in production.
+            ((LivingEntityAccessor) player).matrix$setUseItemRemaining(0);
             player.stopUsingItem();
             if (!activeItem.useOnRelease()) {
                 activeItem.finishUsingItem(player.level(), player);

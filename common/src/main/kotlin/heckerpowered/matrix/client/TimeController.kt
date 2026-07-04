@@ -7,6 +7,7 @@ package heckerpowered.matrix.client
 
 import heckerpowered.matrix.client.ui.foundation.animation.SimpleDoubleAnimation
 import heckerpowered.matrix.common.network.ServerboundWarpPayload
+import heckerpowered.matrix.mixin.TickRateManagerAccessor
 import it.unimi.dsi.fastutil.floats.FloatUnaryOperator
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.client.Camera
@@ -52,19 +53,24 @@ object TimeController {
     private const val VANILLA_NANOS_PER_TICK = 50_000_000L
 
     val isTimeScaled: Boolean
-        get() = (Minecraft.getInstance().level?.tickRateManager()?.nanosecondsPerTick ?: VANILLA_NANOS_PER_TICK) > VANILLA_NANOS_PER_TICK
+        get() {
+            val tickRateManager = Minecraft.getInstance().level?.tickRateManager() ?: return false
+            return (tickRateManager as TickRateManagerAccessor).`matrix$getNanosecondsPerTick`() > VANILLA_NANOS_PER_TICK
+        }
 
     /**
      * 26.2: DeltaTracker.Timer.msPerTick is final and the effective client pace is
      * `max(msPerTick, level.tickRateManager().millisecondsPerTick())` (Minecraft.getTickTargetMillis),
-     * so the pace is driven through the client level's TickRateManager. The public
-     * nanosecondsPerTick field is written directly because setTickRate clamps to >= 1 tps and
-     * the 0.01x slow-time needs 0.2 tps; slow-time only ever slows below 20 tps, which the
-     * max() in getTickTargetMillis passes through.
+     * so the pace is driven through the client level's TickRateManager. nanosecondsPerTick is
+     * written directly (via the mixin accessor — the class-tweaker field widening does not
+     * apply in production) because setTickRate clamps to >= 1 tps and the 0.01x slow-time
+     * needs 0.2 tps; slow-time only ever slows below 20 tps, which the max() in
+     * getTickTargetMillis passes through.
      */
     private fun setClientPace(timeScale: Double) {
         val level = Minecraft.getInstance().level ?: return
-        level.tickRateManager().nanosecondsPerTick = (VANILLA_NANOS_PER_TICK / timeScale).toLong()
+        (level.tickRateManager() as TickRateManagerAccessor)
+            .`matrix$setNanosecondsPerTick`((VANILLA_NANOS_PER_TICK / timeScale).toLong())
     }
 
     @JvmStatic

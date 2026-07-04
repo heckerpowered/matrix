@@ -11,6 +11,7 @@ import heckerpowered.matrix.common.entity.ability.HealMeasurementScope
 import heckerpowered.matrix.common.item.WizardHelmet13
 import heckerpowered.matrix.common.magic.core.MagicCalculationContext
 import heckerpowered.matrix.common.persistent.wizardHelmetStack
+import heckerpowered.matrix.mixin.LivingEntityAccessor
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.player.Player
@@ -52,7 +53,7 @@ fun LivingEntity.addAbsorptionUpTo(amount: Float, maximumAmount: Float): Float {
     if (currentAmount >= maximumAmount) return 0.0F
 
     val addedAmount = amount.coerceAtMost(maximumAmount - currentAmount)
-    internalSetAbsorptionAmount(currentAmount + addedAmount)
+    (this as LivingEntityAccessor).`matrix$internalSetAbsorptionAmount`(currentAmount + addedAmount)
     return addedAmount
 }
 

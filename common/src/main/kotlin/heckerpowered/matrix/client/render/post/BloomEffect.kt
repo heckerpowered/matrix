@@ -266,7 +266,21 @@ object BloomEffect {
     }
 
     fun renderBloom() {
-        val mipLevel = minecraft.mainRenderTarget.recommendMipLevel()
+        val main = minecraft.mainRenderTarget
+        // Self-healing sizing: these targets are created during lazy class-init, whose timing
+        // relative to real window sizing differs per backend (on Vulkan they came up 1x1 and
+        // MISSED the startup resize event — the whole pyramid then composited one
+        // uninitialized texel fullscreen: no halo, and random white flashes). Never trust
+        // creation-time dimensions; align with the main target at use time.
+        if (brightFramebuffer.width != main.width || brightFramebuffer.height != main.height) {
+            brightFramebuffer.resize(main.width, main.height)
+        }
+        if (bloomDownFramebuffer.width != main.width || bloomDownFramebuffer.height != main.height) {
+            bloomDownFramebuffer.resize(main.width, main.height)
+            bloomUpFramebuffer.resize(main.width, main.height)
+        }
+
+        val mipLevel = main.recommendMipLevel()
         clearBloomPasses()
         computeBloomPass()
         generateMipmaps(mipLevel)
